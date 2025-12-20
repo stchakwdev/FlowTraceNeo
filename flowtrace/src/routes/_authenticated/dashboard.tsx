@@ -1,10 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuth } from '@workos-inc/authkit-react'
 import { getUserDisplayName, getUserInitials } from '@/lib/auth'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: Dashboard,
 })
+
+const navItems = [
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Transactions', href: '/transactions' },
+  { label: 'Flows', href: '/flows' },
+  { label: 'Trust Score', href: '/trust-score' },
+]
 
 function Dashboard() {
   const { user, signOut } = useAuth()
@@ -14,9 +21,22 @@ function Dashboard() {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary" />
-            <span className="text-xl font-bold">FlowTrace</span>
+          <div className="flex items-center gap-6">
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary" />
+              <span className="text-xl font-bold">FlowTrace</span>
+            </Link>
+            <nav className="hidden items-center gap-1 md:flex">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&.active]:bg-accent [&.active]:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           <div className="flex items-center gap-4">
@@ -24,7 +44,7 @@ function Dashboard() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
                 {getUserInitials(user as any)}
               </div>
-              <span className="text-sm font-medium">
+              <span className="hidden text-sm font-medium sm:block">
                 {getUserDisplayName(user as any)}
               </span>
             </div>
@@ -142,12 +162,12 @@ function ActionCard({
   href: string
 }) {
   return (
-    <a
-      href={href}
+    <Link
+      to={href}
       className="block rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary hover:bg-accent"
     >
       <h3 className="font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-    </a>
+    </Link>
   )
 }

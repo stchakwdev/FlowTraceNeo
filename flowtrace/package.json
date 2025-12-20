@@ -15,6 +15,7 @@
     "@base-ui/react": "^1.0.0",
     "@fontsource-variable/nunito-sans": "^5.2.7",
     "@phosphor-icons/react": "^2.1.10",
+    "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",
     "@tanstack/react-router": "^1.132.0",
