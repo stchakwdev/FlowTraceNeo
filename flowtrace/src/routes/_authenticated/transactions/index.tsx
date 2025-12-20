@@ -99,119 +99,117 @@ function TransactionList() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Transactions</h1>
-            <p className="text-muted-foreground">
-              Track and verify all financial transactions
-            </p>
-          </div>
-          <Link
-            to="/transactions/new"
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Link>
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      {/* Header */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Transactions</h1>
+          <p className="text-muted-foreground">
+            Track and verify all financial transactions
+          </p>
         </div>
+        <Link
+          to="/transactions/new"
+          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Add Transaction
+        </Link>
+      </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search transactions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+      {/* Filters */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search transactions..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <div className="flex gap-2">
+          {(['all', 'pending', 'verified', 'flagged'] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                filter === status
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Total</p>
+          <p className="text-2xl font-bold">{mockTransactions.length}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Pending</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {mockTransactions.filter((t) => t.status === 'pending').length}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Verified</p>
+          <p className="text-2xl font-bold text-green-600">
+            {mockTransactions.filter((t) => t.status === 'verified').length}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Flagged</p>
+          <p className="text-2xl font-bold text-red-600">
+            {mockTransactions.filter((t) => t.status === 'flagged').length}
+          </p>
+        </div>
+      </div>
+
+      {/* Transaction List */}
+      <div className="rounded-lg border border-border bg-card">
+        {filteredTransactions.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-muted-foreground">No transactions found</p>
           </div>
-          <div className="flex gap-2">
-            {(['all', 'pending', 'verified', 'flagged'] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  filter === status
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card text-muted-foreground hover:bg-accent'
-                }`}
+        ) : (
+          <div className="divide-y divide-border">
+            {filteredTransactions.map((transaction) => (
+              <Link
+                key={transaction.id}
+                to="/transactions/$id"
+                params={{ id: transaction.id }}
+                className="flex items-center justify-between p-4 transition-colors hover:bg-accent"
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </button>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <p className="font-medium">{transaction.description}</p>
+                    {getStatusBadge(transaction.status)}
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>{transaction.from}</span>
+                    <ArrowRightIcon className="h-3 w-3" />
+                    <span>{transaction.to}</span>
+                    <span className="mx-2">•</span>
+                    <span>{transaction.date}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">
+                    {formatCurrency(transaction.amount, transaction.currency)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{transaction.category}</p>
+                </div>
+              </Link>
             ))}
           </div>
-        </div>
-
-        {/* Stats Row */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="text-2xl font-bold">{mockTransactions.length}</p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Pending</p>
-            <p className="text-2xl font-bold text-yellow-600">
-              {mockTransactions.filter((t) => t.status === 'pending').length}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Verified</p>
-            <p className="text-2xl font-bold text-green-600">
-              {mockTransactions.filter((t) => t.status === 'verified').length}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Flagged</p>
-            <p className="text-2xl font-bold text-red-600">
-              {mockTransactions.filter((t) => t.status === 'flagged').length}
-            </p>
-          </div>
-        </div>
-
-        {/* Transaction List */}
-        <div className="rounded-lg border border-border bg-card">
-          {filteredTransactions.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-muted-foreground">No transactions found</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredTransactions.map((transaction) => (
-                <Link
-                  key={transaction.id}
-                  to="/transactions/$id"
-                  params={{ id: transaction.id }}
-                  className="flex items-center justify-between p-4 transition-colors hover:bg-accent"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <p className="font-medium">{transaction.description}</p>
-                      {getStatusBadge(transaction.status)}
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{transaction.from}</span>
-                      <ArrowRightIcon className="h-3 w-3" />
-                      <span>{transaction.to}</span>
-                      <span className="mx-2">•</span>
-                      <span>{transaction.date}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      {formatCurrency(transaction.amount, transaction.currency)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{transaction.category}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   )

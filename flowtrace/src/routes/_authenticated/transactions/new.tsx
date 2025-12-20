@@ -63,220 +63,218 @@ function NewTransaction() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate({ to: '/transactions' })}
-            className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back to Transactions
-          </button>
-          <h1 className="text-3xl font-bold">New Transaction</h1>
-          <p className="text-muted-foreground">Record a new financial transaction</p>
-        </div>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <button
+          onClick={() => navigate({ to: '/transactions' })}
+          className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Transactions
+        </button>
+        <h1 className="text-3xl font-bold">New Transaction</h1>
+        <p className="text-muted-foreground">Record a new financial transaction</p>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Transaction Details</h2>
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h2 className="mb-4 text-lg font-semibold">Transaction Details</h2>
 
-            <div className="space-y-4">
-              {/* Description */}
+          <div className="space-y-4">
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
+                Description *
+              </label>
+              <input
+                type="text"
+                id="description"
+                name="description"
+                required
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="e.g., Office supplies purchase"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            {/* Amount and Currency */}
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
-                  Description *
+                <label htmlFor="amount" className="mb-1.5 block text-sm font-medium">
+                  Amount *
                 </label>
                 <input
-                  type="text"
-                  id="description"
-                  name="description"
+                  type="number"
+                  id="amount"
+                  name="amount"
                   required
-                  value={formData.description}
+                  min="0"
+                  step="0.01"
+                  value={formData.amount}
                   onChange={handleChange}
-                  placeholder="e.g., Office supplies purchase"
+                  placeholder="0.00"
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
-
-              {/* Amount and Currency */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="amount" className="mb-1.5 block text-sm font-medium">
-                    Amount *
-                  </label>
-                  <input
-                    type="number"
-                    id="amount"
-                    name="amount"
-                    required
-                    min="0"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="currency" className="mb-1.5 block text-sm font-medium">
-                    Currency
-                  </label>
-                  <select
-                    id="currency"
-                    name="currency"
-                    value={formData.currency}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="KES">KES - Kenyan Shilling</option>
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="UGX">UGX - Ugandan Shilling</option>
-                    <option value="TZS">TZS - Tanzanian Shilling</option>
-                    <option value="NGN">NGN - Nigerian Naira</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* From and To */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="fromNodeId" className="mb-1.5 block text-sm font-medium">
-                    From *
-                  </label>
-                  <select
-                    id="fromNodeId"
-                    name="fromNodeId"
-                    required
-                    value={formData.fromNodeId}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="">Select source...</option>
-                    {mockNodes.map((node) => (
-                      <option key={node.id} value={node.id}>
-                        {node.name} ({node.type})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="toNodeId" className="mb-1.5 block text-sm font-medium">
-                    To *
-                  </label>
-                  <select
-                    id="toNodeId"
-                    name="toNodeId"
-                    required
-                    value={formData.toNodeId}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="">Select destination...</option>
-                    {mockNodes.map((node) => (
-                      <option key={node.id} value={node.id}>
-                        {node.name} ({node.type})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Category and Date */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="category" className="mb-1.5 block text-sm font-medium">
-                    Category *
-                  </label>
-                  <select
-                    id="category"
-                    name="category"
-                    required
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="">Select category...</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="date" className="mb-1.5 block text-sm font-medium">
-                    Date *
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    name="date"
-                    required
-                    value={formData.date}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Notes */}
               <div>
-                <label htmlFor="notes" className="mb-1.5 block text-sm font-medium">
-                  Notes
+                <label htmlFor="currency" className="mb-1.5 block text-sm font-medium">
+                  Currency
                 </label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  rows={3}
-                  value={formData.notes}
+                <select
+                  id="currency"
+                  name="currency"
+                  value={formData.currency}
                   onChange={handleChange}
-                  placeholder="Additional details or context..."
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="KES">KES - Kenyan Shilling</option>
+                  <option value="USD">USD - US Dollar</option>
+                  <option value="UGX">UGX - Ugandan Shilling</option>
+                  <option value="TZS">TZS - Tanzanian Shilling</option>
+                  <option value="NGN">NGN - Nigerian Naira</option>
+                </select>
+              </div>
+            </div>
+
+            {/* From and To */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="fromNodeId" className="mb-1.5 block text-sm font-medium">
+                  From *
+                </label>
+                <select
+                  id="fromNodeId"
+                  name="fromNodeId"
+                  required
+                  value={formData.fromNodeId}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">Select source...</option>
+                  {mockNodes.map((node) => (
+                    <option key={node.id} value={node.id}>
+                      {node.name} ({node.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="toNodeId" className="mb-1.5 block text-sm font-medium">
+                  To *
+                </label>
+                <select
+                  id="toNodeId"
+                  name="toNodeId"
+                  required
+                  value={formData.toNodeId}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">Select destination...</option>
+                  {mockNodes.map((node) => (
+                    <option key={node.id} value={node.id}>
+                      {node.name} ({node.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Category and Date */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="category" className="mb-1.5 block text-sm font-medium">
+                  Category *
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  required
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">Select category...</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="date" className="mb-1.5 block text-sm font-medium">
+                  Date *
+                </label>
+                <input
+                  type="date"
+                  id="date"
+                  name="date"
+                  required
+                  value={formData.date}
+                  onChange={handleChange}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Verification Upload */}
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Verification Documents</h2>
-            <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
-              <UploadIcon className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">
-                Drag and drop receipts, invoices, or photos
-              </p>
-              <p className="text-xs text-muted-foreground">or</p>
-              <button
-                type="button"
-                className="mt-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-              >
-                Browse Files
-              </button>
+            {/* Notes */}
+            <div>
+              <label htmlFor="notes" className="mb-1.5 block text-sm font-medium">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={3}
+                value={formData.notes}
+                onChange={handleChange}
+                placeholder="Additional details or context..."
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
+        {/* Verification Upload */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h2 className="mb-4 text-lg font-semibold">Verification Documents</h2>
+          <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
+            <UploadIcon className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Drag and drop receipts, invoices, or photos
+            </p>
+            <p className="text-xs text-muted-foreground">or</p>
             <button
               type="button"
-              onClick={() => navigate({ to: '/transactions' })}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+              className="mt-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Saving...' : 'Save Transaction'}
+              Browse Files
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/transactions' })}
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isSubmitting ? 'Saving...' : 'Save Transaction'}
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

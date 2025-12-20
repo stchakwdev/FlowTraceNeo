@@ -2,8 +2,20 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { AuthKitProvider } from '@workos-inc/authkit-react'
+import { ThemeProvider } from '@/lib/theme'
 
 import appCss from '../styles.css?url'
+
+// Script to prevent theme flash on page load
+const themeScript = `
+(function() {
+  const theme = localStorage.getItem('flowtrace-theme') || 'system';
+  const resolved = theme === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
+  document.documentElement.classList.add(resolved);
+})();
+`
 
 const workosClientId = import.meta.env.VITE_WORKOS_CLIENT_ID || ''
 
@@ -27,6 +39,11 @@ export const Route = createRootRoute({
         href: appCss,
       },
     ],
+    scripts: [
+      {
+        children: themeScript,
+      },
+    ],
   }),
 
   component: RootComponent,
@@ -36,14 +53,16 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <AuthKitProvider clientId={workosClientId}>
-      <Outlet />
+      <ThemeProvider>
+        <Outlet />
+      </ThemeProvider>
     </AuthKitProvider>
   )
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

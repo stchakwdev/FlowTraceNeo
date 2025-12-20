@@ -1,5 +1,6 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useAuth } from '@workos-inc/authkit-react'
+import { AppShell } from '@/components/layout/app-shell'
 
 // Bypass auth in development when WorkOS is not configured
 const DEV_BYPASS_AUTH = !import.meta.env.VITE_WORKOS_CLIENT_ID
@@ -13,7 +14,11 @@ function AuthenticatedLayout() {
 
   // In dev mode without WorkOS, bypass auth
   if (DEV_BYPASS_AUTH) {
-    return <Outlet />
+    return (
+      <AppShell>
+        <Outlet />
+      </AppShell>
+    )
   }
 
   // Show loading state while checking auth
@@ -49,5 +54,9 @@ function AuthenticatedLayout() {
   }
 
   // Render authenticated content
-  return <Outlet />
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  )
 }

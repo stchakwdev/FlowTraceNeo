@@ -63,285 +63,283 @@ function FlowVisualization() {
   const totalFlow = mockEdges.reduce((sum, e) => sum + e.amount, 0)
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Money Flow</h1>
-            <p className="text-muted-foreground">
-              Visualize how funds move through your organization
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {['week', 'month', 'quarter', 'year'].map((range) => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  timeRange === range
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card text-muted-foreground hover:bg-accent'
-                }`}
-              >
-                {range.charAt(0).toUpperCase() + range.slice(1)}
-              </button>
-            ))}
-          </div>
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      {/* Header */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Money Flow</h1>
+          <p className="text-muted-foreground">
+            Visualize how funds move through your organization
+          </p>
         </div>
-
-        {/* Stats */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Total Flow</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalFlow)}</p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Active Nodes</p>
-            <p className="text-2xl font-bold">{mockNodes.length}</p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Transactions</p>
-            <p className="text-2xl font-bold">{mockEdges.length}</p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Avg Transaction</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalFlow / mockEdges.length)}</p>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="mb-4 flex flex-wrap gap-4">
-          {Object.entries(nodeColors).map(([type, colors]) => (
-            <div key={type} className="flex items-center gap-2">
-              <div className={`h-3 w-3 rounded-full ${colors.bg.replace('fill-', 'bg-')}`} />
-              <span className="text-sm capitalize text-muted-foreground">{type}</span>
-            </div>
+        <div className="flex gap-2">
+          {['week', 'month', 'quarter', 'year'].map((range) => (
+            <button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                timeRange === range
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              {range.charAt(0).toUpperCase() + range.slice(1)}
+            </button>
           ))}
         </div>
+      </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Flow Diagram */}
-          <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Flow Diagram</h2>
-              <div className="flex gap-2">
-                <button className="rounded-lg border border-border p-2 hover:bg-accent">
-                  <ZoomOutIcon className="h-4 w-4" />
-                </button>
-                <button className="rounded-lg border border-border p-2 hover:bg-accent">
-                  <ZoomInIcon className="h-4 w-4" />
-                </button>
-                <button className="rounded-lg border border-border p-2 hover:bg-accent">
-                  <MaximizeIcon className="h-4 w-4" />
-                </button>
-              </div>
+      {/* Stats */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Total Flow</p>
+          <p className="text-2xl font-bold">{formatCurrency(totalFlow)}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Active Nodes</p>
+          <p className="text-2xl font-bold">{mockNodes.length}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Transactions</p>
+          <p className="text-2xl font-bold">{mockEdges.length}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Avg Transaction</p>
+          <p className="text-2xl font-bold">{formatCurrency(totalFlow / mockEdges.length)}</p>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mb-4 flex flex-wrap gap-4">
+        {Object.entries(nodeColors).map(([type, colors]) => (
+          <div key={type} className="flex items-center gap-2">
+            <div className={`h-3 w-3 rounded-full ${colors.bg.replace('fill-', 'bg-')}`} />
+            <span className="text-sm capitalize text-muted-foreground">{type}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Flow Diagram */}
+        <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Flow Diagram</h2>
+            <div className="flex gap-2">
+              <button className="rounded-lg border border-border p-2 hover:bg-accent">
+                <ZoomOutIcon className="h-4 w-4" />
+              </button>
+              <button className="rounded-lg border border-border p-2 hover:bg-accent">
+                <ZoomInIcon className="h-4 w-4" />
+              </button>
+              <button className="rounded-lg border border-border p-2 hover:bg-accent">
+                <MaximizeIcon className="h-4 w-4" />
+              </button>
             </div>
-
-            <div className="overflow-auto rounded-lg border border-border bg-accent/30">
-              <svg
-                width="950"
-                height="500"
-                className="min-w-[950px]"
-                viewBox="0 0 950 500"
-              >
-                {/* Edges */}
-                {mockEdges.map((edge) => {
-                  const fromNode = mockNodes.find((n) => n.id === edge.from)
-                  const toNode = mockNodes.find((n) => n.id === edge.to)
-                  if (!fromNode || !toNode) return null
-
-                  const isHighlighted =
-                    selectedNode === edge.from || selectedNode === edge.to
-
-                  // Calculate edge path
-                  const startX = fromNode.x + 60
-                  const startY = fromNode.y + 25
-                  const endX = toNode.x
-                  const endY = toNode.y + 25
-                  const midX = (startX + endX) / 2
-
-                  return (
-                    <g key={edge.id}>
-                      <path
-                        d={`M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`}
-                        fill="none"
-                        className={`${
-                          isHighlighted ? 'stroke-primary' : 'stroke-muted-foreground/30'
-                        } transition-colors`}
-                        strokeWidth={isHighlighted ? 3 : 2}
-                        strokeDasharray={isHighlighted ? undefined : '5,5'}
-                      />
-                      {/* Arrow */}
-                      <polygon
-                        points={`${endX},${endY} ${endX - 8},${endY - 4} ${endX - 8},${endY + 4}`}
-                        className={isHighlighted ? 'fill-primary' : 'fill-muted-foreground/30'}
-                      />
-                      {/* Amount label */}
-                      <text
-                        x={midX}
-                        y={(startY + endY) / 2 - 8}
-                        textAnchor="middle"
-                        className={`fill-current text-xs ${
-                          isHighlighted ? 'text-primary font-medium' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {formatCurrency(edge.amount)}
-                      </text>
-                    </g>
-                  )
-                })}
-
-                {/* Nodes */}
-                {mockNodes.map((node) => {
-                  const colors = nodeColors[node.type] || nodeColors.account
-                  const isSelected = selectedNode === node.id
-
-                  return (
-                    <g
-                      key={node.id}
-                      onClick={() =>
-                        setSelectedNode(selectedNode === node.id ? null : node.id)
-                      }
-                      className="cursor-pointer"
-                    >
-                      <rect
-                        x={node.x}
-                        y={node.y}
-                        width={120}
-                        height={50}
-                        rx={8}
-                        className={`${colors.bg} ${colors.border} ${
-                          isSelected ? 'stroke-[3px]' : 'stroke-2'
-                        } transition-all`}
-                      />
-                      <text
-                        x={node.x + 60}
-                        y={node.y + 22}
-                        textAnchor="middle"
-                        className={`fill-current text-sm font-medium ${colors.text}`}
-                      >
-                        {node.name.length > 12
-                          ? node.name.slice(0, 12) + '...'
-                          : node.name}
-                      </text>
-                      <text
-                        x={node.x + 60}
-                        y={node.y + 38}
-                        textAnchor="middle"
-                        className="fill-current text-xs capitalize text-muted-foreground"
-                      >
-                        {node.type}
-                      </text>
-                    </g>
-                  )
-                })}
-              </svg>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Click on a node to see details. Scroll to pan the diagram.
-            </p>
           </div>
 
-          {/* Node Details Panel */}
-          <div className="space-y-4">
-            {selectedNodeData ? (
-              <>
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <h2 className="mb-4 text-lg font-semibold">
-                    {selectedNodeData.node.name}
-                  </h2>
-                  <p className="mb-4 text-sm capitalize text-muted-foreground">
-                    {selectedNodeData.node.type}
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Inflows</p>
-                      <p className="text-xl font-bold text-green-600">
-                        {formatCurrency(selectedNodeData.totalIn)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Outflows</p>
-                      <p className="text-xl font-bold text-red-600">
-                        {formatCurrency(selectedNodeData.totalOut)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm text-muted-foreground">Net</p>
-                    <p
-                      className={`text-xl font-bold ${
-                        selectedNodeData.totalIn - selectedNodeData.totalOut >= 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
+          <div className="overflow-auto rounded-lg border border-border bg-accent/30">
+            <svg
+              width="950"
+              height="500"
+              className="min-w-[950px]"
+              viewBox="0 0 950 500"
+            >
+              {/* Edges */}
+              {mockEdges.map((edge) => {
+                const fromNode = mockNodes.find((n) => n.id === edge.from)
+                const toNode = mockNodes.find((n) => n.id === edge.to)
+                if (!fromNode || !toNode) return null
+
+                const isHighlighted =
+                  selectedNode === edge.from || selectedNode === edge.to
+
+                // Calculate edge path
+                const startX = fromNode.x + 60
+                const startY = fromNode.y + 25
+                const endX = toNode.x
+                const endY = toNode.y + 25
+                const midX = (startX + endX) / 2
+
+                return (
+                  <g key={edge.id}>
+                    <path
+                      d={`M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`}
+                      fill="none"
+                      className={`${
+                        isHighlighted ? 'stroke-primary' : 'stroke-muted-foreground/30'
+                      } transition-colors`}
+                      strokeWidth={isHighlighted ? 3 : 2}
+                      strokeDasharray={isHighlighted ? undefined : '5,5'}
+                    />
+                    {/* Arrow */}
+                    <polygon
+                      points={`${endX},${endY} ${endX - 8},${endY - 4} ${endX - 8},${endY + 4}`}
+                      className={isHighlighted ? 'fill-primary' : 'fill-muted-foreground/30'}
+                    />
+                    {/* Amount label */}
+                    <text
+                      x={midX}
+                      y={(startY + endY) / 2 - 8}
+                      textAnchor="middle"
+                      className={`fill-current text-xs ${
+                        isHighlighted ? 'text-primary font-medium' : 'text-muted-foreground'
                       }`}
                     >
-                      {formatCurrency(
-                        selectedNodeData.totalIn - selectedNodeData.totalOut
-                      )}
+                      {formatCurrency(edge.amount)}
+                    </text>
+                  </g>
+                )
+              })}
+
+              {/* Nodes */}
+              {mockNodes.map((node) => {
+                const colors = nodeColors[node.type] || nodeColors.account
+                const isSelected = selectedNode === node.id
+
+                return (
+                  <g
+                    key={node.id}
+                    onClick={() =>
+                      setSelectedNode(selectedNode === node.id ? null : node.id)
+                    }
+                    className="cursor-pointer"
+                  >
+                    <rect
+                      x={node.x}
+                      y={node.y}
+                      width={120}
+                      height={50}
+                      rx={8}
+                      className={`${colors.bg} ${colors.border} ${
+                        isSelected ? 'stroke-[3px]' : 'stroke-2'
+                      } transition-all`}
+                    />
+                    <text
+                      x={node.x + 60}
+                      y={node.y + 22}
+                      textAnchor="middle"
+                      className={`fill-current text-sm font-medium ${colors.text}`}
+                    >
+                      {node.name.length > 12
+                        ? node.name.slice(0, 12) + '...'
+                        : node.name}
+                    </text>
+                    <text
+                      x={node.x + 60}
+                      y={node.y + 38}
+                      textAnchor="middle"
+                      className="fill-current text-xs capitalize text-muted-foreground"
+                    >
+                      {node.type}
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Click on a node to see details. Scroll to pan the diagram.
+          </p>
+        </div>
+
+        {/* Node Details Panel */}
+        <div className="space-y-4">
+          {selectedNodeData ? (
+            <>
+              <div className="rounded-lg border border-border bg-card p-6">
+                <h2 className="mb-4 text-lg font-semibold">
+                  {selectedNodeData.node.name}
+                </h2>
+                <p className="mb-4 text-sm capitalize text-muted-foreground">
+                  {selectedNodeData.node.type}
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Inflows</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {formatCurrency(selectedNodeData.totalIn)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Outflows</p>
+                    <p className="text-xl font-bold text-red-600">
+                      {formatCurrency(selectedNodeData.totalOut)}
                     </p>
                   </div>
                 </div>
-
-                {selectedNodeData.inflows.length > 0 && (
-                  <div className="rounded-lg border border-border bg-card p-6">
-                    <h3 className="mb-3 font-semibold text-green-600">
-                      Inflows ({selectedNodeData.inflows.length})
-                    </h3>
-                    <ul className="space-y-2">
-                      {selectedNodeData.inflows.map((flow) => {
-                        const fromNode = mockNodes.find((n) => n.id === flow.from)
-                        return (
-                          <li
-                            key={flow.id}
-                            className="flex items-center justify-between text-sm"
-                          >
-                            <span>{fromNode?.name}</span>
-                            <span className="font-medium">
-                              {formatCurrency(flow.amount)}
-                            </span>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {selectedNodeData.outflows.length > 0 && (
-                  <div className="rounded-lg border border-border bg-card p-6">
-                    <h3 className="mb-3 font-semibold text-red-600">
-                      Outflows ({selectedNodeData.outflows.length})
-                    </h3>
-                    <ul className="space-y-2">
-                      {selectedNodeData.outflows.map((flow) => {
-                        const toNode = mockNodes.find((n) => n.id === flow.to)
-                        return (
-                          <li
-                            key={flow.id}
-                            className="flex items-center justify-between text-sm"
-                          >
-                            <span>{toNode?.name}</span>
-                            <span className="font-medium">
-                              {formatCurrency(flow.amount)}
-                            </span>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="rounded-lg border border-border bg-card p-6 text-center">
-                <GraphIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="font-semibold">Select a Node</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Click on any node in the diagram to see its flow details
-                </p>
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground">Net</p>
+                  <p
+                    className={`text-xl font-bold ${
+                      selectedNodeData.totalIn - selectedNodeData.totalOut >= 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
+                  >
+                    {formatCurrency(
+                      selectedNodeData.totalIn - selectedNodeData.totalOut
+                    )}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
+
+              {selectedNodeData.inflows.length > 0 && (
+                <div className="rounded-lg border border-border bg-card p-6">
+                  <h3 className="mb-3 font-semibold text-green-600">
+                    Inflows ({selectedNodeData.inflows.length})
+                  </h3>
+                  <ul className="space-y-2">
+                    {selectedNodeData.inflows.map((flow) => {
+                      const fromNode = mockNodes.find((n) => n.id === flow.from)
+                      return (
+                        <li
+                          key={flow.id}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span>{fromNode?.name}</span>
+                          <span className="font-medium">
+                            {formatCurrency(flow.amount)}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {selectedNodeData.outflows.length > 0 && (
+                <div className="rounded-lg border border-border bg-card p-6">
+                  <h3 className="mb-3 font-semibold text-red-600">
+                    Outflows ({selectedNodeData.outflows.length})
+                  </h3>
+                  <ul className="space-y-2">
+                    {selectedNodeData.outflows.map((flow) => {
+                      const toNode = mockNodes.find((n) => n.id === flow.to)
+                      return (
+                        <li
+                          key={flow.id}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span>{toNode?.name}</span>
+                          <span className="font-medium">
+                            {formatCurrency(flow.amount)}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rounded-lg border border-border bg-card p-6 text-center">
+              <GraphIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <h3 className="font-semibold">Select a Node</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Click on any node in the diagram to see its flow details
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

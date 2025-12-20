@@ -98,178 +98,176 @@ function TransactionDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate({ to: '/transactions' })}
-            className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back to Transactions
-          </button>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold">{mockTransaction.description}</h1>
-                {getStatusBadge(mockTransaction.status)}
-              </div>
-              <p className="mt-1 text-muted-foreground">Transaction #{id}</p>
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <button
+          onClick={() => navigate({ to: '/transactions' })}
+          className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Transactions
+        </button>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">{mockTransaction.description}</h1>
+              {getStatusBadge(mockTransaction.status)}
             </div>
-            <div className="flex gap-2">
-              <button className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">
-                Edit
+            <p className="mt-1 text-muted-foreground">Transaction #{id}</p>
+          </div>
+          <div className="flex gap-2">
+            <button className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent">
+              Edit
+            </button>
+            {mockTransaction.status === 'pending' && (
+              <button className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                Verify
               </button>
-              {mockTransaction.status === 'pending' && (
-                <button className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-                  Verify
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Content */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Transaction Details */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="mb-4 text-lg font-semibold">Transaction Details</h2>
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm text-muted-foreground">Amount</dt>
-                  <dd className="text-2xl font-bold">
-                    {formatCurrency(mockTransaction.amount, mockTransaction.currency)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Date</dt>
-                  <dd className="font-medium">{formatDate(mockTransaction.date)}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Category</dt>
-                  <dd className="font-medium">{mockTransaction.category}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Status</dt>
-                  <dd>{getStatusBadge(mockTransaction.status)}</dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Flow */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="mb-4 text-lg font-semibold">Money Flow</h2>
-              <div className="flex items-center justify-between rounded-lg bg-accent/50 p-4">
-                <div className="text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <WalletIcon className="h-6 w-6 text-primary" />
-                  </div>
-                  <p className="font-medium">{mockTransaction.from.name}</p>
-                  <p className="text-xs text-muted-foreground">{mockTransaction.from.type}</p>
-                </div>
-                <div className="flex-1 px-4">
-                  <div className="flex items-center justify-center">
-                    <div className="h-0.5 flex-1 bg-primary/30" />
-                    <ArrowRightIcon className="mx-2 h-5 w-5 text-primary" />
-                    <div className="h-0.5 flex-1 bg-primary/30" />
-                  </div>
-                  <p className="mt-1 text-center text-sm font-medium text-primary">
-                    {formatCurrency(mockTransaction.amount, mockTransaction.currency)}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <BuildingIcon className="h-6 w-6 text-primary" />
-                  </div>
-                  <p className="font-medium">{mockTransaction.to.name}</p>
-                  <p className="text-xs text-muted-foreground">{mockTransaction.to.type}</p>
-                </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Content */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Transaction Details */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold">Transaction Details</h2>
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-sm text-muted-foreground">Amount</dt>
+                <dd className="text-2xl font-bold">
+                  {formatCurrency(mockTransaction.amount, mockTransaction.currency)}
+                </dd>
               </div>
-            </div>
-
-            {/* Notes */}
-            {mockTransaction.notes && (
-              <div className="rounded-lg border border-border bg-card p-6">
-                <h2 className="mb-4 text-lg font-semibold">Notes</h2>
-                <p className="text-muted-foreground">{mockTransaction.notes}</p>
+              <div>
+                <dt className="text-sm text-muted-foreground">Date</dt>
+                <dd className="font-medium">{formatDate(mockTransaction.date)}</dd>
               </div>
-            )}
-
-            {/* Verifications */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Verifications</h2>
-                <button className="flex items-center gap-1 text-sm text-primary hover:underline">
-                  <PlusIcon className="h-4 w-4" />
-                  Add
-                </button>
+              <div>
+                <dt className="text-sm text-muted-foreground">Category</dt>
+                <dd className="font-medium">{mockTransaction.category}</dd>
               </div>
-              {mockTransaction.verifications.length > 0 ? (
-                <ul className="divide-y divide-border">
-                  {mockTransaction.verifications.map((v) => (
-                    <li key={v.id} className="flex items-center justify-between py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
-                          {getVerificationIcon(v.type)}
-                        </div>
-                        <div>
-                          <p className="font-medium">{v.fileName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {v.uploadedBy} • {formatDateTime(v.uploadedAt)}
-                          </p>
-                        </div>
-                      </div>
-                      <button className="text-sm text-primary hover:underline">View</button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground">No verifications yet</p>
-              )}
+              <div>
+                <dt className="text-sm text-muted-foreground">Status</dt>
+                <dd>{getStatusBadge(mockTransaction.status)}</dd>
+              </div>
+            </dl>
+          </div>
+
+          {/* Flow */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold">Money Flow</h2>
+            <div className="flex items-center justify-between rounded-lg bg-accent/50 p-4">
+              <div className="text-center">
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <WalletIcon className="h-6 w-6 text-primary" />
+                </div>
+                <p className="font-medium">{mockTransaction.from.name}</p>
+                <p className="text-xs text-muted-foreground">{mockTransaction.from.type}</p>
+              </div>
+              <div className="flex-1 px-4">
+                <div className="flex items-center justify-center">
+                  <div className="h-0.5 flex-1 bg-primary/30" />
+                  <ArrowRightIcon className="mx-2 h-5 w-5 text-primary" />
+                  <div className="h-0.5 flex-1 bg-primary/30" />
+                </div>
+                <p className="mt-1 text-center text-sm font-medium text-primary">
+                  {formatCurrency(mockTransaction.amount, mockTransaction.currency)}
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <BuildingIcon className="h-6 w-6 text-primary" />
+                </div>
+                <p className="font-medium">{mockTransaction.to.name}</p>
+                <p className="text-xs text-muted-foreground">{mockTransaction.to.type}</p>
+              </div>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
+          {/* Notes */}
+          {mockTransaction.notes && (
             <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="mb-4 text-lg font-semibold">Actions</h2>
-              <div className="space-y-2">
-                <button className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
-                  <UploadIcon className="h-4 w-4" />
-                  Upload Document
-                </button>
-                <button className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
-                  <ShareIcon className="h-4 w-4" />
-                  Share
-                </button>
-                <button className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
-                  <DownloadIcon className="h-4 w-4" />
-                  Export PDF
-                </button>
-              </div>
+              <h2 className="mb-4 text-lg font-semibold">Notes</h2>
+              <p className="text-muted-foreground">{mockTransaction.notes}</p>
             </div>
+          )}
 
-            {/* Audit Log */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="mb-4 text-lg font-semibold">Activity</h2>
-              <ul className="space-y-4">
-                {mockTransaction.auditLog.map((log, i) => (
-                  <li key={i} className="relative pl-6">
-                    <div className="absolute left-0 top-1 h-3 w-3 rounded-full border-2 border-primary bg-background" />
-                    {i < mockTransaction.auditLog.length - 1 && (
-                      <div className="absolute left-1.5 top-4 h-full w-0 border-l border-dashed border-border" />
-                    )}
-                    <p className="text-sm font-medium">{log.action}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {log.user} • {formatDateTime(log.timestamp)}
-                    </p>
+          {/* Verifications */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Verifications</h2>
+              <button className="flex items-center gap-1 text-sm text-primary hover:underline">
+                <PlusIcon className="h-4 w-4" />
+                Add
+              </button>
+            </div>
+            {mockTransaction.verifications.length > 0 ? (
+              <ul className="divide-y divide-border">
+                {mockTransaction.verifications.map((v) => (
+                  <li key={v.id} className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                        {getVerificationIcon(v.type)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{v.fileName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {v.uploadedBy} • {formatDateTime(v.uploadedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <button className="text-sm text-primary hover:underline">View</button>
                   </li>
                 ))}
               </ul>
+            ) : (
+              <p className="text-muted-foreground">No verifications yet</p>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold">Actions</h2>
+            <div className="space-y-2">
+              <button className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
+                <UploadIcon className="h-4 w-4" />
+                Upload Document
+              </button>
+              <button className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
+                <ShareIcon className="h-4 w-4" />
+                Share
+              </button>
+              <button className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
+                <DownloadIcon className="h-4 w-4" />
+                Export PDF
+              </button>
             </div>
+          </div>
+
+          {/* Audit Log */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold">Activity</h2>
+            <ul className="space-y-4">
+              {mockTransaction.auditLog.map((log, i) => (
+                <li key={i} className="relative pl-6">
+                  <div className="absolute left-0 top-1 h-3 w-3 rounded-full border-2 border-primary bg-background" />
+                  {i < mockTransaction.auditLog.length - 1 && (
+                    <div className="absolute left-1.5 top-4 h-full w-0 border-l border-dashed border-border" />
+                  )}
+                  <p className="text-sm font-medium">{log.action}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {log.user} • {formatDateTime(log.timestamp)}
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
