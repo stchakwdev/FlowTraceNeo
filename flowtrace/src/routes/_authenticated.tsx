@@ -1,12 +1,20 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useAuth } from '@workos-inc/authkit-react'
 
+// Bypass auth in development when WorkOS is not configured
+const DEV_BYPASS_AUTH = !import.meta.env.VITE_WORKOS_CLIENT_ID
+
 export const Route = createFileRoute('/_authenticated')({
   component: AuthenticatedLayout,
 })
 
 function AuthenticatedLayout() {
   const { isLoading, user, signIn } = useAuth()
+
+  // In dev mode without WorkOS, bypass auth
+  if (DEV_BYPASS_AUTH) {
+    return <Outlet />
+  }
 
   // Show loading state while checking auth
   if (isLoading) {
