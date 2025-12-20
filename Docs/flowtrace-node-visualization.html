@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowTrace Node Tracking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 40%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(45deg);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trust-score {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .trust-score .score {
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .trust-score .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #64748b;
+        }
+
+        .legend-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .visualization-container {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 40px;
+            position: relative;
+            min-height: 600px;
+            overflow: hidden;
+        }
+
+        .node {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            border: 2px solid transparent;
+        }
+
+        .node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .node.source {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        }
+
+        .node.intermediate {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+        }
+
+        .node.destination {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+        }
+
+        .node-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            margin: 0 auto 10px;
+        }
+
+        .node.source .node-icon {
+            background: #10b981;
+            color: white;
+        }
+
+        .node.intermediate .node-icon {
+            background: #2563eb;
+            color: white;
+        }
+
+        .node.destination .node-icon {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .node-title {
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        .node-amount {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .node-status {
+            text-align: center;
+            font-size: 0.8em;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .flow-line {
+            position: absolute;
+            background: #e2e8f0;
+            z-index: 1;
+            transform-origin: left center;
+            transition: all 0.3s ease;
+        }
+
+        .flow-line.active {
+            background: linear-gradient(90deg, #10b981 0%, #2563eb 50%, #f59e0b 100%);
+            animation: flow 2s linear infinite;
+        }
+
+        @keyframes flow {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .flow-label {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 5;
+        }
+
+        .verification-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            z-index: 15;
+        }
+
+        .verification-badge.verified {
+            background: #10b981;
+            color: white;
+        }
+
+        .verification-badge.pending {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .verification-badge.unverified {
+            background: #ef4444;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .stat-change {
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        .transaction-list {
+            margin-top: 30px;
+        }
+
+        .transaction-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .transaction-item:hover {
+            border-color: #2563eb;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.1);
+        }
+
+        .transaction-flow {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .transaction-arrow {
+            color: #94a3b8;
+        }
+
+        .transaction-details {
+            text-align: right;
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .transaction-status {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .trust-score {
+                position: static;
+                margin-top: 20px;
+                display: inline-block;
+            }
+            
+            .visualization-container {
+                min-height: 800px;
+                padding: 20px;
+            }
+            
+            .node {
+                position: relative !important;
+                margin-bottom: 20px;
+                width: 100% !important;
+            }
+            
+            .flow-line, .flow-label {
+                display: none;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                box-shadow: 0 4px 30px rgba(37, 99, 235, 0.3);
+            }
+            100% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Water Access Kenya - Financial Flow Tracking</h1>
+            <p>Real-time visualization of funds from donors to beneficiaries</p>
+            <div class="trust-score">
+                <span class="score">87</span>
+                <span class="label">Trust Score</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2 class="section-title">
+                <span>🔄</span> Live Financial Flow Map
+            </h2>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #10b981; color: white;">💰</div>
+                    <span>Source (Donors/Grants)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #2563eb; color: white;">🏢</div>
+                    <span>Intermediate (Departments)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #f59e0b; color: white;">🎯</div>
+                    <span>Destination (Beneficiaries)</span>
+                </div>
+            </div>
+
+            <div class="visualization-container">
+                <!-- Source Nodes -->
+                <div class="node source" style="left: 50px; top: 100px; width: 180px;" data-node="usaid">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">💰</div>
+                    <div class="node-title">USAID Grant</div>
+                    <div class="node-amount">$125,000</div>
+                    <div class="node-status">Verified • Q2 2025</div>
+                </div>
+
+                <div class="node source" style="left: 50px; top: 300px; width: 180px;" data-node="gates">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">💰</div>
+                    <div class="node-title">Gates Foundation</div>
+                    <div class="node-amount">$200,000</div>
+                    <div class="node-status">Verified • Annual</div>
+                </div>
+
+                <div class="node source" style="left: 50px; top: 500px; width: 180px;" data-node="individual">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">💰</div>
+                    <div class="node-title">Individual Donors</div>
+                    <div class="node-amount">$45,000</div>
+                    <div class="node-status">Verified • Monthly</div>
+                </div>
+
+                <!-- Intermediate Nodes -->
+                <div class="node intermediate pulse" style="left: 400px; top: 50px; width: 180px;" data-node="hq">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">🏢</div>
+                    <div class="node-title">HQ Operations</div>
+                    <div class="node-amount">$85,000</div>
+                    <div class="node-status">15% of total</div>
+                </div>
+
+                <div class="node intermediate" style="left: 400px; top: 250px; width: 180px;" data-node="field">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">🏢</div>
+                    <div class="node-title">Field Operations</div>
+                    <div class="node-amount">$180,000</div>
+                    <div class="node-status">Active • 5 offices</div>
+                </div>
+
+                <div class="node intermediate" style="left: 400px; top: 450px; width: 180px;" data-node="equipment">
+                    <div class="verification-badge pending">⏳</div>
+                    <div class="node-icon">🏢</div>
+                    <div class="node-title">Equipment & Supplies</div>
+                    <div class="node-amount">$105,000</div>
+                    <div class="node-status">Pending verification</div>
+                </div>
+
+                <!-- Destination Nodes -->
+                <div class="node destination" style="left: 750px; top: 80px; width: 180px;" data-node="village1">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">🎯</div>
+                    <div class="node-title">Kibera Community</div>
+                    <div class="node-amount">$45,000</div>
+                    <div class="node-status">2,500 beneficiaries</div>
+                </div>
+
+                <div class="node destination" style="left: 750px; top: 220px; width: 180px;" data-node="village2">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">🎯</div>
+                    <div class="node-title">Mathare Wells</div>
+                    <div class="node-amount">$38,000</div>
+                    <div class="node-status">1,800 beneficiaries</div>
+                </div>
+
+                <div class="node destination" style="left: 750px; top: 360px; width: 180px;" data-node="school">
+                    <div class="verification-badge verified">✓</div>
+                    <div class="node-icon">🎯</div>
+                    <div class="node-title">School Programs</div>
+                    <div class="node-amount">$52,000</div>
+                    <div class="node-status">15 schools</div>
+                </div>
+
+                <div class="node destination" style="left: 750px; top: 500px; width: 180px;" data-node="emergency">
+                    <div class="verification-badge unverified">!</div>
+                    <div class="node-icon">🎯</div>
+                    <div class="node-title">Emergency Relief</div>
+                    <div class="node-amount">$15,000</div>
+                    <div class="node-status">Needs verification</div>
+                </div>
+
+                <!-- Flow Lines - these would be dynamically generated -->
+                <div class="flow-line active" style="left: 230px; top: 140px; width: 170px; height: 3px;"></div>
+                <div class="flow-label" style="left: 280px; top: 120px;">$50,000</div>
+
+                <div class="flow-line active" style="left: 230px; top: 340px; width: 170px; height: 3px;"></div>
+                <div class="flow-label" style="left: 280px; top: 320px;">$120,000</div>
+
+                <div class="flow-line active" style="left: 230px; top: 540px; width: 170px; height: 3px;"></div>
+                <div class="flow-label" style="left: 280px; top: 520px;">$25,000</div>
+
+                <!-- More complex routing lines would be added here -->
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Inflow</div>
+                    <div class="stat-value">$370,000</div>
+                    <div class="stat-change positive">↑ 15% from last quarter</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Verification Rate</div>
+                    <div class="stat-value">92%</div>
+                    <div class="stat-change positive">↑ 5% improvement</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Admin Overhead</div>
+                    <div class="stat-value">15%</div>
+                    <div class="stat-change positive">↓ 3% reduction</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Beneficiaries Reached</div>
+                    <div class="stat-value">8,240</div>
+                    <div class="stat-change positive">↑ 2,100 new this quarter</div>
+                </div>
+            </div>
+
+            <div class="transaction-list">
+                <h2 class="section-title">
+                    <span>📊</span> Recent Transactions
+                </h2>
+                
+                <div class="transaction-item">
+                    <div class="transaction-flow">
+                        <span><strong>USAID Grant</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Field Operations</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Kibera Community</strong></span>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-amount">$12,500</div>
+                        <div class="transaction-status">✓ Verified • 2 hours ago</div>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-flow">
+                        <span><strong>Gates Foundation</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Equipment & Supplies</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Water Pumps</strong></span>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-amount">$35,000</div>
+                        <div class="transaction-status">⏳ Pending • 5 hours ago</div>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-flow">
+                        <span><strong>Individual Donors</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>HQ Operations</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Staff Salaries</strong></span>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-amount">$8,750</div>
+                        <div class="transaction-status">✓ Verified • Yesterday</div>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-flow">
+                        <span><strong>Emergency Fund</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Field Operations</strong></span>
+                        <span class="transaction-arrow">→</span>
+                        <span><strong>Emergency Relief</strong></span>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-amount">$15,000</div>
+                        <div class="transaction-status">! Needs verification • 2 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactivity
+        document.querySelectorAll('.node').forEach(node => {
+            node.addEventListener('click', function() {
+                // Remove previous selections
+                document.querySelectorAll('.node').forEach(n => n.style.borderWidth = '2px');
+                
+                // Highlight selected node
+                this.style.borderWidth = '4px';
+                
+                // In a real app, this would show detailed transaction history
+                console.log('Selected node:', this.dataset.node);
+            });
+        });
+
+        // Simulate real-time updates
+        function updateRandomAmount() {
+            const nodes = document.querySelectorAll('.node-amount');
+            const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+            const currentAmount = parseInt(randomNode.textContent.replace(/[$,]/g, ''));
+            const change = Math.floor(Math.random() * 5000) - 2500;
+            const newAmount = Math.max(0, currentAmount + change);
+            randomNode.textContent = '$' + newAmount.toLocaleString();
+            
+            // Flash the parent node
+            const parentNode = randomNode.closest('.node');
+            parentNode.classList.add('pulse');
+            setTimeout(() => parentNode.classList.remove('pulse'), 2000);
+        }
+
+        // Update every 5 seconds to simulate real-time tracking
+        setInterval(updateRandomAmount, 5000);
+
+        // Add hover effects to transaction items
+        document.querySelectorAll('.transaction-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(5px)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body>
+</html>
