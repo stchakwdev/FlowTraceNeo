@@ -1,5 +1,4 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useAuth } from '@workos-inc/authkit-react'
 import {
   ArrowRight,
   ChartLineUp,
@@ -12,6 +11,21 @@ import { ThemeToggle } from '@/components/layout/theme-toggle'
 
 // Check if WorkOS is configured
 const DEV_BYPASS_AUTH = !import.meta.env.VITE_WORKOS_CLIENT_ID
+
+// Conditionally import useAuth to avoid SSR issues
+function useAuthSafe() {
+  if (DEV_BYPASS_AUTH) {
+    return { user: null, signIn: () => {} }
+  }
+  // Dynamic import would be better but for now return mock in dev
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useAuth } = require('@workos-inc/authkit-react')
+    return useAuth()
+  } catch {
+    return { user: null, signIn: () => {} }
+  }
+}
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -45,7 +59,7 @@ const features = [
 ]
 
 function LandingPage() {
-  const { user, signIn } = useAuth()
+  const { user, signIn } = useAuthSafe()
   const isAuthenticated = DEV_BYPASS_AUTH || !!user
 
   return (

@@ -4,8 +4,6 @@ import {
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthKitProvider } from '@workos-inc/authkit-react'
 import appCss from '../styles.css?url'
@@ -35,6 +33,7 @@ const themeScript = `
 `
 
 const workosClientId = import.meta.env.VITE_WORKOS_CLIENT_ID || ''
+const isWorkosConfigured = !!workosClientId
 
 export const Route = createRootRoute({
   head: () => ({
@@ -67,16 +66,25 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
+// Wrapper that conditionally uses AuthKit
+function AuthWrapper({ children }: { children: React.ReactNode }) {
+  if (!isWorkosConfigured) {
+    // Skip AuthKit in dev mode when not configured
+    return <>{children}</>
+  }
+  return <AuthKitProvider clientId={workosClientId}>{children}</AuthKitProvider>
+}
+
 function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthKitProvider clientId={workosClientId}>
+      <AuthWrapper>
         <OrgProvider>
           <ThemeProvider>
             <Outlet />
           </ThemeProvider>
         </OrgProvider>
-      </AuthKitProvider>
+      </AuthWrapper>
     </QueryClientProvider>
   )
 }
@@ -89,17 +97,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
         <Scripts />
       </body>
     </html>
