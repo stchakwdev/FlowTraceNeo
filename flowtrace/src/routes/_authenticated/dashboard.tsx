@@ -1,6 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '@workos-inc/authkit-react'
+import type { TransactionWithNodes } from '@/lib/supabase'
 import { getUserDisplayName } from '@/lib/auth'
+import { useOrg } from '@/lib/org-context'
+import { useOrgStats, useTransactions } from '@/lib/queries'
+import { getTrustGrade } from '@/lib/supabase'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: Dashboard,
@@ -8,6 +12,12 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 
 function Dashboard() {
   const { user } = useAuth()
+  const { organization, isLoading: orgLoading } = useOrg()
+  const { data: stats, isLoading: statsLoading } = useOrgStats()
+  const { data: transactions, isLoading: txnLoading } = useTransactions()
+
+  const isLoading = orgLoading || statsLoading || txnLoading
+  const recentTransactions = transactions?.slice(0, 5) ?? []
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -20,30 +30,47 @@ function Dashboard() {
 
       {/* Stats Cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Trust Score"
-          value="87"
-          subtitle="A Grade"
-          trend="+2 this week"
-        />
-        <StatCard
-          title="Total Transactions"
-          value="1,234"
-          subtitle="This month"
-          trend="+12% from last month"
-        />
-        <StatCard
-          title="Verified"
-          value="92%"
-          subtitle="Verification rate"
-          trend="+5% from last month"
-        />
-        <StatCard
-          title="Pending"
-          value="23"
-          subtitle="Awaiting verification"
-          trend="Action required"
-        />
+        {isLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Trust Score"
+              value={String(organization?.trust_score ?? 0)}
+              subtitle={`${getTrustGrade(organization?.trust_score ?? 0)} Grade`}
+              trend={
+                organization?.verified
+                  ? 'Verified organization'
+                  : 'Pending verification'
+              }
+            />
+            <StatCard
+              title="Total Transactions"
+              value={stats?.total.toLocaleString() ?? '0'}
+              subtitle="All time"
+              trend={`${stats?.verified ?? 0} verified`}
+            />
+            <StatCard
+              title="Verified"
+              value={`${stats?.verificationRate ?? 0}%`}
+              subtitle="Verification rate"
+              trend={`${stats?.verified ?? 0} of ${stats?.total ?? 0} transactions`}
+            />
+            <StatCard
+              title="Pending"
+              value={String(stats?.pending ?? 0)}
+              subtitle="Awaiting verification"
+              trend={
+                stats?.flagged ? `${stats.flagged} flagged` : 'No flagged items'
+              }
+            />
+          </>
+        )}
       </div>
 
       {/* Quick Actions */}
@@ -68,14 +95,36 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Transactions Placeholder */}
+      {/* Recent Transactions */}
       <div>
-        <h2 className="mb-4 text-xl font-semibold">Recent Transactions</h2>
-        <div className="rounded-lg border border-border bg-card p-8 text-center">
-          <p className="text-muted-foreground">
-            No transactions yet. Add your first transaction to get started.
-          </p>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Recent Transactions</h2>
+          <Link
+            to="/transactions"
+            className="text-sm text-primary hover:underline"
+          >
+            View all
+          </Link>
         </div>
+        {txnLoading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : recentTransactions.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center">
+            <p className="text-muted-foreground">
+              No transactions yet. Add your first transaction to get started.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recentTransactions.map((txn) => (
+              <TransactionRow key={txn.id} transaction={txn} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -118,6 +167,68 @@ function ActionCard({
     >
       <h3 className="font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    </Link>
+  )
+}
+
+function StatCardSkeleton() {
+  return (
+    <div className="rounded-lg border border-border bg-card p-6">
+      <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-8 w-16 animate-pulse rounded bg-muted" />
+      <div className="mt-1 h-4 w-20 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-3 w-28 animate-pulse rounded bg-muted" />
+    </div>
+  )
+}
+
+function TransactionRow({
+  transaction,
+}: {
+  transaction: TransactionWithNodes
+}) {
+  const statusColors = {
+    verified:
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    pending:
+      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+    flagged: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    rejected:
+      'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  }
+
+  const formatAmount = (amount: number, currency: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  return (
+    <Link
+      to="/transactions/$id"
+      params={{ id: transaction.id }}
+      className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+    >
+      <div className="flex-1">
+        <p className="font-medium">{transaction.description}</p>
+        <p className="text-sm text-muted-foreground">
+          {transaction.from_node?.name ?? 'Unknown'} →{' '}
+          {transaction.to_node?.name ?? 'Unknown'}
+        </p>
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="font-semibold">
+          {formatAmount(transaction.amount, transaction.currency)}
+        </span>
+        <span
+          className={`rounded-full px-2 py-1 text-xs font-medium ${statusColors[transaction.verification_status]}`}
+        >
+          {transaction.verification_status}
+        </span>
+      </div>
     </Link>
   )
 }

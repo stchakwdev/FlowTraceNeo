@@ -1,81 +1,33 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
+import { useOrgStats, useTransactions } from '@/lib/queries'
 
 export const Route = createFileRoute('/_authenticated/transactions/')({
   component: TransactionList,
 })
 
-// Mock data for development
-const mockTransactions = [
-  {
-    id: '1',
-    description: 'Office Supplies Purchase',
-    amount: 15000,
-    currency: 'KES',
-    from: 'Operations Budget',
-    to: 'Staples Kenya',
-    date: '2024-12-18',
-    status: 'verified' as const,
-    category: 'Operations',
-  },
-  {
-    id: '2',
-    description: 'Community Health Training',
-    amount: 250000,
-    currency: 'KES',
-    from: 'USAID Grant',
-    to: 'Training Department',
-    date: '2024-12-15',
-    status: 'pending' as const,
-    category: 'Programs',
-  },
-  {
-    id: '3',
-    description: 'Vehicle Maintenance',
-    amount: 45000,
-    currency: 'KES',
-    from: 'Operations Budget',
-    to: 'AutoXpress Ltd',
-    date: '2024-12-12',
-    status: 'verified' as const,
-    category: 'Transport',
-  },
-  {
-    id: '4',
-    description: 'Staff Salary - November',
-    amount: 1200000,
-    currency: 'KES',
-    from: 'General Fund',
-    to: 'Payroll',
-    date: '2024-11-30',
-    status: 'verified' as const,
-    category: 'Salaries',
-  },
-  {
-    id: '5',
-    description: 'Suspicious Cash Withdrawal',
-    amount: 500000,
-    currency: 'KES',
-    from: 'Project Fund',
-    to: 'Unknown',
-    date: '2024-12-10',
-    status: 'flagged' as const,
-    category: 'Unclassified',
-  },
-]
-
 function TransactionList() {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'verified' | 'flagged'>('all')
+  const [filter, setFilter] = useState<
+    'all' | 'pending' | 'verified' | 'flagged'
+  >('all')
   const [search, setSearch] = useState('')
 
-  const filteredTransactions = mockTransactions.filter((t) => {
-    const matchesFilter = filter === 'all' || t.status === filter
-    const matchesSearch =
-      t.description.toLowerCase().includes(search.toLowerCase()) ||
-      t.from.toLowerCase().includes(search.toLowerCase()) ||
-      t.to.toLowerCase().includes(search.toLowerCase())
-    return matchesFilter && matchesSearch
-  })
+  const { data: transactions, isLoading, error } = useTransactions()
+  const { data: stats } = useOrgStats()
+
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return []
+    return transactions.filter((t) => {
+      const matchesFilter = filter === 'all' || t.verification_status === filter
+      const fromName = t.from_node?.name ?? ''
+      const toName = t.to_node?.name ?? ''
+      const matchesSearch =
+        t.description.toLowerCase().includes(search.toLowerCase()) ||
+        fromName.toLowerCase().includes(search.toLowerCase()) ||
+        toName.toLowerCase().includes(search.toLowerCase())
+      return matchesFilter && matchesSearch
+    })
+  }, [transactions, filter, search])
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-KE', {
@@ -85,14 +37,22 @@ function TransactionList() {
     }).format(amount)
   }
 
-  const getStatusBadge = (status: 'pending' | 'verified' | 'flagged') => {
+  const getStatusBadge = (
+    status: 'pending' | 'verified' | 'flagged' | 'rejected',
+  ) => {
     const styles = {
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      verified: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      pending:
+        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+      verified:
+        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
       flagged: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+      rejected:
+        'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
     }
     return (
-      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status]}`}>
+      <span
+        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${styles[status]}`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     )
@@ -130,19 +90,21 @@ function TransactionList() {
           />
         </div>
         <div className="flex gap-2">
-          {(['all', 'pending', 'verified', 'flagged'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                filter === status
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-muted-foreground hover:bg-accent'
-              }`}
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </button>
-          ))}
+          {(['all', 'pending', 'verified', 'flagged'] as const).map(
+            (status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  filter === status
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card text-muted-foreground hover:bg-accent'
+                }`}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </button>
+            ),
+          )}
         </div>
       </div>
 
@@ -150,31 +112,47 @@ function TransactionList() {
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-2xl font-bold">{mockTransactions.length}</p>
+          <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Pending</p>
           <p className="text-2xl font-bold text-yellow-600">
-            {mockTransactions.filter((t) => t.status === 'pending').length}
+            {stats?.pending ?? 0}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Verified</p>
           <p className="text-2xl font-bold text-green-600">
-            {mockTransactions.filter((t) => t.status === 'verified').length}
+            {stats?.verified ?? 0}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Flagged</p>
           <p className="text-2xl font-bold text-red-600">
-            {mockTransactions.filter((t) => t.status === 'flagged').length}
+            {stats?.flagged ?? 0}
           </p>
         </div>
       </div>
 
       {/* Transaction List */}
       <div className="rounded-lg border border-border bg-card">
-        {filteredTransactions.length === 0 ? (
+        {isLoading ? (
+          <div className="divide-y divide-border">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-4">
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-48 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-64 animate-pulse rounded bg-muted" />
+                </div>
+                <div className="h-6 w-24 animate-pulse rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <p className="text-destructive">Error loading transactions</p>
+          </div>
+        ) : filteredTransactions.length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-muted-foreground">No transactions found</p>
           </div>
@@ -190,21 +168,23 @@ function TransactionList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <p className="font-medium">{transaction.description}</p>
-                    {getStatusBadge(transaction.status)}
+                    {getStatusBadge(transaction.verification_status)}
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{transaction.from}</span>
+                    <span>{transaction.from_node?.name ?? 'Unknown'}</span>
                     <ArrowRightIcon className="h-3 w-3" />
-                    <span>{transaction.to}</span>
+                    <span>{transaction.to_node?.name ?? 'Unknown'}</span>
                     <span className="mx-2">•</span>
-                    <span>{transaction.date}</span>
+                    <span>{transaction.transaction_date}</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">
                     {formatCurrency(transaction.amount, transaction.currency)}
                   </p>
-                  <p className="text-xs text-muted-foreground">{transaction.category}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {transaction.category ?? 'Uncategorized'}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -218,24 +198,54 @@ function TransactionList() {
 // Simple icon components
 function PlusIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 4v16m8-8H4"
+      />
     </svg>
   )
 }
 
 function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
     </svg>
   )
 }
 
 function ArrowRightIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M14 5l7 7m0 0l-7 7m7-7H3"
+      />
     </svg>
   )
 }

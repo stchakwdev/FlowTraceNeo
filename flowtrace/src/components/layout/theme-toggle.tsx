@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor } from '@phosphor-icons/react'
+import { Monitor, Moon, Sun } from '@phosphor-icons/react'
 import { useTheme } from '@/lib/theme'
 import { Button } from '@/components/ui/button'
 import {

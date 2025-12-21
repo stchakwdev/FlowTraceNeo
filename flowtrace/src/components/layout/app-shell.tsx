@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useAuth } from '@workos-inc/authkit-react'
 import {
-  House,
+  CaretDown,
   CurrencyCircleDollar,
   FlowArrow,
+  House,
   ShieldCheck,
   SignOut,
-  CaretDown,
 } from '@phosphor-icons/react'
+import { ThemeToggle } from './theme-toggle'
+import { MobileNav, MobileNavTrigger } from './mobile-nav'
 import { getUserDisplayName, getUserInitials } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,8 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ThemeToggle } from './theme-toggle'
-import { MobileNav, MobileNavTrigger } from './mobile-nav'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -50,7 +50,10 @@ export function AppShell({ children }: AppShellProps) {
           <div className="flex items-center gap-6">
             <Link to="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <FlowArrow className="size-5 text-primary-foreground" weight="bold" />
+                <FlowArrow
+                  className="size-5 text-primary-foreground"
+                  weight="bold"
+                />
               </div>
               <span className="text-xl font-bold">FlowTrace</span>
             </Link>
@@ -61,7 +64,8 @@ export function AppShell({ children }: AppShellProps) {
                 const Icon = item.icon
                 const isActive =
                   location.pathname === item.href ||
-                  (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
+                  (item.href !== '/dashboard' &&
+                    location.pathname.startsWith(item.href))
 
                 return (
                   <Link
@@ -71,7 +75,7 @@ export function AppShell({ children }: AppShellProps) {
                       'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       isActive
                         ? 'bg-accent text-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                     )}
                   >
                     <Icon
@@ -113,7 +117,9 @@ export function AppShell({ children }: AppShellProps) {
                     {getUserDisplayName(user as any)}
                   </p>
                   {user?.email && (
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
                   )}
                   {DEV_BYPASS_AUTH && (
                     <p className="text-xs text-muted-foreground">Dev Mode</p>
@@ -150,7 +156,10 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* Mobile Navigation Drawer */}
-      <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+      <MobileNav
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+      />
 
       {/* Main Content */}
       <main>{children}</main>

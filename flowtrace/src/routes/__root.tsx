@@ -1,10 +1,27 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthKitProvider } from '@workos-inc/authkit-react'
-import { ThemeProvider } from '@/lib/theme'
-
 import appCss from '../styles.css?url'
+import { ThemeProvider } from '@/lib/theme'
+import { OrgProvider } from '@/lib/org-context'
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000, // 30 seconds
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 // Script to prevent theme flash on page load
 const themeScript = `
@@ -52,11 +69,15 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <AuthKitProvider clientId={workosClientId}>
-      <ThemeProvider>
-        <Outlet />
-      </ThemeProvider>
-    </AuthKitProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthKitProvider clientId={workosClientId}>
+        <OrgProvider>
+          <ThemeProvider>
+            <Outlet />
+          </ThemeProvider>
+        </OrgProvider>
+      </AuthKitProvider>
+    </QueryClientProvider>
   )
 }
 

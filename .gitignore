@@ -27,6 +27,12 @@ dist-ssr
 .DS_Store
 Thumbs.db
 
+# Vercel
+.vercel
+
+# MCP config (may contain project refs)
+.mcp.json
+
 # Misc
 *.log
 count.txt

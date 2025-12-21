@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '@workos-inc/authkit-react'
 import {
+  ArrowRight,
+  ChartLineUp,
   FlowArrow,
   ShieldCheck,
-  ChartLineUp,
   UsersThree,
-  ArrowRight,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
@@ -55,7 +55,10 @@ function LandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <FlowArrow className="size-5 text-primary-foreground" weight="bold" />
+              <FlowArrow
+                className="size-5 text-primary-foreground"
+                weight="bold"
+              />
             </div>
             <span className="text-xl font-bold">FlowTrace</span>
           </div>
@@ -86,8 +89,9 @@ function LandingPage() {
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
             FlowTrace helps NGOs, nonprofits, and social enterprises build trust
-            through transparent financial tracking. Visualize fund flows, generate
-            trust scores, and provide stakeholders with verifiable records.
+            through transparent financial tracking. Visualize fund flows,
+            generate trust scores, and provide stakeholders with verifiable
+            records.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4">
             {isAuthenticated ? (
@@ -111,10 +115,12 @@ function LandingPage() {
       <section className="py-24">
         <div className="mx-auto max-w-7xl px-4">
           <div className="text-center">
-            <h2 className="text-3xl font-bold">Everything you need for financial transparency</h2>
+            <h2 className="text-3xl font-bold">
+              Everything you need for financial transparency
+            </h2>
             <p className="mt-4 text-muted-foreground">
-              Comprehensive tools to track, verify, and report your organization's
-              financial activities.
+              Comprehensive tools to track, verify, and report your
+              organization's financial activities.
             </p>
           </div>
 

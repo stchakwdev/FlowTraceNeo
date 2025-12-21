@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import {
-  X,
-  List,
-  House,
   CurrencyCircleDollar,
   FlowArrow,
+  House,
+  List,
   ShieldCheck,
+  X,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -49,7 +49,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
       <div
         className={cn(
           'fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-opacity duration-300 md:hidden',
-          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={onClose}
         aria-hidden="true"
@@ -59,7 +59,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
       <nav
         className={cn(
           'fixed right-0 top-0 z-50 h-full w-72 bg-card shadow-xl transition-transform duration-300 ease-in-out md:hidden',
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? 'translate-x-0' : 'translate-x-full',
         )}
         aria-label="Mobile navigation"
       >
@@ -78,8 +78,10 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         <div className="flex flex-col gap-1 p-4">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = location.pathname === item.href ||
-              (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
+            const isActive =
+              location.pathname === item.href ||
+              (item.href !== '/dashboard' &&
+                location.pathname.startsWith(item.href))
 
             return (
               <Link
@@ -89,10 +91,13 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                   'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                 )}
               >
-                <Icon className="size-5" weight={isActive ? 'fill' : 'regular'} />
+                <Icon
+                  className="size-5"
+                  weight={isActive ? 'fill' : 'regular'}
+                />
                 {item.label}
               </Link>
             )

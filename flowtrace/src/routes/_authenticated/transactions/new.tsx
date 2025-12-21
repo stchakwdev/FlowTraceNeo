@@ -1,22 +1,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useCreateTransaction, useNodes } from '@/lib/queries'
+import { useOrg } from '@/lib/org-context'
 
 export const Route = createFileRoute('/_authenticated/transactions/new')({
   component: NewTransaction,
 })
-
-// Mock nodes for development
-const mockNodes = [
-  { id: '1', name: 'General Fund', type: 'account' },
-  { id: '2', name: 'USAID Grant', type: 'donor' },
-  { id: '3', name: 'Operations Budget', type: 'account' },
-  { id: '4', name: 'Project Fund', type: 'account' },
-  { id: '5', name: 'Training Department', type: 'department' },
-  { id: '6', name: 'Field Operations', type: 'department' },
-  { id: '7', name: 'Staples Kenya', type: 'vendor' },
-  { id: '8', name: 'AutoXpress Ltd', type: 'vendor' },
-  { id: '9', name: 'Payroll', type: 'account' },
-]
 
 const categories = [
   'Operations',
@@ -27,16 +16,21 @@ const categories = [
   'Training',
   'Supplies',
   'Utilities',
+  'Funding',
+  'Budget',
   'Other',
 ]
 
 function NewTransaction() {
   const navigate = useNavigate()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { organization } = useOrg()
+  const { data: nodes, isLoading: nodesLoading } = useNodes()
+  const createTransaction = useCreateTransaction()
+
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    currency: 'KES',
+    currency: organization?.currency ?? 'KES',
     fromNodeId: '',
     toNodeId: '',
     category: '',
@@ -46,17 +40,35 @@ function NewTransaction() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      await createTransaction.mutateAsync({
+        description: formData.description,
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        from_node_id: formData.fromNodeId || null,
+        to_node_id: formData.toNodeId || null,
+        category: formData.category || null,
+        transaction_date: formData.date,
+        notes: formData.notes || null,
+        reference: null,
+        exchange_rate: null,
+        amount_usd: null,
+        verification_status: 'pending',
+        created_by: null,
+      })
 
-    // Navigate back to transaction list
-    navigate({ to: '/transactions' })
+      // Navigate back to transaction list
+      navigate({ to: '/transactions' })
+    } catch (error) {
+      console.error('Failed to create transaction:', error)
+    }
   }
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -74,7 +86,9 @@ function NewTransaction() {
           Back to Transactions
         </button>
         <h1 className="text-3xl font-bold">New Transaction</h1>
-        <p className="text-muted-foreground">Record a new financial transaction</p>
+        <p className="text-muted-foreground">
+          Record a new financial transaction
+        </p>
       </div>
 
       {/* Form */}
@@ -85,7 +99,10 @@ function NewTransaction() {
           <div className="space-y-4">
             {/* Description */}
             <div>
-              <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
+              <label
+                htmlFor="description"
+                className="mb-1.5 block text-sm font-medium"
+              >
                 Description *
               </label>
               <input
@@ -103,7 +120,10 @@ function NewTransaction() {
             {/* Amount and Currency */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="amount" className="mb-1.5 block text-sm font-medium">
+                <label
+                  htmlFor="amount"
+                  className="mb-1.5 block text-sm font-medium"
+                >
                   Amount *
                 </label>
                 <input
@@ -120,7 +140,10 @@ function NewTransaction() {
                 />
               </div>
               <div>
-                <label htmlFor="currency" className="mb-1.5 block text-sm font-medium">
+                <label
+                  htmlFor="currency"
+                  className="mb-1.5 block text-sm font-medium"
+                >
                   Currency
                 </label>
                 <select
@@ -142,19 +165,25 @@ function NewTransaction() {
             {/* From and To */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="fromNodeId" className="mb-1.5 block text-sm font-medium">
+                <label
+                  htmlFor="fromNodeId"
+                  className="mb-1.5 block text-sm font-medium"
+                >
                   From *
                 </label>
                 <select
                   id="fromNodeId"
                   name="fromNodeId"
                   required
+                  disabled={nodesLoading}
                   value={formData.fromNodeId}
                   onChange={handleChange}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                 >
-                  <option value="">Select source...</option>
-                  {mockNodes.map((node) => (
+                  <option value="">
+                    {nodesLoading ? 'Loading...' : 'Select source...'}
+                  </option>
+                  {nodes?.map((node) => (
                     <option key={node.id} value={node.id}>
                       {node.name} ({node.type})
                     </option>
@@ -162,19 +191,25 @@ function NewTransaction() {
                 </select>
               </div>
               <div>
-                <label htmlFor="toNodeId" className="mb-1.5 block text-sm font-medium">
+                <label
+                  htmlFor="toNodeId"
+                  className="mb-1.5 block text-sm font-medium"
+                >
                   To *
                 </label>
                 <select
                   id="toNodeId"
                   name="toNodeId"
                   required
+                  disabled={nodesLoading}
                   value={formData.toNodeId}
                   onChange={handleChange}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                 >
-                  <option value="">Select destination...</option>
-                  {mockNodes.map((node) => (
+                  <option value="">
+                    {nodesLoading ? 'Loading...' : 'Select destination...'}
+                  </option>
+                  {nodes?.map((node) => (
                     <option key={node.id} value={node.id}>
                       {node.name} ({node.type})
                     </option>
@@ -186,7 +221,10 @@ function NewTransaction() {
             {/* Category and Date */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="category" className="mb-1.5 block text-sm font-medium">
+                <label
+                  htmlFor="category"
+                  className="mb-1.5 block text-sm font-medium"
+                >
                   Category *
                 </label>
                 <select
@@ -206,7 +244,10 @@ function NewTransaction() {
                 </select>
               </div>
               <div>
-                <label htmlFor="date" className="mb-1.5 block text-sm font-medium">
+                <label
+                  htmlFor="date"
+                  className="mb-1.5 block text-sm font-medium"
+                >
                   Date *
                 </label>
                 <input
@@ -223,7 +264,10 @@ function NewTransaction() {
 
             {/* Notes */}
             <div>
-              <label htmlFor="notes" className="mb-1.5 block text-sm font-medium">
+              <label
+                htmlFor="notes"
+                className="mb-1.5 block text-sm font-medium"
+              >
                 Notes
               </label>
               <textarea
@@ -257,6 +301,13 @@ function NewTransaction() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {createTransaction.isError && (
+          <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+            Failed to create transaction. Please try again.
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex justify-end gap-3">
           <button
@@ -268,10 +319,10 @@ function NewTransaction() {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={createTransaction.isPending || nodesLoading}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : 'Save Transaction'}
+            {createTransaction.isPending ? 'Saving...' : 'Save Transaction'}
           </button>
         </div>
       </form>
@@ -281,16 +332,36 @@ function NewTransaction() {
 
 function ArrowLeftIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+      />
     </svg>
   )
 }
 
 function UploadIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+      />
     </svg>
   )
 }
