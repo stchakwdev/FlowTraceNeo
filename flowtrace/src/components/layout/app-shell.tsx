@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { useAuth } from '@workos-inc/authkit-react'
 import {
   CaretDown,
   CurrencyCircleDollar,
@@ -34,12 +33,16 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { user, signOut } = useAuth()
+  // Dev mode - no WorkOS auth
+  const user = null
+  const signOut = () => {
+    window.location.href = '/'
+  }
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
-  // Check if WorkOS is configured
-  const DEV_BYPASS_AUTH = !import.meta.env.VITE_WORKOS_CLIENT_ID
+  // Dev mode is active when WorkOS is not configured
+  const DEV_BYPASS_AUTH = true
 
   return (
     <div className="min-h-screen bg-background">

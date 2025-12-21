@@ -5,7 +5,6 @@ import {
   createRootRoute,
 } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthKitProvider } from '@workos-inc/authkit-react'
 import appCss from '../styles.css?url'
 import { ThemeProvider } from '@/lib/theme'
 import { OrgProvider } from '@/lib/org-context'
@@ -31,9 +30,6 @@ const themeScript = `
   document.documentElement.classList.add(resolved);
 })();
 `
-
-const workosClientId = import.meta.env.VITE_WORKOS_CLIENT_ID || ''
-const isWorkosConfigured = !!workosClientId
 
 export const Route = createRootRoute({
   head: () => ({
@@ -66,25 +62,14 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
-// Wrapper that conditionally uses AuthKit
-function AuthWrapper({ children }: { children: React.ReactNode }) {
-  if (!isWorkosConfigured) {
-    // Skip AuthKit in dev mode when not configured
-    return <>{children}</>
-  }
-  return <AuthKitProvider clientId={workosClientId}>{children}</AuthKitProvider>
-}
-
 function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthWrapper>
-        <OrgProvider>
-          <ThemeProvider>
-            <Outlet />
-          </ThemeProvider>
-        </OrgProvider>
-      </AuthWrapper>
+      <OrgProvider>
+        <ThemeProvider>
+          <Outlet />
+        </ThemeProvider>
+      </OrgProvider>
     </QueryClientProvider>
   )
 }

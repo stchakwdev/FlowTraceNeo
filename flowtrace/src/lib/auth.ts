@@ -1,10 +1,6 @@
-import { AuthKitProvider as WorkOSAuthKitProvider } from '@workos-inc/authkit-react'
-
-// Re-export AuthKitProvider for use in root layout
-export { WorkOSAuthKitProvider as AuthKitProvider }
-
 // WorkOS client ID from environment
 export const workosClientId = import.meta.env.VITE_WORKOS_CLIENT_ID || ''
+export const isWorkosConfigured = !!workosClientId
 
 // Auth redirect paths
 export const AUTH_ROUTES = {

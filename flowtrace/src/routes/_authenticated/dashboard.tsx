@@ -1,7 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useAuth } from '@workos-inc/authkit-react'
 import type { TransactionWithNodes } from '@/lib/supabase'
-import { getUserDisplayName } from '@/lib/auth'
 import { useOrg } from '@/lib/org-context'
 import { useOrgStats, useTransactions } from '@/lib/queries'
 import { getTrustGrade } from '@/lib/supabase'
@@ -11,7 +9,6 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 })
 
 function Dashboard() {
-  const { user } = useAuth()
   const { organization, isLoading: orgLoading } = useOrg()
   const { data: stats, isLoading: statsLoading } = useOrgStats()
   const { data: transactions, isLoading: txnLoading } = useTransactions()
@@ -24,7 +21,7 @@ function Dashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back, {getUserDisplayName(user as any)}
+          Welcome back{organization?.name ? `, ${organization.name}` : ''}
         </p>
       </div>
 

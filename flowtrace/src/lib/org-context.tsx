@@ -1,14 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useAuth } from '@workos-inc/authkit-react'
-import {
-  DEV_MODE,
-  DEV_ORG_ID,
-  createOrUpdateProfile,
-  getOrganization,
-  getProfile,
-} from './supabase'
+import { DEV_MODE, DEV_ORG_ID } from './supabase'
 import type { ReactNode } from 'react'
 import type { Organization, Profile } from './supabase'
 
@@ -46,12 +39,11 @@ const DEV_ORGANIZATION: Organization = {
 }
 
 export function OrgProvider({ children }: { children: ReactNode }) {
-  const { user, isLoading: authLoading } = useAuth()
   const [state, setState] = useState<Omit<OrgContextValue, 'refetch'>>({
-    organizationId: null,
-    organization: null,
+    organizationId: DEV_MODE ? DEV_ORG_ID : null,
+    organization: DEV_MODE ? DEV_ORGANIZATION : null,
     profile: null,
-    isLoading: true,
+    isLoading: !DEV_MODE,
     error: null,
   })
 
@@ -68,71 +60,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Wait for auth to finish loading
-    if (authLoading) return
-
-    // No user - clear state
-    if (!user) {
-      setState({
-        organizationId: null,
-        organization: null,
-        profile: null,
-        isLoading: false,
-        error: null,
-      })
-      return
-    }
-
-    try {
-      // Get or create user profile
-      let profileData = await getProfile(user.id)
-
-      if (!profileData) {
-        // Create profile for new users
-        const fullName =
-          user.firstName && user.lastName
-            ? `${user.firstName} ${user.lastName}`
-            : user.firstName || user.lastName || undefined
-
-        await createOrUpdateProfile(user.id, user.email || '', fullName)
-
-        // Fetch the created profile
-        profileData = await getProfile(user.id)
-      }
-
-      // Get organization if user has one
-      let org: Organization | null = null
-      if (profileData?.organization_id) {
-        try {
-          org = await getOrganization(profileData.organization_id)
-        } catch {
-          // Organization not found - user needs to be assigned one
-          console.warn('User organization not found')
-        }
-      }
-
-      setState({
-        organizationId: profileData?.organization_id || null,
-        organization: org,
-        profile: profileData,
-        isLoading: false,
-        error: null,
-      })
-    } catch (error) {
-      console.error('Error loading org context:', error)
-      setState({
-        organizationId: null,
-        organization: null,
-        profile: null,
-        isLoading: false,
-        error: error as Error,
-      })
-    }
+    // When WorkOS is configured, this would load real user data
+    // For now, just set not loading
+    setState((prev) => ({ ...prev, isLoading: false }))
   }
 
   useEffect(() => {
     loadOrgContext()
-  }, [user, authLoading])
+  }, [])
 
   return (
     <OrgContext.Provider value={{ ...state, refetch: loadOrgContext }}>
