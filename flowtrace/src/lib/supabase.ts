@@ -1,9 +1,24 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Lazy initialization to avoid SSR issues
+let _supabase: SupabaseClient | null = null
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    if (!_supabase) {
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.warn('Supabase not configured - using mock client')
+        // Return a mock that won't crash
+        return () => Promise.resolve({ data: null, error: null })
+      }
+      _supabase = createClient(supabaseUrl, supabaseAnonKey)
+    }
+    return (_supabase as Record<string, unknown>)[prop as string]
+  },
+})
 
 // Development mode constants
 export const DEV_MODE = !import.meta.env.VITE_WORKOS_CLIENT_ID
