@@ -388,3 +388,164 @@ export async function deleteVerificationFile(filePath: string): Promise<void> {
 
   if (error) throw error
 }
+
+// ======================
+// Edge Function Types
+// ======================
+
+export interface TrustScoreResult {
+  success: boolean
+  trust_score: number
+  previous_score: number
+  delta: number
+  details: {
+    trust_score: number
+    verification_rate: number
+    documentation_rate: number
+    consistency_score: number
+    total_transactions: number
+    verified_transactions: number
+    documented_transactions: number
+  }
+}
+
+export interface FlowDataNode {
+  id: string
+  name: string
+  type: string
+  inflow: number
+  outflow: number
+  balance: number
+}
+
+export interface FlowDataEdge {
+  source: string
+  target: string
+  value: number
+  count: number
+  currency: string
+}
+
+export interface FlowDataResult {
+  nodes: FlowDataNode[]
+  edges: FlowDataEdge[]
+  summary: {
+    total_nodes: number
+    total_edges: number
+    total_flow: number
+    transaction_count: number
+    currency: string
+  }
+}
+
+export interface ProcessReceiptResult {
+  success: boolean
+  verification: {
+    id: string
+    file_url: string
+    type: string
+    status: string
+  }
+  ocr: {
+    processed: boolean
+    message: string
+  }
+  high_value_alert: boolean
+}
+
+// ======================
+// Edge Function API Helpers
+// ======================
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
+
+async function invokeEdgeFunction<T>(
+  functionName: string,
+  options: {
+    method?: 'GET' | 'POST'
+    body?: Record<string, unknown>
+    params?: Record<string, string>
+  } = {},
+): Promise<T> {
+  const { method = 'POST', body, params } = options
+
+  let url = `${SUPABASE_URL}/functions/v1/${functionName}`
+  if (params) {
+    const searchParams = new URLSearchParams(params)
+    url += `?${searchParams.toString()}`
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Edge function failed')
+  }
+
+  return response.json()
+}
+
+// Calculate Trust Score via Edge Function
+export async function calculateTrustScoreAPI(
+  organizationId: string,
+): Promise<TrustScoreResult> {
+  return invokeEdgeFunction<TrustScoreResult>('calculate-trust-score', {
+    method: 'POST',
+    body: { organization_id: organizationId },
+  })
+}
+
+// Get Flow Data via Edge Function
+export async function getFlowDataAPI(
+  organizationId: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<FlowDataResult> {
+  const params: Record<string, string> = { organization_id: organizationId }
+  if (startDate) params.start_date = startDate
+  if (endDate) params.end_date = endDate
+
+  return invokeEdgeFunction<FlowDataResult>('generate-flow-data', {
+    method: 'GET',
+    params,
+  })
+}
+
+// Process Receipt OCR via Edge Function
+export async function processReceiptOCR(
+  organizationId: string,
+  transactionId: string,
+  file: File,
+  verificationType: Verification['type'] = 'receipt',
+): Promise<ProcessReceiptResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('organization_id', organizationId)
+  formData.append('transaction_id', transactionId)
+  formData.append('type', verificationType)
+
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/process-receipt-ocr`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: formData,
+    },
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'OCR processing failed')
+  }
+
+  return response.json()
+}

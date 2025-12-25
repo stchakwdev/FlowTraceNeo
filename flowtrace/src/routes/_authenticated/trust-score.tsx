@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+import { ArrowsClockwise } from '@phosphor-icons/react'
 import { useOrg } from '@/lib/org-context'
-import { useOrgStats, useTrustHistory } from '@/lib/queries'
+import { useOrgStats, useRecalculateTrustScore, useTrustHistory } from '@/lib/queries'
 import { getTrustGrade } from '@/lib/supabase'
 
 export const Route = createFileRoute('/_authenticated/trust-score')({
@@ -11,9 +12,22 @@ export const Route = createFileRoute('/_authenticated/trust-score')({
 function TrustScore() {
   const [selectedPeriod, setSelectedPeriod] = useState('6m')
 
-  const { organization, isLoading: orgLoading } = useOrg()
+  const { organization, isLoading: orgLoading, refetch: refetchOrg } = useOrg()
   const { data: stats, isLoading: statsLoading } = useOrgStats()
-  const { data: trustHistory, isLoading: historyLoading } = useTrustHistory()
+  const { data: trustHistory, isLoading: historyLoading, refetch: refetchHistory } = useTrustHistory()
+
+  // Recalculate trust score mutation
+  const recalculateMutation = useRecalculateTrustScore()
+
+  const handleRecalculate = async () => {
+    try {
+      await recalculateMutation.mutateAsync()
+      // Refetch data after recalculation
+      await Promise.all([refetchOrg(), refetchHistory()])
+    } catch (error) {
+      console.error('Failed to recalculate trust score:', error)
+    }
+  }
 
   const isLoading = orgLoading || statsLoading || historyLoading
 
@@ -181,11 +195,23 @@ function TrustScore() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Trust Score</h1>
-        <p className="text-muted-foreground">
-          Your organization&apos;s financial transparency rating
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Trust Score</h1>
+          <p className="text-muted-foreground">
+            Your organization&apos;s financial transparency rating
+          </p>
+        </div>
+        <button
+          onClick={handleRecalculate}
+          disabled={recalculateMutation.isPending}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <ArrowsClockwise
+            className={`h-4 w-4 ${recalculateMutation.isPending ? 'animate-spin' : ''}`}
+          />
+          {recalculateMutation.isPending ? 'Calculating...' : 'Recalculate'}
+        </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

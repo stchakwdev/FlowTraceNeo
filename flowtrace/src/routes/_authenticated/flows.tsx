@@ -1,13 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import type { FlowNode, TransactionWithNodes } from '@/lib/supabase'
-import { useNodes, useTransactions } from '@/lib/queries'
+import { useFlowData } from '@/lib/queries'
+import type { FlowDataNode } from '@/lib/supabase'
 
 export const Route = createFileRoute('/_authenticated/flows')({
   component: FlowVisualization,
 })
 
-interface PositionedNode extends FlowNode {
+interface PositionedNode extends FlowDataNode {
   x: number
   y: number
 }
@@ -55,7 +55,7 @@ const nodeColors: Record<string, { bg: string; border: string; text: string }> =
   }
 
 // Position nodes in columns by type
-function positionNodes(nodes: Array<FlowNode>): Array<PositionedNode> {
+function positionNodes(nodes: Array<FlowDataNode>): Array<PositionedNode> {
   const columns: Record<string, number> = {
     donor: 100,
     account: 350,
@@ -77,54 +77,30 @@ function positionNodes(nodes: Array<FlowNode>): Array<PositionedNode> {
   })
 }
 
-// Aggregate transactions into edges
-function computeEdges(
-  transactions: Array<TransactionWithNodes>,
-): Array<FlowEdge> {
-  const edgeMap = new Map<string, FlowEdge>()
-
-  transactions.forEach((txn) => {
-    if (!txn.from_node_id || !txn.to_node_id) return
-
-    const key = `${txn.from_node_id}-${txn.to_node_id}`
-    const existing = edgeMap.get(key)
-
-    if (existing) {
-      existing.amount += txn.amount
-      existing.count += 1
-    } else {
-      edgeMap.set(key, {
-        id: key,
-        from: txn.from_node_id,
-        to: txn.to_node_id,
-        amount: txn.amount,
-        count: 1,
-      })
-    }
-  })
-
-  return Array.from(edgeMap.values())
-}
-
 function FlowVisualization() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState('month')
 
-  const { data: rawNodes, isLoading: nodesLoading } = useNodes()
-  const { data: transactions, isLoading: txnLoading } = useTransactions()
+  // Use Edge Function for flow data
+  const { data: flowData, isLoading } = useFlowData()
 
-  const isLoading = nodesLoading || txnLoading
-
-  // Position nodes and compute edges from real data
+  // Position nodes from Edge Function data
   const positionedNodes = useMemo(() => {
-    if (!rawNodes) return []
-    return positionNodes(rawNodes)
-  }, [rawNodes])
+    if (!flowData?.nodes) return []
+    return positionNodes(flowData.nodes)
+  }, [flowData?.nodes])
 
-  const edges = useMemo(() => {
-    if (!transactions) return []
-    return computeEdges(transactions)
-  }, [transactions])
+  // Transform edges from Edge Function format
+  const edges = useMemo((): FlowEdge[] => {
+    if (!flowData?.edges) return []
+    return flowData.edges.map((edge) => ({
+      id: `${edge.source}-${edge.target}`,
+      from: edge.source,
+      to: edge.target,
+      amount: edge.value,
+      count: edge.count,
+    }))
+  }, [flowData?.edges])
 
   const formatCurrency = (amount: number) => {
     if (amount >= 1000000) return `KES ${(amount / 1000000).toFixed(1)}M`
@@ -139,13 +115,15 @@ function FlowVisualization() {
 
     const inflows = edges.filter((e) => e.to === selectedNode)
     const outflows = edges.filter((e) => e.from === selectedNode)
-    const totalIn = inflows.reduce((sum, e) => sum + e.amount, 0)
-    const totalOut = outflows.reduce((sum, e) => sum + e.amount, 0)
+    // Use pre-calculated values from Edge Function
+    const totalIn = node.inflow
+    const totalOut = node.outflow
 
     return { node, inflows, outflows, totalIn, totalOut }
   }, [selectedNode, positionedNodes, edges])
 
-  const totalFlow = edges.reduce((sum, e) => sum + e.amount, 0)
+  // Use summary from Edge Function
+  const totalFlow = flowData?.summary?.total_flow ?? 0
 
   // Calculate SVG dimensions based on node positions
   const svgHeight = useMemo(() => {

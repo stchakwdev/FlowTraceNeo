@@ -6,19 +6,28 @@ import {
 } from '@tanstack/react-query'
 import { useOrg } from './org-context'
 import {
+  calculateTrustScoreAPI,
   createNode,
   createTransaction,
   createVerification,
+  getFlowDataAPI,
   getNodes,
   getOrganizationStats,
   getTransaction,
   getTransactions,
   getTrustScoreHistory,
   getVerifications,
+  processReceiptOCR,
   updateTransaction,
   uploadVerificationFile,
 } from './supabase'
-import type { FlowNode, Transaction, Verification } from './supabase'
+import type {
+  FlowDataResult,
+  FlowNode,
+  Transaction,
+  TrustScoreResult,
+  Verification,
+} from './supabase'
 
 // Query key factory for consistent cache management
 export const queryKeys = {
@@ -29,6 +38,8 @@ export const queryKeys = {
   orgStats: (orgId: string) => ['org-stats', orgId] as const,
   verifications: (txnId: string) => ['verifications', txnId] as const,
   trustHistory: (orgId: string) => ['trust-history', orgId] as const,
+  flowData: (orgId: string, startDate?: string, endDate?: string) =>
+    ['flow-data', orgId, startDate, endDate] as const,
 }
 
 // Query options (for use with suspense or prefetching)
@@ -299,3 +310,74 @@ export function useUploadVerification() {
     },
   })
 }
+
+// ======================
+// Edge Function Hooks
+// ======================
+
+// Flow Data from Edge Function
+export function useFlowData(startDate?: string, endDate?: string) {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.flowData(organizationId || '', startDate, endDate),
+    queryFn: () => getFlowDataAPI(organizationId!, startDate, endDate),
+    enabled: !!organizationId,
+    staleTime: 60 * 1000, // 1 minute
+  })
+}
+
+// Recalculate Trust Score
+export function useRecalculateTrustScore() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => calculateTrustScoreAPI(organizationId!),
+    onSuccess: () => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trustHistory(organizationId!),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orgStats(organizationId!),
+      })
+      // Also refetch org context
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'organization',
+      })
+    },
+  })
+}
+
+// Process Receipt with OCR
+export function useProcessReceiptOCR() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      transactionId,
+      file,
+      type,
+    }: {
+      transactionId: string
+      file: File
+      type: Verification['type']
+    }) => processReceiptOCR(organizationId!, transactionId, file, type),
+    onSuccess: (_, variables) => {
+      // Invalidate verification queries
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.verifications(variables.transactionId),
+      })
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] === 'transaction' &&
+          query.queryKey[1] === variables.transactionId,
+      })
+    },
+  })
+}
+
+// Export types for components
+export type { FlowDataResult, TrustScoreResult }
