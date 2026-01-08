@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { ArrowsClockwise } from '@phosphor-icons/react'
+import { ArrowsClockwise, Shield, Receipt, CheckCircle, Clock, XCircle } from '@phosphor-icons/react'
 import { useOrg } from '@/lib/org-context'
 import { useOrgStats, useRecalculateTrustScore, useTrustHistory } from '@/lib/queries'
 import { getTrustGrade } from '@/lib/supabase'
@@ -39,6 +39,9 @@ function TrustScore() {
     // Use the latest trust history entry if available for component breakdown
     const latestHistory = trustHistory?.[trustHistory.length - 1]
 
+    // Use proof coverage rate for documentation quality
+    const proofCoverage = stats?.proofStats?.proofCoverageRate ?? 0
+
     const components = {
       verification: {
         score: latestHistory?.verification_rate ?? stats?.verificationRate ?? 0,
@@ -46,9 +49,9 @@ function TrustScore() {
         label: 'Transaction Verification',
       },
       documentation: {
-        score: latestHistory?.documentation_rate ?? 75,
+        score: latestHistory?.documentation_rate ?? proofCoverage,
         weight: 30,
-        label: 'Documentation Quality',
+        label: 'Proof Documentation',
       },
       consistency: {
         score: latestHistory?.consistency_score ?? 80,
@@ -86,14 +89,32 @@ function TrustScore() {
         impact: '+3 points',
       })
     }
-    if (components.documentation.score < 85) {
+    // Recommend adding proofs if coverage is low
+    if (proofCoverage < 50) {
+      recommendations.push({
+        id: '3',
+        priority: 'high' as const,
+        title: 'Add proof documentation',
+        description: `Only ${proofCoverage}% of transactions have proof attached. Add receipts, photos, or other evidence.`,
+        impact: '+10 points',
+      })
+    } else if (proofCoverage < 80) {
       recommendations.push({
         id: '3',
         priority: 'medium' as const,
-        title: 'Improve documentation',
-        description:
-          'Add notes and descriptions to transactions for better transparency',
-        impact: '+2 points',
+        title: 'Improve proof coverage',
+        description: `${100 - proofCoverage}% of transactions are missing proof documentation`,
+        impact: '+5 points',
+      })
+    }
+    // Recommend verifying pending proofs
+    if (stats?.proofStats && stats.proofStats.pendingProofs > 0) {
+      recommendations.push({
+        id: '4',
+        priority: 'medium' as const,
+        title: 'Review pending proofs',
+        description: `${stats.proofStats.pendingProofs} proof documents are awaiting verification`,
+        impact: '+3 points',
       })
     }
 
@@ -109,6 +130,15 @@ function TrustScore() {
         pending: stats?.pending ?? 0,
         flagged: stats?.flagged ?? 0,
         total: stats?.total ?? 0,
+      },
+      proofStats: stats?.proofStats ?? {
+        totalProofs: 0,
+        verifiedProofs: 0,
+        pendingProofs: 0,
+        rejectedProofs: 0,
+        totalTrustPoints: 0,
+        transactionsWithProofs: 0,
+        proofCoverageRate: 0,
       },
     }
   }, [organization, stats, trustHistory])
@@ -413,6 +443,66 @@ function TrustScore() {
                       : 0}
                     %
                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Proof Documentation Stats */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Proof Documentation</h2>
+              <div className="flex items-center gap-1 text-emerald-600">
+                <Shield className="h-4 w-4" weight="fill" />
+                <span className="text-sm font-bold">+{trustData.proofStats.totalTrustPoints}</span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" weight="fill" />
+                  <span className="text-sm">Verified Proofs</span>
+                </div>
+                <span className="font-medium">{trustData.proofStats.verifiedProofs}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-yellow-500" weight="fill" />
+                  <span className="text-sm">Pending</span>
+                </div>
+                <span className="font-medium">{trustData.proofStats.pendingProofs}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4 text-red-500" weight="fill" />
+                  <span className="text-sm">Rejected</span>
+                </div>
+                <span className="font-medium">{trustData.proofStats.rejectedProofs}</span>
+              </div>
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Proofs</span>
+                  <span className="font-bold">{trustData.proofStats.totalProofs}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Proof Coverage</span>
+                  <span className={`font-medium ${trustData.proofStats.proofCoverageRate >= 80 ? 'text-green-600' : trustData.proofStats.proofCoverageRate >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {trustData.proofStats.proofCoverageRate}%
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted/20">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        trustData.proofStats.proofCoverageRate >= 80
+                          ? 'bg-green-500'
+                          : trustData.proofStats.proofCoverageRate >= 50
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                      }`}
+                      style={{ width: `${trustData.proofStats.proofCoverageRate}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

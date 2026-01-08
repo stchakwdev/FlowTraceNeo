@@ -4,7 +4,9 @@ import {
   CaretDown,
   CurrencyCircleDollar,
   FlowArrow,
+  Gear,
   House,
+  LinkSimple,
   ShieldCheck,
   SignOut,
 } from '@phosphor-icons/react'
@@ -25,7 +27,9 @@ const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: House },
   { label: 'Transactions', href: '/transactions', icon: CurrencyCircleDollar },
   { label: 'Flows', href: '/flows', icon: FlowArrow },
+  { label: 'Chains', href: '/chains', icon: LinkSimple },
   { label: 'Trust Score', href: '/trust-score', icon: ShieldCheck },
+  { label: 'Settings', href: '/settings', icon: Gear },
 ]
 
 interface AppShellProps {
@@ -129,6 +133,12 @@ export function AppShell({ children }: AppShellProps) {
                   )}
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">
+                    <Gear className="size-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => signOut()}
                   className="text-destructive focus:text-destructive"

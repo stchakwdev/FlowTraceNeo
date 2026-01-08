@@ -14,9 +14,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTrustScoreRouteImport } from './routes/_authenticated/trust-score'
 import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/flows'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedChainsRouteImport } from './routes/_authenticated/chains'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions/index'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions/new'
 import { Route as AuthenticatedTransactionsIdRouteImport } from './routes/_authenticated/transactions/$id'
+import { Route as AuthenticatedSettingsAccessGroupsRouteImport } from './routes/_authenticated/settings/access-groups'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -42,10 +45,21 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedChainsRoute = AuthenticatedChainsRouteImport.update({
+  id: '/chains',
+  path: '/chains',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTransactionsIndexRoute =
   AuthenticatedTransactionsIndexRouteImport.update({
     id: '/transactions/',
     path: '/transactions/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTransactionsNewRoute =
@@ -60,64 +74,88 @@ const AuthenticatedTransactionsIdRoute =
     path: '/transactions/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsAccessGroupsRoute =
+  AuthenticatedSettingsAccessGroupsRouteImport.update({
+    id: '/settings/access-groups',
+    path: '/settings/access-groups',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chains': typeof AuthenticatedChainsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chains': typeof AuthenticatedChainsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_authenticated/chains': typeof AuthenticatedChainsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/flows': typeof AuthenticatedFlowsRoute
   '/_authenticated/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/_authenticated/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
   '/_authenticated/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/chains'
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/settings/access-groups'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/settings'
     | '/transactions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/chains'
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/settings/access-groups'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/settings'
     | '/transactions'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_authenticated/chains'
     | '/_authenticated/dashboard'
     | '/_authenticated/flows'
     | '/_authenticated/trust-score'
+    | '/_authenticated/settings/access-groups'
     | '/_authenticated/transactions/$id'
     | '/_authenticated/transactions/new'
+    | '/_authenticated/settings/'
     | '/_authenticated/transactions/'
   fileRoutesById: FileRoutesById
 }
@@ -163,11 +201,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/chains': {
+      id: '/_authenticated/chains'
+      path: '/chains'
+      fullPath: '/chains'
+      preLoaderRoute: typeof AuthenticatedChainsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/transactions/': {
       id: '/_authenticated/transactions/'
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AuthenticatedTransactionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/transactions/new': {
@@ -184,24 +236,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/access-groups': {
+      id: '/_authenticated/settings/access-groups'
+      path: '/settings/access-groups'
+      fullPath: '/settings/access-groups'
+      preLoaderRoute: typeof AuthenticatedSettingsAccessGroupsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedChainsRoute: typeof AuthenticatedChainsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFlowsRoute: typeof AuthenticatedFlowsRoute
   AuthenticatedTrustScoreRoute: typeof AuthenticatedTrustScoreRoute
+  AuthenticatedSettingsAccessGroupsRoute: typeof AuthenticatedSettingsAccessGroupsRoute
   AuthenticatedTransactionsIdRoute: typeof AuthenticatedTransactionsIdRoute
   AuthenticatedTransactionsNewRoute: typeof AuthenticatedTransactionsNewRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedChainsRoute: AuthenticatedChainsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFlowsRoute: AuthenticatedFlowsRoute,
   AuthenticatedTrustScoreRoute: AuthenticatedTrustScoreRoute,
+  AuthenticatedSettingsAccessGroupsRoute:
+    AuthenticatedSettingsAccessGroupsRoute,
   AuthenticatedTransactionsIdRoute: AuthenticatedTransactionsIdRoute,
   AuthenticatedTransactionsNewRoute: AuthenticatedTransactionsNewRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
 }
 

@@ -91,17 +91,44 @@ export interface TransactionWithNodes extends Transaction {
   to_node: Pick<FlowNode, 'id' | 'name' | 'type'> | null
 }
 
+// Extended verification types for proof system
+export type VerificationType =
+  | 'receipt'
+  | 'photo'
+  | 'gps'
+  | 'signature'
+  | 'biometric'
+  | 'bank_statement'
+  | 'document'
+  | 'invoice'
+  | 'video'
+  | 'audit'
+  | 'contract'
+  | 'government_doc'
+
+// Trust points per verification type
+export const VERIFICATION_TRUST_POINTS: Record<VerificationType, number> = {
+  receipt: 5,
+  bank_statement: 10,
+  invoice: 4,
+  photo: 8,
+  gps: 3,
+  video: 10,
+  biometric: 7,
+  signature: 7,
+  audit: 15,
+  contract: 6,
+  government_doc: 8,
+  document: 4,
+}
+
+// Visibility levels for proofs
+export type VerificationVisibility = 'full' | 'thumbnail' | 'summary' | 'hidden'
+
 export interface Verification {
   id: string
   transaction_id: string
-  type:
-    | 'receipt'
-    | 'photo'
-    | 'gps'
-    | 'signature'
-    | 'biometric'
-    | 'bank_statement'
-    | 'document'
+  type: VerificationType
   file_url: string | null
   ocr_data: Record<string, unknown> | null
   metadata: Record<string, unknown>
@@ -109,6 +136,29 @@ export interface Verification {
   verified_by: string | null
   verified_at: string | null
   created_at: string
+  // New Phase 3 fields
+  trust_points: number
+  visibility_level: VerificationVisibility
+  thumbnail_url: string | null
+  executor_name: string | null
+  gps_latitude: number | null
+  gps_longitude: number | null
+  gps_accuracy: number | null
+  location_name: string | null
+  description: string | null
+  created_by: string | null
+}
+
+// Verification access log for audit trail
+export interface VerificationAccessLog {
+  id: string
+  verification_id: string
+  accessed_by: string
+  access_type: 'view' | 'download'
+  access_level: VerificationVisibility
+  ip_address: string | null
+  user_agent: string | null
+  accessed_at: string
 }
 
 export interface TrustScoreHistory {
@@ -122,12 +172,128 @@ export interface TrustScoreHistory {
   calculated_at: string
 }
 
+// ============================================================================
+// ACCESS GROUPS & VISIBILITY TYPES
+// ============================================================================
+
+export interface AccessGroupPermissions {
+  can_view_nodes: boolean
+  can_view_amounts: boolean
+  can_view_proofs: boolean
+  can_view_executor: boolean
+  can_view_full_proofs: boolean
+  can_edit_nodes: boolean
+  can_edit_transactions: boolean
+  can_manage_members: boolean
+  can_manage_groups: boolean
+}
+
+export interface AccessGroup {
+  id: string
+  organization_id: string
+  name: string
+  slug: string
+  description: string | null
+  icon: string
+  color: string
+  permissions: AccessGroupPermissions
+  node_scope: 'all' | 'assigned' | 'downstream'
+  is_default: boolean
+  is_public: boolean
+  priority: number
+  created_at: string
+  updated_at: string
+}
+
+export interface GroupMember {
+  id: string
+  group_id: string
+  user_id: string | null
+  user_email: string | null
+  granted_by: string | null
+  valid_from: string
+  valid_until: string | null
+  notes: string | null
+  created_at: string
+}
+
+export interface GroupMemberWithDetails extends GroupMember {
+  group: Pick<AccessGroup, 'id' | 'name' | 'slug' | 'color' | 'icon'>
+  profile?: Pick<Profile, 'id' | 'email' | 'full_name'> | null
+}
+
+export interface NodeVisibility {
+  id: string
+  node_id: string
+  group_id: string
+  can_view: boolean
+  can_view_amounts: boolean | null
+  can_view_proofs: boolean | null
+  can_view_executor: boolean | null
+  display_name: string | null
+  created_at: string
+}
+
+export interface TransactionVisibility {
+  id: string
+  transaction_id: string
+  group_id: string
+  can_view: boolean
+  can_view_amount: boolean | null
+  can_view_proofs: boolean | null
+  can_view_executor: boolean | null
+  created_at: string
+}
+
+export interface PublicEmbedConfig {
+  id: string
+  organization_id: string
+  display_mode: 'simplified' | 'detailed' | 'custom'
+  show_amounts: boolean
+  amount_format: 'exact' | 'ranges' | 'percentages' | 'hidden'
+  show_node_names: boolean
+  show_trust_score: boolean
+  show_transaction_count: boolean
+  show_last_updated: boolean
+  visible_node_types: string[]
+  hidden_node_ids: string[]
+  theme: {
+    primary_color: string
+    background: 'light' | 'dark'
+    border_radius: 'none' | 'sm' | 'md' | 'lg' | 'full'
+    show_logo: boolean
+  }
+  allow_embed: boolean
+  allowed_domains: string[]
+  embed_token: string
+  created_at: string
+  updated_at: string
+}
+
+export interface VisibilityContext {
+  total_nodes: number
+  visible_nodes: number
+  total_transactions: number
+  visible_transactions: number
+  visibility_percentage: number
+}
+
 export interface OrgStats {
   total: number
   verified: number
   pending: number
   flagged: number
   verificationRate: number
+  // Proof verification stats
+  proofStats: {
+    totalProofs: number
+    verifiedProofs: number
+    pendingProofs: number
+    rejectedProofs: number
+    totalTrustPoints: number
+    transactionsWithProofs: number
+    proofCoverageRate: number // % of transactions with at least one proof
+  }
 }
 
 // Profile helpers
@@ -178,12 +344,21 @@ export async function getOrganization(id: string) {
 export async function getOrganizationStats(
   organizationId: string,
 ): Promise<OrgStats> {
-  const { data: transactions, error } = await supabase
+  // Fetch transactions with verification counts
+  const { data: transactions, error: txnError } = await supabase
     .from('transactions')
-    .select('verification_status')
+    .select('id, verification_status, verification_count')
     .eq('organization_id', organizationId)
 
-  if (error) throw error
+  if (txnError) throw txnError
+
+  // Fetch verification proof stats
+  const { data: verifications, error: verError } = await supabase
+    .from('verifications')
+    .select('id, status, trust_points, transaction_id')
+    .in('transaction_id', transactions.map((t) => t.id))
+
+  if (verError) throw verError
 
   const txnList = transactions
   const total = txnList.length
@@ -198,7 +373,39 @@ export async function getOrganizationStats(
   ).length
   const verificationRate = total > 0 ? Math.round((verified / total) * 100) : 0
 
-  return { total, verified, pending, flagged, verificationRate }
+  // Calculate proof stats
+  const proofList = verifications ?? []
+  const totalProofs = proofList.length
+  const verifiedProofs = proofList.filter((p) => p.status === 'verified').length
+  const pendingProofs = proofList.filter((p) => p.status === 'pending').length
+  const rejectedProofs = proofList.filter((p) => p.status === 'rejected').length
+  const totalTrustPoints = proofList.reduce(
+    (sum, p) => sum + (p.trust_points ?? 0),
+    0,
+  )
+
+  // Count unique transactions with at least one proof
+  const transactionIdsWithProofs = new Set(proofList.map((p) => p.transaction_id))
+  const transactionsWithProofs = transactionIdsWithProofs.size
+  const proofCoverageRate =
+    total > 0 ? Math.round((transactionsWithProofs / total) * 100) : 0
+
+  return {
+    total,
+    verified,
+    pending,
+    flagged,
+    verificationRate,
+    proofStats: {
+      totalProofs,
+      verifiedProofs,
+      pendingProofs,
+      rejectedProofs,
+      totalTrustPoints,
+      transactionsWithProofs,
+      proofCoverageRate,
+    },
+  }
 }
 
 // Transaction helpers
@@ -310,7 +517,7 @@ export async function getVerifications(transactionId: string) {
 }
 
 export async function createVerification(
-  verification: Omit<Verification, 'id' | 'created_at' | 'verified_at'>,
+  verification: Omit<Verification, 'id' | 'created_at' | 'verified_at' | 'trust_points'>,
 ) {
   const { data, error } = await supabase
     .from('verifications')
@@ -320,6 +527,63 @@ export async function createVerification(
 
   if (error) throw error
   return data as Verification
+}
+
+// Get verifications with trust points for a transaction
+export async function getVerificationsWithTrustPoints(transactionId: string) {
+  const { data, error } = await supabase
+    .from('verifications')
+    .select('*')
+    .eq('transaction_id', transactionId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as Array<Verification>
+}
+
+// Calculate total trust points for a transaction
+export async function getTransactionTrustPoints(transactionId: string): Promise<number> {
+  const { data, error } = await supabase
+    .rpc('get_transaction_trust_points', { txn_id: transactionId })
+
+  if (error) throw error
+  return data as number
+}
+
+// Log verification access for audit
+export async function logVerificationAccess(
+  verificationId: string,
+  accessedBy: string,
+  accessType: 'view' | 'download',
+  accessLevel: VerificationVisibility,
+) {
+  const { error } = await supabase
+    .from('verification_access_log')
+    .insert({
+      verification_id: verificationId,
+      accessed_by: accessedBy,
+      access_type: accessType,
+      access_level: accessLevel,
+    })
+
+  if (error) throw error
+}
+
+// Get verification visibility based on user's access group
+export function getVerificationVisibility(
+  verification: Verification,
+  userPermissions: AccessGroupPermissions,
+): VerificationVisibility {
+  if (userPermissions.can_view_full_proofs) {
+    return 'full'
+  }
+  if (userPermissions.can_view_proofs) {
+    return 'thumbnail'
+  }
+  if (userPermissions.can_view_nodes) {
+    return 'summary'
+  }
+  return 'hidden'
 }
 
 // Trust score history helpers
@@ -389,6 +653,265 @@ export async function deleteVerificationFile(filePath: string): Promise<void> {
   if (error) throw error
 }
 
+// ============================================================================
+// ACCESS GROUP HELPERS
+// ============================================================================
+
+export async function getAccessGroups(organizationId: string) {
+  const { data, error } = await supabase
+    .from('access_groups')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('priority')
+
+  if (error) throw error
+  return data as Array<AccessGroup>
+}
+
+export async function getAccessGroup(id: string) {
+  const { data, error } = await supabase
+    .from('access_groups')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data as AccessGroup
+}
+
+export async function createAccessGroup(
+  group: Omit<AccessGroup, 'id' | 'created_at' | 'updated_at'>,
+) {
+  const { data, error } = await supabase
+    .from('access_groups')
+    .insert(group)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as AccessGroup
+}
+
+export async function updateAccessGroup(
+  id: string,
+  updates: Partial<Omit<AccessGroup, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>,
+) {
+  const { data, error } = await supabase
+    .from('access_groups')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as AccessGroup
+}
+
+export async function deleteAccessGroup(id: string) {
+  const { error } = await supabase
+    .from('access_groups')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================================================
+// GROUP MEMBERS HELPERS
+// ============================================================================
+
+export async function getGroupMembers(groupId: string) {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select(`
+      *,
+      profile:profiles(id, email, full_name)
+    `)
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as Array<GroupMember & { profile: Pick<Profile, 'id' | 'email' | 'full_name'> | null }>
+}
+
+export async function getUserGroups(userId: string, organizationId: string) {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select(`
+      *,
+      group:access_groups(id, name, slug, color, icon, permissions, node_scope)
+    `)
+    .eq('user_id', userId)
+    .lte('valid_from', new Date().toISOString())
+    .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
+
+  if (error) throw error
+
+  // Filter by organization
+  return (data as Array<GroupMemberWithDetails & { group: AccessGroup }>)
+    .filter((m) => m.group.organization_id === organizationId)
+}
+
+export async function addGroupMember(
+  member: Omit<GroupMember, 'id' | 'created_at'>,
+) {
+  const { data, error } = await supabase
+    .from('group_members')
+    .insert(member)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as GroupMember
+}
+
+export async function removeGroupMember(id: string) {
+  const { error } = await supabase
+    .from('group_members')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+export async function inviteMemberByEmail(
+  groupId: string,
+  email: string,
+  grantedBy: string,
+  validUntil?: string,
+) {
+  const { data, error } = await supabase
+    .from('group_members')
+    .insert({
+      group_id: groupId,
+      user_email: email,
+      granted_by: grantedBy,
+      valid_until: validUntil || null,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as GroupMember
+}
+
+// ============================================================================
+// NODE VISIBILITY HELPERS
+// ============================================================================
+
+export async function getNodeVisibility(nodeId: string) {
+  const { data, error } = await supabase
+    .from('node_visibility')
+    .select(`
+      *,
+      group:access_groups(id, name, slug, color)
+    `)
+    .eq('node_id', nodeId)
+
+  if (error) throw error
+  return data as Array<NodeVisibility & { group: Pick<AccessGroup, 'id' | 'name' | 'slug' | 'color'> }>
+}
+
+export async function setNodeVisibility(
+  nodeId: string,
+  groupId: string,
+  settings: Partial<Omit<NodeVisibility, 'id' | 'node_id' | 'group_id' | 'created_at'>>,
+) {
+  const { data, error } = await supabase
+    .from('node_visibility')
+    .upsert({
+      node_id: nodeId,
+      group_id: groupId,
+      ...settings,
+    }, { onConflict: 'node_id,group_id' })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as NodeVisibility
+}
+
+export async function removeNodeVisibility(nodeId: string, groupId: string) {
+  const { error } = await supabase
+    .from('node_visibility')
+    .delete()
+    .eq('node_id', nodeId)
+    .eq('group_id', groupId)
+
+  if (error) throw error
+}
+
+// ============================================================================
+// PUBLIC EMBED CONFIG HELPERS
+// ============================================================================
+
+export async function getPublicEmbedConfig(organizationId: string) {
+  const { data, error } = await supabase
+    .from('public_embed_config')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .single()
+
+  if (error && error.code !== 'PGRST116') throw error
+  return data as PublicEmbedConfig | null
+}
+
+export async function updatePublicEmbedConfig(
+  organizationId: string,
+  config: Partial<Omit<PublicEmbedConfig, 'id' | 'organization_id' | 'embed_token' | 'created_at' | 'updated_at'>>,
+) {
+  const { data, error } = await supabase
+    .from('public_embed_config')
+    .update(config)
+    .eq('organization_id', organizationId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as PublicEmbedConfig
+}
+
+export async function regenerateEmbedToken(organizationId: string) {
+  // This requires a server-side call to regenerate the token
+  const { data, error } = await supabase
+    .rpc('regenerate_embed_token', { org_id: organizationId })
+
+  if (error) throw error
+  return data as string
+}
+
+// ============================================================================
+// VISIBILITY CONTEXT HELPERS
+// ============================================================================
+
+export async function getVisibilityContext(
+  userId: string,
+  organizationId: string,
+): Promise<VisibilityContext> {
+  const { data, error } = await supabase
+    .rpc('get_visibility_context', {
+      p_user_id: userId,
+      p_org_id: organizationId,
+    })
+
+  if (error) throw error
+  return data as VisibilityContext
+}
+
+export async function getUserPermissions(
+  userId: string,
+  organizationId: string,
+): Promise<AccessGroupPermissions> {
+  const { data, error } = await supabase
+    .rpc('get_user_permissions', {
+      p_user_id: userId,
+      p_org_id: organizationId,
+    })
+
+  if (error) throw error
+  return data as AccessGroupPermissions
+}
+
 // ======================
 // Edge Function Types
 // ======================
@@ -416,6 +939,12 @@ export interface FlowDataNode {
   inflow: number
   outflow: number
   balance: number
+  // Verification stats for transactions through this node
+  verification_count?: number
+  verified_count?: number
+  pending_count?: number
+  rejected_count?: number
+  trust_points?: number
 }
 
 export interface FlowDataEdge {
@@ -548,4 +1077,295 @@ export async function processReceiptOCR(
   }
 
   return response.json()
+}
+
+// ============================================================================
+// ORGANIZATION CHAINS TYPES
+// ============================================================================
+
+export type ChainStatus = 'pending' | 'active' | 'rejected' | 'revoked'
+
+export interface OrganizationChain {
+  id: string
+  source_org_id: string
+  target_org_id: string
+  link_node_id: string | null
+  status: ChainStatus
+  granted_group_id: string | null
+  request_message: string | null
+  rejection_reason: string | null
+  requested_by: string
+  requested_at: string
+  approved_by: string | null
+  approved_at: string | null
+  revoked_by: string | null
+  revoked_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OrganizationChainWithDetails extends OrganizationChain {
+  source_org: Pick<Organization, 'id' | 'name' | 'logo_url' | 'trust_score' | 'type' | 'country'>
+  target_org: Pick<Organization, 'id' | 'name' | 'logo_url' | 'trust_score' | 'type' | 'country'>
+  link_node: Pick<FlowNode, 'id' | 'name' | 'type'> | null
+  granted_group: Pick<AccessGroup, 'id' | 'name' | 'slug' | 'permissions'> | null
+}
+
+export type ChainActivityAction =
+  | 'requested'
+  | 'approved'
+  | 'rejected'
+  | 'revoked'
+  | 'permissions_updated'
+  | 'node_linked'
+
+export interface ChainActivityLog {
+  id: string
+  chain_id: string
+  action: ChainActivityAction
+  actor_id: string
+  actor_org_id: string
+  details: Record<string, unknown>
+  created_at: string
+}
+
+export interface ChainCounts {
+  outgoing_pending: number
+  outgoing_active: number
+  incoming_pending: number
+  incoming_active: number
+}
+
+export interface ChainTrustScore {
+  aggregated_score: number
+  org_count: number
+  scores: {
+    source_org: number
+    target_org: number
+  }
+}
+
+// Cross-org flow data for chain visualization
+export interface ChainedFlowData {
+  organizations: Array<{
+    org: Pick<Organization, 'id' | 'name' | 'logo_url' | 'trust_score'>
+    nodes: FlowDataNode[]
+    edges: FlowDataEdge[]
+  }>
+  chain_links: Array<{
+    chain_id: string
+    source_org_id: string
+    target_org_id: string
+    link_node_id: string | null
+  }>
+  aggregated_trust_score: number
+  total_flow: number
+}
+
+// ============================================================================
+// ORGANIZATION CHAINS HELPERS
+// ============================================================================
+
+export async function getOutgoingChains(organizationId: string) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .select(`
+      *,
+      target_org:organizations!target_org_id(id, name, logo_url, trust_score, type, country),
+      link_node:flow_nodes(id, name, type),
+      granted_group:access_groups(id, name, slug, permissions)
+    `)
+    .eq('source_org_id', organizationId)
+    .order('requested_at', { ascending: false })
+
+  if (error) throw error
+  return data as OrganizationChainWithDetails[]
+}
+
+export async function getIncomingChains(organizationId: string) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .select(`
+      *,
+      source_org:organizations!source_org_id(id, name, logo_url, trust_score, type, country),
+      link_node:flow_nodes(id, name, type),
+      granted_group:access_groups(id, name, slug, permissions)
+    `)
+    .eq('target_org_id', organizationId)
+    .order('requested_at', { ascending: false })
+
+  if (error) throw error
+  return data as OrganizationChainWithDetails[]
+}
+
+export async function getChain(chainId: string) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .select(`
+      *,
+      source_org:organizations!source_org_id(id, name, logo_url, trust_score, type, country),
+      target_org:organizations!target_org_id(id, name, logo_url, trust_score, type, country),
+      link_node:flow_nodes(id, name, type),
+      granted_group:access_groups(id, name, slug, permissions)
+    `)
+    .eq('id', chainId)
+    .single()
+
+  if (error) throw error
+  return data as OrganizationChainWithDetails
+}
+
+export async function requestChain(
+  sourceOrgId: string,
+  targetOrgId: string,
+  requestedBy: string,
+  message?: string,
+) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .insert({
+      source_org_id: sourceOrgId,
+      target_org_id: targetOrgId,
+      requested_by: requestedBy,
+      request_message: message || null,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as OrganizationChain
+}
+
+export async function approveChain(
+  chainId: string,
+  approvedBy: string,
+  grantedGroupId: string,
+  linkNodeId?: string,
+) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .update({
+      status: 'active',
+      approved_by: approvedBy,
+      approved_at: new Date().toISOString(),
+      granted_group_id: grantedGroupId,
+      link_node_id: linkNodeId || null,
+    })
+    .eq('id', chainId)
+    .eq('status', 'pending')
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as OrganizationChain
+}
+
+export async function rejectChain(
+  chainId: string,
+  rejectedBy: string,
+  reason?: string,
+) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .update({
+      status: 'rejected',
+      approved_by: rejectedBy,
+      approved_at: new Date().toISOString(),
+      rejection_reason: reason || null,
+    })
+    .eq('id', chainId)
+    .eq('status', 'pending')
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as OrganizationChain
+}
+
+export async function revokeChain(chainId: string, revokedBy: string) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .update({
+      status: 'revoked',
+      revoked_by: revokedBy,
+      revoked_at: new Date().toISOString(),
+    })
+    .eq('id', chainId)
+    .eq('status', 'active')
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as OrganizationChain
+}
+
+export async function cancelChainRequest(chainId: string) {
+  const { error } = await supabase
+    .from('organization_chains')
+    .delete()
+    .eq('id', chainId)
+    .eq('status', 'pending')
+
+  if (error) throw error
+}
+
+export async function updateChainPermissions(
+  chainId: string,
+  grantedGroupId: string,
+  linkNodeId?: string,
+) {
+  const { data, error } = await supabase
+    .from('organization_chains')
+    .update({
+      granted_group_id: grantedGroupId,
+      link_node_id: linkNodeId || null,
+    })
+    .eq('id', chainId)
+    .eq('status', 'active')
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as OrganizationChain
+}
+
+export async function getChainActivityLog(chainId: string) {
+  const { data, error } = await supabase
+    .from('chain_activity_log')
+    .select('*')
+    .eq('chain_id', chainId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as ChainActivityLog[]
+}
+
+export async function getChainCounts(organizationId: string): Promise<ChainCounts> {
+  const { data, error } = await supabase.rpc('get_org_chain_counts', {
+    p_org_id: organizationId,
+  })
+
+  if (error) throw error
+  return data as ChainCounts
+}
+
+export async function getChainTrustScore(chainId: string): Promise<ChainTrustScore | null> {
+  const { data, error } = await supabase.rpc('get_chain_trust_score', {
+    p_chain_id: chainId,
+  })
+
+  if (error) throw error
+  return data?.[0] as ChainTrustScore | null
+}
+
+export async function searchOrganizations(query: string, excludeOrgId: string) {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('id, name, logo_url, trust_score, type, country')
+    .neq('id', excludeOrgId)
+    .ilike('name', `%${query}%`)
+    .limit(10)
+
+  if (error) throw error
+  return data as Pick<Organization, 'id' | 'name' | 'logo_url' | 'trust_score' | 'type' | 'country'>[]
 }

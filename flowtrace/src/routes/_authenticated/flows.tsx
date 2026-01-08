@@ -14,6 +14,7 @@ import {
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,
   Plus,
+  Shield,
   Storefront,
   TrendDown,
   TrendUp,
@@ -21,6 +22,7 @@ import {
 } from '@phosphor-icons/react'
 import { useFlowData } from '@/lib/queries'
 import type { FlowDataNode } from '@/lib/supabase'
+import { VerificationBreakdown, NodeVerificationBadge } from '@/components/verification-indicator'
 
 export const Route = createFileRoute('/_authenticated/flows')({
   component: FlowVisualization,
@@ -282,13 +284,23 @@ function GlassNode({
 
             {/* Text content */}
             <div className="min-w-0 flex-1">
-              <p
-                className={`truncate text-sm font-semibold ${
-                  isSelected ? 'text-white' : 'text-slate-200'
-                } transition-colors`}
-              >
-                {node.name}
-              </p>
+              <div className="flex items-center gap-2">
+                <p
+                  className={`truncate text-sm font-semibold ${
+                    isSelected ? 'text-white' : 'text-slate-200'
+                  } transition-colors`}
+                >
+                  {node.name}
+                </p>
+                {/* Verification badge */}
+                {(node.verification_count ?? 0) > 0 && (
+                  <NodeVerificationBadge
+                    count={node.verification_count ?? 0}
+                    trustPoints={node.trust_points ?? 0}
+                    verifiedCount={node.verified_count ?? 0}
+                  />
+                )}
+              </div>
               <p className="text-xs text-slate-500">{config.label}</p>
             </div>
           </div>
@@ -649,6 +661,18 @@ function FlowVisualization() {
                     {formatCurrency(selectedNodeData.totalIn - selectedNodeData.totalOut)}
                   </p>
                 </div>
+
+                {/* Verification Stats */}
+                <VerificationBreakdown
+                  stats={{
+                    total: selectedNodeData.node.verification_count ?? 0,
+                    verified: selectedNodeData.node.verified_count ?? 0,
+                    pending: selectedNodeData.node.pending_count ?? 0,
+                    rejected: selectedNodeData.node.rejected_count ?? 0,
+                    trustPoints: selectedNodeData.node.trust_points ?? 0,
+                  }}
+                  className="mt-4"
+                />
               </div>
 
               {selectedNodeData.inflows.length > 0 && (

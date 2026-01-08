@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import {
   CloudArrowUp,
   File,
@@ -9,12 +9,33 @@ import {
   CheckCircle,
   Warning,
   SpinnerGap,
+  MapPin,
+  Eye,
+  EyeSlash,
+  User,
+  CaretDown,
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { supabase, type Verification } from '@/lib/supabase'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  supabase,
+  type VerificationType,
+  type VerificationVisibility,
+  VERIFICATION_TRUST_POINTS,
+} from '@/lib/supabase'
 
-export type VerificationType = Verification['type']
+export type { VerificationType, VerificationVisibility }
+
+// GPS location data
+export interface GPSLocation {
+  latitude: number
+  longitude: number
+  accuracy: number
+  locationName?: string
+}
 
 interface UploadedFile {
   id: string
@@ -25,6 +46,15 @@ interface UploadedFile {
   status: 'uploading' | 'success' | 'error'
   progress: number
   error?: string
+}
+
+// Extended upload result with Phase 3 metadata
+export interface UploadResult extends UploadedFile {
+  visibilityLevel: VerificationVisibility
+  executorName?: string
+  description?: string
+  gpsLocation?: GPSLocation
+  trustPoints: number
 }
 
 interface FileUploadProps {
@@ -38,6 +68,13 @@ interface FileUploadProps {
   accept?: string
   className?: string
   disabled?: boolean
+  // New Phase 3 options
+  showVisibilitySelector?: boolean
+  showGPSCapture?: boolean
+  showExecutorName?: boolean
+  showDescription?: boolean
+  defaultVisibility?: VerificationVisibility
+  createdBy?: string
 }
 
 const ALLOWED_TYPES: Record<string, string[]> = {
@@ -54,16 +91,42 @@ const ALLOWED_TYPES: Record<string, string[]> = {
   signature: ['image/jpeg', 'image/png', 'image/webp'],
   gps: ['application/json', 'text/plain'],
   biometric: ['application/json'],
+  // New Phase 3 types
+  invoice: ['application/pdf', 'image/jpeg', 'image/png'],
+  video: ['video/mp4', 'video/webm', 'video/quicktime'],
+  audit: ['application/pdf'],
+  contract: ['application/pdf', 'image/jpeg', 'image/png'],
+  government_doc: ['application/pdf', 'image/jpeg', 'image/png'],
 }
 
 const TYPE_LABELS: Record<VerificationType, string> = {
   receipt: 'Receipt',
-  photo: 'Photo',
+  photo: 'Photo Evidence',
   document: 'Document',
   bank_statement: 'Bank Statement',
   signature: 'Signature',
-  gps: 'GPS Data',
+  gps: 'GPS Verification',
   biometric: 'Biometric',
+  // New Phase 3 types
+  invoice: 'Invoice',
+  video: 'Video Evidence',
+  audit: 'Third-party Audit',
+  contract: 'Contract',
+  government_doc: 'Government Document',
+}
+
+const VISIBILITY_LABELS: Record<VerificationVisibility, string> = {
+  full: 'Full Access',
+  thumbnail: 'Thumbnail Only',
+  summary: 'Summary Only',
+  hidden: 'Hidden',
+}
+
+const VISIBILITY_DESCRIPTIONS: Record<VerificationVisibility, string> = {
+  full: 'Board & Staff can see original file with all details',
+  thumbnail: 'Donors see blurred/low-res version',
+  summary: 'Partners see "Proof attached" indicator only',
+  hidden: 'Not visible to public',
 }
 
 function formatFileSize(bytes: number): string {
@@ -423,6 +486,311 @@ export function FileUpload({
           })}
         </ul>
       )}
+    </div>
+  )
+}
+
+// GPS capture hook
+export function useGPSCapture() {
+  const [location, setLocation] = useState<GPSLocation | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const captureLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const loc: GPSLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        }
+
+        // Try to get location name via reverse geocoding (optional)
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${loc.latitude}&lon=${loc.longitude}&format=json`,
+          )
+          if (response.ok) {
+            const data = await response.json()
+            loc.locationName = data.display_name?.split(',').slice(0, 3).join(',')
+          }
+        } catch {
+          // Ignore geocoding errors
+        }
+
+        setLocation(loc)
+        setLoading(false)
+      },
+      (err) => {
+        setError(err.message || 'Failed to get location')
+        setLoading(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }, [])
+
+  const clearLocation = useCallback(() => {
+    setLocation(null)
+    setError(null)
+  }, [])
+
+  return { location, loading, error, captureLocation, clearLocation }
+}
+
+// Visibility selector component
+interface VisibilitySelectorProps {
+  value: VerificationVisibility
+  onChange: (value: VerificationVisibility) => void
+  disabled?: boolean
+  className?: string
+}
+
+export function VisibilitySelector({
+  value,
+  onChange,
+  disabled,
+  className,
+}: VisibilitySelectorProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className={cn('relative', className)}>
+      <Label className="text-sm font-medium mb-1.5 block">Visibility Level</Label>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={cn(
+          'flex items-center justify-between w-full px-3 py-2 text-sm border rounded-lg bg-background',
+          'hover:bg-muted transition-colors',
+          disabled && 'opacity-50 cursor-not-allowed',
+        )}
+      >
+        <span className="flex items-center gap-2">
+          {value === 'hidden' ? (
+            <EyeSlash className="size-4 text-muted-foreground" />
+          ) : (
+            <Eye className="size-4 text-muted-foreground" />
+          )}
+          {VISIBILITY_LABELS[value]}
+        </span>
+        <CaretDown className="size-4 text-muted-foreground" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 border rounded-lg bg-card shadow-lg">
+          {(Object.keys(VISIBILITY_LABELS) as VerificationVisibility[]).map((level) => (
+            <button
+              key={level}
+              type="button"
+              onClick={() => {
+                onChange(level)
+                setIsOpen(false)
+              }}
+              className={cn(
+                'flex flex-col w-full px-3 py-2 text-left hover:bg-muted transition-colors',
+                'first:rounded-t-lg last:rounded-b-lg',
+                value === level && 'bg-primary/10',
+              )}
+            >
+              <span className="flex items-center gap-2 text-sm font-medium">
+                {level === 'hidden' ? (
+                  <EyeSlash className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
+                {VISIBILITY_LABELS[level]}
+              </span>
+              <span className="text-xs text-muted-foreground mt-0.5">
+                {VISIBILITY_DESCRIPTIONS[level]}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// GPS capture button component
+interface GPSCaptureButtonProps {
+  location: GPSLocation | null
+  loading: boolean
+  error: string | null
+  onCapture: () => void
+  onClear: () => void
+  disabled?: boolean
+  className?: string
+}
+
+export function GPSCaptureButton({
+  location,
+  loading,
+  error,
+  onCapture,
+  onClear,
+  disabled,
+  className,
+}: GPSCaptureButtonProps) {
+  return (
+    <div className={cn('space-y-2', className)}>
+      <Label className="text-sm font-medium">GPS Location</Label>
+      {!location ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onCapture}
+          disabled={disabled || loading}
+          className="w-full"
+        >
+          {loading ? (
+            <SpinnerGap className="size-4 animate-spin mr-2" />
+          ) : (
+            <MapPin className="size-4 mr-2" />
+          )}
+          {loading ? 'Getting location...' : 'Capture GPS Location'}
+        </Button>
+      ) : (
+        <div className="flex items-start gap-2 p-2 rounded-lg border bg-muted/30">
+          <MapPin className="size-4 text-emerald-600 shrink-0 mt-0.5" weight="fill" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium">
+              {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+            </p>
+            {location.locationName && (
+              <p className="text-xs text-muted-foreground truncate">
+                {location.locationName}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Accuracy: ±{Math.round(location.accuracy)}m
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={onClear}
+            disabled={disabled}
+          >
+            <X className="size-3.5" />
+          </Button>
+        </div>
+      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  )
+}
+
+// Enhanced verification upload form with all Phase 3 fields
+interface EnhancedUploadFormProps {
+  verificationType: VerificationType
+  visibilityLevel: VerificationVisibility
+  onVisibilityChange: (level: VerificationVisibility) => void
+  executorName: string
+  onExecutorNameChange: (name: string) => void
+  description: string
+  onDescriptionChange: (desc: string) => void
+  gpsLocation: GPSLocation | null
+  gpsLoading: boolean
+  gpsError: string | null
+  onCaptureGPS: () => void
+  onClearGPS: () => void
+  disabled?: boolean
+  className?: string
+}
+
+export function EnhancedUploadForm({
+  verificationType,
+  visibilityLevel,
+  onVisibilityChange,
+  executorName,
+  onExecutorNameChange,
+  description,
+  onDescriptionChange,
+  gpsLocation,
+  gpsLoading,
+  gpsError,
+  onCaptureGPS,
+  onClearGPS,
+  disabled,
+  className,
+}: EnhancedUploadFormProps) {
+  const trustPoints = VERIFICATION_TRUST_POINTS[verificationType] || 0
+
+  return (
+    <div className={cn('space-y-4', className)}>
+      {/* Trust points indicator */}
+      <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          {TYPE_LABELS[verificationType]}
+        </span>
+        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+          +{trustPoints} Trust Points
+        </span>
+      </div>
+
+      {/* Visibility selector */}
+      <VisibilitySelector
+        value={visibilityLevel}
+        onChange={onVisibilityChange}
+        disabled={disabled}
+      />
+
+      {/* Executor name */}
+      <div>
+        <Label htmlFor="executor-name" className="text-sm font-medium">
+          Executor Name
+        </Label>
+        <div className="relative mt-1.5">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            id="executor-name"
+            value={executorName}
+            onChange={(e) => onExecutorNameChange(e.target.value)}
+            placeholder="Who executed this transaction?"
+            disabled={disabled}
+            className="pl-9"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Visibility controlled by access group permissions
+        </p>
+      </div>
+
+      {/* Description */}
+      <div>
+        <Label htmlFor="description" className="text-sm font-medium">
+          Description
+        </Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="Add notes about this verification..."
+          disabled={disabled}
+          className="mt-1.5 min-h-[80px]"
+        />
+      </div>
+
+      {/* GPS capture */}
+      <GPSCaptureButton
+        location={gpsLocation}
+        loading={gpsLoading}
+        error={gpsError}
+        onCapture={onCaptureGPS}
+        onClear={onClearGPS}
+        disabled={disabled}
+      />
     </div>
   )
 }

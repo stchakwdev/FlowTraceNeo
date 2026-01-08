@@ -3,7 +3,9 @@ import { Link, useLocation } from '@tanstack/react-router'
 import {
   CurrencyCircleDollar,
   FlowArrow,
+  Gear,
   House,
+  LinkSimple,
   List,
   ShieldCheck,
   X,
@@ -15,7 +17,9 @@ const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: House },
   { label: 'Transactions', href: '/transactions', icon: CurrencyCircleDollar },
   { label: 'Flows', href: '/flows', icon: FlowArrow },
+  { label: 'Chains', href: '/chains', icon: LinkSimple },
   { label: 'Trust Score', href: '/trust-score', icon: ShieldCheck },
+  { label: 'Settings', href: '/settings', icon: Gear },
 ]
 
 interface MobileNavProps {
