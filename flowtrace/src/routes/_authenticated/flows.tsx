@@ -1,5 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+import {
+  ArrowsIn,
+  ArrowsOut,
+  CurrencyCircleDollar,
+  FlowArrow,
+  GitBranch,
+  Lightning,
+  MagnifyingGlassMinus,
+  MagnifyingGlassPlus,
+  Plus,
+  TrendDown,
+  TrendUp,
+} from '@phosphor-icons/react'
 import { useFlowData } from '@/lib/queries'
 import type { FlowDataNode } from '@/lib/supabase'
 
@@ -136,21 +149,26 @@ function FlowVisualization() {
     <div className="mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Money Flow</h1>
-          <p className="text-muted-foreground">
-            Visualize how funds move through your organization
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/20">
+            <FlowArrow className="h-6 w-6 text-white" weight="bold" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Money Flow</h1>
+            <p className="text-muted-foreground">
+              Visualize how funds move through your organization
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 rounded-lg border border-border bg-card p-1">
           {['week', 'month', 'quarter', 'year'].map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
                 timeRange === range
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-muted-foreground hover:bg-accent'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -166,30 +184,57 @@ function FlowVisualization() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-border bg-card p-4"
+                className="rounded-xl border border-border bg-card p-4"
               >
-                <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-                <div className="mt-2 h-8 w-24 animate-pulse rounded bg-muted" />
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+                  <div className="h-8 w-8 animate-pulse rounded-lg bg-muted" />
+                </div>
+                <div className="mt-2 h-7 w-24 animate-pulse rounded bg-muted" />
               </div>
             ))}
           </>
         ) : (
           <>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Total Flow</p>
-              <p className="text-2xl font-bold">{formatCurrency(totalFlow)}</p>
+            <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Total Flow</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                  <CurrencyCircleDollar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" weight="duotone" />
+                </div>
+              </div>
+              <p className="relative mt-1 text-2xl font-bold">{formatCurrency(totalFlow)}</p>
             </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Active Nodes</p>
-              <p className="text-2xl font-bold">{positionedNodes.length}</p>
+            <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Active Nodes</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <GitBranch className="h-4 w-4 text-blue-600 dark:text-blue-400" weight="duotone" />
+                </div>
+              </div>
+              <p className="relative mt-1 text-2xl font-bold">{positionedNodes.length}</p>
             </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Flow Links</p>
-              <p className="text-2xl font-bold">{edges.length}</p>
+            <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Flow Links</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                  <Lightning className="h-4 w-4 text-violet-600 dark:text-violet-400" weight="duotone" />
+                </div>
+              </div>
+              <p className="relative mt-1 text-2xl font-bold">{edges.length}</p>
             </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Avg Flow</p>
-              <p className="text-2xl font-bold">
+            <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Avg Flow</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                  <TrendUp className="h-4 w-4 text-amber-600 dark:text-amber-400" weight="duotone" />
+                </div>
+              </div>
+              <p className="relative mt-1 text-2xl font-bold">
                 {edges.length > 0
                   ? formatCurrency(totalFlow / edges.length)
                   : 'N/A'}
@@ -215,28 +260,28 @@ function FlowVisualization() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Flow Diagram */}
-        <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2">
+        <div className="rounded-xl border border-border bg-card p-4 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Flow Diagram</h2>
-            <div className="flex gap-2">
-              <button className="rounded-lg border border-border p-2 hover:bg-accent">
-                <ZoomOutIcon className="h-4 w-4" />
+            <div className="flex gap-1 rounded-lg border border-border bg-muted/30 p-1">
+              <button className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <MagnifyingGlassMinus className="h-4 w-4" />
               </button>
-              <button className="rounded-lg border border-border p-2 hover:bg-accent">
-                <ZoomInIcon className="h-4 w-4" />
+              <button className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <MagnifyingGlassPlus className="h-4 w-4" />
               </button>
-              <button className="rounded-lg border border-border p-2 hover:bg-accent">
-                <MaximizeIcon className="h-4 w-4" />
+              <button className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <ArrowsOut className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          <div className="overflow-auto rounded-lg border border-border bg-accent/30">
+          <div className="overflow-auto rounded-xl border border-border bg-gradient-to-br from-muted/30 to-muted/10">
             {isLoading ? (
               <div className="flex h-[500px] items-center justify-center">
                 <div className="text-center">
-                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  <p className="mt-4 text-muted-foreground">
+                  <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="mt-4 font-medium text-muted-foreground">
                     Loading flow data...
                   </p>
                 </div>
@@ -244,10 +289,20 @@ function FlowVisualization() {
             ) : positionedNodes.length === 0 ? (
               <div className="flex h-[500px] items-center justify-center">
                 <div className="text-center">
-                  <GraphIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-4 text-muted-foreground">
-                    No flow nodes found
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                    <FlowArrow className="h-8 w-8 text-muted-foreground" weight="duotone" />
+                  </div>
+                  <h3 className="mt-4 font-semibold">No flow nodes found</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Add transactions to start visualizing your flows
                   </p>
+                  <Link
+                    to="/transactions/new"
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Transaction
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -372,34 +427,50 @@ function FlowVisualization() {
         <div className="space-y-4">
           {selectedNodeData ? (
             <>
-              <div className="rounded-lg border border-border bg-card p-6">
-                <h2 className="mb-4 text-lg font-semibold">
-                  {selectedNodeData.node.name}
-                </h2>
-                <p className="mb-4 text-sm capitalize text-muted-foreground">
-                  {selectedNodeData.node.type}
-                </p>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Inflows</p>
-                    <p className="text-xl font-bold text-green-600">
+                    <h2 className="text-lg font-semibold">
+                      {selectedNodeData.node.name}
+                    </h2>
+                    <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">
+                      {selectedNodeData.node.type}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedNode(null)}
+                    className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <ArrowsIn className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+                    <div className="flex items-center gap-2">
+                      <TrendUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" weight="bold" />
+                      <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Inflows</p>
+                    </div>
+                    <p className="mt-1 text-xl font-bold text-emerald-700 dark:text-emerald-400">
                       {formatCurrency(selectedNodeData.totalIn)}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Outflows</p>
-                    <p className="text-xl font-bold text-red-600">
+                  <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+                    <div className="flex items-center gap-2">
+                      <TrendDown className="h-4 w-4 text-red-600 dark:text-red-400" weight="bold" />
+                      <p className="text-xs font-medium text-red-700 dark:text-red-400">Outflows</p>
+                    </div>
+                    <p className="mt-1 text-xl font-bold text-red-700 dark:text-red-400">
                       {formatCurrency(selectedNodeData.totalOut)}
                     </p>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <p className="text-sm text-muted-foreground">Net</p>
+                <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-xs font-medium text-muted-foreground">Net Balance</p>
                   <p
-                    className={`text-xl font-bold ${
+                    className={`mt-1 text-2xl font-bold ${
                       selectedNodeData.totalIn - selectedNodeData.totalOut >= 0
-                        ? 'text-green-600'
-                        : 'text-red-600'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-red-600 dark:text-red-400'
                     }`}
                   >
                     {formatCurrency(
@@ -410,8 +481,9 @@ function FlowVisualization() {
               </div>
 
               {selectedNodeData.inflows.length > 0 && (
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <h3 className="mb-3 font-semibold text-green-600">
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400">
+                    <TrendUp className="h-4 w-4" weight="bold" />
                     Inflows ({selectedNodeData.inflows.length})
                   </h3>
                   <ul className="space-y-2">
@@ -422,10 +494,10 @@ function FlowVisualization() {
                       return (
                         <li
                           key={flow.id}
-                          className="flex items-center justify-between text-sm"
+                          className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 text-sm"
                         >
-                          <span>{fromNode?.name ?? 'Unknown'}</span>
-                          <span className="font-medium">
+                          <span className="truncate">{fromNode?.name ?? 'Unknown'}</span>
+                          <span className="shrink-0 font-medium text-emerald-600 dark:text-emerald-400">
                             {formatCurrency(flow.amount)}
                           </span>
                         </li>
@@ -436,8 +508,9 @@ function FlowVisualization() {
               )}
 
               {selectedNodeData.outflows.length > 0 && (
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <h3 className="mb-3 font-semibold text-red-600">
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-red-600 dark:text-red-400">
+                    <TrendDown className="h-4 w-4" weight="bold" />
                     Outflows ({selectedNodeData.outflows.length})
                   </h3>
                   <ul className="space-y-2">
@@ -448,10 +521,10 @@ function FlowVisualization() {
                       return (
                         <li
                           key={flow.id}
-                          className="flex items-center justify-between text-sm"
+                          className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 text-sm"
                         >
-                          <span>{toNode?.name ?? 'Unknown'}</span>
-                          <span className="font-medium">
+                          <span className="truncate">{toNode?.name ?? 'Unknown'}</span>
+                          <span className="shrink-0 font-medium text-red-600 dark:text-red-400">
                             {formatCurrency(flow.amount)}
                           </span>
                         </li>
@@ -462,9 +535,11 @@ function FlowVisualization() {
               )}
             </>
           ) : (
-            <div className="rounded-lg border border-border bg-card p-6 text-center">
-              <GraphIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="font-semibold">Select a Node</h3>
+            <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                <GitBranch className="h-7 w-7 text-muted-foreground" weight="duotone" />
+              </div>
+              <h3 className="mt-4 font-semibold">Select a Node</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Click on any node in the diagram to see its flow details
               </p>
@@ -476,75 +551,3 @@ function FlowVisualization() {
   )
 }
 
-// Icon components
-function ZoomInIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-      />
-    </svg>
-  )
-}
-
-function ZoomOutIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"
-      />
-    </svg>
-  )
-}
-
-function MaximizeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-      />
-    </svg>
-  )
-}
-
-function GraphIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13 10V3L4 14h7v7l9-11h-7z"
-      />
-    </svg>
-  )
-}
