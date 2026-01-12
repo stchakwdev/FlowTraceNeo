@@ -1369,3 +1369,422 @@ export async function searchOrganizations(query: string, excludeOrgId: string) {
   if (error) throw error
   return data as Pick<Organization, 'id' | 'name' | 'logo_url' | 'trust_score' | 'type' | 'country'>[]
 }
+
+// ============================================================================
+// CAMPAIGNS & DONATIONS TYPES
+// ============================================================================
+
+export type CampaignStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled'
+export type PaymentStatus = 'pending' | 'confirmed' | 'failed' | 'refunded'
+export type DonorUpdateType =
+  | 'donation_received'
+  | 'funds_allocated'
+  | 'milestone_reached'
+  | 'project_update'
+  | 'impact_report'
+  | 'campaign_complete'
+  | 'thank_you'
+  | 'custom'
+export type DeliveryMethod = 'email' | 'sms' | 'push' | 'in_app'
+
+export interface Campaign {
+  id: string
+  organization_id: string
+  name: string
+  description: string | null
+  short_description: string | null
+  image_url: string | null
+  target_amount: number
+  current_amount: number
+  currency: string
+  target_node_id: string | null
+  status: CampaignStatus
+  allow_overflow: boolean
+  overflow_campaign_id: string | null
+  overflow_consent_message: string | null
+  starts_at: string
+  ends_at: string | null
+  is_public: boolean
+  public_slug: string | null
+  category: string | null
+  tags: string[] | null
+  metadata: Record<string, unknown>
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CampaignStats {
+  donation_count: number
+  unique_donors: number
+  total_raised: number
+  funding_percentage: number
+  avg_donation: number
+  largest_donation: number
+  smallest_donation: number
+  days_remaining: number | null
+  days_active: number
+}
+
+export interface CampaignWithDetails extends Campaign {
+  target_node: Pick<FlowNode, 'id' | 'name' | 'type'> | null
+  stats?: CampaignStats
+}
+
+export interface CampaignCounts {
+  total_campaigns: number
+  active_campaigns: number
+  completed_campaigns: number
+  total_raised: number
+  total_donations: number
+}
+
+export interface Donation {
+  id: string
+  campaign_id: string
+  donor_email: string | null
+  donor_name: string | null
+  donor_phone: string | null
+  is_anonymous: boolean
+  amount: number
+  currency: string
+  amount_usd: number | null
+  exchange_rate: number | null
+  earmarked_node_id: string | null
+  earmark_notes: string | null
+  allow_reallocation: boolean
+  flow_node_id: string | null
+  impact_percentage: number | null
+  payment_method: string | null
+  payment_reference: string | null
+  payment_status: PaymentStatus
+  transaction_id: string | null
+  source: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface DonationWithDetails extends Donation {
+  campaign: Pick<Campaign, 'id' | 'name' | 'public_slug' | 'status'>
+  earmarked_node: Pick<FlowNode, 'id' | 'name' | 'type'> | null
+}
+
+export interface DonorUpdate {
+  id: string
+  donation_id: string
+  campaign_id: string | null
+  update_type: DonorUpdateType
+  title: string
+  message: string
+  image_url: string | null
+  related_node_id: string | null
+  related_transaction_id: string | null
+  sent_at: string | null
+  delivery_method: DeliveryMethod
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface DonorUpdateWithDetails extends DonorUpdate {
+  donation: Pick<Donation, 'id' | 'donor_email' | 'donor_name' | 'amount'>
+  campaign: Pick<Campaign, 'id' | 'name'> | null
+  related_node: Pick<FlowNode, 'id' | 'name' | 'type'> | null
+}
+
+// ============================================================================
+// CAMPAIGNS HELPERS
+// ============================================================================
+
+export async function getCampaigns(organizationId: string) {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .select(`
+      *,
+      target_node:flow_nodes(id, name, type)
+    `)
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as CampaignWithDetails[]
+}
+
+export async function getCampaign(id: string, organizationId: string) {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .select(`
+      *,
+      target_node:flow_nodes(id, name, type)
+    `)
+    .eq('id', id)
+    .eq('organization_id', organizationId)
+    .single()
+
+  if (error) throw error
+  return data as CampaignWithDetails
+}
+
+export async function getCampaignBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .select(`
+      *,
+      target_node:flow_nodes(id, name, type)
+    `)
+    .eq('public_slug', slug)
+    .eq('is_public', true)
+    .eq('status', 'active')
+    .single()
+
+  if (error) throw error
+  return data as CampaignWithDetails
+}
+
+export async function createCampaign(
+  campaign: Omit<Campaign, 'id' | 'current_amount' | 'created_at' | 'updated_at'>,
+) {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .insert(campaign)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Campaign
+}
+
+export async function updateCampaign(
+  id: string,
+  organizationId: string,
+  updates: Partial<Omit<Campaign, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>,
+) {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .update(updates)
+    .eq('id', id)
+    .eq('organization_id', organizationId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Campaign
+}
+
+export async function deleteCampaign(id: string, organizationId: string) {
+  const { error } = await supabase
+    .from('campaigns')
+    .delete()
+    .eq('id', id)
+    .eq('organization_id', organizationId)
+    .eq('status', 'draft')
+
+  if (error) throw error
+}
+
+export async function getCampaignStats(campaignId: string): Promise<CampaignStats> {
+  const { data, error } = await supabase.rpc('get_campaign_stats', {
+    p_campaign_id: campaignId,
+  })
+
+  if (error) throw error
+  return data?.[0] as CampaignStats
+}
+
+export async function getCampaignCounts(organizationId: string): Promise<CampaignCounts> {
+  const { data, error } = await supabase.rpc('get_org_campaign_counts', {
+    p_org_id: organizationId,
+  })
+
+  if (error) throw error
+  return data?.[0] as CampaignCounts
+}
+
+export async function getUnderfundedCampaigns(organizationId: string, limit = 5) {
+  const { data, error } = await supabase.rpc('get_underfunded_campaigns', {
+    p_org_id: organizationId,
+    p_limit: limit,
+  })
+
+  if (error) throw error
+  return data as Campaign[]
+}
+
+export async function generateCampaignSlug(name: string, organizationId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('generate_campaign_slug', {
+    p_name: name,
+    p_org_id: organizationId,
+  })
+
+  if (error) throw error
+  return data as string
+}
+
+// ============================================================================
+// DONATIONS HELPERS
+// ============================================================================
+
+export async function getDonations(campaignId: string) {
+  const { data, error } = await supabase
+    .from('donations')
+    .select(`
+      *,
+      campaign:campaigns(id, name, public_slug, status),
+      earmarked_node:flow_nodes(id, name, type)
+    `)
+    .eq('campaign_id', campaignId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as DonationWithDetails[]
+}
+
+export async function getDonation(id: string) {
+  const { data, error } = await supabase
+    .from('donations')
+    .select(`
+      *,
+      campaign:campaigns(id, name, public_slug, status),
+      earmarked_node:flow_nodes(id, name, type)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data as DonationWithDetails
+}
+
+export async function createDonation(
+  donation: Omit<Donation, 'id' | 'impact_percentage' | 'created_at' | 'updated_at'>,
+) {
+  const { data, error } = await supabase
+    .from('donations')
+    .insert(donation)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Donation
+}
+
+export async function updateDonationStatus(
+  id: string,
+  status: PaymentStatus,
+  paymentReference?: string,
+) {
+  const { data, error } = await supabase
+    .from('donations')
+    .update({
+      payment_status: status,
+      payment_reference: paymentReference || null,
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Donation
+}
+
+export async function getDonorDonations(donorEmail: string) {
+  const { data, error } = await supabase
+    .from('donations')
+    .select(`
+      *,
+      campaign:campaigns(id, name, public_slug, status)
+    `)
+    .eq('donor_email', donorEmail)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as DonationWithDetails[]
+}
+
+export async function calculateDonationImpact(donationId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('calculate_donation_impact', {
+    p_donation_id: donationId,
+  })
+
+  if (error) throw error
+  return data as number
+}
+
+// ============================================================================
+// DONOR UPDATES HELPERS
+// ============================================================================
+
+export async function getDonorUpdates(donationId: string) {
+  const { data, error } = await supabase
+    .from('donor_updates')
+    .select(`
+      *,
+      donation:donations(id, donor_email, donor_name, amount),
+      campaign:campaigns(id, name),
+      related_node:flow_nodes(id, name, type)
+    `)
+    .eq('donation_id', donationId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as DonorUpdateWithDetails[]
+}
+
+export async function getCampaignUpdates(campaignId: string) {
+  const { data, error } = await supabase
+    .from('donor_updates')
+    .select(`
+      *,
+      donation:donations(id, donor_email, donor_name, amount),
+      campaign:campaigns(id, name),
+      related_node:flow_nodes(id, name, type)
+    `)
+    .eq('campaign_id', campaignId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as DonorUpdateWithDetails[]
+}
+
+export async function createDonorUpdate(
+  update: Omit<DonorUpdate, 'id' | 'sent_at' | 'created_at'>,
+) {
+  const { data, error } = await supabase
+    .from('donor_updates')
+    .insert(update)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as DonorUpdate
+}
+
+export async function markUpdateSent(id: string) {
+  const { data, error } = await supabase
+    .from('donor_updates')
+    .update({ sent_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as DonorUpdate
+}
+
+// Create donor flow node helper
+export async function createDonorFlowNode(
+  organizationId: string,
+  donorName: string | null,
+  donorEmail: string | null,
+): Promise<string> {
+  const { data, error } = await supabase.rpc('create_donor_node', {
+    p_org_id: organizationId,
+    p_donor_name: donorName,
+    p_donor_email: donorEmail,
+  })
+
+  if (error) throw error
+  return data as string
+}

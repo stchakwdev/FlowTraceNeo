@@ -11,15 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DonateSlugRouteImport } from './routes/donate/$slug'
 import { Route as AuthenticatedTrustScoreRouteImport } from './routes/_authenticated/trust-score'
 import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/flows'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChainsRouteImport } from './routes/_authenticated/chains'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedCampaignsIndexRouteImport } from './routes/_authenticated/campaigns/index'
+import { Route as EmbedCampaignIdRouteImport } from './routes/embed/campaign.$id'
+import { Route as BadgeTrustOrgIdRouteImport } from './routes/badge/trust.$orgId'
 import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions/new'
 import { Route as AuthenticatedTransactionsIdRouteImport } from './routes/_authenticated/transactions/$id'
+import { Route as AuthenticatedSettingsEmbedRouteImport } from './routes/_authenticated/settings/embed'
 import { Route as AuthenticatedSettingsAccessGroupsRouteImport } from './routes/_authenticated/settings/access-groups'
+import { Route as AuthenticatedCampaignsIdRouteImport } from './routes/_authenticated/campaigns/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -28,6 +34,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonateSlugRoute = DonateSlugRouteImport.update({
+  id: '/donate/$slug',
+  path: '/donate/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTrustScoreRoute = AuthenticatedTrustScoreRouteImport.update({
@@ -62,6 +73,22 @@ const AuthenticatedSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCampaignsIndexRoute =
+  AuthenticatedCampaignsIndexRouteImport.update({
+    id: '/campaigns/',
+    path: '/campaigns/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const EmbedCampaignIdRoute = EmbedCampaignIdRouteImport.update({
+  id: '/embed/campaign/$id',
+  path: '/embed/campaign/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BadgeTrustOrgIdRoute = BadgeTrustOrgIdRouteImport.update({
+  id: '/badge/trust/$orgId',
+  path: '/badge/trust/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTransactionsNewRoute =
   AuthenticatedTransactionsNewRouteImport.update({
     id: '/transactions/new',
@@ -74,10 +101,22 @@ const AuthenticatedTransactionsIdRoute =
     path: '/transactions/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsEmbedRoute =
+  AuthenticatedSettingsEmbedRouteImport.update({
+    id: '/settings/embed',
+    path: '/settings/embed',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsAccessGroupsRoute =
   AuthenticatedSettingsAccessGroupsRouteImport.update({
     id: '/settings/access-groups',
     path: '/settings/access-groups',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCampaignsIdRoute =
+  AuthenticatedCampaignsIdRouteImport.update({
+    id: '/campaigns/$id',
+    path: '/campaigns/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -87,9 +126,15 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/donate/$slug': typeof DonateSlugRoute
+  '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
   '/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
+  '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
+  '/embed/campaign/$id': typeof EmbedCampaignIdRoute
+  '/campaigns': typeof AuthenticatedCampaignsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
 }
@@ -99,9 +144,15 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/donate/$slug': typeof DonateSlugRoute
+  '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
   '/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
+  '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
+  '/embed/campaign/$id': typeof EmbedCampaignIdRoute
+  '/campaigns': typeof AuthenticatedCampaignsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
 }
@@ -113,9 +164,15 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/flows': typeof AuthenticatedFlowsRoute
   '/_authenticated/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/donate/$slug': typeof DonateSlugRoute
+  '/_authenticated/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
   '/_authenticated/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
+  '/_authenticated/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/_authenticated/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
+  '/embed/campaign/$id': typeof EmbedCampaignIdRoute
+  '/_authenticated/campaigns/': typeof AuthenticatedCampaignsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
 }
@@ -127,9 +184,15 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/donate/$slug'
+    | '/campaigns/$id'
     | '/settings/access-groups'
+    | '/settings/embed'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/badge/trust/$orgId'
+    | '/embed/campaign/$id'
+    | '/campaigns'
     | '/settings'
     | '/transactions'
   fileRoutesByTo: FileRoutesByTo
@@ -139,9 +202,15 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/donate/$slug'
+    | '/campaigns/$id'
     | '/settings/access-groups'
+    | '/settings/embed'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/badge/trust/$orgId'
+    | '/embed/campaign/$id'
+    | '/campaigns'
     | '/settings'
     | '/transactions'
   id:
@@ -152,9 +221,15 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/flows'
     | '/_authenticated/trust-score'
+    | '/donate/$slug'
+    | '/_authenticated/campaigns/$id'
     | '/_authenticated/settings/access-groups'
+    | '/_authenticated/settings/embed'
     | '/_authenticated/transactions/$id'
     | '/_authenticated/transactions/new'
+    | '/badge/trust/$orgId'
+    | '/embed/campaign/$id'
+    | '/_authenticated/campaigns/'
     | '/_authenticated/settings/'
     | '/_authenticated/transactions/'
   fileRoutesById: FileRoutesById
@@ -162,6 +237,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  DonateSlugRoute: typeof DonateSlugRoute
+  BadgeTrustOrgIdRoute: typeof BadgeTrustOrgIdRoute
+  EmbedCampaignIdRoute: typeof EmbedCampaignIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -178,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donate/$slug': {
+      id: '/donate/$slug'
+      path: '/donate/$slug'
+      fullPath: '/donate/$slug'
+      preLoaderRoute: typeof DonateSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/trust-score': {
@@ -222,6 +307,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/campaigns/': {
+      id: '/_authenticated/campaigns/'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof AuthenticatedCampaignsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/embed/campaign/$id': {
+      id: '/embed/campaign/$id'
+      path: '/embed/campaign/$id'
+      fullPath: '/embed/campaign/$id'
+      preLoaderRoute: typeof EmbedCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/badge/trust/$orgId': {
+      id: '/badge/trust/$orgId'
+      path: '/badge/trust/$orgId'
+      fullPath: '/badge/trust/$orgId'
+      preLoaderRoute: typeof BadgeTrustOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/transactions/new': {
       id: '/_authenticated/transactions/new'
       path: '/transactions/new'
@@ -236,11 +342,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/embed': {
+      id: '/_authenticated/settings/embed'
+      path: '/settings/embed'
+      fullPath: '/settings/embed'
+      preLoaderRoute: typeof AuthenticatedSettingsEmbedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings/access-groups': {
       id: '/_authenticated/settings/access-groups'
       path: '/settings/access-groups'
       fullPath: '/settings/access-groups'
       preLoaderRoute: typeof AuthenticatedSettingsAccessGroupsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/campaigns/$id': {
+      id: '/_authenticated/campaigns/$id'
+      path: '/campaigns/$id'
+      fullPath: '/campaigns/$id'
+      preLoaderRoute: typeof AuthenticatedCampaignsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
@@ -251,9 +371,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFlowsRoute: typeof AuthenticatedFlowsRoute
   AuthenticatedTrustScoreRoute: typeof AuthenticatedTrustScoreRoute
+  AuthenticatedCampaignsIdRoute: typeof AuthenticatedCampaignsIdRoute
   AuthenticatedSettingsAccessGroupsRoute: typeof AuthenticatedSettingsAccessGroupsRoute
+  AuthenticatedSettingsEmbedRoute: typeof AuthenticatedSettingsEmbedRoute
   AuthenticatedTransactionsIdRoute: typeof AuthenticatedTransactionsIdRoute
   AuthenticatedTransactionsNewRoute: typeof AuthenticatedTransactionsNewRoute
+  AuthenticatedCampaignsIndexRoute: typeof AuthenticatedCampaignsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
 }
@@ -263,10 +386,13 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFlowsRoute: AuthenticatedFlowsRoute,
   AuthenticatedTrustScoreRoute: AuthenticatedTrustScoreRoute,
+  AuthenticatedCampaignsIdRoute: AuthenticatedCampaignsIdRoute,
   AuthenticatedSettingsAccessGroupsRoute:
     AuthenticatedSettingsAccessGroupsRoute,
+  AuthenticatedSettingsEmbedRoute: AuthenticatedSettingsEmbedRoute,
   AuthenticatedTransactionsIdRoute: AuthenticatedTransactionsIdRoute,
   AuthenticatedTransactionsNewRoute: AuthenticatedTransactionsNewRoute,
+  AuthenticatedCampaignsIndexRoute: AuthenticatedCampaignsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
 }
@@ -278,6 +404,9 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  DonateSlugRoute: DonateSlugRoute,
+  BadgeTrustOrgIdRoute: BadgeTrustOrgIdRoute,
+  EmbedCampaignIdRoute: EmbedCampaignIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

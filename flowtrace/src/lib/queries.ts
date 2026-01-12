@@ -8,19 +8,35 @@ import { useOrg } from './org-context'
 import {
   addGroupMember,
   approveChain,
+  calculateDonationImpact,
   calculateTrustScoreAPI,
   cancelChainRequest,
   createAccessGroup,
+  createCampaign,
+  createDonation,
+  createDonorFlowNode,
+  createDonorUpdate,
   createNode,
   createTransaction,
   createVerification,
   deleteAccessGroup,
+  deleteCampaign,
   getAccessGroup,
   getAccessGroups,
+  getCampaign,
+  getCampaignBySlug,
+  getCampaignCounts,
+  getCampaigns,
+  getCampaignStats,
+  getCampaignUpdates,
   getChain,
   getChainActivityLog,
   getChainCounts,
   getChainTrustScore,
+  getDonation,
+  getDonations,
+  getDonorDonations,
+  getDonorUpdates,
   getFlowDataAPI,
   getGroupMembers,
   getIncomingChains,
@@ -32,11 +48,13 @@ import {
   getTransaction,
   getTransactions,
   getTrustScoreHistory,
+  getUnderfundedCampaigns,
   getUserGroups,
   getUserPermissions,
   getVerifications,
   getVisibilityContext,
   inviteMemberByEmail,
+  markUpdateSent,
   processReceiptOCR,
   rejectChain,
   removeGroupMember,
@@ -46,7 +64,9 @@ import {
   searchOrganizations,
   setNodeVisibility,
   updateAccessGroup,
+  updateCampaign,
   updateChainPermissions,
+  updateDonationStatus,
   updatePublicEmbedConfig,
   updateTransaction,
   uploadVerificationFile,
@@ -54,10 +74,21 @@ import {
 import type {
   AccessGroup,
   AccessGroupPermissions,
+  Campaign,
+  CampaignCounts,
+  CampaignStats,
+  CampaignStatus,
+  CampaignWithDetails,
   ChainActivityLog,
   ChainCounts,
   ChainStatus,
   ChainTrustScore,
+  DeliveryMethod,
+  Donation,
+  DonationWithDetails,
+  DonorUpdate,
+  DonorUpdateType,
+  DonorUpdateWithDetails,
   FlowDataResult,
   FlowNode,
   GroupMember,
@@ -65,6 +96,7 @@ import type {
   Organization,
   OrganizationChain,
   OrganizationChainWithDetails,
+  PaymentStatus,
   PublicEmbedConfig,
   Transaction,
   TrustScoreResult,
@@ -106,6 +138,18 @@ export const queryKeys = {
   chainTrustScore: (chainId: string) => ['chain-trust-score', chainId] as const,
   orgSearch: (query: string, excludeOrgId: string) =>
     ['org-search', query, excludeOrgId] as const,
+  // Campaigns & Donations
+  campaigns: (orgId: string) => ['campaigns', orgId] as const,
+  campaign: (id: string, orgId: string) => ['campaign', id, orgId] as const,
+  campaignBySlug: (slug: string) => ['campaign-slug', slug] as const,
+  campaignStats: (campaignId: string) => ['campaign-stats', campaignId] as const,
+  campaignCounts: (orgId: string) => ['campaign-counts', orgId] as const,
+  underfundedCampaigns: (orgId: string) => ['underfunded-campaigns', orgId] as const,
+  donations: (campaignId: string) => ['donations', campaignId] as const,
+  donation: (id: string) => ['donation', id] as const,
+  donorDonations: (email: string) => ['donor-donations', email] as const,
+  donorUpdates: (donationId: string) => ['donor-updates', donationId] as const,
+  campaignUpdates: (campaignId: string) => ['campaign-updates', campaignId] as const,
 }
 
 // Query options (for use with suspense or prefetching)
@@ -215,6 +259,33 @@ export function useTrustHistory() {
   return useQuery({
     queryKey: queryKeys.trustHistory(organizationId || ''),
     queryFn: () => getTrustScoreHistory(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Trust score for organization (public or by org ID)
+export function useTrustScore(organizationId: string) {
+  return useQuery({
+    queryKey: ['trust-score', organizationId],
+    queryFn: async () => {
+      const history = await getTrustScoreHistory(organizationId, 1)
+      if (history && history.length > 0) {
+        return {
+          overall_score: history[0].score,
+          breakdown: history[0].breakdown,
+          verification_rate: history[0].verification_rate,
+          calculated_at: history[0].calculated_at,
+        }
+      }
+      // Return default if no history
+      return {
+        overall_score: 0,
+        breakdown: {},
+        verification_rate: null,
+        calculated_at: null,
+      }
+    },
     enabled: !!organizationId,
     staleTime: 5 * 60 * 1000,
   })
@@ -1029,20 +1100,336 @@ export function useUpdateChainPermissions() {
   })
 }
 
+// ======================
+// Campaigns & Donations Hooks
+// ======================
+
+// Query Options
+export function campaignsQueryOptions(orgId: string) {
+  return queryOptions({
+    queryKey: queryKeys.campaigns(orgId),
+    queryFn: () => getCampaigns(orgId),
+    staleTime: 60 * 1000, // 1 minute
+    enabled: !!orgId,
+  })
+}
+
+export function campaignQueryOptions(id: string, orgId: string) {
+  return queryOptions({
+    queryKey: queryKeys.campaign(id, orgId),
+    queryFn: () => getCampaign(id, orgId),
+    staleTime: 60 * 1000,
+    enabled: !!id && !!orgId,
+  })
+}
+
+export function campaignBySlugQueryOptions(slug: string) {
+  return queryOptions({
+    queryKey: queryKeys.campaignBySlug(slug),
+    queryFn: () => getCampaignBySlug(slug),
+    staleTime: 60 * 1000,
+    enabled: !!slug,
+  })
+}
+
+// Campaign Hooks
+export function useCampaigns() {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.campaigns(organizationId || ''),
+    queryFn: () => getCampaigns(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useCampaign(id: string) {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.campaign(id, organizationId || ''),
+    queryFn: () => getCampaign(id, organizationId!),
+    enabled: !!organizationId && !!id,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useCampaignBySlug(slug: string) {
+  return useQuery({
+    queryKey: queryKeys.campaignBySlug(slug),
+    queryFn: () => getCampaignBySlug(slug),
+    enabled: !!slug,
+    staleTime: 60 * 1000,
+  })
+}
+
+// Alias for public campaign access
+export const usePublicCampaign = useCampaignBySlug
+
+export function useCampaignStats(campaignId: string) {
+  return useQuery({
+    queryKey: queryKeys.campaignStats(campaignId),
+    queryFn: () => getCampaignStats(campaignId),
+    enabled: !!campaignId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useCampaignCounts() {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.campaignCounts(organizationId || ''),
+    queryFn: () => getCampaignCounts(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useUnderfundedCampaigns(limit = 5) {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.underfundedCampaigns(organizationId || ''),
+    queryFn: () => getUnderfundedCampaigns(organizationId!, limit),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Campaign Mutations
+export function useCreateCampaign() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (
+      data: Omit<Campaign, 'id' | 'current_amount' | 'created_at' | 'updated_at' | 'organization_id'>,
+    ) => createCampaign({ ...data, organization_id: organizationId! }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaigns(organizationId!),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaignCounts(organizationId!),
+      })
+    },
+  })
+}
+
+export function useUpdateCampaign() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      updates,
+    }: {
+      id: string
+      updates: Partial<Omit<Campaign, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>
+    }) => updateCampaign(id, organizationId!, updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaign(variables.id, organizationId!),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaigns(organizationId!),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaignCounts(organizationId!),
+      })
+    },
+  })
+}
+
+export function useDeleteCampaign() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteCampaign(id, organizationId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaigns(organizationId!),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaignCounts(organizationId!),
+      })
+    },
+  })
+}
+
+// Donations Hooks
+export function useDonations(campaignId: string) {
+  return useQuery({
+    queryKey: queryKeys.donations(campaignId),
+    queryFn: () => getDonations(campaignId),
+    enabled: !!campaignId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useDonation(id: string) {
+  return useQuery({
+    queryKey: queryKeys.donation(id),
+    queryFn: () => getDonation(id),
+    enabled: !!id,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useDonorDonations(email: string) {
+  return useQuery({
+    queryKey: queryKeys.donorDonations(email),
+    queryFn: () => getDonorDonations(email),
+    enabled: !!email,
+    staleTime: 60 * 1000,
+  })
+}
+
+// Donation Mutations
+export function useCreateDonation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (
+      data: Omit<Donation, 'id' | 'impact_percentage' | 'created_at' | 'updated_at'>,
+    ) => createDonation(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.donations(variables.campaign_id),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaignStats(variables.campaign_id),
+      })
+      // Invalidate campaign to refresh current_amount
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] === 'campaign' &&
+          query.queryKey[1] === variables.campaign_id,
+      })
+    },
+  })
+}
+
+export function useUpdateDonationStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+      paymentReference,
+    }: {
+      id: string
+      status: PaymentStatus
+      paymentReference?: string
+    }) => updateDonationStatus(id, status, paymentReference),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.donation(data.id),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.donations(data.campaign_id),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaignStats(data.campaign_id),
+      })
+      // Invalidate campaign to refresh current_amount
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] === 'campaign' &&
+          query.queryKey[1] === data.campaign_id,
+      })
+    },
+  })
+}
+
+// Donor Updates Hooks
+export function useDonorUpdates(donationId: string) {
+  return useQuery({
+    queryKey: queryKeys.donorUpdates(donationId),
+    queryFn: () => getDonorUpdates(donationId),
+    enabled: !!donationId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useCampaignUpdates(campaignId: string) {
+  return useQuery({
+    queryKey: queryKeys.campaignUpdates(campaignId),
+    queryFn: () => getCampaignUpdates(campaignId),
+    enabled: !!campaignId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useCreateDonorUpdate() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (
+      data: Omit<DonorUpdate, 'id' | 'sent_at' | 'created_at'>,
+    ) => createDonorUpdate(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.donorUpdates(variables.donation_id),
+      })
+      if (variables.campaign_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.campaignUpdates(variables.campaign_id),
+        })
+      }
+    },
+  })
+}
+
+export function useMarkUpdateSent() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => markUpdateSent(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.donorUpdates(data.donation_id),
+      })
+      if (data.campaign_id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.campaignUpdates(data.campaign_id),
+        })
+      }
+    },
+  })
+}
+
 // Export types for components
 export type {
   AccessGroup,
   AccessGroupPermissions,
+  Campaign,
+  CampaignCounts,
+  CampaignStats,
+  CampaignStatus,
+  CampaignWithDetails,
   ChainActivityLog,
   ChainCounts,
   ChainStatus,
   ChainTrustScore,
+  DeliveryMethod,
+  Donation,
+  DonationWithDetails,
+  DonorUpdate,
+  DonorUpdateType,
+  DonorUpdateWithDetails,
   FlowDataResult,
   GroupMember,
   NodeVisibility,
   Organization,
   OrganizationChain,
   OrganizationChainWithDetails,
+  PaymentStatus,
   PublicEmbedConfig,
   TrustScoreResult,
   Verification,
