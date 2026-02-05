@@ -9,15 +9,29 @@ import { nitro } from 'nitro/vite'
 const config = defineConfig({
   plugins: [
     devtools(),
-    nitro({
-      preset: 'vercel',
-    }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
     tanstackStart(),
+    nitro({
+      preset: 'vercel',
+      serverDir: 'server',
+      routeRules: {
+        '/.well-known/**': {
+          cors: true,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        },
+        '/api/mcp/**': {
+          cors: true,
+        },
+      },
+    }),
     viteReact(),
   ],
 })
