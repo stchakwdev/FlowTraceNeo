@@ -12,7 +12,7 @@ export const Route = createFileRoute('/badge/trust/$orgId')({
 
 function TrustBadgePage() {
   const { orgId } = Route.useParams()
-  const { style, label, format } = Route.useSearch()
+  const { style, label } = Route.useSearch()
 
   // For SVG format, we'd return raw SVG - but for now show preview
   // In production, this could be a server-rendered SVG endpoint

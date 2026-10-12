@@ -10,7 +10,6 @@ import {
   UsersThree,
   TreeStructure,
 } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -177,9 +176,18 @@ export function ChainApprovalModal({
               {/* Access Group Selection */}
               <div className="space-y-2">
                 <Label>Grant Access Level</Label>
-                <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <Select
+                  value={selectedGroupId}
+                  items={{
+                    '': 'Select an access group...',
+                    ...Object.fromEntries(
+                      (accessGroups ?? []).map((group) => [group.id, group.name]),
+                    ),
+                  }}
+                  onValueChange={(value) => setSelectedGroupId(value ?? '')}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select an access group..." />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {accessGroups?.map((group) => (
@@ -201,9 +209,18 @@ export function ChainApprovalModal({
               {/* Link Node Selection (Optional) */}
               <div className="space-y-2">
                 <Label>Link to Node (optional)</Label>
-                <Select value={selectedNodeId} onValueChange={setSelectedNodeId}>
+                <Select
+                  value={selectedNodeId}
+                  items={{
+                    '': 'No specific node',
+                    ...Object.fromEntries(
+                      (nodes ?? []).map((node) => [node.id, node.name]),
+                    ),
+                  }}
+                  onValueChange={(value) => setSelectedNodeId(value ?? '')}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a node to link..." />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">No specific node</SelectItem>

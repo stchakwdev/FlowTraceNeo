@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Receipt,
   Image as ImageIcon,
@@ -26,7 +25,6 @@ import { Card } from '@/components/ui/card'
 import type {
   Verification,
   VerificationType,
-  VerificationVisibility,
 } from '@/lib/supabase'
 import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
 

@@ -8,12 +8,10 @@ import {
   DotsThree,
   Heart,
   PencilSimple,
-  Target,
   Trash,
   TrendUp,
   Users,
 } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -105,8 +103,8 @@ function CampaignDetailPage() {
           <p className="text-muted-foreground mb-4">
             The campaign you're looking for doesn't exist or has been deleted.
           </p>
-          <Button asChild>
-            <Link to="/campaigns">Back to Campaigns</Link>
+          <Button nativeButton={false} render={<Link to="/campaigns" />}>
+            Back to Campaigns
           </Button>
         </Card>
       </div>
@@ -149,10 +147,8 @@ function CampaignDetailPage() {
             </Button>
           )}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <DotsThree className="h-5 w-5" weight="bold" />
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
+              <DotsThree className="h-5 w-5" weight="bold" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>

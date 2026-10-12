@@ -6,7 +6,6 @@ import {
   Megaphone,
   Plus,
 } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'

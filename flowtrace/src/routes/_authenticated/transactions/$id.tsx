@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Wallet,
   Buildings,
-  Plus,
   CloudArrowUp,
   ShareNetwork,
   Download,
@@ -376,7 +375,9 @@ function TransactionDetail() {
                 </Button>
               </div>
               <FileUpload
+                organizationId={transaction.organization_id}
                 transactionId={id}
+                verificationType="document"
                 onUploadComplete={handleUploadComplete}
               />
             </div>

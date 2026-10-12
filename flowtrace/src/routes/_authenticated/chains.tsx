@@ -66,15 +66,6 @@ function ChainsPage() {
     }
   }
 
-  const getTrustGrade = (score: number) => {
-    if (score >= 90) return 'A+'
-    if (score >= 80) return 'A'
-    if (score >= 70) return 'B'
-    if (score >= 60) return 'C'
-    if (score >= 50) return 'D'
-    return 'F'
-  }
-
   return (
     <div className="flex flex-col gap-6 px-6 py-6">
       {/* Header */}
@@ -319,10 +310,8 @@ function ChainCard({ chain, direction, onReview, onCancel, onRevoke }: ChainCard
             </Button>
           )}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <DotsThree className="h-5 w-5" weight="bold" />
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+              <DotsThree className="h-5 w-5" weight="bold" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>

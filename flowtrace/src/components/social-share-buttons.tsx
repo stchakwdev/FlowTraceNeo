@@ -26,7 +26,6 @@ export function SocialShareButtons({
   const [copied, setCopied] = useState(false)
 
   const encodedUrl = encodeURIComponent(url)
-  const encodedTitle = encodeURIComponent(title)
   const encodedText = encodeURIComponent(text || title)
 
   const shareLinks = {

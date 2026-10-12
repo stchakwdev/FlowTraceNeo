@@ -16,7 +16,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
       }
       _supabase = createClient(supabaseUrl, supabaseAnonKey)
     }
-    return (_supabase as Record<string, unknown>)[prop as string]
+    return (_supabase as unknown as Record<string, unknown>)[prop as string]
   },
 })
 
@@ -571,7 +571,7 @@ export async function logVerificationAccess(
 
 // Get verification visibility based on user's access group
 export function getVerificationVisibility(
-  verification: Verification,
+  _verification: Verification,
   userPermissions: AccessGroupPermissions,
 ): VerificationVisibility {
   if (userPermissions.can_view_full_proofs) {

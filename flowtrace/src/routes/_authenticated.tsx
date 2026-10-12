@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { getAuth, getSignInUrl } from '@workos/authkit-tanstack-react-start'
 import { AppShell } from '@/components/layout/app-shell'
+import { mapWorkOSUser } from '@/lib/auth'
 
 // Dev mode detection - skip auth when WorkOS not configured
 const DEV_MODE = !import.meta.env.VITE_WORKOS_CLIENT_ID
@@ -18,9 +19,9 @@ export const Route = createFileRoute('/_authenticated')({
     }
 
     // Production: Check auth
-    const { user, organizationId } = await getAuth()
+    const auth = await getAuth()
 
-    if (!user) {
+    if (!auth.user) {
       // Redirect to WorkOS sign-in with return URL
       const signInUrl = await getSignInUrl({
         data: { returnPathname: location.pathname },
@@ -28,7 +29,11 @@ export const Route = createFileRoute('/_authenticated')({
       throw redirect({ href: signInUrl })
     }
 
-    return { user, organizationId, devMode: false }
+    return {
+      user: mapWorkOSUser(auth.user, auth.organizationId),
+      organizationId: auth.organizationId ?? null,
+      devMode: false,
+    }
   },
   component: AuthenticatedLayout,
 })

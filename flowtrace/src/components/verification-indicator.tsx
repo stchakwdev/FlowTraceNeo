@@ -3,10 +3,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Receipt,
-  Image as ImageIcon,
-  MapPin,
-  File,
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 

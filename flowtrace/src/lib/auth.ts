@@ -32,7 +32,11 @@ export interface AuthState {
 }
 
 // Map WorkOS User to our AuthUser interface
-export function mapWorkOSUser(user: User | null): AuthUser | null {
+// organizationId comes from the WorkOS session, not the User object
+export function mapWorkOSUser(
+  user: User | null,
+  organizationId?: string | null,
+): AuthUser | null {
   if (!user) return null
   return {
     id: user.id,
@@ -40,7 +44,7 @@ export function mapWorkOSUser(user: User | null): AuthUser | null {
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
     profilePictureUrl: user.profilePictureUrl ?? undefined,
-    organizationId: user.organizationId ?? undefined,
+    organizationId: organizationId ?? undefined,
   }
 }
 

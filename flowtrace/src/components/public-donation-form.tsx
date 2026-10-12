@@ -205,8 +205,9 @@ export function PublicDonationForm({ campaign }: PublicDonationFormProps) {
         <Label htmlFor="payment_method">Payment Method</Label>
         <Select
           value={formData.payment_method}
+          items={PAYMENT_METHODS}
           onValueChange={(value) =>
-            setFormData({ ...formData, payment_method: value })
+            setFormData({ ...formData, payment_method: value ?? '' })
           }
         >
           <SelectTrigger>

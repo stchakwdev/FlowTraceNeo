@@ -37,15 +37,6 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
     }).format(amount)
   }
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
   const getDaysRemaining = () => {
     if (!campaign.ends_at) return null
     const now = new Date()
@@ -99,17 +90,15 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
           </div>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 -mr-2">
-                <DotsThree className="h-5 w-5" weight="bold" />
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="shrink-0 -mr-2" />}>
+              <DotsThree className="h-5 w-5" weight="bold" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link to="/campaigns/$id" params={{ id: campaign.id }}>
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Details
-                </Link>
+              <DropdownMenuItem
+                render={<Link to="/campaigns/$id" params={{ id: campaign.id }} />}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
               </DropdownMenuItem>
               {onEdit && (
                 <DropdownMenuItem onClick={onEdit}>

@@ -230,8 +230,9 @@ export function DonationModal({ campaign, isOpen, onClose }: DonationModalProps)
             <Label htmlFor="payment_method">Payment Method</Label>
             <Select
               value={formData.payment_method}
+              items={PAYMENT_METHODS}
               onValueChange={(value) =>
-                setFormData({ ...formData, payment_method: value })
+                setFormData({ ...formData, payment_method: value ?? '' })
               }
             >
               <SelectTrigger>
@@ -253,12 +254,18 @@ export function DonationModal({ campaign, isOpen, onClose }: DonationModalProps)
               <Label htmlFor="earmarked_node">Earmark for (Optional)</Label>
               <Select
                 value={formData.earmarked_node_id}
+                items={{
+                  '': 'Any area of need',
+                  ...Object.fromEntries(
+                    earmarkableNodes.map((node) => [node.id, node.name]),
+                  ),
+                }}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, earmarked_node_id: value })
+                  setFormData({ ...formData, earmarked_node_id: value ?? '' })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Any area of need" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Any area of need</SelectItem>

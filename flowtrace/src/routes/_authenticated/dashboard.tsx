@@ -1,14 +1,10 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   ArrowRight,
-  CheckCircle,
-  Clock,
   CurrencyCircleDollar,
   FileArrowUp,
   FlowArrow,
   Plus,
-  ShieldCheck,
-  Warning,
 } from '@phosphor-icons/react'
 import type { TransactionWithNodes } from '@/lib/supabase'
 import { useOrg } from '@/lib/org-context'

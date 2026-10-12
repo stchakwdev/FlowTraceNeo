@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState } from 'react'
 import {
   CloudArrowUp,
   File,
@@ -223,15 +223,13 @@ export function FileUpload({
         if (error) throw error
 
         // Get the URL (signed URL for private bucket)
-        const {
-          data: { signedUrl },
-        } = await supabase.storage
+        const { data: signed } = await supabase.storage
           .from('verifications')
           .createSignedUrl(data.path, 60 * 60 * 24 * 7) // 7 days
 
         const successFile: UploadedFile = {
           ...uploadedFile,
-          url: signedUrl || '',
+          url: signed?.signedUrl || '',
           status: 'success',
           progress: 100,
         }
@@ -844,13 +842,11 @@ export function CompactFileUpload({
 
       if (uploadError) throw uploadError
 
-      const {
-        data: { signedUrl },
-      } = await supabase.storage
+      const { data: signed } = await supabase.storage
         .from('verifications')
         .createSignedUrl(data.path, 60 * 60 * 24 * 7)
 
-      onUploadComplete?.(signedUrl || '')
+      onUploadComplete?.(signed?.signedUrl || '')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {

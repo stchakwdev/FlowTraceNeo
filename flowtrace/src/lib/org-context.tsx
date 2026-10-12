@@ -43,7 +43,11 @@ const DEV_ORGANIZATION: Organization = {
 }
 
 export function OrgProvider({ children }: { children: ReactNode }) {
-  const { user: workosUser, isLoading: authLoading } = useAuth()
+  const {
+    user: workosUser,
+    organizationId: workosOrgId,
+    loading: authLoading,
+  } = useAuth()
   const [state, setState] = useState<
     Omit<OrgContextValue, 'refetch' | 'user'>
   >({
@@ -55,7 +59,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   })
 
   // Map WorkOS user to our AuthUser type
-  const user = mapWorkOSUser(workosUser)
+  const user = mapWorkOSUser(workosUser, workosOrgId)
 
   const loadOrgContext = async () => {
     // Dev bypass mode - use mock organization
@@ -93,7 +97,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         .eq('id', workosUser.id)
         .single()
 
-      let orgId = profile?.organization_id ?? workosUser.organizationId ?? null
+      let orgId = profile?.organization_id ?? workosOrgId ?? null
 
       // If no profile or no org, auto-provision: create profile + link to demo org
       if (!profile || !orgId) {

@@ -51,10 +51,19 @@ function EmbedSettingsPage() {
               <Label>Select a campaign to embed</Label>
               <Select
                 value={selectedCampaignId}
-                onValueChange={setSelectedCampaignId}
+                items={{
+                  '': 'Choose a campaign...',
+                  ...Object.fromEntries(
+                    activeCampaigns.map((campaign) => [
+                      campaign.id,
+                      campaign.name,
+                    ]),
+                  ),
+                }}
+                onValueChange={(value) => setSelectedCampaignId(value ?? '')}
               >
                 <SelectTrigger className="w-full sm:w-[300px]">
-                  <SelectValue placeholder="Choose a campaign..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {activeCampaigns.map((campaign) => (

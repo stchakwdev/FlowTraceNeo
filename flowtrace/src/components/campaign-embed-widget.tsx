@@ -42,15 +42,6 @@ export function CampaignEmbedWidget({
     return () => observer.disconnect()
   }, [campaign])
 
-  const formatAmount = (amount: number, currency = 'KES') => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">

@@ -14,7 +14,6 @@ import {
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,
   Plus,
-  Shield,
   Storefront,
   TrendDown,
   TrendUp,

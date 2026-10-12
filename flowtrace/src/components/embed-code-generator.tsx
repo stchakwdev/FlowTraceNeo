@@ -24,7 +24,6 @@ interface EmbedCodeGeneratorProps {
 
 export function EmbedCodeGenerator({
   campaignId,
-  campaignSlug,
   campaignName,
   organizationId,
   className,

@@ -8,13 +8,11 @@ import { useOrg } from './org-context'
 import {
   addGroupMember,
   approveChain,
-  calculateDonationImpact,
   calculateTrustScoreAPI,
   cancelChainRequest,
   createAccessGroup,
   createCampaign,
   createDonation,
-  createDonorFlowNode,
   createDonorUpdate,
   createNode,
   createTransaction,
@@ -735,7 +733,7 @@ export function useRemoveGroupMember() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, groupId }: { id: string; groupId: string }) =>
+    mutationFn: ({ id }: { id: string; groupId: string }) =>
       removeGroupMember(id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

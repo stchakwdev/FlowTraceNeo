@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/donate/$slug')({
   component: PublicCampaignPage,
-  head: ({ params }) => ({
+  head: () => ({
     meta: [
       {
         title: `Donate | FlowTrace`,
@@ -27,15 +27,6 @@ function PublicCampaignPage() {
   const { slug } = Route.useParams()
   const { data: campaign, isLoading, error } = usePublicCampaign(slug)
   const { data: stats } = useCampaignStats(campaign?.id || '')
-
-  const formatAmount = (amount: number, currency = 'KES') => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
 
   if (isLoading) {
     return (
@@ -55,11 +46,9 @@ function PublicCampaignPage() {
             <p className="text-muted-foreground mb-6">
               This campaign may have ended, been removed, or the link may be incorrect.
             </p>
-            <Button asChild>
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Go to Homepage
-              </Link>
+            <Button nativeButton={false} render={<Link to="/" />}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go to Homepage
             </Button>
           </Card>
         </div>

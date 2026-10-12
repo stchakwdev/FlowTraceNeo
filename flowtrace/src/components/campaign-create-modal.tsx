@@ -185,8 +185,9 @@ export function CampaignCreateModal({ isOpen, onClose }: CampaignCreateModalProp
               <Label htmlFor="currency">Currency</Label>
               <Select
                 value={formData.currency}
+                items={CURRENCIES}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, currency: value })
+                  setFormData({ ...formData, currency: value ?? '' })
                 }
               >
                 <SelectTrigger>
@@ -208,12 +209,21 @@ export function CampaignCreateModal({ isOpen, onClose }: CampaignCreateModalProp
             <Label htmlFor="target_node">Target Project/Department</Label>
             <Select
               value={formData.target_node_id}
+              items={{
+                '': 'Select target...',
+                ...Object.fromEntries(
+                  (nodes ?? []).map((node) => [
+                    node.id,
+                    `${node.name} (${node.type})`,
+                  ]),
+                ),
+              }}
               onValueChange={(value) =>
-                setFormData({ ...formData, target_node_id: value })
+                setFormData({ ...formData, target_node_id: value ?? '' })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select target..." />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {nodes?.map((node) => (
@@ -230,12 +240,13 @@ export function CampaignCreateModal({ isOpen, onClose }: CampaignCreateModalProp
             <Label htmlFor="category">Category</Label>
             <Select
               value={formData.category}
+              items={[{ value: '', label: 'Select category...' }, ...CATEGORIES]}
               onValueChange={(value) =>
-                setFormData({ ...formData, category: value })
+                setFormData({ ...formData, category: value ?? '' })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select category..." />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map((c) => (
