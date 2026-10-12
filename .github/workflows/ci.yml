@@ -1,3 +1,5 @@
+# Typecheck and build run on Vercel (see the build script), so failures and
+# their logs show up in the Vercel deployment. GitHub only runs the tests.
 name: CI
 
 on:
@@ -27,16 +29,10 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      - name: Typecheck
-        run: bun run typecheck
-
       - name: Test
         run: bun run test
         env:
           CI: 'true'
-
-      - name: Build
-        run: bun run build
 
       - name: Upload test results
         if: always()
