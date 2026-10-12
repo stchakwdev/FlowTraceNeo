@@ -227,11 +227,11 @@ export function PanZoomContainer({
 
   const resetView = useCallback(() => {
     setTransform({
-      x: 0,
-      y: 0,
+      x: initialX,
+      y: initialY,
       scale: initialZoom,
     })
-  }, [initialZoom])
+  }, [initialX, initialY, initialZoom])
 
   const fitToView = useCallback(() => {
     if (onFitToView) {
@@ -292,7 +292,7 @@ export function PanZoomContainer({
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          background: 'rgba(0, 0, 0, 0.7)',
+          background: 'color-mix(in oklch, var(--card) 90%, transparent)',
           backdropFilter: 'blur(10px)',
           borderRadius: 8,
           padding: 8,
@@ -309,9 +309,9 @@ export function PanZoomContainer({
             border: 'none',
             background:
               transform.scale >= maxZoom
-                ? 'rgba(255, 255, 255, 0.1)'
-                : 'rgba(0, 102, 255, 0.8)',
-            color: '#fff',
+                ? 'color-mix(in oklch, var(--foreground) 10%, transparent)'
+                : 'color-mix(in oklch, var(--primary) 80%, transparent)',
+            color: 'var(--primary-foreground)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -333,9 +333,9 @@ export function PanZoomContainer({
             border: 'none',
             background:
               transform.scale <= minZoom
-                ? 'rgba(255, 255, 255, 0.1)'
-                : 'rgba(0, 102, 255, 0.8)',
-            color: '#fff',
+                ? 'color-mix(in oklch, var(--foreground) 10%, transparent)'
+                : 'color-mix(in oklch, var(--primary) 80%, transparent)',
+            color: 'var(--primary-foreground)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -354,8 +354,8 @@ export function PanZoomContainer({
             height: 40,
             borderRadius: 6,
             border: 'none',
-            background: 'rgba(0, 102, 255, 0.8)',
-            color: '#fff',
+            background: 'color-mix(in oklch, var(--primary) 80%, transparent)',
+            color: 'var(--primary-foreground)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -374,8 +374,8 @@ export function PanZoomContainer({
             height: 40,
             borderRadius: 6,
             border: 'none',
-            background: 'rgba(0, 102, 255, 0.8)',
-            color: '#fff',
+            background: 'color-mix(in oklch, var(--primary) 80%, transparent)',
+            color: 'var(--primary-foreground)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -394,11 +394,11 @@ export function PanZoomContainer({
           position: 'absolute',
           bottom: 20,
           right: 20,
-          background: 'rgba(0, 0, 0, 0.7)',
+          background: 'color-mix(in oklch, var(--card) 90%, transparent)',
           backdropFilter: 'blur(10px)',
           padding: '8px 12px',
           borderRadius: 6,
-          color: '#fff',
+          color: 'var(--foreground)',
           fontSize: 14,
           fontFamily: 'JetBrains Mono, monospace',
           zIndex: 1000,
@@ -410,18 +410,18 @@ export function PanZoomContainer({
       {/* Pan Instructions */}
       {!isDragging &&
         transform.scale === initialZoom &&
-        transform.x === 0 &&
-        transform.y === 0 && (
+        transform.x === initialX &&
+        transform.y === initialY && (
           <div
             style={{
               position: 'absolute',
               bottom: 60,
               left: 20,
-              background: 'rgba(0, 0, 0, 0.6)',
+              background: 'color-mix(in oklch, var(--card) 90%, transparent)',
               backdropFilter: 'blur(10px)',
               padding: '8px 12px',
               borderRadius: 6,
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'var(--muted-foreground)',
               fontSize: 12,
               zIndex: 1000,
               maxWidth: 200,

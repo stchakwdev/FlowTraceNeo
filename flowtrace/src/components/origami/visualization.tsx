@@ -311,8 +311,20 @@ export function OrigamiVisualization({
             x2="100%"
             y2="0%"
           >
-            <stop offset="0%" stopColor="rgba(0, 102, 255, 0.2)" />
-            <stop offset="100%" stopColor="rgba(0, 212, 170, 0.2)" />
+            <stop
+              offset="0%"
+              style={{
+                stopColor:
+                  'color-mix(in oklch, var(--primary) 20%, transparent)',
+              }}
+            />
+            <stop
+              offset="100%"
+              style={{
+                stopColor:
+                  'color-mix(in oklch, var(--success) 20%, transparent)',
+              }}
+            />
           </linearGradient>
 
           <linearGradient
@@ -322,8 +334,20 @@ export function OrigamiVisualization({
             x2="100%"
             y2="0%"
           >
-            <stop offset="0%" stopColor="rgba(0, 102, 255, 0.8)" />
-            <stop offset="100%" stopColor="rgba(0, 212, 170, 0.8)" />
+            <stop
+              offset="0%"
+              style={{
+                stopColor:
+                  'color-mix(in oklch, var(--primary) 80%, transparent)',
+              }}
+            />
+            <stop
+              offset="100%"
+              style={{
+                stopColor:
+                  'color-mix(in oklch, var(--success) 80%, transparent)',
+              }}
+            />
           </linearGradient>
         </defs>
 
@@ -358,8 +382,8 @@ export function OrigamiVisualization({
             position: 'absolute',
             top: 10,
             left: 10,
-            background: 'rgba(0, 0, 0, 0.7)',
-            color: 'white',
+            background: 'var(--popover)',
+            color: 'var(--popover-foreground)',
             padding: '8px 12px',
             borderRadius: 4,
             fontSize: 12,
@@ -405,20 +429,22 @@ export function OrigamiControls({
         transform: 'translateX(-50%)',
         display: 'flex',
         gap: 10,
-        background: 'rgba(255, 255, 255, 0.05)',
+        background: 'color-mix(in oklch, var(--card) 80%, transparent)',
         backdropFilter: 'blur(20px)',
         padding: 10,
         borderRadius: 8,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border:
+          '1px solid color-mix(in oklch, var(--foreground) 10%, transparent)',
         zIndex: 1000,
       }}
     >
       <button
         onClick={onExpandAll}
         style={{
-          background: 'rgba(0, 102, 255, 0.2)',
-          border: '1px solid rgba(0, 102, 255, 0.3)',
-          color: '#fff',
+          background: 'color-mix(in oklch, var(--primary) 20%, transparent)',
+          border:
+            '1px solid color-mix(in oklch, var(--primary) 30%, transparent)',
+          color: 'var(--foreground)',
           padding: '8px 16px',
           borderRadius: 6,
           cursor: 'pointer',
@@ -432,9 +458,10 @@ export function OrigamiControls({
       <button
         onClick={onCollapseAll}
         style={{
-          background: 'rgba(0, 102, 255, 0.2)',
-          border: '1px solid rgba(0, 102, 255, 0.3)',
-          color: '#fff',
+          background: 'color-mix(in oklch, var(--primary) 20%, transparent)',
+          border:
+            '1px solid color-mix(in oklch, var(--primary) 30%, transparent)',
+          color: 'var(--foreground)',
           padding: '8px 16px',
           borderRadius: 6,
           cursor: 'pointer',
@@ -449,9 +476,10 @@ export function OrigamiControls({
         <button
           onClick={onRandomizeActivity}
           style={{
-            background: 'rgba(0, 102, 255, 0.2)',
-            border: '1px solid rgba(0, 102, 255, 0.3)',
-            color: '#fff',
+            background: 'color-mix(in oklch, var(--primary) 20%, transparent)',
+            border:
+              '1px solid color-mix(in oklch, var(--primary) 30%, transparent)',
+            color: 'var(--foreground)',
             padding: '8px 16px',
             borderRadius: 6,
             cursor: 'pointer',
@@ -467,12 +495,12 @@ export function OrigamiControls({
         onClick={onToggleAnimations}
         style={{
           background: animationsEnabled
-            ? 'rgba(0, 212, 170, 0.2)'
-            : 'rgba(255, 107, 0, 0.2)',
+            ? 'color-mix(in oklch, var(--success) 20%, transparent)'
+            : 'color-mix(in oklch, var(--warning) 20%, transparent)',
           border: animationsEnabled
-            ? '1px solid rgba(0, 212, 170, 0.3)'
-            : '1px solid rgba(255, 107, 0, 0.3)',
-          color: '#fff',
+            ? '1px solid color-mix(in oklch, var(--success) 30%, transparent)'
+            : '1px solid color-mix(in oklch, var(--warning) 30%, transparent)',
+          color: 'var(--foreground)',
           padding: '8px 16px',
           borderRadius: 6,
           cursor: 'pointer',

@@ -1,3 +1,11 @@
+/* Origami faces are tinted from the app theme so nodes follow light/dark mode */
+.origami-theme {
+  --ori-face: color-mix(in oklch, var(--card) 90%, var(--primary));
+  --ori-face-mid: color-mix(in oklch, var(--card) 82%, var(--primary));
+  --ori-face-2: color-mix(in oklch, var(--card) 88%, var(--chart-4));
+  --ori-face-2-mid: color-mix(in oklch, var(--card) 80%, var(--chart-4));
+}
+
 /**
  * Origami Node Styles
  * Comprehensive styling for dynamic origami visualization
@@ -25,6 +33,12 @@
   opacity: 0;
   transform: scale(0.8);
   pointer-events: none;
+  /* Opacity alone leaves the 3D-transformed faces painted in Chromium */
+  visibility: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    visibility 0s linear 0.3s;
 }
 
 /* Size Classes */
@@ -184,10 +198,14 @@
 @keyframes origami-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 20px rgba(0, 212, 170, 0.6));
+    filter: drop-shadow(
+      0 0 20px color-mix(in oklch, var(--success) 60%, transparent)
+    );
   }
   50% {
-    filter: drop-shadow(0 0 40px rgba(0, 212, 170, 0.9));
+    filter: drop-shadow(
+      0 0 40px color-mix(in oklch, var(--success) 90%, transparent)
+    );
   }
 }
 
@@ -198,18 +216,20 @@
 
 .origami-highlighted .origami-fold-face {
   fill: url(#origami-highlight) !important;
-  stroke: rgba(0, 212, 170, 0.6) !important;
+  stroke: color-mix(in oklch, var(--success) 60%, transparent) !important;
   stroke-width: 1.5 !important;
 }
 
 /* Hover effects */
 .origami-node:hover {
   transform: translateY(-5px) scale(1.02);
-  filter: drop-shadow(0 15px 40px rgba(0, 102, 255, 0.5));
+  filter: drop-shadow(
+    0 15px 40px color-mix(in oklch, var(--primary) 50%, transparent)
+  );
 }
 
 .origami-node:hover .origami-expand-btn {
-  background: rgba(0, 102, 255, 1);
+  background: color-mix(in oklch, var(--primary) 100%, transparent);
   transform: scale(1.1);
 }
 
@@ -223,7 +243,7 @@
 
 .origami-fold-face {
   transition: all 0.3s ease;
-  stroke: rgba(255, 255, 255, 0.2);
+  stroke: color-mix(in oklch, var(--foreground) 20%, transparent);
   stroke-width: 0.5;
 }
 
@@ -246,17 +266,17 @@
   text-align: center;
   pointer-events: none;
   z-index: 10;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .origami-icon {
-  background: linear-gradient(135deg, #0066ff, #00d4aa);
+  background: linear-gradient(135deg, var(--primary), var(--success));
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 8px;
-  box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
+  box-shadow: 0 4px 15px color-mix(in oklch, var(--primary) 40%, transparent);
   transition: transform 0.3s ease;
 }
 
@@ -265,23 +285,21 @@
 }
 
 .origami-value {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-weight: 600;
-  color: #fff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  color: var(--foreground);
   margin-bottom: 4px;
 }
 
 .origami-title {
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  color: var(--muted-foreground);
   line-height: 1.2;
 }
 
 .origami-transactions {
-  color: rgba(0, 212, 170, 0.8);
-  font-family: 'JetBrains Mono', monospace;
+  color: color-mix(in oklch, var(--success) 80%, transparent);
+  font-family: 'IBM Plex Mono', monospace;
   margin-top: 2px;
 }
 
@@ -291,7 +309,7 @@
   right: -8px;
   border-radius: 50%;
   font-weight: 600;
-  color: #fff;
+  color: var(--primary-foreground);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
 }
@@ -308,9 +326,9 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(0, 102, 255, 0.8);
+  background: color-mix(in oklch, var(--primary) 80%, transparent);
   border: none;
-  color: #fff;
+  color: var(--primary-foreground);
   font-size: 12px;
   cursor: pointer;
   display: flex;
@@ -322,7 +340,7 @@
 }
 
 .origami-expand-btn:hover {
-  background: rgba(0, 102, 255, 1);
+  background: color-mix(in oklch, var(--primary) 100%, transparent);
   transform: scale(1.1);
 }
 
@@ -345,7 +363,8 @@
 
 /* Performance Optimizations */
 .origami-node {
-  contain: layout style paint;
+  /* No paint containment: it clips the expand button that overhangs the node */
+  contain: layout style;
   will-change: transform, filter, opacity;
 }
 
@@ -440,7 +459,7 @@
 /* Focus states for accessibility */
 .origami-node:focus,
 .origami-expand-btn:focus {
-  outline: 2px solid #0066ff;
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -454,7 +473,7 @@
 
 /* Connection lines styling */
 .origami-connection {
-  stroke: rgba(0, 102, 255, 0.2);
+  stroke: color-mix(in oklch, var(--primary) 20%, transparent);
   stroke-width: 2;
   fill: none;
   stroke-dasharray: 5, 5;
@@ -463,9 +482,11 @@
 }
 
 .origami-connection.highlighted {
-  stroke: rgba(0, 212, 170, 0.8);
+  stroke: color-mix(in oklch, var(--success) 80%, transparent);
   stroke-width: 3;
-  filter: drop-shadow(0 0 10px rgba(0, 212, 170, 0.6));
+  filter: drop-shadow(
+    0 0 10px color-mix(in oklch, var(--success) 60%, transparent)
+  );
   animation: origami-dash 5s linear infinite;
 }
 

@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { OrigamiControls, OrigamiVisualization } from './visualization'
 import { PanZoomContainer } from './pan-zoom'
-import { calculateFitToViewTransform } from './bounds'
+import { calculateFitToViewTransform, calculateNodeBounds } from './bounds'
 import { toOrigamiNodes } from './adapter'
 import type { FlowDataResult } from '@/lib/supabase'
 
 const FIT_PADDING = 40
 // Keep fitted content clear of the fold/unfold control bar
 const CONTROLS_HEIGHT = 90
+// Below this zoom node labels are too small to read, so the initial view
+// starts here and anchors on the top of the tree instead of fitting it all
+const MIN_READABLE_SCALE = 0.7
 
 interface OrigamiFlowProps {
   data: FlowDataResult
@@ -56,10 +59,24 @@ export function OrigamiFlow({
     )
   }, [layout.nodes, viewportWidth, height])
 
-  const initialTransform = useMemo(() => handleFitToView(), [handleFitToView])
+  const initialTransform = useMemo(() => {
+    const fit = handleFitToView()
+    if (!fit || fit.scale >= MIN_READABLE_SCALE) return fit
+    const bounds = calculateNodeBounds(layout.nodes)
+    const scale = MIN_READABLE_SCALE
+    return {
+      scale,
+      x: viewportWidth / 2 - bounds.centerX * scale,
+      y: FIT_PADDING - bounds.minY * scale,
+    }
+  }, [handleFitToView, layout.nodes, viewportWidth])
 
   return (
-    <div ref={containerRef} className="relative w-full" style={{ height }}>
+    <div
+      ref={containerRef}
+      className="origami-theme relative w-full"
+      style={{ height }}
+    >
       <PanZoomContainer
         // Remount when the layout changes so the initial fit is re-applied
         key={`${layout.nodes.length}-${viewportWidth}`}

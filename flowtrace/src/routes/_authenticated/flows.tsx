@@ -579,7 +579,7 @@ function FlowVisualization() {
                 </div>
               </div>
             ) : view === 'origami' && flowData ? (
-              <div className="overflow-hidden rounded-lg bg-slate-950">
+              <div className="overflow-hidden rounded-lg">
                 <OrigamiFlow
                   data={flowData}
                   height={500}

@@ -36,31 +36,31 @@ const sizeConfig = {
   xl: {
     width: 200,
     height: 200,
-    fontSize: { value: 28, title: 16, transactions: 12 },
+    fontSize: { value: 30, title: 17, transactions: 13 },
     iconSize: 36,
   },
   lg: {
     width: 160,
     height: 160,
-    fontSize: { value: 24, title: 14, transactions: 11 },
+    fontSize: { value: 26, title: 16, transactions: 12 },
     iconSize: 32,
   },
   md: {
     width: 130,
     height: 130,
-    fontSize: { value: 20, title: 14, transactions: 10 },
+    fontSize: { value: 22, title: 15, transactions: 12 },
     iconSize: 28,
   },
   sm: {
     width: 100,
     height: 100,
-    fontSize: { value: 18, title: 12, transactions: 9 },
+    fontSize: { value: 19, title: 14, transactions: 11 },
     iconSize: 24,
   },
   xs: {
     width: 80,
     height: 80,
-    fontSize: { value: 16, title: 11, transactions: 8 },
+    fontSize: { value: 17, title: 13, transactions: 10 },
     iconSize: 20,
   },
 }
@@ -192,8 +192,8 @@ export function OrigamiNode({
     cursor: 'pointer',
     animationDelay: `${animationDelay}ms`,
     filter: isHighlighted
-      ? 'drop-shadow(0 0 30px rgba(0, 212, 170, 0.8))'
-      : 'drop-shadow(0 10px 30px rgba(0, 102, 255, 0.3))',
+      ? 'drop-shadow(0 0 30px color-mix(in oklch, var(--success) 80%, transparent))'
+      : 'drop-shadow(0 10px 30px color-mix(in oklch, var(--primary) 30%, transparent))',
     zIndex: isHighlighted ? 100 : 10 + data.level,
     transition: 'filter 0.3s ease, z-index 0s',
   })
@@ -215,9 +215,9 @@ export function OrigamiNode({
           points={face.points}
           fill={isHighlighted ? 'url(#origami-highlight)' : fillUrl}
           fillOpacity={face.opacity}
-          stroke="rgba(255, 255, 255, 0.1)"
           strokeWidth="0.5"
           style={{
+            stroke: 'color-mix(in oklch, var(--foreground) 12%, transparent)',
             transition: 'all 0.3s ease',
             transform: `translateZ(${face.index * 2}px)`,
           }}
@@ -232,6 +232,8 @@ export function OrigamiNode({
       className="origami-paper-texture"
       style={{
         position: 'absolute',
+        top: 0,
+        left: 0,
         width: '100%',
         height: '100%',
         opacity: 0.15,
@@ -240,15 +242,15 @@ export function OrigamiNode({
           45deg,
           transparent,
           transparent 2px,
-          rgba(255, 255, 255, 0.03) 2px,
-          rgba(255, 255, 255, 0.03) 4px
+          color-mix(in oklch, var(--foreground) 3%, transparent) 2px,
+          color-mix(in oklch, var(--foreground) 3%, transparent) 4px
         ),
         repeating-linear-gradient(
           -45deg,
           transparent,
           transparent 2px,
-          rgba(255, 255, 255, 0.02) 2px,
-          rgba(255, 255, 255, 0.02) 4px
+          color-mix(in oklch, var(--foreground) 2%, transparent) 2px,
+          color-mix(in oklch, var(--foreground) 2%, transparent) 4px
         )
       `,
         pointerEvents: 'none',
@@ -286,9 +288,21 @@ export function OrigamiNode({
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#1a2332" stopOpacity="1" />
-            <stop offset="50%" stopColor="#243142" stopOpacity="1" />
-            <stop offset="100%" stopColor="#1a2332" stopOpacity="1" />
+            <stop
+              offset="0%"
+              style={{ stopColor: 'var(--ori-face)' }}
+              stopOpacity="1"
+            />
+            <stop
+              offset="50%"
+              style={{ stopColor: 'var(--ori-face-mid)' }}
+              stopOpacity="1"
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: 'var(--ori-face)' }}
+              stopOpacity="1"
+            />
           </linearGradient>
 
           <linearGradient
@@ -298,9 +312,21 @@ export function OrigamiNode({
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#1e2938" stopOpacity="1" />
-            <stop offset="50%" stopColor="#2a3848" stopOpacity="1" />
-            <stop offset="100%" stopColor="#1e2938" stopOpacity="1" />
+            <stop
+              offset="0%"
+              style={{ stopColor: 'var(--ori-face-2)' }}
+              stopOpacity="1"
+            />
+            <stop
+              offset="50%"
+              style={{ stopColor: 'var(--ori-face-2-mid)' }}
+              stopOpacity="1"
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: 'var(--ori-face-2)' }}
+              stopOpacity="1"
+            />
           </linearGradient>
 
           <linearGradient
@@ -310,8 +336,16 @@ export function OrigamiNode({
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#000000" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0.1" />
+            <stop
+              offset="0%"
+              style={{ stopColor: 'var(--foreground)' }}
+              stopOpacity="0.3"
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: 'var(--foreground)' }}
+              stopOpacity="0.1"
+            />
           </linearGradient>
 
           <linearGradient
@@ -321,9 +355,21 @@ export function OrigamiNode({
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#00D4AA" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="#00D4AA" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#0066FF" stopOpacity="0.3" />
+            <stop
+              offset="0%"
+              style={{ stopColor: 'var(--success)' }}
+              stopOpacity="0.3"
+            />
+            <stop
+              offset="50%"
+              style={{ stopColor: 'var(--success)' }}
+              stopOpacity="0.4"
+            />
+            <stop
+              offset="100%"
+              style={{ stopColor: 'var(--primary)' }}
+              stopOpacity="0.3"
+            />
           </linearGradient>
         </defs>
 
@@ -345,7 +391,7 @@ export function OrigamiNode({
           textAlign: 'center',
           pointerEvents: 'none',
           zIndex: 10,
-          color: '#fff',
+          color: 'var(--foreground)',
         }}
       >
         {/* Icon */}
@@ -355,14 +401,16 @@ export function OrigamiNode({
             style={{
               width: size.iconSize,
               height: size.iconSize,
-              background: 'linear-gradient(135deg, #0066FF, #00D4AA)',
+              background:
+                'linear-gradient(135deg, var(--primary), var(--success))',
               borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 8px',
               fontSize: size.iconSize * 0.6,
-              boxShadow: '0 4px 15px rgba(0, 102, 255, 0.4)',
+              boxShadow:
+                '0 4px 15px color-mix(in oklch, var(--primary) 40%, transparent)',
             }}
           >
             {data.icon}
@@ -377,8 +425,7 @@ export function OrigamiNode({
             fontSize: size.fontSize.value,
             fontWeight: 600,
             whiteSpace: 'nowrap',
-            color: '#fff',
-            textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+            color: 'var(--foreground)',
             marginBottom: 4,
           }}
         >
@@ -392,8 +439,13 @@ export function OrigamiNode({
           style={{
             fontSize: size.fontSize.title,
             fontWeight: 500,
-            color: 'rgba(255, 255, 255, 0.9)',
-            textShadow: '0 1px 5px rgba(0, 0, 0, 0.3)',
+            color: 'var(--foreground)',
+            lineHeight: 1.15,
+            maxWidth: size.width * 0.8,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
             marginBottom: data.size === 'xs' ? 0 : 2,
           }}
         >
@@ -406,7 +458,7 @@ export function OrigamiNode({
             className="origami-transactions"
             style={{
               fontSize: size.fontSize.transactions,
-              color: 'rgba(0, 212, 170, 0.8)',
+              color: 'color-mix(in oklch, var(--success) 80%, transparent)',
               fontFamily: "'IBM Plex Mono', monospace",
             }}
           >
@@ -427,16 +479,16 @@ export function OrigamiNode({
               borderRadius: '50%',
               background:
                 data.trustScore > 80
-                  ? '#00D4AA'
+                  ? 'var(--success)'
                   : data.trustScore > 60
-                    ? '#FF6B00'
-                    : '#FF3366',
+                    ? 'var(--warning)'
+                    : 'var(--destructive)',
               fontSize: 10,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 600,
-              color: '#fff',
+              color: 'var(--primary-foreground)',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             }}
           >
@@ -457,9 +509,9 @@ export function OrigamiNode({
             width: 24,
             height: 24,
             borderRadius: '50%',
-            background: 'rgba(0, 102, 255, 0.8)',
+            background: 'color-mix(in oklch, var(--primary) 80%, transparent)',
             border: 'none',
-            color: '#fff',
+            color: 'var(--primary-foreground)',
             fontSize: 12,
             cursor: 'pointer',
             display: 'flex',

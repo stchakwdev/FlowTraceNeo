@@ -1,4 +1,3 @@
-import { generateAutoLayout } from './bounds'
 import type { FlowDataResult } from '@/lib/supabase'
 import type { OrigamiNodeData } from './node'
 import type { NodeSize } from './patterns'
@@ -104,17 +103,34 @@ export function toOrigamiNodes(data: FlowDataResult): {
     }
   })
 
-  const perLevel = new Map<number, number>()
+  // Lay out level by level with fixed spacing, centring each row and ordering
+  // nodes by their parent's position so links cross as little as possible
+  const byLevel = new Map<number, Array<OrigamiNodeData>>()
   for (const node of unpositioned) {
-    perLevel.set(node.level, (perLevel.get(node.level) ?? 0) + 1)
+    byLevel.set(node.level, [...(byLevel.get(node.level) ?? []), node])
   }
-  const widest = Math.max(1, ...perLevel.values())
-  const width = Math.max(1000, widest * NODE_SPACING_X)
-  const height = Math.max(600, perLevel.size * LEVEL_SPACING_Y)
+  const levels = [...byLevel.keys()].sort((a, b) => a - b)
+  const widest = Math.max(1, ...[...byLevel.values()].map((row) => row.length))
+  const width = Math.max(1000, (widest + 1) * NODE_SPACING_X)
+  const height = Math.max(600, (levels.length + 1) * LEVEL_SPACING_Y)
 
-  return {
-    nodes: generateAutoLayout(unpositioned, width, height, 140),
-    width,
-    height,
+  const xOf = new Map<string, number>()
+  const nodes: Array<OrigamiNodeData> = []
+  for (const level of levels) {
+    const row = byLevel.get(level)!
+    const parentX = (n: OrigamiNodeData) =>
+      (n.parent ? xOf.get(n.parent) : 0) ?? 0
+    row.sort((a, b) => parentX(a) - parentX(b) || b.balance - a.balance)
+    row.forEach((node, i) => {
+      const x = width / 2 + (i - (row.length - 1) / 2) * NODE_SPACING_X
+      xOf.set(node.id, x)
+      nodes.push({
+        ...node,
+        x,
+        y: LEVEL_SPACING_Y / 2 + level * LEVEL_SPACING_Y,
+      })
+    })
   }
+
+  return { nodes, width, height }
 }
