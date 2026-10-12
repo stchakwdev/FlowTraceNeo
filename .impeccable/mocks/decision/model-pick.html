@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duplicate book direction sketch</title>
+<style>
+  :root{--cover:#3E1A20;--white:#FFFFFF;--pink:#F3C8CE;--yellow:#F4E59B;--red:#C2272D;--pen:#1F3FA3;--stamp:#5B3C99;--ink:#1A1A1A}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:1440px;height:900px;overflow:hidden;background:var(--cover);font-family:"Archivo",Arial,sans-serif;color:var(--ink);position:relative}
+  .top{display:flex;align-items:center;padding:22px 56px;color:#F3E9E6;gap:24px}
+  .top b{font-size:22px;font-weight:800}
+  .top nav{margin-left:auto;display:flex;gap:26px;align-items:center;font-size:14px}
+  .top .stampbtn{border:2.5px solid #F3E9E6;padding:10px 18px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+  .copy{position:absolute;width:760px;height:640px;padding:36px 44px}
+  .yellow{background:var(--yellow);left:600px;top:150px;transform:rotate(2.2deg)}
+  .pink{background:var(--pink);left:560px;top:128px;transform:rotate(-1.4deg)}
+  .white{background:var(--white);left:500px;top:104px;border-left:22px dotted var(--cover);box-shadow:0 20px 40px rgba(0,0,0,.35)}
+  .copylabel{position:absolute;right:20px;bottom:14px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--red)}
+  .rhead{display:flex;justify-content:space-between;border-bottom:2px solid var(--red);padding-bottom:12px;color:var(--red)}
+  .rhead b{font-size:30px;font-weight:800;letter-spacing:.04em}
+  .rhead span{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+  .field{display:grid;grid-template-columns:150px 1fr;border-bottom:1px solid #E3B4B7;padding:16px 0;align-items:end}
+  .field small{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--red)}
+  .field p{font-family:"Caveat","Segoe Print",cursive;color:var(--pen);font-size:30px}
+  .stamp{position:absolute;right:56px;top:300px;border:4px solid var(--stamp);color:var(--stamp);padding:10px 18px;transform:rotate(-9deg);font-weight:800;font-size:28px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+  .stamp small{display:block;font-size:13px;letter-spacing:.14em}
+  .lead{position:absolute;left:56px;top:150px;width:400px;color:#F7EFEC}
+  .lead h1{font-size:68px;line-height:.98;font-weight:800;letter-spacing:-.015em}
+  .lead p{font-size:18px;line-height:1.5;margin-top:24px;color:#E2CFCB}
+  .lead .go{display:inline-block;margin-top:30px;background:#F7EFEC;color:var(--cover);padding:16px 24px;font-weight:800;font-size:17px}
+  .lead .alt{display:block;margin-top:16px;font-size:15px;color:#E2CFCB;text-decoration:underline}
+</style>
+</head>
+<body>
+  <header class="top"><b>FlowTrace</b><nav><a>How proof works</a><a>For funders</a><a>Sign in</a><a class="stampbtn">Explore the demo</a></nav></header>
+  <div class="lead">
+    <h1>One transaction. Every copy it needs.</h1>
+    <p>Write it once with its proof attached. FlowTrace issues the board, your donors and the public each their own copy, at the depth you choose.</p>
+    <a class="go">Explore the demo</a><a class="alt">How proof is attached</a>
+  </div>
+  <div class="copy yellow"><span class="copylabel">Public copy</span></div>
+  <div class="copy pink"><span class="copylabel">Donor copy</span></div>
+  <div class="copy white">
+    <div class="rhead"><b>RECEIPT</b><span>No. 0418</span></div>
+    <div class="field"><small>Date</small><p>18 Jan 2026</p></div>
+    <div class="field"><small>From</small><p>Project Fund (DFID UK Aid)</p></div>
+    <div class="field"><small>To</small><p>Clean Water Turkana, Borehole Phase 1</p></div>
+    <div class="field"><small>Amount KES</small><p>2,500,000.00</p></div>
+    <div class="field"><small>Proof</small><p>Contractor invoice · site photo · GPS</p></div>
+    <div class="stamp">Evidenced<small>3 proofs · demo data</small></div>
+    <span class="copylabel">Board copy</span>
+  </div>
+</body>
+</html>

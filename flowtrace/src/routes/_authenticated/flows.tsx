@@ -1,767 +1,352 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useMemo, useState, useCallback } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
-  ArrowsIn,
-  ArrowsOut,
-  Bank,
-  Buildings,
-  CurrencyCircleDollar,
-  FlowArrow,
-  GitBranch,
-  Handshake,
-  Heart,
-  Lightning,
+  ArrowsInLineHorizontal,
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,
-  Plus,
-  Storefront,
-  TrendDown,
-  TrendUp,
-  Wallet,
 } from '@phosphor-icons/react'
-import { useFlowData } from '@/lib/queries'
-import type { FlowDataNode } from '@/lib/supabase'
-import { VerificationBreakdown, NodeVerificationBadge } from '@/components/verification-indicator'
+import type { ReactNode } from 'react'
+import type { PeriodId, Selection } from '@/components/flows/flow-graph'
+import {
+  KeyFigure,
+  KeyFigures,
+  ProofLegend,
+  ReportNotice,
+  ReportSection,
+} from '@/components/report'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { FlowDetails } from '@/components/flows/flow-details'
+import { FlowMap } from '@/components/flows/flow-map'
+import {
+  PERIODS,
+  WIDEST_PERIOD,
+  buildFlowGraph,
+  connectedSet,
+  filterByPeriod,
+  periodWindow,
+} from '@/components/flows/flow-graph'
+import { formatCompact, formatDate, formatMoney } from '@/lib/format'
+import { useTransactions } from '@/lib/queries'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authenticated/flows')({
-  component: FlowVisualization,
+  component: FlowsPage,
 })
 
-interface PositionedNode extends FlowDataNode {
-  x: number
-  y: number
-  column: number
-}
+const ZOOM_MIN = 0.4
+const ZOOM_MAX = 1.6
+const ZOOM_STEP = 0.1
+// The opening view never shrinks the map below this, which keeps node text at
+// 12px or more; narrower screens scroll sideways instead. "Fit" may go smaller
+// when asked for.
+const LEGIBLE_MIN = 0.9
 
-interface FlowEdge {
-  id: string
-  from: string
-  to: string
-  amount: number
-  count: number
-}
+function FlowsPage() {
+  const { data, isLoading, error, refetch, isRefetching } = useTransactions()
+  const [period, setPeriod] = useState<PeriodId>('month')
+  const [selection, setSelection] = useState<Selection | null>(null)
+  // null = legible fit (the opening view); 'fit' = the whole map, however small.
+  const [zoom, setZoom] = useState<number | 'fit' | null>(null)
+  const [mapWidth, setMapWidth] = useState(0)
+  const detailsHeadingId = useId()
 
-// Node type configurations with icons and colors
-const nodeConfig: Record<
-  string,
-  { icon: typeof Bank; gradient: string; glow: string; label: string }
-> = {
-  donor: {
-    icon: Handshake,
-    gradient: 'from-primary/20 to-primary/10',
-    glow: 'shadow-primary/20',
-    label: 'Donor',
-  },
-  account: {
-    icon: Wallet,
-    gradient: 'from-success/20 to-success/10',
-    glow: 'shadow-success/20',
-    label: 'Account',
-  },
-  department: {
-    icon: Buildings,
-    gradient: 'from-chart-4/20 to-chart-4/10',
-    glow: 'shadow-chart-4/20',
-    label: 'Department',
-  },
-  vendor: {
-    icon: Storefront,
-    gradient: 'from-accent/20 to-accent/10',
-    glow: 'shadow-accent/20',
-    label: 'Vendor',
-  },
-  beneficiary: {
-    icon: Heart,
-    gradient: 'from-chart-3/20 to-chart-3/10',
-    glow: 'shadow-chart-3/20',
-    label: 'Beneficiary',
-  },
-  project: {
-    icon: Bank,
-    gradient: 'from-chart-5/20 to-chart-5/10',
-    glow: 'shadow-chart-5/20',
-    label: 'Project',
-  },
-}
+  const all = data ?? []
+  const range = useMemo(() => periodWindow(all, period), [all, period])
+  const inPeriod = useMemo(() => filterByPeriod(all, period), [all, period])
+  const graph = useMemo(() => buildFlowGraph(inPeriod), [inPeriod])
 
-// Column positions for hierarchical layout
-const columnPositions = {
-  donor: 0,
-  account: 1,
-  department: 2,
-  project: 2,
-  vendor: 3,
-  beneficiary: 3,
-}
+  // Drop a selection that the new period no longer contains.
+  const current =
+    selection &&
+    (selection.kind === 'node'
+      ? graph.nodes.some((n) => n.id === selection.id)
+      : graph.edges.some((e) => e.id === selection.id))
+      ? selection
+      : null
+  const active = useMemo(() => connectedSet(graph, current), [graph, current])
 
-// Position nodes in a clean hierarchical layout
-function positionNodes(nodes: FlowDataNode[]): PositionedNode[] {
-  const columnWidth = 280
-  const nodeHeight = 90
-  const startX = 80
-  const startY = 60
+  useEffect(() => {
+    if (!current) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelection(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [current])
 
-  // Group nodes by column
-  const columns: Record<number, FlowDataNode[]> = {}
-  nodes.forEach((node) => {
-    const col = columnPositions[node.type as keyof typeof columnPositions] ?? 1
-    if (!columns[col]) columns[col] = []
-    columns[col].push(node)
-  })
-
-  const positioned: PositionedNode[] = []
-
-  Object.entries(columns).forEach(([colStr, colNodes]) => {
-    const col = parseInt(colStr)
-    const x = startX + col * columnWidth
-
-    // Center nodes vertically in their column
-    const totalHeight = colNodes.length * nodeHeight
-    const offsetY = Math.max(0, (400 - totalHeight) / 2)
-
-    colNodes.forEach((node, idx) => {
-      positioned.push({
-        ...node,
-        x,
-        y: startY + offsetY + idx * nodeHeight,
-        column: col,
-      })
-    })
-  })
-
-  return positioned
-}
-
-// Animated edge component
-function AnimatedEdge({
-  fromX,
-  fromY,
-  toX,
-  toY,
-  isHighlighted,
-  amount,
-  formatCurrency,
-}: {
-  fromX: number
-  fromY: number
-  toX: number
-  toY: number
-  isHighlighted: boolean
-  amount: number
-  formatCurrency: (n: number) => string
-}) {
-  // Create smooth bezier curve
-  const midX = (fromX + toX) / 2
-
-  const pathD = `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`
-
-  return (
-    <g className="edge-group">
-      {/* Glow effect layer */}
-      <path
-        d={pathD}
-        fill="none"
-        className={`transition-all duration-300 ${
-          isHighlighted ? 'stroke-primary/40' : 'stroke-transparent'
-        }`}
-        strokeWidth={isHighlighted ? 8 : 0}
-        strokeLinecap="round"
-        filter="url(#glow)"
-      />
-
-      {/* Main edge line */}
-      <path
-        d={pathD}
-        fill="none"
-        className={`transition-all duration-300 ${
-          isHighlighted
-            ? 'stroke-primary'
-            : 'stroke-muted-foreground/40'
-        }`}
-        strokeWidth={isHighlighted ? 2.5 : 1.5}
-        strokeLinecap="round"
-      />
-
-      {/* Animated flow particles */}
-      <circle r={isHighlighted ? 4 : 3} className={isHighlighted ? 'fill-primary' : 'fill-muted-foreground/60'}>
-        <animateMotion dur="2s" repeatCount="indefinite" path={pathD} />
-      </circle>
-      <circle r={isHighlighted ? 3 : 2} className={isHighlighted ? 'fill-primary/70' : 'fill-muted-foreground/40'}>
-        <animateMotion dur="2s" repeatCount="indefinite" path={pathD} begin="0.7s" />
-      </circle>
-      <circle r={isHighlighted ? 2 : 1.5} className={isHighlighted ? 'fill-primary/50' : 'fill-muted-foreground/30'}>
-        <animateMotion dur="2s" repeatCount="indefinite" path={pathD} begin="1.4s" />
-      </circle>
-
-      {/* Amount label - only show on highlight */}
-      {isHighlighted && (
-        <g>
-          <rect
-            x={midX - 40}
-            y={(fromY + toY) / 2 - 12}
-            width={80}
-            height={24}
-            rx={12}
-            className="fill-foreground/90"
-          />
-          <text
-            x={midX}
-            y={(fromY + toY) / 2 + 4}
-            textAnchor="middle"
-            className="fill-primary-foreground text-xs font-medium"
-          >
-            {formatCurrency(amount)}
-          </text>
-        </g>
-      )}
-    </g>
-  )
-}
-
-// Glassmorphism node component
-function GlassNode({
-  node,
-  isSelected,
-  onClick,
-}: {
-  node: PositionedNode
-  isSelected: boolean
-  onClick: () => void
-}) {
-  const config = nodeConfig[node.type] || nodeConfig.account
-  const Icon = config.icon
-
-  return (
-    <g
-      onClick={onClick}
-      className="cursor-pointer"
-      style={{ transform: `translate(${node.x}px, ${node.y}px)` }}
-    >
-      {/* Outer glow on selection */}
-      {isSelected && (
-        <rect
-          x={-4}
-          y={-4}
-          width={208}
-          height={72}
-          rx={18}
-          className="fill-primary/20 animate-pulse"
-          filter="url(#glow)"
-        />
-      )}
-
-      {/* Main glass container */}
-      <foreignObject x={0} y={0} width={200} height={64}>
-        <div
-          className={`
-            group h-full w-full rounded-2xl border backdrop-blur-xl
-            transition-all duration-300 ease-out
-            ${
-              isSelected
-                ? 'border-primary/50 bg-card shadow-lg shadow-primary/20 scale-105'
-                : 'border-border bg-card/80 hover:border-primary/30 hover:bg-card hover:scale-[1.02]'
-            }
-          `}
-        >
-          <div className="flex h-full items-center gap-3 px-4">
-            {/* Icon container */}
-            <div
-              className={`
-                flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
-                bg-gradient-to-br ${config.gradient}
-                border border-white/10 shadow-lg ${config.glow}
-                transition-transform duration-300 group-hover:scale-110
-              `}
-            >
-              <Icon
-                className={`h-5 w-5 ${
-                  isSelected ? 'text-primary' : 'text-muted-foreground'
-                } transition-colors`}
-                weight="duotone"
-              />
-            </div>
-
-            {/* Text content */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p
-                  className={`truncate text-sm font-semibold ${
-                    isSelected ? 'text-foreground' : 'text-foreground'
-                  } transition-colors`}
-                >
-                  {node.name}
-                </p>
-                {/* Verification badge */}
-                {(node.verification_count ?? 0) > 0 && (
-                  <NodeVerificationBadge
-                    count={node.verification_count ?? 0}
-                    trustPoints={node.trust_points ?? 0}
-                    verifiedCount={node.verified_count ?? 0}
-                  />
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{config.label}</p>
-            </div>
-          </div>
-        </div>
-      </foreignObject>
-    </g>
-  )
-}
-
-function FlowVisualization() {
-  const [selectedNode, setSelectedNode] = useState<string | null>(null)
-  const [timeRange, setTimeRange] = useState('month')
-  const [zoom, setZoom] = useState(1)
-
-  const { data: flowData, isLoading } = useFlowData()
-
-  const positionedNodes = useMemo(() => {
-    if (!flowData?.nodes) return []
-    return positionNodes(flowData.nodes)
-  }, [flowData?.nodes])
-
-  const edges = useMemo((): FlowEdge[] => {
-    if (!flowData?.edges) return []
-    return flowData.edges.map((edge) => ({
-      id: `${edge.source}-${edge.target}`,
-      from: edge.source,
-      to: edge.target,
-      amount: edge.value,
-      count: edge.count,
-    }))
-  }, [flowData?.edges])
-
-  const formatCurrency = useCallback((amount: number) => {
-    if (amount >= 1000000) return `KES ${(amount / 1000000).toFixed(1)}M`
-    if (amount >= 1000) return `KES ${(amount / 1000).toFixed(0)}K`
-    return `KES ${amount}`
+  // Measure the map's container (a callback ref, since it mounts only once
+  // data has arrived) so "Fit" can size the map to it.
+  const observer = useRef<ResizeObserver | null>(null)
+  const mapRef = useCallback((el: HTMLDivElement | null) => {
+    observer.current?.disconnect()
+    observer.current = null
+    if (!el) return
+    observer.current = new ResizeObserver(([entry]) =>
+      setMapWidth(entry.contentRect.width),
+    )
+    observer.current.observe(el)
   }, [])
 
-  const selectedNodeData = useMemo(() => {
-    if (!selectedNode) return null
-    const node = positionedNodes.find((n) => n.id === selectedNode)
-    if (!node) return null
+  // Leave a pixel for the container border so a fitted map never scrolls.
+  const ratio = mapWidth > 0 ? (mapWidth - 2) / graph.width : 1
+  const scale =
+    zoom === 'fit'
+      ? Math.min(1, Math.max(ZOOM_MIN, ratio))
+      : (zoom ?? Math.min(1, Math.max(LEGIBLE_MIN, ratio)))
+  const stepZoom = (dir: 1 | -1) =>
+    setZoom(
+      Math.min(
+        ZOOM_MAX,
+        Math.max(ZOOM_MIN, Math.round((scale + dir * ZOOM_STEP) * 10) / 10),
+      ),
+    )
 
-    const inflows = edges.filter((e) => e.to === selectedNode)
-    const outflows = edges.filter((e) => e.from === selectedNode)
-    const totalIn = node.inflow
-    const totalOut = node.outflow
+  const periodMeta = PERIODS.find((p) => p.id === period)!
+  const widest = PERIODS.find((p) => p.id === WIDEST_PERIOD)!
+  const evidencedShare =
+    graph.totals.moved > 0
+      ? Math.round((graph.totals.evidenced / graph.totals.moved) * 100)
+      : 0
 
-    return { node, inflows, outflows, totalIn, totalOut }
-  }, [selectedNode, positionedNodes, edges])
-
-  const totalFlow = flowData?.summary?.total_flow ?? 0
-
-  const svgWidth = 1100
-  const svgHeight = useMemo(() => {
-    if (positionedNodes.length === 0) return 500
-    const maxY = Math.max(...positionedNodes.map((n) => n.y))
-    return Math.max(500, maxY + 120)
-  }, [positionedNodes])
-
-  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.1, 1.5))
-  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.1, 0.5))
-  const handleResetZoom = () => setZoom(1)
-
-  return (
-    <div className="px-6 py-6">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="section-label">VISUALIZATION</p>
-          <h1 className="mt-1 font-display text-2xl font-bold">Money Flow</h1>
-          <p className="text-sm text-muted-foreground">
-            Visualize how funds move through your organization
-          </p>
-        </div>
-        <div className="flex gap-1 rounded-lg border border-border p-0.5">
-          {['week', 'month', 'quarter', 'year'].map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                timeRange === range
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        {isLoading ? (
-          <>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-5">
-                <div className="flex items-center justify-between">
-                  <div className="h-4 w-20 skeleton-shimmer rounded" />
-                  <div className="h-10 w-10 skeleton-shimmer rounded-lg" />
-                </div>
-                <div className="mt-3 h-8 w-28 skeleton-shimmer rounded" />
-              </div>
-            ))}
-          </>
-        ) : (
-          <>
-            <StatCard
-              label="Total Flow"
-              value={formatCurrency(totalFlow)}
-              icon={CurrencyCircleDollar}
-              gradient="from-emerald-500 to-green-600"
-              glow="shadow-emerald-500/25"
-            />
-            <StatCard
-              label="Active Nodes"
-              value={positionedNodes.length.toString()}
-              icon={GitBranch}
-              gradient="from-blue-500 to-indigo-600"
-              glow="shadow-blue-500/25"
-            />
-            <StatCard
-              label="Flow Links"
-              value={edges.length.toString()}
-              icon={Lightning}
-              gradient="from-violet-500 to-purple-600"
-              glow="shadow-violet-500/25"
-            />
-            <StatCard
-              label="Avg Flow"
-              value={edges.length > 0 ? formatCurrency(totalFlow / edges.length) : 'N/A'}
-              icon={TrendUp}
-              gradient="from-amber-500 to-orange-600"
-              glow="shadow-amber-500/25"
-            />
-          </>
-        )}
-      </div>
-
-      {/* Legend */}
-      <div className="mb-4 flex flex-wrap gap-3">
-        {Object.entries(nodeConfig).map(([type, config]) => {
-          const Icon = config.icon
-          return (
-            <div
-              key={type}
-              className="flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1.5"
-            >
-              <div className={`flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br ${config.gradient}`}>
-                <Icon className="h-3 w-3 text-muted-foreground" weight="duotone" />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground">{config.label}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Flow Diagram */}
-        <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2 overflow-hidden">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">Flow Diagram</h2>
-            <div className="flex gap-1 rounded-lg border border-border p-0.5">
-              <button
-                onClick={handleZoomOut}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <MagnifyingGlassMinus className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleZoomIn}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <MagnifyingGlassPlus className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleResetZoom}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <ArrowsOut className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="overflow-auto rounded-lg bg-muted/30 ring-1 ring-border">
-            {isLoading ? (
-              <div className="flex h-[500px] items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
-                  <p className="mt-4 font-medium text-muted-foreground">Loading flow data...</p>
-                </div>
-              </div>
-            ) : positionedNodes.length === 0 ? (
-              <div className="flex h-[500px] items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-lg bg-muted/30 ring-1 ring-border">
-                    <FlowArrow className="h-10 w-10 text-muted-foreground" weight="duotone" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold text-foreground">No flow nodes found</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Add transactions to start visualizing your flows
-                  </p>
-                  <Link
-                    to="/transactions/new"
-                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Transaction
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <svg
-                width={svgWidth * zoom}
-                height={svgHeight * zoom}
-                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                className="min-w-[900px]"
-                style={{ minHeight: svgHeight * zoom }}
-              >
-                {/* Definitions for filters and gradients */}
-                <defs>
-                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                  <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgb(34, 211, 238)" stopOpacity="0.6" />
-                    <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0.6" />
-                  </linearGradient>
-                </defs>
-
-                {/* Background grid pattern */}
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path
-                    d="M 40 0 L 0 0 0 40"
-                    fill="none"
-                    stroke="rgba(148, 163, 184, 0.05)"
-                    strokeWidth="1"
-                  />
-                </pattern>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-
-                {/* Edges layer */}
-                <g className="edges">
-                  {edges.map((edge) => {
-                    const fromNode = positionedNodes.find((n) => n.id === edge.from)
-                    const toNode = positionedNodes.find((n) => n.id === edge.to)
-                    if (!fromNode || !toNode) return null
-
-                    const isHighlighted = selectedNode === edge.from || selectedNode === edge.to
-
-                    return (
-                      <AnimatedEdge
-                        key={edge.id}
-                        fromX={fromNode.x + 200}
-                        fromY={fromNode.y + 32}
-                        toX={toNode.x}
-                        toY={toNode.y + 32}
-                        isHighlighted={isHighlighted}
-                        amount={edge.amount}
-                        formatCurrency={formatCurrency}
-                      />
-                    )
-                  })}
-                </g>
-
-                {/* Nodes layer */}
-                <g className="nodes">
-                  {positionedNodes.map((node) => (
-                    <GlassNode
-                      key={node.id}
-                      node={node}
-                      isSelected={selectedNode === node.id}
-                      onClick={() => setSelectedNode(selectedNode === node.id ? null : node.id)}
-                    />
-                  ))}
-                </g>
-              </svg>
-            )}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Click on a node to see details. Scroll to pan the diagram.
-          </p>
-        </div>
-
-        {/* Node Details Panel */}
-        <div className="space-y-4">
-          {selectedNodeData ? (
-            <>
-              <div className="rounded-lg border border-border bg-card p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${
-                        nodeConfig[selectedNodeData.node.type]?.gradient || nodeConfig.account.gradient
-                      } border border-white/10`}
-                    >
-                      {(() => {
-                        const Icon = nodeConfig[selectedNodeData.node.type]?.icon || Bank
-                        return <Icon className="h-6 w-6 text-foreground" weight="duotone" />
-                      })()}
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-foreground">
-                        {selectedNodeData.node.name}
-                      </h2>
-                      <span className="text-sm text-muted-foreground">
-                        {nodeConfig[selectedNodeData.node.type]?.label || 'Node'}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedNode(null)}
-                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <ArrowsIn className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-success/10 p-4 ring-1 ring-success/20">
-                    <div className="flex items-center gap-2">
-                      <TrendUp className="h-4 w-4 text-success" weight="bold" />
-                      <p className="text-xs font-medium text-success">Inflows</p>
-                    </div>
-                    <p className="mt-2 text-xl font-bold text-success">
-                      {formatCurrency(selectedNodeData.totalIn)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-destructive/10 p-4 ring-1 ring-destructive/20">
-                    <div className="flex items-center gap-2">
-                      <TrendDown className="h-4 w-4 text-destructive" weight="bold" />
-                      <p className="text-xs font-medium text-destructive">Outflows</p>
-                    </div>
-                    <p className="mt-2 text-xl font-bold text-destructive">
-                      {formatCurrency(selectedNodeData.totalOut)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-lg bg-muted/30 p-4 ring-1 ring-border">
-                  <p className="text-xs font-medium text-muted-foreground">Net Balance</p>
-                  <p
-                    className={`mt-1 text-2xl font-bold ${
-                      selectedNodeData.totalIn - selectedNodeData.totalOut >= 0
-                        ? 'text-success'
-                        : 'text-destructive'
-                    }`}
-                  >
-                    {formatCurrency(selectedNodeData.totalIn - selectedNodeData.totalOut)}
-                  </p>
-                </div>
-
-                {/* Verification Stats */}
-                <VerificationBreakdown
-                  stats={{
-                    total: selectedNodeData.node.verification_count ?? 0,
-                    verified: selectedNodeData.node.verified_count ?? 0,
-                    pending: selectedNodeData.node.pending_count ?? 0,
-                    rejected: selectedNodeData.node.rejected_count ?? 0,
-                    trustPoints: selectedNodeData.node.trust_points ?? 0,
-                  }}
-                  className="mt-4"
-                />
-              </div>
-
-              {selectedNodeData.inflows.length > 0 && (
-                <div className="rounded-lg border border-border bg-card/50 p-4">
-                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-success">
-                    <TrendUp className="h-4 w-4" weight="bold" />
-                    Inflows ({selectedNodeData.inflows.length})
-                  </h3>
-                  <ul className="space-y-2">
-                    {selectedNodeData.inflows.map((flow) => {
-                      const fromNode = positionedNodes.find((n) => n.id === flow.from)
-                      return (
-                        <li
-                          key={flow.id}
-                          className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3 text-sm ring-1 ring-border"
-                        >
-                          <span className="truncate text-foreground">{fromNode?.name ?? 'Unknown'}</span>
-                          <span className="shrink-0 font-semibold text-success">
-                            {formatCurrency(flow.amount)}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              )}
-
-              {selectedNodeData.outflows.length > 0 && (
-                <div className="rounded-lg border border-border bg-card/50 p-4">
-                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-destructive">
-                    <TrendDown className="h-4 w-4" weight="bold" />
-                    Outflows ({selectedNodeData.outflows.length})
-                  </h3>
-                  <ul className="space-y-2">
-                    {selectedNodeData.outflows.map((flow) => {
-                      const toNode = positionedNodes.find((n) => n.id === flow.to)
-                      return (
-                        <li
-                          key={flow.id}
-                          className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3 text-sm ring-1 ring-border"
-                        >
-                          <span className="truncate text-foreground">{toNode?.name ?? 'Unknown'}</span>
-                          <span className="shrink-0 font-semibold text-destructive">
-                            {formatCurrency(flow.amount)}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="rounded-lg border border-dashed border-border bg-card/30 p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-muted/30 ring-1 ring-border">
-                <GitBranch className="h-8 w-8 text-muted-foreground" weight="duotone" />
-              </div>
-              <h3 className="mt-4 font-semibold text-foreground">Select a Node</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Click on any node in the diagram to see its flow details
-              </p>
-            </div>
+  const periodControl = (
+    <div
+      role="group"
+      aria-label="Period"
+      className="inline-flex border border-foreground/70"
+    >
+      {PERIODS.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          aria-pressed={period === p.id}
+          onClick={() => setPeriod(p.id)}
+          className={cn(
+            'h-10 min-w-16 px-3 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&+&]:border-l [&+&]:border-foreground/70',
+            period === p.id
+              ? 'bg-primary text-primary-foreground'
+              : 'text-foreground hover:bg-muted',
           )}
-        </div>
-      </div>
+        >
+          {p.label}
+        </button>
+      ))}
     </div>
   )
-}
 
-// Stat card component
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  gradient,
-  glow,
-}: {
-  label: string
-  value: string
-  icon: typeof CurrencyCircleDollar
-  gradient: string
-  glow: string
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 transition-all hover:border-primary/30">
-      <div className="relative flex items-center justify-between">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-lg ${glow}`}
-        >
-          <Icon className="h-5 w-5 text-primary-foreground" weight="duotone" />
+  let body: ReactNode
+  if (isLoading) {
+    body = (
+      <ReportNotice title="Loading movements">
+        Building the flow map from your recorded transactions.
+      </ReportNotice>
+    )
+  } else if (error) {
+    body = (
+      <ReportNotice
+        tone="error"
+        title="The flow map could not load"
+        action={
+          <Button
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+          >
+            {isRefetching ? 'Trying again' : 'Try again'}
+          </Button>
+        }
+      >
+        {error instanceof Error ? error.message : String(error)} Check your
+        connection, then try again.
+      </ReportNotice>
+    )
+  } else if (all.length === 0) {
+    body = (
+      <ReportNotice
+        title="No movements recorded yet"
+        action={
+          <Link to="/transactions/new" className={buttonVariants()}>
+            Record a transaction
+          </Link>
+        }
+      >
+        The map draws each recorded movement from donor to recipient. Record
+        your first transaction to start it.
+      </ReportNotice>
+    )
+  } else if (graph.edges.length === 0) {
+    body = (
+      <ReportNotice
+        title={`No movements in the ${periodMeta.phrase}`}
+        action={
+          period !== WIDEST_PERIOD ? (
+            <Button onClick={() => setPeriod(WIDEST_PERIOD)}>
+              Show the {widest.phrase}
+            </Button>
+          ) : undefined
+        }
+      >
+        {range &&
+          `The ${periodMeta.label.toLowerCase()} view covers ${formatDate(range.start)} to ${formatDate(range.end)}, and nothing was recorded in it.`}
+      </ReportNotice>
+    )
+  } else {
+    body = (
+      <>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-border py-3">
+          <ProofLegend />
+          <p className="text-xs text-muted-foreground">
+            Line weight carries the amount.
+          </p>
         </div>
+
+        {/* The map takes the full width until a selection opens the panel. */}
+        <div
+          className={cn(
+            'grid gap-6 pt-4',
+            current && 'lg:grid-cols-[minmax(0,1fr)_19rem]',
+          )}
+        >
+          <div className="min-w-0">
+            <div
+              ref={mapRef}
+              className="max-h-[70vh] overflow-auto overscroll-contain border border-border bg-background lg:max-h-none"
+            >
+              <FlowMap
+                graph={graph}
+                zoom={scale}
+                selection={current}
+                active={active}
+                onSelect={setSelection}
+                onClear={() => setSelection(null)}
+              />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Select a donor, account or recipient to isolate everything
+              upstream and downstream of it; select a line to see the movements
+              it carries. Tab moves through the map in money order; Esc clears
+              the selection.
+              <span className="lg:hidden"> Scroll sideways to see the whole map.</span>
+            </p>
+          </div>
+
+          {current ? (
+            <aside
+              aria-labelledby={detailsHeadingId}
+              className="fixed inset-x-0 bottom-0 z-30 max-h-[45vh] overflow-y-auto border-t-[3px] border-foreground bg-background px-4 pt-3 pb-6 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.35)] lg:sticky lg:top-6 lg:z-auto lg:max-h-[calc(100vh-3rem)] lg:self-start lg:border-t-[3px] lg:px-0 lg:pt-3 lg:shadow-none"
+            >
+              <FlowDetails
+                graph={graph}
+                selection={current}
+                onClear={() => setSelection(null)}
+                headingId={detailsHeadingId}
+              />
+            </aside>
+          ) : null}
+        </div>
+      </>
+    )
+  }
+
+  const showMap = !isLoading && !error && graph.edges.length > 0
+
+  return (
+    <div className={cn('mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8', current && 'pb-[47vh] lg:pb-8')}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-4xl sm:text-5xl">Money flow</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {range
+              ? `Movements from ${formatDate(range.start)} to ${formatDate(range.end)}, counted back from the latest recorded transaction.`
+              : 'Where money came from, where it went, and the proof behind each movement.'}
+          </p>
+        </div>
+        {all.length > 0 && periodControl}
       </div>
-      <p className="relative mt-2 financial-figure text-2xl font-bold">{value}</p>
+
+      {showMap && (
+        <KeyFigures className="mt-6">
+          <KeyFigure
+            value={`KES ${formatCompact(graph.totals.moved)}`}
+            label="Total moved"
+            detail={
+              <span className="text-muted-foreground tabular-nums">
+                {formatMoney(graph.totals.moved)}
+              </span>
+            }
+          />
+          <KeyFigure value={graph.nodes.length} label="Nodes" />
+          <KeyFigure
+            value={graph.edges.length}
+            label="Links"
+            detail={
+              <span className="text-muted-foreground">
+                {graph.totals.movements} movements
+              </span>
+            }
+          />
+          <KeyFigure
+            value={`${evidencedShare}%`}
+            label="Share evidenced"
+            detail={
+              <span className="text-muted-foreground tabular-nums">
+                {formatMoney(graph.totals.evidenced)} has proof
+              </span>
+            }
+          />
+        </KeyFigures>
+      )}
+
+      <ReportSection
+        title="Flow map"
+        className="mt-8"
+        actions={
+          showMap ? (
+            <div
+              role="group"
+              aria-label="Zoom"
+              className="flex items-center gap-1"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10"
+                onClick={() => stepZoom(-1)}
+                disabled={scale <= ZOOM_MIN}
+                aria-label="Zoom out"
+              >
+                <MagnifyingGlassMinus />
+              </Button>
+              <output
+                aria-live="polite"
+                className="w-11 text-center text-xs font-semibold text-foreground tabular-nums"
+              >
+                {Math.round(scale * 100)}%
+              </output>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10"
+                onClick={() => stepZoom(1)}
+                disabled={scale >= ZOOM_MAX}
+                aria-label="Zoom in"
+              >
+                <MagnifyingGlassPlus />
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-10"
+                onClick={() => setZoom('fit')}
+                disabled={zoom === 'fit'}
+              >
+                <ArrowsInLineHorizontal />
+                Fit
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
+        {body}
+      </ReportSection>
     </div>
   )
 }

@@ -1,10 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Code, Share } from '@phosphor-icons/react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { EmbedCodeGenerator } from '@/components/embed-code-generator'
-import { BadgePreviewGrid } from '@/components/trust-badge-preview'
-import { useCampaigns } from '@/lib/queries'
-import { useOrg } from '@/lib/org-context'
+import { useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { ArrowLeft, CircleNotch } from '@phosphor-icons/react'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -12,132 +9,141 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { useState } from 'react'
+import { ReportNotice, ReportSection } from '@/components/report'
+import {
+  CampaignWidgetEmbed,
+  TrustBadgeEmbed,
+} from '@/components/embed-code-generator'
+import { useCampaigns } from '@/lib/queries'
+import { useOrg } from '@/lib/org-context'
 
 export const Route = createFileRoute('/_authenticated/settings/embed')({
   component: EmbedSettingsPage,
 })
 
 function EmbedSettingsPage() {
-  const { organizationId } = useOrg()
-  const { data: campaigns } = useCampaigns()
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('')
+  const { organizationId, organization } = useOrg()
+  const campaigns = useCampaigns()
+  const [chosenId, setChosenId] = useState<string | null>(null)
 
-  const activeCampaigns = campaigns?.filter((c) => c.status === 'active' && c.is_public) || []
-  const selectedCampaign = activeCampaigns.find((c) => c.id === selectedCampaignId)
+  const embeddable =
+    campaigns.data?.filter((c) => c.status === 'active' && c.is_public) ?? []
+  const selected =
+    embeddable.find((c) => c.id === chosenId) ?? embeddable.at(0) ?? null
 
   return (
-    <div className="mx-auto max-w-4xl p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Share className="h-6 w-6" />
-          Embed & Badges
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Share your transparency data with embeddable widgets and trust badges
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-6 sm:px-8 sm:py-8">
+      <header>
+        <Link
+          to="/settings"
+          className="mb-3 inline-flex min-h-10 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Settings
+        </Link>
+        <h1 className="text-4xl sm:text-5xl">Embed &amp; badges</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Put {organization?.name ?? 'your organisation'}’s live figures on your
+          own website: a campaign widget that takes donations, and a badge that
+          shows your Trust Score.
         </p>
-      </div>
+      </header>
 
-      {/* Campaign Selection */}
-      {activeCampaigns.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Campaign Widget</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Select a campaign to embed</Label>
-              <Select
-                value={selectedCampaignId}
-                items={{
-                  '': 'Choose a campaign...',
-                  ...Object.fromEntries(
-                    activeCampaigns.map((campaign) => [
-                      campaign.id,
-                      campaign.name,
-                    ]),
-                  ),
-                }}
-                onValueChange={(value) => setSelectedCampaignId(value ?? '')}
+      {campaigns.isError ? (
+        <ReportSection title="Campaign widget">
+          <ReportNotice
+            tone="error"
+            title="Your campaigns could not be loaded"
+            action={
+              <Button
+                variant="outline"
+                className="h-10"
+                onClick={() => campaigns.refetch()}
               >
-                <SelectTrigger className="w-full sm:w-[300px]">
+                Try again
+              </Button>
+            }
+          >
+            {campaigns.error instanceof Error
+              ? campaigns.error.message
+              : 'Check your connection and try again.'}
+          </ReportNotice>
+        </ReportSection>
+      ) : campaigns.isLoading ? (
+        <ReportSection title="Campaign widget">
+          <p className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+            <CircleNotch className="size-4 animate-spin" aria-hidden="true" />
+            Loading your campaigns
+          </p>
+        </ReportSection>
+      ) : embeddable.length === 0 ? (
+        <ReportSection title="Campaign widget">
+          <ReportNotice
+            title="No campaign is ready to embed"
+            action={
+              <Link
+                to="/campaigns"
+                className={buttonVariants({ className: 'h-10' })}
+              >
+                Go to campaigns
+              </Link>
+            }
+          >
+            A widget needs an active, public campaign. Publish one and its
+            widget code appears here.
+          </ReportNotice>
+        </ReportSection>
+      ) : (
+        <CampaignWidgetEmbed
+          campaignId={selected?.id}
+          campaignName={selected?.name}
+          picker={
+            <div className="flex flex-col gap-2">
+              <span id="embed-campaign-label" className="text-sm font-semibold">
+                Campaign
+              </span>
+              <Select
+                value={selected?.id ?? ''}
+                items={Object.fromEntries(
+                  embeddable.map((c) => [c.id, c.name]),
+                )}
+                onValueChange={(v) => v && setChosenId(v)}
+              >
+                <SelectTrigger
+                  className="h-10 w-full"
+                  aria-labelledby="embed-campaign-label"
+                  aria-describedby="embed-campaign-hint"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {activeCampaigns.map((campaign) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.name}
+                  {embeddable.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {selectedCampaign && (
-              <div className="pt-2">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Public URL:{' '}
-                  <code className="px-2 py-0.5 bg-muted rounded text-xs">
-                    /donate/{selectedCampaign.public_slug}
-                  </code>
+              {selected?.public_slug && (
+                <p
+                  id="embed-campaign-hint"
+                  className="text-xs text-muted-foreground [overflow-wrap:anywhere]"
+                >
+                  Donation page:{' '}
+                  <a
+                    href={`/donate/${selected.public_slug}`}
+                    className="font-mono text-foreground underline underline-offset-4 hover:text-primary"
+                  >
+                    /donate/{selected.public_slug}
+                  </a>
                 </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </div>
+          }
+        />
       )}
 
-      {/* Embed Code Generator */}
-      <EmbedCodeGenerator
-        campaignId={selectedCampaignId || undefined}
-        campaignSlug={selectedCampaign?.public_slug || undefined}
-        campaignName={selectedCampaign?.name}
-        organizationId={organizationId || ''}
-      />
-
-      {/* Badge Preview Grid */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Badge Styles Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {organizationId && (
-            <BadgePreviewGrid organizationId={organizationId} />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Usage Tips */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Code className="h-5 w-5" />
-            Usage Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="prose prose-sm max-w-none dark:prose-invert">
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>
-              <strong>Campaign Widgets:</strong> Embed on your website to show real-time
-              donation progress and accept contributions.
-            </li>
-            <li>
-              <strong>Trust Badges:</strong> Add to your README, email signature, or
-              website footer to showcase your transparency score.
-            </li>
-            <li>
-              <strong>Responsive Design:</strong> The campaign widget automatically
-              adjusts its height based on content.
-            </li>
-            <li>
-              <strong>Theme Support:</strong> Choose light or dark theme to match your
-              website&apos;s design.
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+      <TrustBadgeEmbed organizationId={organizationId ?? ''} />
     </div>
   )
 }

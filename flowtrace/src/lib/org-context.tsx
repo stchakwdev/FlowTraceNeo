@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useAppAuth } from './auth-context'
 import { DEV_MODE, DEV_ORG_ID, supabase } from './supabase'
+import { demoOrganization, profiles as demoProfiles } from './demo/dataset'
 import type { AuthUser } from './auth'
 import type { ReactNode } from 'react'
 import type { Organization, Profile } from './supabase'
@@ -27,36 +28,21 @@ const OrgContext = createContext<OrgContextValue>({
   refetch: async () => {},
 })
 
-// Dev mode mock organization
-const DEV_ORGANIZATION: Organization = {
-  id: DEV_ORG_ID,
-  name: 'Demo NGO Kenya',
-  type: 'NGO',
-  country: 'KE',
-  currency: 'KES',
-  trust_score: 87,
-  verified: true,
-  public_slug: 'demo-ngo',
-  logo_url: null,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-}
+// Dummy auth mode: the demo org and its admin profile from the bundled dataset
+const DEV_ORGANIZATION: Organization = demoOrganization
+const DEV_PROFILE: Profile = demoProfiles[0]
 
 export function OrgProvider({ children }: { children: ReactNode }) {
-  const {
-    user,
-    organizationId: authOrgId,
-    loading: authLoading,
-  } = useAppAuth()
-  const [state, setState] = useState<
-    Omit<OrgContextValue, 'refetch' | 'user'>
-  >({
-    organizationId: DEV_MODE ? DEV_ORG_ID : null,
-    organization: DEV_MODE ? DEV_ORGANIZATION : null,
-    profile: null,
-    isLoading: !DEV_MODE,
-    error: null,
-  })
+  const { user, organizationId: authOrgId, loading: authLoading } = useAppAuth()
+  const [state, setState] = useState<Omit<OrgContextValue, 'refetch' | 'user'>>(
+    {
+      organizationId: DEV_MODE ? DEV_ORG_ID : null,
+      organization: DEV_MODE ? DEV_ORGANIZATION : null,
+      profile: DEV_MODE ? DEV_PROFILE : null,
+      isLoading: !DEV_MODE,
+      error: null,
+    },
+  )
 
   const loadOrgContext = async () => {
     // Dev bypass mode - use mock organization
@@ -64,7 +50,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       setState({
         organizationId: DEV_ORG_ID,
         organization: DEV_ORGANIZATION,
-        profile: null,
+        profile: DEV_PROFILE,
         isLoading: false,
         error: null,
       })
@@ -106,9 +92,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
               id: user.id,
               email: user.email,
               full_name:
-                [user.firstName, user.lastName]
-                  .filter(Boolean)
-                  .join(' ') || null,
+                [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+                null,
               organization_id: orgId,
               role: 'admin' as const,
             },

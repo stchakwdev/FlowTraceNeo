@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sitrep direction sketch</title>
+<style>
+  :root{--ground:#F5F6F3;--ink:#13202D;--ink2:#4A5866;--blue:#1C5FA8;--blue2:#7FA6D3;--gap:#D6DCE2;--rule:#C9D0D7;--flag:#D4521F}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:1440px;height:900px;overflow:hidden;background:var(--ground);color:var(--ink);font-family:"Archivo","Arial Narrow",Arial,sans-serif}
+  .mast{height:52px;border-bottom:3px solid var(--ink);display:flex;align-items:center;padding:0 48px;gap:28px}
+  .mark{font-weight:800;font-size:22px;letter-spacing:-.01em}
+  .meta{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);font-stretch:85%}
+  .mast nav{margin-left:auto;display:flex;align-items:center;gap:24px;font-size:14px}
+  .btn{background:var(--blue);color:#fff;padding:10px 18px;font-weight:700;font-size:14px}
+  main{display:grid;grid-template-columns:5fr 7fr;gap:56px;padding:44px 48px 0}
+  .kicker{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);font-weight:700}
+  h1{font-size:76px;line-height:.96;font-weight:800;font-stretch:75%;letter-spacing:-.01em;margin-top:18px}
+  .lede{font-size:19px;line-height:1.5;color:var(--ink2);margin-top:24px;max-width:500px}
+  .cta{display:flex;gap:20px;align-items:center;margin-top:32px}
+  .cta .btn{font-size:17px;padding:16px 24px}
+  .cta a.q{font-size:16px;border-bottom:1.5px solid var(--ink)}
+  .report{border-top:3px solid var(--ink)}
+  .rhead{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--rule)}
+  .figs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--rule)}
+  .fig{padding:18px 18px 16px 0}
+  .fig + .fig{padding-left:18px;border-left:1px solid var(--rule)}
+  .fig b{display:block;font-size:44px;font-weight:800;font-stretch:75%;font-variant-numeric:tabular-nums;line-height:1}
+  .fig span{display:block;font-size:13px;color:var(--ink2);margin-top:8px}
+  .sec{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin:22px 0 12px}
+  .row{display:grid;grid-template-columns:150px 1fr 120px;align-items:center;gap:16px;margin-bottom:12px;font-size:14px}
+  .bar{height:22px;background:var(--gap);position:relative}
+  .bar i{position:absolute;inset:0 auto 0 0;background:var(--blue)}
+  .bar i.ev{background:var(--blue2)}
+  .bar.pend{background:repeating-linear-gradient(90deg,var(--ink2) 0 8px,transparent 8px 14px);height:3px;margin:9px 0}
+  .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+  .legend{display:flex;gap:28px;font-size:13px;color:var(--ink2);margin-top:18px;align-items:center}
+  .ln{display:inline-block;width:34px;height:0;border-top:3px solid var(--ink);vertical-align:middle;margin-right:8px}
+  .ln.d{border-top-style:dashed}
+  .ln.x{border-top:3px solid var(--flag);position:relative}
+  .demo{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);border:1px solid var(--rule);padding:3px 7px}
+  .next{position:absolute;left:48px;right:48px;top:800px;border-top:3px solid var(--ink);padding-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+  .next h3{font-size:30px;font-weight:800;font-stretch:75%}
+  .next h3 em{font-style:normal;color:var(--blue)}
+</style>
+</head>
+<body>
+  <header class="mast">
+    <span class="mark">FlowTrace</span>
+    <span class="meta">Situation report · Demo NGO Kenya · as of 4 Feb 2026</span>
+    <nav><a>How proof works</a><a>For funders</a><a>Sign in</a><a class="btn">Explore the demo</a></nav>
+  </header>
+  <main>
+    <section>
+      <p class="kicker">For NGO directors and finance leads</p>
+      <h1>Every shilling, traced to its proof.</h1>
+      <p class="lede">FlowTrace records each grant, budget transfer and M-Pesa payment with its receipt, photo or bank statement attached, then gives each funder a live view at the depth you choose.</p>
+      <div class="cta"><a class="btn">Explore the demo: Demo NGO Kenya</a><a class="q">How proof is attached</a></div>
+    </section>
+    <section class="report">
+      <div class="rhead"><span class="sec" style="margin:0">Key figures, Q1 2026</span><span class="demo">Demo data</span></div>
+      <div class="figs">
+        <div class="fig"><b>15.7M</b><span>KES received and evidenced</span></div>
+        <div class="fig"><b>12/15</b><span>movements with proof attached</span></div>
+        <div class="fig"><b>3</b><span>awaiting proof</span></div>
+        <div class="fig"><b>87</b><span>Trust Score</span></div>
+      </div>
+      <p class="sec">Funding received, by donor</p>
+      <div class="row"><span>USAID</span><div class="bar"><i style="width:100%"></i></div><span class="num">8,500,000</span></div>
+      <div class="row"><span>DFID UK Aid</span><div class="bar"><i style="width:47%"></i></div><span class="num">4,000,000</span></div>
+      <div class="row"><span>Gates Foundation</span><div class="bar"><i style="width:38%"></i></div><span class="num">3,200,000</span></div>
+      <div class="row"><span>World Bank IDA</span><div class="bar pend"></div><span class="num">6,000,000</span></div>
+      <div class="legend"><span><i class="ln"></i>Evidenced</span><span><i class="ln d"></i>Awaiting proof</span><span><i class="ln x"></i>Flagged</span></div>
+    </section>
+  </main>
+  <section class="next">
+    <h3><em>01</em> Money moves</h3><h3><em>02</em> Proof attaches</h3><h3><em>03</em> Funders see it live</h3>
+  </section>
+</body>
+</html>

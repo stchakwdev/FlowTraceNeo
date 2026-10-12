@@ -1,108 +1,131 @@
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Prohibit,
-} from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
 import type { ChainStatus } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
-interface ChainStatusBadgeProps {
-  status: ChainStatus
-  size?: 'sm' | 'md' | 'lg'
-  className?: string
+export const CHAIN_STATUS_LABEL: Record<ChainStatus, string> = {
+  active: 'Active',
+  pending: 'Pending',
+  revoked: 'Revoked',
+  rejected: 'Rejected',
 }
 
-const STATUS_CONFIG: Record<
-  ChainStatus,
-  {
-    icon: React.ElementType
-    label: string
-    className: string
-  }
-> = {
-  pending: {
-    icon: Clock,
-    label: 'Pending',
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  },
-  active: {
-    icon: CheckCircle,
-    label: 'Active',
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  },
-  rejected: {
-    icon: XCircle,
-    label: 'Rejected',
-    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  },
-  revoked: {
-    icon: Prohibit,
-    label: 'Revoked',
-    className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  },
-}
-
-const SIZE_CLASSES = {
-  sm: {
-    container: 'px-1.5 py-0.5 gap-1 text-xs',
-    icon: 'h-3 w-3',
-  },
-  md: {
-    container: 'px-2 py-1 gap-1.5 text-sm',
-    icon: 'h-3.5 w-3.5',
-  },
-  lg: {
-    container: 'px-3 py-1.5 gap-2 text-sm',
-    icon: 'h-4 w-4',
-  },
-}
-
-export function ChainStatusBadge({
+/**
+ * The link between two organisations, drawn the way the report draws proof:
+ * the line's pattern carries the state. Active is a solid ink line, pending
+ * is dashed, revoked or rejected is broken with a gap and a cut mark.
+ * Fills the width of its container.
+ */
+export function ChainLine({
   status,
-  size = 'md',
   className,
-}: ChainStatusBadgeProps) {
-  const config = STATUS_CONFIG[status]
-  const sizeClasses = SIZE_CLASSES[size]
-  const Icon = config.icon
+}: {
+  status: ChainStatus
+  className?: string
+}) {
+  const broken = status === 'revoked' || status === 'rejected'
+  return (
+    <svg
+      width="100%"
+      height="12"
+      aria-hidden="true"
+      className={cn('block overflow-visible', className)}
+    >
+      {broken ? (
+        <>
+          <line
+            x1="0"
+            y1="6"
+            x2="42%"
+            y2="6"
+            strokeWidth="3"
+            className="stroke-muted-foreground"
+          />
+          <line
+            x1="58%"
+            y1="6"
+            x2="100%"
+            y2="6"
+            strokeWidth="3"
+            className="stroke-muted-foreground"
+          />
+          <line
+            x1="47%"
+            y1="0"
+            x2="49%"
+            y2="12"
+            strokeWidth="2"
+            className="stroke-muted-foreground"
+          />
+          <line
+            x1="51%"
+            y1="0"
+            x2="53%"
+            y2="12"
+            strokeWidth="2"
+            className="stroke-muted-foreground"
+          />
+        </>
+      ) : (
+        <line
+          x1="0"
+          y1="6"
+          x2="100%"
+          y2="6"
+          strokeWidth="3"
+          strokeDasharray={status === 'pending' ? '7 5' : undefined}
+          className={
+            status === 'pending'
+              ? 'stroke-muted-foreground'
+              : 'stroke-foreground'
+          }
+        />
+      )}
+    </svg>
+  )
+}
 
+/** A short sample of the chain line plus its state in words. */
+export function ChainStatusMark({
+  status,
+  className,
+}: {
+  status: ChainStatus
+  className?: string
+}) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full font-medium',
-        sizeClasses.container,
-        config.className,
+        'inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap',
+        status === 'active' ? 'text-foreground' : 'text-muted-foreground',
         className,
       )}
     >
-      <Icon className={sizeClasses.icon} weight="fill" />
-      {config.label}
+      <ChainLine status={status} className="w-6" />
+      {CHAIN_STATUS_LABEL[status]}
     </span>
   )
 }
 
-// Compact version showing just the icon with tooltip
-export function ChainStatusIcon({
-  status,
-  size = 'md',
-  className,
-}: ChainStatusBadgeProps) {
-  const config = STATUS_CONFIG[status]
-  const sizeClasses = SIZE_CLASSES[size]
-  const Icon = config.icon
-
+/** Key for the three chain line patterns. */
+export function ChainLegend({ className }: { className?: string }) {
   return (
-    <span
+    <div
       className={cn(
-        'inline-flex items-center justify-center rounded-full',
-        size === 'sm' ? 'h-5 w-5' : size === 'md' ? 'h-6 w-6' : 'h-7 w-7',
-        config.className,
+        'flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground',
         className,
       )}
-      title={config.label}
     >
-      <Icon className={sizeClasses.icon} weight="fill" />
-    </span>
+      <span className="inline-flex items-center gap-2">
+        <ChainLine status="active" className="w-7" />
+        Active
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <ChainLine status="pending" className="w-7" />
+        Awaiting approval
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <ChainLine status="revoked" className="w-7" />
+        Revoked or rejected
+      </span>
+    </div>
   )
 }

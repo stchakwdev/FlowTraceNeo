@@ -1,138 +1,122 @@
+import { CoverageBar } from '@/components/report'
+import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-interface CampaignProgressBarProps {
-  current: number
+interface CampaignCoverageProps {
+  raised: number
   target: number
+  /** Spending backed by verified proof, drawn as the darker share of the bar. */
+  evidenced?: number | null
   currency?: string
-  showLabels?: boolean
-  showPercentage?: boolean
   size?: 'sm' | 'md' | 'lg'
+  /** Show the key under the bar. */
+  showKey?: boolean
   className?: string
 }
 
-export function CampaignProgressBar({
-  current,
+/**
+ * Campaign funding coverage: raised against target, with the share already
+ * spent with proof drawn darker. Figures are tabular and carry their currency.
+ */
+export function CampaignCoverage({
+  raised,
   target,
+  evidenced,
   currency = 'KES',
-  showLabels = true,
-  showPercentage = true,
   size = 'md',
+  showKey = true,
   className,
-}: CampaignProgressBarProps) {
-  const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0
-  const isOverfunded = current > target
-  const overfundPercentage = target > 0 ? ((current - target) / target) * 100 : 0
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const sizeClasses = {
-    sm: 'h-1.5',
-    md: 'h-2.5',
-    lg: 'h-4',
-  }
+}: CampaignCoverageProps) {
+  const pct = target > 0 ? Math.round((raised / target) * 100) : 0
+  const over = raised - target
+  const remaining = Math.max(0, target - raised)
+  const hasEvidence = evidenced !== null && evidenced !== undefined
 
   return (
     <div className={cn('w-full', className)}>
-      {/* Labels */}
-      {showLabels && (
-        <div className="mb-1.5 flex items-baseline justify-between text-sm">
-          <span className="font-semibold text-foreground">
-            {formatAmount(current)}
-          </span>
-          <span className="text-muted-foreground">
-            of {formatAmount(target)}
-          </span>
-        </div>
-      )}
-
-      {/* Progress bar */}
-      <div className={cn('relative w-full overflow-hidden rounded-full bg-muted', sizeClasses[size])}>
-        {/* Main progress */}
-        <div
-          className={cn(
-            'h-full rounded-full transition-all duration-500 ease-out',
-            isOverfunded ? 'bg-emerald-500' : 'bg-primary',
-          )}
-          style={{ width: `${Math.min(percentage, 100)}%` }}
-        />
-
-        {/* Overfunded indicator */}
-        {isOverfunded && (
-          <div
-            className="absolute right-0 top-0 h-full bg-emerald-400/50"
-            style={{ width: `${Math.min(overfundPercentage, 50)}%` }}
-          />
-        )}
-      </div>
-
-      {/* Percentage */}
-      {showPercentage && (
-        <div className="mt-1 flex items-center justify-between text-xs">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+        <p className="min-w-0">
           <span
             className={cn(
-              'font-medium',
-              percentage >= 100
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : percentage >= 75
-                  ? 'text-primary'
-                  : percentage >= 50
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-muted-foreground',
+              'figure block text-foreground',
+              size === 'sm' && 'text-2xl',
+              size === 'md' && 'text-3xl',
+              size === 'lg' && 'text-4xl sm:text-5xl',
             )}
           >
-            {percentage.toFixed(0)}% funded
+            {formatMoney(raised, currency)}
           </span>
-          {isOverfunded && (
-            <span className="text-emerald-600 dark:text-emerald-400">
-              +{overfundPercentage.toFixed(0)}% overflow
-            </span>
+          <span className="mt-1.5 block text-sm text-muted-foreground">
+            raised of{' '}
+            <span className="font-semibold text-foreground tabular-nums">
+              {formatMoney(target, currency)}
+            </span>{' '}
+            target
+          </span>
+        </p>
+        <p
+          className={cn(
+            'figure text-foreground',
+            size === 'lg' ? 'text-3xl' : 'text-xl',
           )}
-        </div>
+        >
+          {pct}%
+        </p>
+      </div>
+
+      <CoverageBar
+        total={Math.max(target, raised)}
+        filled={raised}
+        evidenced={hasEvidence ? evidenced : undefined}
+        label={`${formatMoney(raised, currency)} raised of ${formatMoney(target, currency)}, ${pct}%${hasEvidence ? `; ${formatMoney(evidenced, currency)} spent with proof` : ''}`}
+        className={cn('mt-3', size === 'sm' && 'h-3')}
+      />
+
+      {showKey && (
+        <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
+          {hasEvidence && (
+            <KeyItem swatch="bg-primary" label="Spent with proof">
+              {formatMoney(evidenced, currency)}
+            </KeyItem>
+          )}
+          <KeyItem
+            swatch="bg-report"
+            label={hasEvidence ? 'Raised, not yet spent with proof' : 'Raised'}
+          >
+            {formatMoney(
+              hasEvidence ? Math.max(0, raised - evidenced) : raised,
+              currency,
+            )}
+          </KeyItem>
+          {over > 0 ? (
+            <KeyItem swatch="bg-report" label="Over target">
+              {formatMoney(over, currency)}
+            </KeyItem>
+          ) : (
+            <KeyItem swatch="bg-gap" label="Still to raise">
+              {formatMoney(remaining, currency)}
+            </KeyItem>
+          )}
+        </dl>
       )}
     </div>
   )
 }
 
-// Compact variant for use in cards/lists
-export function CampaignProgressCompact({
-  current,
-  target,
-  className,
+function KeyItem({
+  swatch,
+  label,
+  children,
 }: {
-  current: number
-  target: number
-  className?: string
+  swatch: string
+  label: string
+  children: React.ReactNode
 }) {
-  const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0
-
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn(
-            'h-full rounded-full transition-all duration-300',
-            percentage >= 100 ? 'bg-emerald-500' : 'bg-primary',
-          )}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <span
-        className={cn(
-          'text-xs font-medium tabular-nums',
-          percentage >= 100
-            ? 'text-emerald-600 dark:text-emerald-400'
-            : 'text-muted-foreground',
-        )}
-      >
-        {percentage.toFixed(0)}%
-      </span>
+    <div className="inline-flex items-center gap-1.5">
+      <span aria-hidden="true" className={cn('size-2.5 shrink-0', swatch)} />
+      <dt>{label}</dt>
+      <dd className="font-semibold text-foreground tabular-nums">{children}</dd>
     </div>
   )
 }

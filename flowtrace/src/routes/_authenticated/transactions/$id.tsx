@@ -1,389 +1,584 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Wallet,
-  Buildings,
-  CloudArrowUp,
-  ShareNetwork,
-  Download,
-  CheckCircle,
-  Clock,
-  Warning,
-  PencilSimple,
-} from '@phosphor-icons/react'
-import type { Verification } from '@/lib/supabase'
+import { ArrowLeft, Plus } from '@phosphor-icons/react'
+import type {
+  TransactionWithNodes,
+  Verification,
+  VerificationType,
+  VerificationVisibility,
+} from '@/lib/supabase'
+import type { UploadedFile } from '@/components/file-upload'
+import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
 import { useTransaction, useVerifications } from '@/lib/queries'
-import { VerificationGallery } from '@/components/verification-gallery'
+import { formatAmount, formatDate, formatDateTimeEAT } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  PROOF_STATUS_LABEL,
+  ReportNotice,
+  ReportSection,
+  StatusMark,
+  proofStroke,
+} from '@/components/report'
+import {
+  PROOF_TYPE_LABEL,
+  VerificationGallery,
+  proofTrustPoints,
+} from '@/components/verification-gallery'
 import { VerificationViewer } from '@/components/verification-viewer'
-import { FileUpload } from '@/components/file-upload'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import {
+  EnhancedUploadForm,
+  FileUpload,
+  useAttachProofs,
+  useGPSCapture,
+} from '@/components/file-upload'
+
+// `attach=1` opens the attach-proof panel; `failed=n` reports uploads that
+// did not complete when the transaction was created.
+type DetailSearch = { attach?: 1; failed?: number }
 
 export const Route = createFileRoute('/_authenticated/transactions/$id')({
+  validateSearch: (search: Record<string, unknown>): DetailSearch => {
+    const failed = Number(search.failed)
+    return {
+      attach:
+        search.attach === true || search.attach === '1' || search.attach === 1
+          ? 1
+          : undefined,
+      failed: Number.isFinite(failed) && failed > 0 ? failed : undefined,
+    }
+  },
   component: TransactionDetail,
 })
 
 function TransactionDetail() {
   const { id } = Route.useParams()
-  const navigate = useNavigate()
+  const { attach, failed } = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const [selected, setSelected] = useState<Verification | null>(null)
 
-  // Verification viewer state
-  const [selectedVerification, setSelectedVerification] =
-    useState<Verification | null>(null)
-  const [showAddVerification, setShowAddVerification] = useState(false)
+  const { data: transaction, isLoading, error, refetch } = useTransaction(id)
+  const {
+    data: verifications,
+    isLoading: proofsLoading,
+    error: proofsError,
+    refetch: refetchProofs,
+  } = useVerifications(id)
 
-  const { data: transaction, isLoading, error } = useTransaction(id)
-  const { data: verifications } = useVerifications(id)
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-KE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+  const setAttach = (open: boolean) =>
+    navigate({
+      search: (prev) => ({
+        attach: open ? 1 : undefined,
+        failed: open ? prev.failed : undefined,
+      }),
+      replace: true,
+      resetScroll: false,
     })
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-KE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  const getStatusBadge = (
-    status: 'pending' | 'verified' | 'flagged' | 'rejected',
-  ) => {
-    const styles = {
-      pending:
-        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      verified:
-        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      flagged: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      rejected:
-        'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
-    }
-    const icons = {
-      pending: Clock,
-      verified: CheckCircle,
-      flagged: Warning,
-      rejected: Warning,
-    }
-    const Icon = icons[status]
-    return (
-      <span
-        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${styles[status]}`}
-      >
-        <Icon className="mr-1 h-4 w-4" weight="fill" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    )
-  }
-
-  const handleVerificationClick = (verification: Verification) => {
-    setSelectedVerification(verification)
-  }
-
-  const handleVerificationNavigate = (verification: Verification) => {
-    setSelectedVerification(verification)
-  }
-
-  const handleAddVerification = () => {
-    setShowAddVerification(true)
-  }
-
-  const handleUploadComplete = () => {
-    setShowAddVerification(false)
-  }
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-8 h-8 w-48 skeleton-shimmer rounded bg-muted" />
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            <div className="h-48 skeleton-shimmer rounded-lg bg-muted" />
-            <div className="h-32 skeleton-shimmer rounded-lg bg-muted" />
-          </div>
-          <div className="h-64 skeleton-shimmer rounded-lg bg-muted" />
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+        <div className="skeleton-shimmer h-4 w-28" />
+        <div className="skeleton-shimmer mt-6 h-12 w-2/3" />
+        <div className="skeleton-shimmer mt-8 h-16 w-64" />
+        <div className="skeleton-shimmer mt-10 h-40 w-full" />
       </div>
     )
   }
 
   if (error || !transaction) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold text-destructive">
-          Transaction not found
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          The transaction you're looking for doesn't exist.
-        </p>
-        <Link
-          to="/transactions"
-          className="mt-4 inline-block text-primary hover:underline"
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+        <BackLink />
+        <ReportNotice
+          tone={error ? 'error' : 'neutral'}
+          className="rule-heavy mt-6"
+          title={
+            error
+              ? 'This transaction could not be loaded'
+              : 'Transaction not found'
+          }
+          action={
+            error ? (
+              <Button variant="outline" onClick={() => refetch()}>
+                Try again
+              </Button>
+            ) : (
+              <Link to="/transactions" className={buttonVariants()}>
+                See all transactions
+              </Link>
+            )
+          }
         >
-          Back to Transactions
-        </Link>
+          {error
+            ? 'Check your connection, then try again.'
+            : 'It may have been removed, or the link is incomplete.'}
+        </ReportNotice>
       </div>
     )
   }
 
-  // Calculate total trust points from verifications
-  const totalTrustPoints =
-    verifications?.reduce((sum, v) => sum + (v.trust_points || 0), 0) ?? 0
+  const proofs = verifications ?? []
+  const trustPoints = proofs.reduce((sum, v) => sum + proofTrustPoints(v), 0)
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <button
-          onClick={() => navigate({ to: '/transactions' })}
-          className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Transactions
-        </button>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">{transaction.description}</h1>
-              {getStatusBadge(transaction.verification_status)}
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+      <BackLink />
+
+      <header className="mt-4">
+        <h1 className="text-4xl text-balance sm:text-5xl">
+          {transaction.description}
+        </h1>
+        <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <StatusMark status={transaction.verification_status} />
+          <time dateTime={transaction.transaction_date}>
+            {formatDate(transaction.transaction_date)}
+          </time>
+          {transaction.reference && (
+            <span className="font-mono text-xs">{transaction.reference}</span>
+          )}
+        </p>
+      </header>
+
+      <div className="mt-8 grid gap-x-10 gap-y-10 lg:grid-cols-12">
+        <div className="min-w-0 space-y-10 lg:col-span-8">
+          <ReportSection title="Movement">
+            <div className="py-5">
+              <p className="figure text-5xl sm:text-6xl">
+                <span className="mr-2 text-2xl text-muted-foreground sm:text-3xl">
+                  {transaction.currency}
+                </span>
+                {formatAmount(transaction.amount)}
+              </p>
+              {transaction.amount_usd != null && (
+                <p className="mt-2 text-sm text-muted-foreground tabular-nums">
+                  about USD {formatAmount(transaction.amount_usd)}
+                </p>
+              )}
+              <FlowDrawing transaction={transaction} />
             </div>
-            <p className="mt-1 text-muted-foreground">Transaction #{id}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <PencilSimple className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-            {transaction.verification_status === 'pending' && (
-              <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Verify
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+          </ReportSection>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Transaction Details */}
-          <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold">Transaction Details</h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm text-muted-foreground">Amount</dt>
-                <dd className="text-2xl font-bold">
-                  {formatCurrency(transaction.amount, transaction.currency)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Date</dt>
-                <dd className="font-medium">
-                  {formatDate(transaction.transaction_date)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Category</dt>
-                <dd className="font-medium">
-                  {transaction.category ?? 'Uncategorized'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Status</dt>
-                <dd>{getStatusBadge(transaction.verification_status)}</dd>
-              </div>
-            </dl>
-          </Card>
-
-          {/* Flow */}
-          <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold">Money Flow</h2>
-            <div className="flex items-center justify-between rounded-lg bg-accent/50 p-4">
-              <div className="text-center">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Wallet className="h-6 w-6 text-primary" weight="duotone" />
-                </div>
-                <p className="font-medium">
-                  {transaction.from_node?.name ?? 'Unknown'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {transaction.from_node?.type ?? 'source'}
-                </p>
-              </div>
-              <div className="flex-1 px-4">
-                <div className="flex items-center justify-center">
-                  <div className="h-0.5 flex-1 bg-primary/30" />
-                  <ArrowRight className="mx-2 h-5 w-5 text-primary" />
-                  <div className="h-0.5 flex-1 bg-primary/30" />
-                </div>
-                <p className="mt-1 text-center text-sm font-medium text-primary">
-                  {formatCurrency(transaction.amount, transaction.currency)}
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Buildings
-                    className="h-6 w-6 text-primary"
-                    weight="duotone"
-                  />
-                </div>
-                <p className="font-medium">
-                  {transaction.to_node?.name ?? 'Unknown'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {transaction.to_node?.type ?? 'destination'}
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Notes */}
-          {transaction.notes && (
-            <Card className="p-6">
-              <h2 className="mb-4 text-lg font-semibold">Notes</h2>
-              <p className="text-muted-foreground">{transaction.notes}</p>
-            </Card>
+          {failed && (
+            <ReportNotice
+              tone="error"
+              className="border border-destructive/40 py-4"
+              title={`${failed} ${failed === 1 ? 'file' : 'files'} did not upload`}
+              action={
+                <Button variant="outline" onClick={() => setAttach(true)}>
+                  Attach proof again
+                </Button>
+              }
+            >
+              The transaction was saved. Attach the missing proof below.
+            </ReportNotice>
           )}
 
-          {/* Verifications - Using new gallery component */}
-          <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold">Proof & Verification</h2>
-            <VerificationGallery
-              verifications={verifications ?? []}
-              onVerificationClick={handleVerificationClick}
-              onAddClick={handleAddVerification}
-              showAddButton={true}
-            />
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold">Actions</h2>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={handleAddVerification}
-              >
-                <CloudArrowUp className="h-4 w-4 mr-2" />
-                Upload Proof
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <ShareNetwork className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </Button>
-            </div>
-          </Card>
-
-          {/* Transaction Info */}
-          <Card className="p-6">
-            <h2 className="mb-4 text-lg font-semibold">Information</h2>
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Reference</dt>
-                <dd className="font-medium">
-                  {transaction.reference ?? 'N/A'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Created</dt>
-                <dd className="font-medium">
-                  {formatDateTime(transaction.created_at)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Last Updated</dt>
-                <dd className="font-medium">
-                  {formatDateTime(transaction.updated_at)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Verification Count</dt>
-                <dd className="font-medium">{verifications?.length ?? 0}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Trust Points</dt>
-                <dd className="font-medium text-emerald-600">
-                  +{totalTrustPoints}
-                </dd>
-              </div>
-            </dl>
-          </Card>
-        </div>
-      </div>
-
-      {/* Verification Viewer Modal */}
-      {selectedVerification && (
-        <VerificationViewer
-          verification={selectedVerification}
-          verifications={verifications ?? []}
-          onClose={() => setSelectedVerification(null)}
-          onNavigate={handleVerificationNavigate}
-        />
-      )}
-
-      {/* Add Verification Modal */}
-      {showAddVerification && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Add Verification</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowAddVerification(false)}
-                >
-                  <span className="sr-only">Close</span>
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+          <ReportSection
+            title="Proofs"
+            meta={
+              proofs.length > 0 && (
+                <span className="tabular-nums">
+                  {proofs.length} {proofs.length === 1 ? 'proof' : 'proofs'} · +
+                  {trustPoints} trust points
+                </span>
+              )
+            }
+            actions={
+              !attach &&
+              proofs.length > 0 && (
+                <Button size="sm" onClick={() => setAttach(true)}>
+                  <Plus />
+                  Attach proof
                 </Button>
-              </div>
-              <FileUpload
+              )
+            }
+          >
+            {attach && (
+              <AttachProof
                 organizationId={transaction.organization_id}
                 transactionId={id}
-                verificationType="document"
-                onUploadComplete={handleUploadComplete}
+                onDone={() => setAttach(false)}
               />
-            </div>
-          </Card>
+            )}
+            {proofsLoading ? (
+              <div className="space-y-3 py-4">
+                <div className="skeleton-shimmer h-16 w-full" />
+                <div className="skeleton-shimmer h-16 w-full" />
+              </div>
+            ) : proofsError ? (
+              <ReportNotice
+                tone="error"
+                title="Proofs could not be loaded"
+                action={
+                  <Button variant="outline" onClick={() => refetchProofs()}>
+                    Try again
+                  </Button>
+                }
+              >
+                The transaction loaded, but its attached proof did not. Check
+                your connection, then try again.
+              </ReportNotice>
+            ) : (
+              <VerificationGallery
+                verifications={proofs}
+                onVerificationClick={setSelected}
+                onAddClick={attach ? undefined : () => setAttach(true)}
+                showAddButton={!attach}
+              />
+            )}
+          </ReportSection>
         </div>
+
+        <aside className="min-w-0 space-y-10 lg:col-span-4">
+          <ReportSection title="Record">
+            <dl className="divide-y divide-border text-sm">
+              <Fact term="Date">
+                {formatDate(transaction.transaction_date)}
+              </Fact>
+              <Fact term="Reference">
+                {transaction.reference ? (
+                  <span className="font-mono text-xs">
+                    {transaction.reference}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">None recorded</span>
+                )}
+              </Fact>
+              <Fact term="Category">
+                {transaction.category ?? (
+                  <span className="text-muted-foreground">Uncategorised</span>
+                )}
+              </Fact>
+              <Fact term="Status">
+                {PROOF_STATUS_LABEL[transaction.verification_status]}
+              </Fact>
+              <Fact term="Recorded">
+                {formatDateTimeEAT(transaction.created_at)}
+              </Fact>
+              {transaction.updated_at !== transaction.created_at && (
+                <Fact term="Last changed">
+                  {formatDateTimeEAT(transaction.updated_at)}
+                </Fact>
+              )}
+            </dl>
+          </ReportSection>
+
+          <ReportSection title="Notes">
+            <p
+              className={cn(
+                'max-w-prose py-3 text-sm leading-relaxed',
+                !transaction.notes && 'text-muted-foreground',
+              )}
+            >
+              {transaction.notes ?? 'No notes recorded.'}
+            </p>
+          </ReportSection>
+        </aside>
+      </div>
+
+      {selected && (
+        <VerificationViewer
+          verification={selected}
+          verifications={proofs}
+          onClose={() => setSelected(null)}
+          onNavigate={setSelected}
+        />
       )}
+    </div>
+  )
+}
+
+function BackLink() {
+  return (
+    <Link
+      to="/transactions"
+      className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="size-4" />
+      Transactions
+    </Link>
+  )
+}
+
+function Fact({ term, children }: { term: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[7rem_1fr] gap-3 py-2.5">
+      <dt className="text-muted-foreground">{term}</dt>
+      <dd className="min-w-0 font-medium">{children}</dd>
+    </div>
+  )
+}
+
+/** From → to, joined by a line whose pattern carries the proof state. */
+function FlowDrawing({ transaction }: { transaction: TransactionWithNodes }) {
+  const status = transaction.verification_status
+  const stroke = proofStroke(status)
+  const node = (
+    n: TransactionWithNodes['from_node'],
+    role: string,
+    align: 'left' | 'right',
+  ) => (
+    <div className={cn('min-w-0', align === 'right' && 'sm:text-right')}>
+      <p className="text-xs text-muted-foreground">{role}</p>
+      <p className="mt-0.5 font-semibold text-balance">
+        {n?.name ?? 'Not assigned'}
+      </p>
+      {n?.type && (
+        <p className="text-xs text-muted-foreground capitalize">
+          {n.type.replace(/_/g, ' ')}
+        </p>
+      )}
+    </div>
+  )
+
+  const line = (vertical: boolean) => (
+    <svg
+      aria-hidden="true"
+      className={cn(
+        'overflow-visible',
+        vertical ? 'ml-1 h-10 w-3 sm:hidden' : 'hidden h-4 w-full sm:block',
+      )}
+    >
+      <line
+        x1={vertical ? 6 : 0}
+        y1={vertical ? 0 : 8}
+        x2={vertical ? 6 : '100%'}
+        y2={vertical ? '100%' : 8}
+        strokeWidth="4"
+        strokeDasharray={stroke.strokeDasharray}
+        className={stroke.className}
+      />
+      {status === 'flagged' && (
+        <g
+          className="stroke-flag"
+          strokeWidth="2.5"
+          transform={vertical ? 'translate(6 20)' : undefined}
+        >
+          {vertical ? (
+            <path d="M-5 -5 L5 5 M5 -5 L-5 5" />
+          ) : (
+            <svg x="50%" y="8" overflow="visible">
+              <path d="M-5 -5 L5 5 M5 -5 L-5 5" />
+            </svg>
+          )}
+        </g>
+      )}
+    </svg>
+  )
+
+  return (
+    <div
+      className="mt-6 grid gap-1 border-t border-border pt-5 sm:grid-cols-[minmax(0,1fr)_minmax(6rem,1.4fr)_minmax(0,1fr)] sm:items-center sm:gap-5"
+      aria-label={`${transaction.from_node?.name ?? 'Not assigned'} to ${transaction.to_node?.name ?? 'Not assigned'}, ${PROOF_STATUS_LABEL[status].toLowerCase()}`}
+      role="group"
+    >
+      {node(transaction.from_node, 'From', 'left')}
+      <div className="flex flex-col sm:items-stretch">
+        <div className="flex items-center gap-3 sm:hidden">
+          {line(true)}
+          <span className="text-xs text-muted-foreground">
+            {PROOF_STATUS_LABEL[status]}
+          </span>
+        </div>
+        {line(false)}
+        <p className="mt-1 hidden text-center text-xs text-muted-foreground sm:block">
+          {PROOF_STATUS_LABEL[status]}
+        </p>
+      </div>
+      {node(transaction.to_node, 'To', 'right')}
+    </div>
+  )
+}
+
+const ATTACH_TYPES: Array<VerificationType> = [
+  'receipt',
+  'invoice',
+  'photo',
+  'bank_statement',
+  'contract',
+  'signature',
+  'gps',
+  'video',
+  'audit',
+  'government_doc',
+  'document',
+]
+
+/** Inline panel: choose the kind of proof, add the file and its details. */
+function AttachProof({
+  organizationId,
+  transactionId,
+  onDone,
+}: {
+  organizationId: string
+  transactionId: string
+  onDone: () => void
+}) {
+  const [type, setType] = useState<VerificationType>('receipt')
+  const [uploads, setUploads] = useState<Array<UploadedFile>>([])
+  const [description, setDescription] = useState('')
+  const [executorName, setExecutorName] = useState('')
+  const [visibility, setVisibility] = useState<VerificationVisibility>('full')
+  const [problem, setProblem] = useState<string | null>(null)
+  const gps = useGPSCapture()
+  const attachProofs = useAttachProofs()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const saving = attachProofs.isPending
+
+  useEffect(() => {
+    panelRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    panelRef.current?.querySelector('select')?.focus({ preventScroll: true })
+  }, [])
+
+  const save = async () => {
+    const gpsOnly = type === 'gps' && gps.location
+    if (uploads.length === 0 && !gpsOnly) {
+      setProblem(
+        type === 'gps'
+          ? 'Add a file or your current location before attaching.'
+          : 'Add at least one file before attaching.',
+      )
+      return
+    }
+    setProblem(null)
+    try {
+      await attachProofs.mutateAsync({
+        transactionId,
+        type,
+        uploaded: uploads,
+        visibilityLevel: visibility,
+        executorName: executorName.trim() || undefined,
+        description: description.trim() || undefined,
+        location: gps.location,
+      })
+      onDone()
+    } catch (err) {
+      setProblem(
+        `The proof was not attached${
+          err instanceof Error && err.message ? `: ${err.message}` : ''
+        }. Your files are still here; try again.`,
+      )
+    }
+  }
+
+  return (
+    <div
+      ref={panelRef}
+      className="my-4 border border-foreground/30 bg-card p-4 sm:p-5"
+      role="region"
+      aria-label="Attach proof"
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-2xl">Attach proof</h3>
+        <p className="text-xs text-muted-foreground tabular-nums">
+          +{VERIFICATION_TRUST_POINTS[type]} trust points each
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-5">
+        <div>
+          <Label htmlFor="proof-type" className="mb-1.5 text-sm font-medium">
+            Kind of proof
+          </Label>
+          <Select
+            value={type}
+            disabled={saving || uploads.length > 0}
+            items={Object.fromEntries(
+              ATTACH_TYPES.map((t) => [
+                t,
+                `${PROOF_TYPE_LABEL[t]} (+${VERIFICATION_TRUST_POINTS[t]})`,
+              ]),
+            )}
+            onValueChange={(v) => v && setType(v as VerificationType)}
+          >
+            <SelectTrigger id="proof-type" className="h-10 w-full sm:max-w-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ATTACH_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {PROOF_TYPE_LABEL[t]} (+{VERIFICATION_TRUST_POINTS[t]})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {uploads.length > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Remove the files to change the kind of proof.
+            </p>
+          )}
+        </div>
+
+        <FileUpload
+          key={type}
+          organizationId={organizationId}
+          transactionId={transactionId}
+          verificationType={type}
+          disabled={saving}
+          onUploadComplete={(file) => {
+            setUploads((prev) => [...prev, file])
+            setProblem(null)
+          }}
+          onFileRemove={(fileId) =>
+            setUploads((prev) => prev.filter((f) => f.id !== fileId))
+          }
+        />
+
+        <EnhancedUploadForm
+          verificationType={type}
+          visibilityLevel={visibility}
+          onVisibilityChange={setVisibility}
+          executorName={executorName}
+          onExecutorNameChange={setExecutorName}
+          description={description}
+          onDescriptionChange={setDescription}
+          gpsLocation={gps.location}
+          gpsLoading={gps.loading}
+          gpsError={gps.error}
+          onCaptureGPS={gps.captureLocation}
+          onClearGPS={gps.clearLocation}
+          disabled={saving}
+        />
+
+        {problem && (
+          <p role="alert" className="text-sm font-medium text-destructive">
+            {problem}
+          </p>
+        )}
+
+        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10"
+            onClick={onDone}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="h-10"
+            onClick={save}
+            disabled={saving}
+          >
+            {saving
+              ? 'Attaching…'
+              : uploads.length > 1
+                ? `Attach ${uploads.length} proofs`
+                : 'Attach proof'}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

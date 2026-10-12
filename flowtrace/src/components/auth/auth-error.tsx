@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Warning } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 
 interface AuthErrorProps {
   error?: string
@@ -8,36 +7,52 @@ interface AuthErrorProps {
 }
 
 const errorMessages: Record<string, string> = {
-  access_denied: 'Access was denied. Please try again.',
-  invalid_request: 'Invalid authentication request.',
-  server_error: 'Authentication server error. Please try again later.',
-  session_expired: 'Your session has expired. Please sign in again.',
-  unauthorized: 'You are not authorized to access this resource.',
-  invalid_token: 'Invalid authentication token. Please sign in again.',
+  access_denied:
+    'Sign-in was cancelled or access was refused. Try signing in again.',
+  invalid_request:
+    'The sign-in request was incomplete. Start again from the sign-in page.',
+  server_error:
+    'The sign-in service had a problem on its side. Wait a minute and try again.',
+  session_expired: 'Your session has ended. Sign in again to carry on.',
+  unauthorized:
+    'Your account doesn’t have access to this page. Ask an admin in your organisation to add you to a group.',
+  invalid_token: 'Your sign-in link is no longer valid. Sign in again.',
 }
 
 export function AuthError({ error, message }: AuthErrorProps) {
-  const displayMessage = error
-    ? errorMessages[error] ?? message ?? 'An authentication error occurred.'
-    : message ?? 'An authentication error occurred.'
+  const displayMessage =
+    (error ? errorMessages[error] : undefined) ??
+    message ??
+    'Something went wrong while signing you in. Try again, and if it keeps happening, contact your FlowTrace admin.'
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-          <Warning className="h-8 w-8 text-destructive" weight="fill" />
-        </div>
-        <h1 className="mt-4 text-2xl font-bold">Authentication Error</h1>
-        <p className="mt-2 max-w-md text-muted-foreground">{displayMessage}</p>
-        <div className="mt-6 flex justify-center gap-4">
-          <Link to="/">
-            <Button variant="outline">Go Home</Button>
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div role="alert" className="rule-heavy w-full max-w-md pt-6">
+        <h1 className="text-4xl">We couldn’t sign you in</h1>
+        <p className="mt-3 text-base text-muted-foreground">{displayMessage}</p>
+        {error && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Reference: <span className="font-mono">{error}</span>
+          </p>
+        )}
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            to="/dashboard"
+            className={buttonVariants({ className: 'h-10' })}
+          >
+            Try again
           </Link>
-          <Link to="/dashboard">
-            <Button>Try Again</Button>
+          <Link
+            to="/"
+            className={buttonVariants({
+              variant: 'outline',
+              className: 'h-10',
+            })}
+          >
+            Go to the home page
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

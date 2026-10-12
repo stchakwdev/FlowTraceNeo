@@ -1,0 +1,766 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-12T15:41:56.933435+00:00",
+  "title": "Design System: FlowTrace",
+  "extensions": {
+    "colorMeta": {
+      "report-blue": {
+        "role": "primary",
+        "displayName": "Report Blue",
+        "canonical": "oklch(0.48 0.13 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.13 255)",
+          "oklch(0.26 0.13 255)",
+          "oklch(0.37 0.13 255)",
+          "oklch(0.48 0.13 255)",
+          "oklch(0.60 0.13 255)",
+          "oklch(0.72 0.13 255)",
+          "oklch(0.84 0.13 255)",
+          "oklch(0.95 0.13 255)"
+        ]
+      },
+      "report-blue-ink": {
+        "role": "primary",
+        "displayName": "Report Blue Ink",
+        "canonical": "oklch(0.99 0.004 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 255)",
+          "oklch(0.26 0.004 255)",
+          "oklch(0.37 0.004 255)",
+          "oklch(0.48 0.004 255)",
+          "oklch(0.60 0.004 255)",
+          "oklch(0.72 0.004 255)",
+          "oklch(0.84 0.004 255)",
+          "oklch(0.95 0.004 255)"
+        ]
+      },
+      "coverage-blue": {
+        "role": "primary",
+        "displayName": "Coverage Blue",
+        "canonical": "oklch(0.71 0.08 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.08 255)",
+          "oklch(0.26 0.08 255)",
+          "oklch(0.37 0.08 255)",
+          "oklch(0.48 0.08 255)",
+          "oklch(0.60 0.08 255)",
+          "oklch(0.72 0.08 255)",
+          "oklch(0.84 0.08 255)",
+          "oklch(0.95 0.08 255)"
+        ]
+      },
+      "signal-orange": {
+        "role": "secondary",
+        "displayName": "Signal Orange",
+        "canonical": "oklch(0.6 0.18 40)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 40)",
+          "oklch(0.26 0.18 40)",
+          "oklch(0.37 0.18 40)",
+          "oklch(0.48 0.18 40)",
+          "oklch(0.60 0.18 40)",
+          "oklch(0.72 0.18 40)",
+          "oklch(0.84 0.18 40)",
+          "oklch(0.95 0.18 40)"
+        ]
+      },
+      "rejection-red": {
+        "role": "secondary",
+        "displayName": "Rejection Red",
+        "canonical": "oklch(0.55 0.19 35)",
+        "tonalRamp": [
+          "oklch(0.15 0.19 35)",
+          "oklch(0.26 0.19 35)",
+          "oklch(0.37 0.19 35)",
+          "oklch(0.48 0.19 35)",
+          "oklch(0.60 0.19 35)",
+          "oklch(0.72 0.19 35)",
+          "oklch(0.84 0.19 35)",
+          "oklch(0.95 0.19 35)"
+        ]
+      },
+      "report-paper": {
+        "role": "neutral",
+        "displayName": "Report Paper",
+        "canonical": "oklch(0.972 0.004 120)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 120)",
+          "oklch(0.26 0.004 120)",
+          "oklch(0.37 0.004 120)",
+          "oklch(0.48 0.004 120)",
+          "oklch(0.60 0.004 120)",
+          "oklch(0.72 0.004 120)",
+          "oklch(0.84 0.004 120)",
+          "oklch(0.95 0.004 120)"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "oklch(0.993 0.002 120)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 120)",
+          "oklch(0.26 0.002 120)",
+          "oklch(0.37 0.002 120)",
+          "oklch(0.48 0.002 120)",
+          "oklch(0.60 0.002 120)",
+          "oklch(0.72 0.002 120)",
+          "oklch(0.84 0.002 120)",
+          "oklch(0.95 0.002 120)"
+        ]
+      },
+      "ink-navy": {
+        "role": "neutral",
+        "displayName": "Ink Navy",
+        "canonical": "oklch(0.24 0.035 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.035 250)",
+          "oklch(0.26 0.035 250)",
+          "oklch(0.37 0.035 250)",
+          "oklch(0.48 0.035 250)",
+          "oklch(0.60 0.035 250)",
+          "oklch(0.72 0.035 250)",
+          "oklch(0.84 0.035 250)",
+          "oklch(0.95 0.035 250)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "oklch(0.45 0.03 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 250)",
+          "oklch(0.26 0.03 250)",
+          "oklch(0.37 0.03 250)",
+          "oklch(0.48 0.03 250)",
+          "oklch(0.60 0.03 250)",
+          "oklch(0.72 0.03 250)",
+          "oklch(0.84 0.03 250)",
+          "oklch(0.95 0.03 250)"
+        ]
+      },
+      "gap-grey": {
+        "role": "neutral",
+        "displayName": "Gap Grey",
+        "canonical": "oklch(0.89 0.012 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 250)",
+          "oklch(0.26 0.012 250)",
+          "oklch(0.37 0.012 250)",
+          "oklch(0.48 0.012 250)",
+          "oklch(0.60 0.012 250)",
+          "oklch(0.72 0.012 250)",
+          "oklch(0.84 0.012 250)",
+          "oklch(0.95 0.012 250)"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.86 0.014 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.014 250)",
+          "oklch(0.26 0.014 250)",
+          "oklch(0.37 0.014 250)",
+          "oklch(0.48 0.014 250)",
+          "oklch(0.60 0.014 250)",
+          "oklch(0.72 0.014 250)",
+          "oklch(0.84 0.014 250)",
+          "oklch(0.95 0.014 250)"
+        ]
+      },
+      "field-stroke": {
+        "role": "neutral",
+        "displayName": "Field Stroke",
+        "canonical": "oklch(0.8 0.018 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.018 250)",
+          "oklch(0.26 0.018 250)",
+          "oklch(0.37 0.018 250)",
+          "oklch(0.48 0.018 250)",
+          "oklch(0.60 0.018 250)",
+          "oklch(0.72 0.018 250)",
+          "oklch(0.84 0.018 250)",
+          "oklch(0.95 0.018 250)"
+        ]
+      },
+      "wash": {
+        "role": "neutral",
+        "displayName": "Wash",
+        "canonical": "oklch(0.94 0.006 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 250)",
+          "oklch(0.26 0.006 250)",
+          "oklch(0.37 0.006 250)",
+          "oklch(0.48 0.006 250)",
+          "oklch(0.60 0.006 250)",
+          "oklch(0.72 0.006 250)",
+          "oklch(0.84 0.006 250)",
+          "oklch(0.95 0.006 250)"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Rail",
+        "canonical": "oklch(0.948 0.007 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.007 250)",
+          "oklch(0.26 0.007 250)",
+          "oklch(0.37 0.007 250)",
+          "oklch(0.48 0.007 250)",
+          "oklch(0.60 0.007 250)",
+          "oklch(0.72 0.007 250)",
+          "oklch(0.84 0.007 250)",
+          "oklch(0.95 0.007 250)"
+        ]
+      },
+      "rail-hover": {
+        "role": "neutral",
+        "displayName": "Rail Hover",
+        "canonical": "oklch(0.9 0.02 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 255)",
+          "oklch(0.26 0.02 255)",
+          "oklch(0.37 0.02 255)",
+          "oklch(0.48 0.02 255)",
+          "oklch(0.60 0.02 255)",
+          "oklch(0.72 0.02 255)",
+          "oklch(0.84 0.02 255)",
+          "oklch(0.95 0.02 255)"
+        ]
+      },
+      "masthead-ink": {
+        "role": "neutral",
+        "displayName": "Masthead Ink",
+        "canonical": "oklch(0.24 0.035 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.035 250)",
+          "oklch(0.26 0.035 250)",
+          "oklch(0.37 0.035 250)",
+          "oklch(0.48 0.035 250)",
+          "oklch(0.60 0.035 250)",
+          "oklch(0.72 0.035 250)",
+          "oklch(0.84 0.035 250)",
+          "oklch(0.95 0.035 250)"
+        ]
+      },
+      "masthead-paper": {
+        "role": "neutral",
+        "displayName": "Masthead Paper",
+        "canonical": "oklch(0.96 0.006 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 250)",
+          "oklch(0.26 0.006 250)",
+          "oklch(0.37 0.006 250)",
+          "oklch(0.48 0.006 250)",
+          "oklch(0.60 0.006 250)",
+          "oklch(0.72 0.006 250)",
+          "oklch(0.84 0.006 250)",
+          "oklch(0.95 0.006 250)"
+        ]
+      },
+      "report-blue-dark": {
+        "role": "primary",
+        "displayName": "Report Blue (dark)",
+        "canonical": "oklch(0.72 0.11 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.11 255)",
+          "oklch(0.26 0.11 255)",
+          "oklch(0.37 0.11 255)",
+          "oklch(0.48 0.11 255)",
+          "oklch(0.60 0.11 255)",
+          "oklch(0.72 0.11 255)",
+          "oklch(0.84 0.11 255)",
+          "oklch(0.95 0.11 255)"
+        ]
+      },
+      "report-blue-ink-dark": {
+        "role": "primary",
+        "displayName": "Report Blue Ink (dark)",
+        "canonical": "oklch(0.17 0.03 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 255)",
+          "oklch(0.26 0.03 255)",
+          "oklch(0.37 0.03 255)",
+          "oklch(0.48 0.03 255)",
+          "oklch(0.60 0.03 255)",
+          "oklch(0.72 0.03 255)",
+          "oklch(0.84 0.03 255)",
+          "oklch(0.95 0.03 255)"
+        ]
+      },
+      "coverage-blue-dark": {
+        "role": "primary",
+        "displayName": "Coverage Blue (dark)",
+        "canonical": "oklch(0.52 0.08 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.08 255)",
+          "oklch(0.26 0.08 255)",
+          "oklch(0.37 0.08 255)",
+          "oklch(0.48 0.08 255)",
+          "oklch(0.60 0.08 255)",
+          "oklch(0.72 0.08 255)",
+          "oklch(0.84 0.08 255)",
+          "oklch(0.95 0.08 255)"
+        ]
+      },
+      "signal-orange-dark": {
+        "role": "secondary",
+        "displayName": "Signal Orange (dark)",
+        "canonical": "oklch(0.72 0.16 45)",
+        "tonalRamp": [
+          "oklch(0.15 0.16 45)",
+          "oklch(0.26 0.16 45)",
+          "oklch(0.37 0.16 45)",
+          "oklch(0.48 0.16 45)",
+          "oklch(0.60 0.16 45)",
+          "oklch(0.72 0.16 45)",
+          "oklch(0.84 0.16 45)",
+          "oklch(0.95 0.16 45)"
+        ]
+      },
+      "rejection-red-dark": {
+        "role": "secondary",
+        "displayName": "Rejection Red (dark)",
+        "canonical": "oklch(0.68 0.17 35)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 35)",
+          "oklch(0.26 0.17 35)",
+          "oklch(0.37 0.17 35)",
+          "oklch(0.48 0.17 35)",
+          "oklch(0.60 0.17 35)",
+          "oklch(0.72 0.17 35)",
+          "oklch(0.84 0.17 35)",
+          "oklch(0.95 0.17 35)"
+        ]
+      },
+      "report-paper-dark": {
+        "role": "neutral",
+        "displayName": "Report Paper (dark)",
+        "canonical": "oklch(0.185 0.02 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 250)",
+          "oklch(0.26 0.02 250)",
+          "oklch(0.37 0.02 250)",
+          "oklch(0.48 0.02 250)",
+          "oklch(0.60 0.02 250)",
+          "oklch(0.72 0.02 250)",
+          "oklch(0.84 0.02 250)",
+          "oklch(0.95 0.02 250)"
+        ]
+      },
+      "sheet-dark": {
+        "role": "neutral",
+        "displayName": "Sheet (dark)",
+        "canonical": "oklch(0.215 0.022 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.022 250)",
+          "oklch(0.26 0.022 250)",
+          "oklch(0.37 0.022 250)",
+          "oklch(0.48 0.022 250)",
+          "oklch(0.60 0.022 250)",
+          "oklch(0.72 0.022 250)",
+          "oklch(0.84 0.022 250)",
+          "oklch(0.95 0.022 250)"
+        ]
+      },
+      "ink-navy-dark": {
+        "role": "neutral",
+        "displayName": "Ink Navy (dark)",
+        "canonical": "oklch(0.94 0.008 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 250)",
+          "oklch(0.26 0.008 250)",
+          "oklch(0.37 0.008 250)",
+          "oklch(0.48 0.008 250)",
+          "oklch(0.60 0.008 250)",
+          "oklch(0.72 0.008 250)",
+          "oklch(0.84 0.008 250)",
+          "oklch(0.95 0.008 250)"
+        ]
+      },
+      "ink-muted-dark": {
+        "role": "neutral",
+        "displayName": "Ink Muted (dark)",
+        "canonical": "oklch(0.72 0.02 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 250)",
+          "oklch(0.26 0.02 250)",
+          "oklch(0.37 0.02 250)",
+          "oklch(0.48 0.02 250)",
+          "oklch(0.60 0.02 250)",
+          "oklch(0.72 0.02 250)",
+          "oklch(0.84 0.02 250)",
+          "oklch(0.95 0.02 250)"
+        ]
+      },
+      "gap-grey-dark": {
+        "role": "neutral",
+        "displayName": "Gap Grey (dark)",
+        "canonical": "oklch(0.31 0.02 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 250)",
+          "oklch(0.26 0.02 250)",
+          "oklch(0.37 0.02 250)",
+          "oklch(0.48 0.02 250)",
+          "oklch(0.60 0.02 250)",
+          "oklch(0.72 0.02 250)",
+          "oklch(0.84 0.02 250)",
+          "oklch(0.95 0.02 250)"
+        ]
+      },
+      "hairline-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "oklch(1 0 0 / 13%)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.60 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "field-stroke-dark": {
+        "role": "neutral",
+        "displayName": "Field Stroke (dark)",
+        "canonical": "oklch(1 0 0 / 20%)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.60 0 0)",
+          "oklch(0.72 0 0)",
+          "oklch(0.84 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "wash-dark": {
+        "role": "neutral",
+        "displayName": "Wash (dark)",
+        "canonical": "oklch(0.25 0.02 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 250)",
+          "oklch(0.26 0.02 250)",
+          "oklch(0.37 0.02 250)",
+          "oklch(0.48 0.02 250)",
+          "oklch(0.60 0.02 250)",
+          "oklch(0.72 0.02 250)",
+          "oklch(0.84 0.02 250)",
+          "oklch(0.95 0.02 250)"
+        ]
+      },
+      "rail-dark": {
+        "role": "neutral",
+        "displayName": "Rail (dark)",
+        "canonical": "oklch(0.165 0.02 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 250)",
+          "oklch(0.26 0.02 250)",
+          "oklch(0.37 0.02 250)",
+          "oklch(0.48 0.02 250)",
+          "oklch(0.60 0.02 250)",
+          "oklch(0.72 0.02 250)",
+          "oklch(0.84 0.02 250)",
+          "oklch(0.95 0.02 250)"
+        ]
+      },
+      "masthead-ink-dark": {
+        "role": "neutral",
+        "displayName": "Masthead Ink (dark)",
+        "canonical": "oklch(0.13 0.02 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 250)",
+          "oklch(0.26 0.02 250)",
+          "oklch(0.37 0.02 250)",
+          "oklch(0.48 0.02 250)",
+          "oklch(0.60 0.02 250)",
+          "oklch(0.72 0.02 250)",
+          "oklch(0.84 0.02 250)",
+          "oklch(0.95 0.02 250)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The landing's single h1; condensed wdth 78."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "App page titles and landing section heads, 2.25rem to 3rem."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dialog and detail-panel headings."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Key figures; condensed wdth 75, heavy, tabular; size carries magnitude (sm/md/lg)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose and table cells at normal width."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Landing and section ledes, 34rem measure."
+      },
+      "section-label": {
+        "displayName": "Section Label",
+        "purpose": "The heading of a report section, on the heavy rule. Never stacked above another heading."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, chain states, table heads."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Identifiers and codes only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "overlay-lift",
+        "value": "0 12px 40px -12px oklch(0.24 0.035 250 / 0.35)",
+        "purpose": "Report dialog only."
+      },
+      {
+        "name": "drawer-edge",
+        "value": "-8px 0 24px -12px rgb(0 0 0 / 0.35)",
+        "purpose": "Mobile nav drawer and (upward) the mobile flow-details sheet."
+      },
+      {
+        "name": "menu",
+        "value": "Tailwind shadow-md / shadow-lg",
+        "purpose": "Dropdown, select, combobox popups."
+      }
+    ],
+    "motion": [
+      {
+        "name": "isolate",
+        "value": "opacity 200ms ease-out",
+        "purpose": "The authored moment: select-to-isolate on the flow map (dim to 0.12) and landing donor rows (dim to 0.3)."
+      },
+      {
+        "name": "page-enter",
+        "value": "350ms cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4 to 1, translateY 4px to 0",
+        "purpose": "Route content entry; off under prefers-reduced-motion."
+      },
+      {
+        "name": "state-colour",
+        "value": "150ms",
+        "purpose": "Button, input, nav colour transitions."
+      },
+      {
+        "name": "drawer",
+        "value": "300ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Mobile nav slide."
+      },
+      {
+        "name": "dialog",
+        "value": "150ms ease-out, opacity + 8px rise",
+        "purpose": "ReportDialog enter/exit."
+      },
+      {
+        "name": "shimmer",
+        "value": "1.5s ease-in-out infinite",
+        "purpose": "Skeleton loading; off under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ],
+    "strokes": [
+      {
+        "name": "rule-heavy",
+        "value": "3px solid ink",
+        "purpose": "Opens every section."
+      },
+      {
+        "name": "hairline",
+        "value": "1px border",
+        "purpose": "Divides figures and rows."
+      },
+      {
+        "name": "proof-evidenced",
+        "value": "solid, ink"
+      },
+      {
+        "name": "proof-pending",
+        "value": "dasharray 6 5, ink muted"
+      },
+      {
+        "name": "proof-flagged",
+        "value": "dasharray 14 8 + X, signal orange"
+      },
+      {
+        "name": "proof-rejected",
+        "value": "dasharray 2 6, rejection red"
+      },
+      {
+        "name": "flow-edge-weight",
+        "value": "2px to 16px, sqrt(amount / max)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action per view: Explore the demo, Save, Record.",
+      "html": "<button class=\"ds-btn-primary\">Explore the demo</button>",
+      "css": ".ds-btn-primary { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; display:inline-flex; align-items:center; gap:6px; height:40px; padding:0 16px; background:var(--primary); color:var(--primary-foreground); border:1px solid transparent; border-radius:0; font-size:14px; font-weight:600; cursor:pointer; transition:background-color 150ms; } .ds-btn-primary:hover { background:color-mix(in oklch, var(--primary) 88%, transparent); } .ds-btn-primary:active { background:color-mix(in oklch, var(--primary) 80%, transparent); } .ds-btn-primary:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action; ink frame that inverts to ink on hover (intended behaviour).",
+      "html": "<button class=\"ds-btn-outline\">Export</button>",
+      "css": ".ds-btn-outline { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; height:40px; padding:0 16px; background:transparent; color:var(--foreground); border:1px solid color-mix(in oklch, var(--foreground) 70%, transparent); border-radius:0; font-size:14px; font-weight:600; cursor:pointer; transition:background-color 150ms, color 150ms; } .ds-btn-outline:hover { background:var(--foreground); color:var(--background); } .ds-btn-outline:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Square field on the sheet surface with a field-stroke border.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Amount (KES) <span class=\"ds-req\">(required)</span></span><input class=\"ds-input\" value=\"2,500,000\"></label>",
+      "css": ".ds-field { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; display:flex; flex-direction:column; gap:6px; } .ds-field-label { font-size:14px; font-weight:600; color:var(--foreground); } .ds-req { font-weight:400; color:var(--muted-foreground); } .ds-input { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; height:36px; padding:4px 12px; background:var(--card); color:var(--foreground); border:1px solid var(--input); border-radius:0; font-size:14px; font-variant-numeric:tabular-nums; outline:none; transition:border-color 150ms; } .ds-input:focus-visible { border-color:var(--ring); box-shadow:0 0 0 1px color-mix(in oklch, var(--ring) 50%, transparent); }"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Desktop rail; the active item is an inverted ink block.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-rail-item\">Dashboard</a><a class=\"ds-rail-item is-active\" aria-current=\"page\">Flows</a><a class=\"ds-rail-item\">Trust Score</a></nav>",
+      "css": ".ds-rail { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; width:224px; background:var(--sidebar); border-right:1px solid var(--sidebar-border); padding:12px 0; display:flex; flex-direction:column; } .ds-rail-item { margin:0 8px; height:40px; display:flex; align-items:center; padding:0 12px; font-size:14px; font-weight:500; color:var(--sidebar-foreground); cursor:pointer; transition:background-color 150ms; } .ds-rail-item:hover { background:var(--sidebar-accent); } .ds-rail-item.is-active { background:var(--foreground); color:var(--background); } .ds-rail-item:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }"
+    },
+    {
+      "name": "Masthead",
+      "kind": "nav",
+      "refersTo": "masthead",
+      "description": "56px ink band with the wordmark and organisation name.",
+      "html": "<header class=\"ds-mast\"><span class=\"ds-mark\"><svg viewBox=\"0 0 28 12\" width=\"28\" height=\"12\"><line x1=\"3\" y1=\"6\" x2=\"14\" y2=\"6\" stroke=\"currentColor\" stroke-width=\"2.5\"/><line x1=\"14\" y1=\"6\" x2=\"25\" y2=\"6\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-dasharray=\"3 2.5\"/><rect x=\"0.5\" y=\"3.5\" width=\"5\" height=\"5\" fill=\"currentColor\"/><rect x=\"11.5\" y=\"3.5\" width=\"5\" height=\"5\" fill=\"var(--masthead)\" stroke=\"currentColor\" stroke-width=\"2\"/><rect x=\"22.5\" y=\"3.5\" width=\"5\" height=\"5\" fill=\"var(--masthead)\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>FlowTrace</span><span class=\"ds-mast-div\"></span><span class=\"ds-mast-org\">Demo NGO Kenya</span></header>",
+      "css": ".ds-mast { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; height:56px; display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--masthead); color:var(--masthead-foreground); } .ds-mark { display:inline-flex; align-items:center; gap:8px; font-size:18px; font-weight:800; font-stretch:87%; letter-spacing:-0.01em; } .ds-mast-div { width:1px; height:24px; background:color-mix(in oklch, var(--masthead-foreground) 25%, transparent); } .ds-mast-org { font-size:14px; font-weight:600; }"
+    },
+    {
+      "name": "Report Section with Key Figures",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Heavy ink rule, section-label header with Demo data tag, hairline-divided figures.",
+      "html": "<section class=\"ds-section\"><div class=\"ds-section-head\"><h2 class=\"ds-section-label\">Key figures, Q1 2026</h2><span class=\"ds-demo\">Demo data</span></div><div class=\"ds-figs\"><div><p class=\"ds-fig ds-fig-lg\">15.7M</p><p class=\"ds-fig-label\">KES received with proof</p></div><div><p class=\"ds-fig\">12/16</p><p class=\"ds-fig-label\">movements evidenced</p></div><div><p class=\"ds-fig\">87</p><p class=\"ds-fig-label\">Trust Score</p></div></div></section>",
+      "css": ".ds-section { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; border-top:3px solid var(--foreground); color:var(--foreground); } .ds-section-head { display:flex; justify-content:space-between; align-items:center; min-height:44px; border-bottom:1px solid var(--border); } .ds-section-label { margin:0; font-size:12px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; font-stretch:100%; } .ds-demo { display:inline-flex; align-items:center; height:20px; padding:0 6px; border:1px solid var(--border); font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted-foreground); } .ds-figs { display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid var(--border); } .ds-figs > div { padding:16px; } .ds-figs > div:first-child { padding-left:0; } .ds-figs > div + div { border-left:1px solid var(--border); } .ds-fig { margin:0; font-size:36px; font-weight:800; font-stretch:75%; line-height:1; letter-spacing:-0.01em; font-variant-numeric:tabular-nums; } .ds-fig-lg { font-size:48px; } .ds-fig-label { margin:8px 0 0; font-size:14px; color:var(--muted-foreground); }"
+    },
+    {
+      "name": "Status Marks",
+      "kind": "custom",
+      "refersTo": "status-line",
+      "description": "Line-pattern verification grammar: solid, dashed, flagged long dash with X, dotted.",
+      "html": "<div class=\"ds-status\"><span class=\"ds-sm\"><svg width=\"22\" height=\"10\"><line x1=\"0\" y1=\"5\" x2=\"22\" y2=\"5\" stroke-width=\"3\" style=\"stroke:var(--foreground)\"/></svg>Evidenced</span><span class=\"ds-sm ds-pending\"><svg width=\"22\" height=\"10\"><line x1=\"0\" y1=\"5\" x2=\"22\" y2=\"5\" stroke-width=\"3\" stroke-dasharray=\"6 5\" style=\"stroke:var(--muted-foreground)\"/></svg>Awaiting proof</span><span class=\"ds-sm ds-flag\"><svg width=\"22\" height=\"10\" style=\"overflow:visible\"><line x1=\"0\" y1=\"5\" x2=\"22\" y2=\"5\" stroke-width=\"3\" stroke-dasharray=\"14 8\" style=\"stroke:var(--flag)\"/><path d=\"M9 2 L13 8 M13 2 L9 8\" stroke-width=\"2\" style=\"stroke:var(--flag)\"/></svg>Flagged</span><span class=\"ds-sm ds-rej\"><svg width=\"22\" height=\"10\"><line x1=\"0\" y1=\"5\" x2=\"22\" y2=\"5\" stroke-width=\"3\" stroke-dasharray=\"2 6\" style=\"stroke:var(--destructive)\"/></svg>Rejected</span></div>",
+      "css": ".ds-status { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; display:flex; flex-wrap:wrap; gap:8px 24px; } .ds-sm { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--foreground); white-space:nowrap; } .ds-pending { color:var(--muted-foreground); } .ds-flag { color:var(--flag); } .ds-rej { color:var(--destructive); }"
+    },
+    {
+      "name": "Coverage Bars",
+      "kind": "custom",
+      "refersTo": "coverage-bar",
+      "description": "Funding by donor: evidenced blue on gap grey; pending as a dashed line. Hover isolates a row.",
+      "html": "<ul class=\"ds-cov\"><li><span>Harambee Health Fund</span><span class=\"ds-bar\"><i style=\"width:100%\"></i></span><b>8,500,000</b></li><li><span>Kisima Water Trust</span><span class=\"ds-bar\"><i style=\"width:47%\"></i></span><b>4,000,000</b></li><li><span>Pan-African Education Fund</span><svg width=\"100%\" height=\"4\"><line x1=\"0\" y1=\"2\" x2=\"100%\" y2=\"2\" stroke-width=\"3\" stroke-dasharray=\"8 6\" style=\"stroke:var(--muted-foreground)\"/></svg><b>6,000,000</b></li></ul>",
+      "css": ".ds-cov { font-family: 'Archivo Variable','Arial Narrow',system-ui,sans-serif; list-style:none; margin:0; padding:0; font-size:14px; color:var(--foreground); } .ds-cov li { display:grid; grid-template-columns:12rem 1fr 7.5rem; gap:16px; align-items:center; padding:6px 0; transition:opacity 200ms; } .ds-cov:hover li:not(:hover) { opacity:0.3; } .ds-cov b { text-align:right; font-variant-numeric:tabular-nums; } .ds-bar { position:relative; height:20px; background:var(--gap); display:block; } .ds-bar i { position:absolute; inset:0 auto 0 0; background:var(--primary); } @media (prefers-reduced-motion: reduce) { .ds-cov li { transition:none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Situation Report",
+    "overview": "FlowTrace is set like the sitrep an NGO leader already knows how to read: cool report paper, ink navy, one report blue, and a strict grid of sections that each open on a heavy ink rule. Figures are the loudest thing on any page. They are set condensed, heavy and tabular, and their size carries their magnitude. Prose stays at normal width so it reads as prose.\n\nThe system's own invention is that **verification state is drawn by line pattern, never by colour alone**: a solid line is evidenced, a dashed line is awaiting proof, a long dash crossed with an X is flagged, a dotted line is rejected. That grammar runs from the wordmark through the landing coverage bars to every edge of the flow map, where line weight carries the amount. Colour confirms the pattern; it never carries the meaning by itself.\n\nDensity is report density: hairlines divide figures, nothing floats, nothing is rounded, nothing glows. Depth comes from the ink masthead and from rules, not from shadows.",
+    "keyCharacteristics": [
+      "Report paper and ink navy, one report blue, signal orange held back for flags.",
+      "Archivo Variable on its width axis: condensed and heavy for headlines and figures, normal width for prose and section labels.",
+      "Tabular numerals on everything (set on `body`).",
+      "3px ink rule opens every section; 1px hairlines divide inside it.",
+      "Square corners everywhere.",
+      "Proof state as line pattern; amount as line weight; selection isolates."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Report Blue is the only saturated colour in ordinary use. It means \"act here\" or \"this has proof\". A second accent is not added.",
+        "section": "colors"
+      },
+      {
+        "name": "The Orange Is a Flag Rule",
+        "body": "Signal Orange appears only where something is flagged. It is never decoration, never a highlight, never a hover.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pattern Before Colour Rule",
+        "body": "Any verification state must stay legible in greyscale. If removing colour makes two states identical, the drawing is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Size Is Magnitude Rule",
+        "body": "In a row of figures, the largest number is set largest. Type size reports importance; it is not chosen for balance.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Everywhere Rule",
+        "body": "Every figure, amount and date column uses tabular numerals so columns align. This is set on `body`; do not switch it off.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Widths Rule",
+        "body": "Condensed is for headlines and figures. Prose, labels and controls stay at normal width.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rule Opens the Section Rule",
+        "body": "Every section starts on a 3px ink rule. Hairlines divide the content inside it. Do not add a box around something a rule already contains.",
+        "section": "layout"
+      },
+      {
+        "name": "The Overlays Only Rule",
+        "body": "Shadows exist only on things that float over the page: dialogs, drawers, menus. A card, section or button never gets one.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square Corner Rule",
+        "body": "Corners are square (0px; 2px at most). Pills and rounded cards are not part of this world.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** open every section with the 3px ink rule and a section-label header row.",
+      "**Do** draw verification state with the line pattern: solid for evidenced, dashed 6/5 for awaiting proof, a long dash 14/8 plus an X in Signal Orange for flagged, dotted 2/6 for rejected. Pair it with its label through StatusMark.",
+      "**Do** let line weight carry the amount, and make selection isolate (dim the rest to 12%).",
+      "**Do** set figures condensed, heavy and tabular, with the most important one set largest.",
+      "**Do** tag every block of figures from the bundled dataset with the Demo data tag, and date figures with \"as of\".",
+      "**Do** keep corners square and show the active nav item as an inverted ink block.",
+      "**Do** respect `prefers-reduced-motion` on any new motion."
+    ],
+    "donts": [
+      "**Don't** put an eyebrow or kicker above a heading. The section label is the heading, never a label stacked over another heading.",
+      "**Don't** use gradients, glass, backdrop blur or glow.",
+      "**Don't** use coloured left borders or side stripes to signal state.",
+      "**Don't** use pills, rounded cards or rounded buttons.",
+      "**Don't** use emoji. Icons are Phosphor.",
+      "**Don't** carry verification state by colour alone, or use Signal Orange for anything that is not a flag.",
+      "**Don't** invent proof: no customer counts, volumes, testimonials or logos that the demo data does not contain.",
+      "**Don't** put shadows on cards, sections or buttons. Shadows are for overlays only."
+    ]
+  }
+}

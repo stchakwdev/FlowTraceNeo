@@ -68,7 +68,7 @@ import {
   updatePublicEmbedConfig,
   updateTransaction,
   uploadVerificationFile,
-} from './supabase'
+} from './data'
 import type {
   AccessGroup,
   AccessGroupPermissions,

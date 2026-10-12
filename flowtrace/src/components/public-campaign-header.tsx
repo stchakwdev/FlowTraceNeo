@@ -1,117 +1,147 @@
 import { Link } from '@tanstack/react-router'
-import { FlowArrow, Buildings, Calendar, MapPin } from '@phosphor-icons/react'
-import type { CampaignWithDetails } from '@/lib/supabase'
+import { SealCheck } from '@phosphor-icons/react'
+import type { CampaignReport, CampaignReportEarmark } from '@/lib/data'
+import type { TransactionWithNodes } from '@/lib/supabase'
+import { Wordmark } from '@/components/layout/wordmark'
+import { CoverageBar, StatusMark } from '@/components/report'
+import { formatDate, formatMoney, formatShortDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
-interface PublicCampaignHeaderProps {
-  campaign: CampaignWithDetails
-}
-
-export function PublicCampaignHeader({ campaign }: PublicCampaignHeaderProps) {
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
+/**
+ * Masthead strip for public pages that sit outside the app shell: the
+ * wordmark, then the organisation the page reports on and its Trust Score.
+ */
+export function PublicMasthead({
+  organization,
+}: {
+  organization?: CampaignReport['organization']
+}) {
   return (
-    <header className="relative">
-      {/* Hero Background */}
-      {campaign.image_url ? (
-        <div className="absolute inset-0 h-64 lg:h-80">
-          <img
-            src={campaign.image_url}
-            alt={campaign.name}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
-        </div>
-      ) : (
-        <div className="absolute inset-0 h-64 lg:h-80 bg-gradient-to-br from-primary/20 to-primary/5" />
-      )}
-
-      {/* Content */}
-      <div className="relative mx-auto max-w-6xl px-4 pt-8 pb-8">
-        {/* Navigation Bar */}
-        <nav className="flex items-center justify-between mb-8">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <FlowArrow className="h-5 w-5 text-primary-foreground" weight="bold" />
-            </div>
-            <span className="text-lg font-bold">FlowTrace</span>
-          </Link>
-        </nav>
-
-        {/* Campaign Title Area */}
-        <div className="mt-16 lg:mt-24">
-          {/* Category Badge */}
-          {campaign.category && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4 capitalize">
-              {campaign.category}
+    <header className="bg-masthead text-masthead-foreground">
+      <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-8">
+        <Link to="/" aria-label="FlowTrace home" className="inline-flex items-center">
+          <Wordmark />
+        </Link>
+        {organization && (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              {organization.name}
+              {organization.verified && (
+                <SealCheck aria-label="Verified organisation" className="size-4" />
+              )}
             </span>
-          )}
-
-          {/* Title */}
-          <h1 className="text-3xl lg:text-4xl font-bold tracking-tight mb-4">
-            {campaign.name}
-          </h1>
-
-          {/* Short Description */}
-          {campaign.short_description && (
-            <p className="text-lg text-muted-foreground max-w-2xl mb-6">
-              {campaign.short_description}
-            </p>
-          )}
-
-          {/* Meta Info */}
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Buildings className="h-4 w-4" />
-              <span>Organization Campaign</span>
-            </div>
-
-            {campaign.starts_at && (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                <span>Started {formatDate(campaign.starts_at)}</span>
-              </div>
-            )}
-
-            {campaign.ends_at && (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                <span>Ends {formatDate(campaign.ends_at)}</span>
-              </div>
-            )}
-
-            {campaign.target_node && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />
-                <span>{campaign.target_node.name}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Tags */}
-          {campaign.tags && campaign.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {campaign.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-0.5 text-xs rounded-md bg-muted text-muted-foreground"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+            <span className="inline-flex items-baseline gap-1.5 border-l border-masthead-foreground/30 pl-3">
+              <span className="text-masthead-foreground/75">Trust Score</span>
+              <span className="figure text-lg">{organization.trust_score}</span>
+              <span className="text-masthead-foreground/75">/100</span>
+            </span>
+          </p>
+        )}
       </div>
     </header>
   )
+}
+
+/**
+ * Where the money can go: each project or department a gift can be earmarked
+ * to, with what it has received and how much of that is backed by proof.
+ * Hovering or focusing one isolates it and dims the rest.
+ */
+export function EarmarkList({
+  earmarks,
+  currency = 'KES',
+  className,
+}: {
+  earmarks: Array<CampaignReportEarmark>
+  currency?: string
+  className?: string
+}) {
+  // Projects that have received nothing say nothing about where money goes.
+  // Each bar is drawn against that node's own receipts: the filled share is
+  // the part backed by verified proof, so a fully evidenced node is full.
+  const shown = earmarks.filter((e) => e.received > 0 || e.is_target)
+  return (
+    <ul
+      className={cn(
+        'divide-y divide-border [&:hover>li]:opacity-45 [&>li]:transition-opacity [&>li]:duration-150 [&>li:hover]:opacity-100 [&:focus-within>li]:opacity-45 [&>li:focus-within]:opacity-100',
+        className,
+      )}
+    >
+      {shown.map((e) => (
+        <li key={e.id} tabIndex={0} className="py-3 outline-none focus-visible:bg-card">
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="min-w-0">
+              <span className={cn('font-semibold', e.is_target && 'text-primary')}>
+                {e.name}
+              </span>
+              {e.is_target && (
+                <span className="ml-2 text-xs text-muted-foreground">this campaign</span>
+              )}
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums">
+              {formatMoney(e.received, currency)}
+            </span>
+          </div>
+          <CoverageBar
+            total={Math.max(1, e.received)}
+            filled={e.received}
+            evidenced={e.evidenced}
+            className="mt-1.5 h-2 bg-transparent"
+            label={`${e.name}: ${formatMoney(e.received, currency)} received, ${formatMoney(e.evidenced, currency)} with proof`}
+          />
+          <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+            {e.received > 0
+              ? `${formatMoney(e.evidenced, currency)} of it with verified proof (${Math.round((e.evidenced / e.received) * 100)}%)`
+              : 'Nothing received yet'}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Recent programme spending, each line carrying its proof state. */
+export function ProofSpendingList({
+  spending,
+  className,
+}: {
+  spending: Array<TransactionWithNodes>
+  className?: string
+}) {
+  return (
+    <ul className={cn('divide-y divide-border', className)}>
+      {spending.map((t) => (
+        <li
+          key={t.id}
+          className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 py-3 text-sm"
+        >
+          <span className="min-w-0 font-semibold">{t.description}</span>
+          <span className="text-right font-semibold tabular-nums">
+            {formatMoney(t.amount, t.currency)}
+          </span>
+          <span className="min-w-0 text-xs text-muted-foreground">
+            <time dateTime={t.transaction_date}>{formatShortDate(t.transaction_date)}</time>
+            {t.from_node && t.to_node
+              ? ` · ${t.from_node.name} to ${t.to_node.name}`
+              : t.to_node
+                ? ` · to ${t.to_node.name}`
+                : ''}
+          </span>
+          <span className="flex flex-col items-end gap-0.5">
+            <StatusMark status={t.verification_status} />
+            {t.verification_count > 0 && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {t.verification_count} {t.verification_count === 1 ? 'proof' : 'proofs'}
+              </span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** "Started 1 Dec 2025" style line. */
+export function campaignDates(startsAt: string, endsAt: string | null) {
+  return `Started ${formatDate(startsAt)}${endsAt ? `, ends ${formatDate(endsAt)}` : ''}`
 }

@@ -1,32 +1,54 @@
-import { useState } from 'react'
-import {
-  X,
-  Buildings,
-  Shield,
-  MapPin,
-  CheckCircle,
-  XCircle,
-  CircleNotch,
-  UsersThree,
-  TreeStructure,
-} from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
+import { CircleNotch } from '@phosphor-icons/react'
+import type {
+  AccessGroupPermissions,
+  OrganizationChainWithDetails,
+} from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useAccessGroups, useNodes, useApproveChain, useRejectChain } from '@/lib/queries'
-import type { OrganizationChainWithDetails } from '@/lib/supabase'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ReportDialog } from '@/components/report-dialog'
+import {
+  useAccessGroups,
+  useApproveChain,
+  useNodes,
+  useRejectChain,
+} from '@/lib/queries'
 
 interface ChainApprovalModalProps {
   chain: OrganizationChainWithDetails | null
+  /** Approve grants an access group; reject declines, with an optional reason. */
+  mode: 'approve' | 'reject'
   isOpen: boolean
   onClose: () => void
   approvedBy: string
 }
 
+/** One plain sentence for what a group's permissions let the other org see. */
+export function describeAccess(p: AccessGroupPermissions) {
+  const parts: Array<string> = []
+  if (p.can_view_nodes) parts.push('the flow')
+  if (p.can_view_amounts) parts.push('amounts')
+  if (p.can_view_full_proofs) parts.push('original proofs')
+  else if (p.can_view_proofs) parts.push('proof summaries')
+  if (p.can_view_executor) parts.push('who handled each payment')
+  if (parts.length === 0) return 'Sees nothing yet.'
+  const list =
+    parts.length === 1
+      ? parts[0]
+      : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+  return `Sees ${list}.`
+}
+
 export function ChainApprovalModal({
   chain,
+  mode,
   isOpen,
   onClose,
   approvedBy,
@@ -34,262 +56,234 @@ export function ChainApprovalModal({
   const [selectedGroupId, setSelectedGroupId] = useState('')
   const [selectedNodeId, setSelectedNodeId] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
-  const [mode, setMode] = useState<'approve' | 'reject'>('approve')
+  const [showGroupError, setShowGroupError] = useState(false)
 
-  const { data: accessGroups } = useAccessGroups()
+  const { data: accessGroups, isError: groupsFailed } = useAccessGroups()
   const { data: nodes } = useNodes()
   const approveChain = useApproveChain()
   const rejectChain = useRejectChain()
 
-  const handleApprove = async () => {
-    if (!chain || !selectedGroupId) return
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedGroupId('')
+      setSelectedNodeId('')
+      setRejectionReason('')
+      setShowGroupError(false)
+      approveChain.reset()
+      rejectChain.reset()
+    }
+  }, [isOpen])
 
+  if (!chain) return null
+
+  const requester = chain.source_org
+  const selectedGroup = accessGroups?.find((g) => g.id === selectedGroupId)
+  const mutation = mode === 'approve' ? approveChain : rejectChain
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     try {
-      await approveChain.mutateAsync({
-        chainId: chain.id,
-        approvedBy,
-        grantedGroupId: selectedGroupId,
-        linkNodeId: selectedNodeId || undefined,
-      })
+      if (mode === 'approve') {
+        if (!selectedGroupId) {
+          setShowGroupError(true)
+          return
+        }
+        await approveChain.mutateAsync({
+          chainId: chain.id,
+          approvedBy,
+          grantedGroupId: selectedGroupId,
+          linkNodeId: selectedNodeId || undefined,
+        })
+      } else {
+        await rejectChain.mutateAsync({
+          chainId: chain.id,
+          rejectedBy: approvedBy,
+          reason: rejectionReason.trim() || undefined,
+        })
+      }
       onClose()
-      resetForm()
-    } catch (error) {
-      console.error('Failed to approve chain:', error)
+    } catch {
+      // Shown below from mutation.error
     }
   }
-
-  const handleReject = async () => {
-    if (!chain) return
-
-    try {
-      await rejectChain.mutateAsync({
-        chainId: chain.id,
-        rejectedBy: approvedBy,
-        reason: rejectionReason.trim() || undefined,
-      })
-      onClose()
-      resetForm()
-    } catch (error) {
-      console.error('Failed to reject chain:', error)
-    }
-  }
-
-  const resetForm = () => {
-    setSelectedGroupId('')
-    setSelectedNodeId('')
-    setRejectionReason('')
-    setMode('approve')
-  }
-
-  const getTrustGrade = (score: number) => {
-    if (score >= 90) return 'A+'
-    if (score >= 80) return 'A'
-    if (score >= 70) return 'B'
-    if (score >= 60) return 'C'
-    if (score >= 50) return 'D'
-    return 'F'
-  }
-
-  if (!isOpen || !chain) return null
-
-  const sourceOrg = chain.source_org
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <Card className="w-full max-w-lg mx-4 p-0 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-lg font-semibold">Review Chain Request</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
+    <ReportDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={
+        mode === 'approve'
+          ? `Approve ${requester.name}`
+          : `Reject ${requester.name}`
+      }
+      description={
+        mode === 'approve'
+          ? 'Choose the access group they join. They see your flows at that group’s depth, and you can revoke the link at any time.'
+          : 'They will see that you declined. They can send a new request later.'
+      }
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} className="h-10">
+            Keep pending
           </Button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {/* Requesting Organization */}
-          <div className="space-y-2">
-            <Label>Requesting Organization</Label>
-            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                {sourceOrg.logo_url ? (
-                  <img
-                    src={sourceOrg.logo_url}
-                    alt={sourceOrg.name}
-                    className="h-10 w-10 rounded object-cover"
-                  />
-                ) : (
-                  <Buildings className="h-6 w-6 text-primary" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{sourceOrg.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {sourceOrg.country && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {sourceOrg.country}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <Shield className="h-3 w-3 text-emerald-600" />
-                    Trust: {getTrustGrade(sourceOrg.trust_score)} ({sourceOrg.trust_score})
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Request Message */}
+          <Button
+            type="submit"
+            form="chain-review-form"
+            variant={mode === 'approve' ? 'default' : 'destructive'}
+            className="h-10"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending && (
+              <CircleNotch className="animate-spin" aria-hidden="true" />
+            )}
+            {mode === 'approve'
+              ? mutation.isPending
+                ? 'Approving'
+                : 'Approve and grant access'
+              : mutation.isPending
+                ? 'Rejecting'
+                : 'Reject request'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="chain-review-form"
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-5"
+        noValidate
+      >
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-y border-border py-3 text-sm">
+          <dt className="text-muted-foreground">From</dt>
+          <dd className="font-semibold">{requester.name}</dd>
+          <dt className="text-muted-foreground">Trust Score</dt>
+          <dd className="tabular-nums">{requester.trust_score} of 100</dd>
           {chain.request_message && (
-            <div className="space-y-2">
-              <Label>Their Message</Label>
-              <div className="p-3 border rounded-lg bg-muted/30">
-                <p className="text-sm">{chain.request_message}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Mode Toggle */}
-          <div className="flex gap-2">
-            <Button
-              variant={mode === 'approve' ? 'default' : 'outline'}
-              size="sm"
-              className="flex-1"
-              onClick={() => setMode('approve')}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Approve
-            </Button>
-            <Button
-              variant={mode === 'reject' ? 'destructive' : 'outline'}
-              size="sm"
-              className="flex-1"
-              onClick={() => setMode('reject')}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Reject
-            </Button>
-          </div>
-
-          {mode === 'approve' ? (
             <>
-              {/* Access Group Selection */}
-              <div className="space-y-2">
-                <Label>Grant Access Level</Label>
-                <Select
-                  value={selectedGroupId}
-                  items={{
-                    '': 'Select an access group...',
-                    ...Object.fromEntries(
-                      (accessGroups ?? []).map((group) => [group.id, group.name]),
-                    ),
-                  }}
-                  onValueChange={(value) => setSelectedGroupId(value ?? '')}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accessGroups?.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        <div className="flex items-center gap-2">
-                          <UsersThree className="h-4 w-4" />
-                          {group.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  This determines what data the requesting organization can see in
-                  your flows.
-                </p>
-              </div>
-
-              {/* Link Node Selection (Optional) */}
-              <div className="space-y-2">
-                <Label>Link to Node (optional)</Label>
-                <Select
-                  value={selectedNodeId}
-                  items={{
-                    '': 'No specific node',
-                    ...Object.fromEntries(
-                      (nodes ?? []).map((node) => [node.id, node.name]),
-                    ),
-                  }}
-                  onValueChange={(value) => setSelectedNodeId(value ?? '')}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No specific node</SelectItem>
-                    {nodes?.map((node) => (
-                      <SelectItem key={node.id} value={node.id}>
-                        <div className="flex items-center gap-2">
-                          <TreeStructure className="h-4 w-4" />
-                          {node.name}
-                          <span className="text-xs text-muted-foreground">
-                            ({node.type})
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Optionally link this chain to a specific entry node in your flow.
-                </p>
-              </div>
+              <dt className="text-muted-foreground">Their message</dt>
+              <dd>{chain.request_message}</dd>
             </>
-          ) : (
-            /* Rejection Reason */
-            <div className="space-y-2">
-              <Label htmlFor="reason">Reason (optional)</Label>
-              <Textarea
-                id="reason"
-                placeholder="Explain why you're declining this request..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={3}
-              />
-            </div>
           )}
-        </div>
+        </dl>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t p-4">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          {mode === 'approve' ? (
-            <Button
-              onClick={handleApprove}
-              disabled={!selectedGroupId || approveChain.isPending}
-            >
-              {approveChain.isPending ? (
-                <CircleNotch className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
-              Approve Request
-            </Button>
-          ) : (
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={rejectChain.isPending}
-            >
-              {rejectChain.isPending ? (
-                <CircleNotch className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <XCircle className="h-4 w-4 mr-2" />
-              )}
-              Reject Request
-            </Button>
-          )}
-        </div>
-      </Card>
-    </div>
+        {mode === 'approve' ? (
+          <>
+            <div className="flex flex-col gap-2">
+              <span id="grant-group-label" className="text-sm font-semibold">
+                Access group
+              </span>
+              <Select
+                value={selectedGroupId}
+                items={{
+                  '': 'Choose a group',
+                  ...Object.fromEntries(
+                    (accessGroups ?? []).map((g) => [g.id, g.name]),
+                  ),
+                }}
+                onValueChange={(value) => {
+                  setSelectedGroupId(value ?? '')
+                  setShowGroupError(false)
+                }}
+              >
+                <SelectTrigger
+                  className="h-10 w-full"
+                  aria-labelledby="grant-group-label"
+                  aria-invalid={showGroupError || undefined}
+                  aria-describedby="grant-group-hint"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {accessGroups?.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p
+                id="grant-group-hint"
+                className={
+                  showGroupError
+                    ? 'text-xs text-destructive'
+                    : 'text-xs text-muted-foreground'
+                }
+                role={showGroupError ? 'alert' : undefined}
+              >
+                {showGroupError
+                  ? 'Choose an access group before approving.'
+                  : groupsFailed
+                    ? 'Your access groups could not be loaded. Close this and try again.'
+                    : selectedGroup
+                      ? describeAccess(selectedGroup.permissions)
+                      : 'This sets what they can see in your flows.'}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span id="link-node-label" className="text-sm font-semibold">
+                Join at node{' '}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </span>
+              <Select
+                value={selectedNodeId}
+                items={{
+                  '': 'No specific node',
+                  ...Object.fromEntries(
+                    (nodes ?? []).map((node) => [node.id, node.name]),
+                  ),
+                }}
+                onValueChange={(value) => setSelectedNodeId(value ?? '')}
+              >
+                <SelectTrigger
+                  className="h-10 w-full"
+                  aria-labelledby="link-node-label"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No specific node</SelectItem>
+                  {nodes?.map((node) => (
+                    <SelectItem key={node.id} value={node.id}>
+                      {node.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Where their flow joins yours, so a funder can follow the money
+                across both.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <label htmlFor="reject-reason" className="text-sm font-semibold">
+              Reason{' '}
+              <span className="font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </label>
+            <Textarea
+              id="reject-reason"
+              placeholder="For example: we only link with organisations we fund directly."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+        )}
+
+        {mutation.isError && (
+          <p role="alert" className="text-sm text-destructive">
+            {mutation.error instanceof Error
+              ? mutation.error.message
+              : 'That didn’t go through. Try again in a moment.'}
+          </p>
+        )}
+      </form>
+    </ReportDialog>
   )
 }

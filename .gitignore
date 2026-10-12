@@ -37,3 +37,8 @@ Thumbs.db
 *.log
 count.txt
 todos.json
+
+# Impeccable working files (screenshots, scratch)
+.impeccable/review/
+.impeccable/tmp/
+.impeccable/questions/

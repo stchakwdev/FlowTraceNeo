@@ -1,472 +1,1131 @@
-import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import {
-  Globe,
-  Handshake,
-  Heart,
+  ArrowLeft,
+  Check,
+  CircleNotch,
+  Minus,
+  PencilSimple,
   Plus,
-  ShieldCheck,
   Trash,
-  Users,
   UserPlus,
-  X,
 } from '@phosphor-icons/react'
+import type { AccessGroup, AccessGroupPermissions } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  DateField,
+  localTodayISO,
+  parseDayMonthYear,
+} from '@/components/ui/date-field'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { ReportNotice, ReportSection } from '@/components/report'
+import { ReportCheckbox, ReportDialog } from '@/components/report-dialog'
+import { ChainLine } from '@/components/chain-status-badge'
 import {
   useAccessGroups,
-  useGroupMembers,
   useCreateAccessGroup,
   useDeleteAccessGroup,
+  useGroupMembers,
   useInviteMemberByEmail,
   useRemoveGroupMember,
+  useUpdateAccessGroup,
 } from '@/lib/queries'
-import type { AccessGroup } from '@/lib/supabase'
+import { useOrg } from '@/lib/org-context'
+import { formatDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/_authenticated/settings/access-groups')({
   component: AccessGroupsPage,
 })
 
-const iconMap: Record<string, React.ElementType> = {
-  'shield-check': ShieldCheck,
-  users: Users,
-  heart: Heart,
-  handshake: Handshake,
-  globe: Globe,
+const SCOPE_LABEL: Record<AccessGroup['node_scope'], string> = {
+  all: 'All flows',
+  assigned: 'Assigned nodes',
+  downstream: 'What their money funds',
 }
 
+const SCOPE_HINT: Record<AccessGroup['node_scope'], string> = {
+  all: 'Every node in your flows.',
+  assigned: 'Only the nodes you assign to this group.',
+  downstream: 'The nodes downstream of the money they gave.',
+}
+
+type ProofDepth = 'none' | 'summary' | 'full'
+
+const proofDepth = (p: AccessGroupPermissions): ProofDepth =>
+  p.can_view_full_proofs ? 'full' : p.can_view_proofs ? 'summary' : 'none'
+
+const ERROR_TEXT = (err: unknown) =>
+  err instanceof Error ? err.message : 'Try again in a moment.'
+
 function AccessGroupsPage() {
-  const { data: groups, isLoading } = useAccessGroups()
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const { organization } = useOrg()
+  const groups = useAccessGroups()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<AccessGroup | 'new' | null>(null)
+  const [deleting, setDeleting] = useState<AccessGroup | null>(null)
+  const deleteGroup = useDeleteAccessGroup()
+
+  const list = groups.data ?? []
+  const selected = list.find((g) => g.id === selectedId) ?? list.at(0) ?? null
 
   return (
-    <div className="px-6 py-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg shadow-primary/20">
-              <Users className="h-6 w-6 text-primary-foreground" weight="bold" />
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-6 sm:px-8 sm:py-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Link
+            to="/settings"
+            className="mb-3 inline-flex min-h-10 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            Settings
+          </Link>
+          <h1 className="text-4xl sm:text-5xl">Access groups</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Who sees what in {organization?.name ?? 'your organisation'}. Each
+            group sees its own depth of your flows, and FlowTrace holds the
+            line.
+          </p>
+        </div>
+        <Button className="h-10" onClick={() => setEditing('new')}>
+          <Plus aria-hidden="true" />
+          Create group
+        </Button>
+      </header>
+
+      <ReportSection
+        title="What each group can see and do"
+        meta={
+          groups.data ? (
+            <span className="tabular-nums">{list.length} groups</span>
+          ) : undefined
+        }
+      >
+        {groups.isError ? (
+          <ReportNotice
+            tone="error"
+            title="Access groups could not be loaded"
+            action={
+              <Button
+                variant="outline"
+                className="h-10"
+                onClick={() => groups.refetch()}
+              >
+                Try again
+              </Button>
+            }
+          >
+            {ERROR_TEXT(groups.error)}
+          </ReportNotice>
+        ) : groups.isLoading ? (
+          <p className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+            <CircleNotch className="size-4 animate-spin" aria-hidden="true" />
+            Loading access groups
+          </p>
+        ) : list.length === 0 ? (
+          <ReportNotice
+            title="No access groups yet"
+            action={
+              <Button className="h-10" onClick={() => setEditing('new')}>
+                <Plus aria-hidden="true" />
+                Create group
+              </Button>
+            }
+          >
+            Groups decide who sees your flows and at what depth. Create one for
+            your board to start.
+          </ReportNotice>
+        ) : (
+          <>
+            <div className="relative w-0 min-w-full overflow-x-auto">
+              <table className="w-full min-w-[58rem] text-left text-sm">
+                <caption className="sr-only">
+                  Permissions for each access group. Select a group to see its
+                  members.
+                </caption>
+                <thead>
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    <th scope="col" className="py-3 pr-4 font-semibold">
+                      Group
+                    </th>
+                    <th scope="col" className="py-3 pr-4 font-semibold">
+                      Sees
+                    </th>
+                    <th scope="col" className="py-3 pr-3 font-semibold">
+                      Amounts
+                    </th>
+                    <th scope="col" className="py-3 pr-3 font-semibold">
+                      Proofs
+                    </th>
+                    <th scope="col" className="py-3 pr-3 font-semibold">
+                      Who handled it
+                    </th>
+                    <th scope="col" className="py-3 pr-3 font-semibold">
+                      Edits flows
+                    </th>
+                    <th scope="col" className="py-3 pr-3 font-semibold">
+                      Edits transactions
+                    </th>
+                    <th scope="col" className="py-3 pr-3 font-semibold">
+                      Manages people
+                    </th>
+                    <th
+                      scope="col"
+                      className="py-3 pr-3 text-right font-semibold"
+                    >
+                      Members
+                    </th>
+                    <th scope="col" className="py-3">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&:has(>tr:hover)>tr:not(:hover)]:opacity-55">
+                  {list.map((group) => (
+                    <GroupRow
+                      key={group.id}
+                      group={group}
+                      selected={selected?.id === group.id}
+                      dimmed={!!selectedId && selected?.id !== group.id}
+                      onSelect={() => setSelectedId(group.id)}
+                      onEdit={() => setEditing(group)}
+                      onDelete={() => {
+                        deleteGroup.reset()
+                        setDeleting(group)
+                      }}
+                    />
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Access Groups</h1>
-              <p className="text-muted-foreground">
-                Manage who can see and interact with your financial data
-              </p>
-            </div>
-          </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4" />
-            Create Group
-          </Button>
-        </div>
-      </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Proofs: “Originals” means the receipts and documents themselves;
+              “Summaries” means type, date and status only. Default groups can
+              be edited but not deleted.
+            </p>
+          </>
+        )}
+      </ReportSection>
 
-      {/* Groups Grid */}
-      {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(5)].map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 skeleton-shimmer rounded-lg bg-muted" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-5 w-24 skeleton-shimmer rounded bg-muted" />
-                  <div className="h-4 w-full skeleton-shimmer rounded bg-muted" />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {groups?.map((group) => (
-            <GroupCard
-              key={group.id}
-              group={group}
-              isSelected={selectedGroup === group.id}
-              onSelect={() => setSelectedGroup(selectedGroup === group.id ? null : group.id)}
-            />
-          ))}
-        </div>
-      )}
+      {selected && <MembersSection group={selected} />}
 
-      {/* Selected Group Details */}
-      {selectedGroup && (
-        <GroupDetails
-          groupId={selectedGroup}
-          onClose={() => setSelectedGroup(null)}
-        />
-      )}
+      <GroupFormDialog
+        key={editing === 'new' ? 'new' : (editing?.id ?? 'closed')}
+        open={!!editing}
+        group={editing === 'new' ? null : editing}
+        existing={list}
+        onClose={() => setEditing(null)}
+        onSaved={(id) => setSelectedId(id)}
+      />
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <CreateGroupModal onClose={() => setShowCreateModal(false)} />
-      )}
+      <AlertDialog
+        open={!!deleting}
+        onOpenChange={(open) => !open && setDeleting(null)}
+      >
+        <AlertDialogContent
+          aria-modal="true"
+          className="border-t-[3px] border-foreground"
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">
+              Delete “{deleting?.name}”?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              Everyone in this group loses access straight away, and any chain
+              link that granted this group stops showing your flows. This can’t
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteGroup.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              Not deleted. {ERROR_TEXT(deleteGroup.error)}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-10">Keep group</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              className="h-10"
+              disabled={deleteGroup.isPending}
+              onClick={() => {
+                if (!deleting) return
+                deleteGroup.mutate(deleting.id, {
+                  onSuccess: () => {
+                    if (selectedId === deleting.id) setSelectedId(null)
+                    setDeleting(null)
+                  },
+                })
+              }}
+            >
+              {deleteGroup.isPending && (
+                <CircleNotch className="animate-spin" aria-hidden="true" />
+              )}
+              Delete group
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
 
-function GroupCard({
+function YesNo({ value }: { value: boolean }) {
+  return value ? (
+    <Check weight="bold" className="size-4" aria-label="Yes" role="img" />
+  ) : (
+    <Minus
+      weight="bold"
+      className="size-4 text-muted-foreground opacity-60"
+      aria-label="No"
+      role="img"
+    />
+  )
+}
+
+function GroupRow({
   group,
-  isSelected,
+  selected,
+  dimmed,
   onSelect,
+  onEdit,
+  onDelete,
 }: {
   group: AccessGroup
-  isSelected: boolean
+  selected: boolean
+  dimmed: boolean
   onSelect: () => void
+  onEdit: () => void
+  onDelete: () => void
 }) {
-  const Icon = iconMap[group.icon] || Users
-  const deleteGroup = useDeleteAccessGroup()
-
-  const permissionCount = Object.values(group.permissions).filter(Boolean).length
+  const members = useGroupMembers(group.id)
+  const p = group.permissions
+  const depth = proofDepth(p)
 
   return (
-    <Card
-      className={`group relative cursor-pointer overflow-hidden p-6 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 ${
-        isSelected ? 'border-primary ring-2 ring-primary/20' : ''
-      }`}
-      onClick={onSelect}
+    <tr
+      className={cn(
+        'border-b border-border align-top transition-opacity duration-200',
+        selected && 'bg-accent/60',
+        dimmed && 'opacity-70',
+      )}
     >
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-
-      <div className="relative">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${group.color}20` }}
-            >
-              <Icon className="h-5 w-5" style={{ color: group.color }} weight="duotone" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold">{group.name}</h3>
-                {group.is_default && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    Default
-                  </span>
-                )}
-                {group.is_public && (
-                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
-                    Public
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                {group.description || 'No description'}
-              </p>
-            </div>
-          </div>
-
-          {!group.is_default && (
+      <th scope="row" className="py-3 pr-4 font-normal">
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-pressed={selected}
+          className="flex min-h-10 flex-col items-start text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span
+            className={cn(
+              'text-base font-semibold',
+              selected && 'text-primary',
+            )}
+          >
+            {group.name}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {[group.is_default && 'Default', group.is_public && 'Public']
+              .filter(Boolean)
+              .join(' · ') || 'Custom'}
+          </span>
+        </button>
+      </th>
+      <td className="py-3 pr-4">
+        {!p.can_view_nodes
+          ? 'Nothing'
+          : p.can_view_amounts
+            ? SCOPE_LABEL[group.node_scope]
+            : `${SCOPE_LABEL[group.node_scope]}, names only`}
+      </td>
+      <td className="py-3 pr-3">
+        <YesNo value={p.can_view_amounts} />
+      </td>
+      <td className="py-3 pr-3">
+        {depth === 'full' ? (
+          'Originals'
+        ) : depth === 'summary' ? (
+          'Summaries'
+        ) : (
+          <YesNo value={false} />
+        )}
+      </td>
+      <td className="py-3 pr-3">
+        <YesNo value={p.can_view_executor} />
+      </td>
+      <td className="py-3 pr-3">
+        <YesNo value={p.can_edit_nodes} />
+      </td>
+      <td className="py-3 pr-3">
+        <YesNo value={p.can_edit_transactions} />
+      </td>
+      <td className="py-3 pr-3">
+        {p.can_manage_groups ? (
+          'Members and groups'
+        ) : p.can_manage_members ? (
+          'Members'
+        ) : (
+          <YesNo value={false} />
+        )}
+      </td>
+      <td className="py-3 pr-3 text-right tabular-nums">
+        {members.data ? members.data.length : members.isError ? '?' : '–'}
+      </td>
+      <td className="py-2">
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-10"
+            onClick={onEdit}
+            aria-label={`Edit ${group.name}`}
+          >
+            <PencilSimple />
+          </Button>
+          {!group.is_default ? (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (confirm('Delete this group?')) {
-                  deleteGroup.mutate(group.id)
-                }
-              }}
+              className="size-10 text-destructive"
+              onClick={onDelete}
+              aria-label={`Delete ${group.name}`}
             >
-              <Trash className="h-4 w-4 text-destructive" />
+              <Trash />
             </Button>
+          ) : (
+            <span aria-hidden="true" className="size-10" />
           )}
         </div>
-
-        <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {permissionCount} permissions
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-3.5 w-3.5" />
-            {group.node_scope} scope
-          </span>
-        </div>
-      </div>
-    </Card>
+      </td>
+    </tr>
   )
 }
 
-function GroupDetails({
-  groupId,
-  onClose,
-}: {
-  groupId: string
-  onClose: () => void
-}) {
-  const { data: groups } = useAccessGroups()
-  const { data: members, isLoading: membersLoading } = useGroupMembers(groupId)
-  const inviteMember = useInviteMemberByEmail()
+// ---------------------------------------------------------------------------
+// Members
+// ---------------------------------------------------------------------------
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function todayISO() {
+  return localTodayISO()
+}
+
+type MemberRow = NonNullable<ReturnType<typeof useGroupMembers>['data']>[number]
+
+function MembersSection({ group }: { group: AccessGroup }) {
+  const members = useGroupMembers(group.id)
+  const invite = useInviteMemberByEmail()
   const removeMember = useRemoveGroupMember()
+  const { profile, user } = useOrg()
 
-  const [showInvite, setShowInvite] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
+  const [email, setEmail] = useState('')
+  const [until, setUntil] = useState('')
+  const [touched, setTouched] = useState(false)
+  const [lastInvited, setLastInvited] = useState<string | null>(null)
+  const [removing, setRemoving] = useState<MemberRow | null>(null)
 
-  const group = groups?.find((g) => g.id === groupId)
-  if (!group) return null
+  useEffect(() => {
+    setEmail('')
+    setUntil('')
+    setTouched(false)
+    setLastInvited(null)
+    invite.reset()
+  }, [group.id])
 
-  const Icon = iconMap[group.icon] || Users
+  const emailError = !email.trim()
+    ? 'Enter an email address.'
+    : !EMAIL_PATTERN.test(email.trim())
+      ? 'That doesn’t look like an email address. Check it and try again.'
+      : (members.data ?? []).some(
+            (m) =>
+              (m.user_email ?? m.profile?.email)?.toLowerCase() ===
+              email.trim().toLowerCase(),
+          )
+        ? 'This person is already in the group.'
+        : null
+  const untilParsed = parseDayMonthYear(until)
+  const untilISO = untilParsed?.iso ?? ''
+  const untilError = untilParsed?.error
+    ? untilParsed.error
+    : untilISO && untilISO < todayISO()
+      ? 'That date has passed. Choose today or a later day.'
+      : null
 
-  const handleInvite = () => {
-    if (!inviteEmail) return
-    inviteMember.mutate(
-      { groupId, email: inviteEmail, grantedBy: 'dev-user' },
+  const onInvite = (e: React.FormEvent) => {
+    e.preventDefault()
+    setTouched(true)
+    if (emailError || untilError) return
+    const address = email.trim()
+    invite.mutate(
+      {
+        groupId: group.id,
+        email: address,
+        grantedBy: profile?.id ?? user?.id ?? 'unknown-user',
+        validUntil: untilISO ? `${untilISO}T23:59:59Z` : undefined,
+      },
       {
         onSuccess: () => {
-          setInviteEmail('')
-          setShowInvite(false)
+          setEmail('')
+          setUntil('')
+          setTouched(false)
+          setLastInvited(address)
         },
-      }
+      },
     )
   }
 
+  const now = new Date().toISOString()
+  const list = members.data ?? []
+
   return (
-    <Card className="mt-6 p-6">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `${group.color}20` }}
-          >
-            <Icon className="h-6 w-6" style={{ color: group.color }} weight="duotone" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">{group.name}</h2>
-            <p className="text-sm text-muted-foreground">{group.description}</p>
-          </div>
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {/* Permissions */}
-      <div className="mt-6">
-        <h3 className="mb-3 font-medium">Permissions</h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(group.permissions).map(([key, value]) => (
-            <div
-              key={key}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                value
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-400'
-                  : 'border-border bg-muted/50 text-muted-foreground'
-              }`}
+    <ReportSection
+      title={`Members of ${group.name}`}
+      meta={
+        members.data ? (
+          <span className="tabular-nums">
+            {list.length} {list.length === 1 ? 'member' : 'members'}
+          </span>
+        ) : undefined
+      }
+    >
+      <div className="grid gap-8 pt-2 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          {members.isError ? (
+            <ReportNotice
+              tone="error"
+              title="Members could not be loaded"
+              action={
+                <Button
+                  variant="outline"
+                  className="h-10"
+                  onClick={() => members.refetch()}
+                >
+                  Try again
+                </Button>
+              }
             >
-              {value ? (
-                <ShieldCheck className="h-4 w-4 shrink-0" weight="fill" />
-              ) : (
-                <X className="h-4 w-4 shrink-0" />
-              )}
-              <span className="truncate">
-                {key.replace(/_/g, ' ').replace('can ', '')}
-              </span>
-            </div>
-          ))}
+              {ERROR_TEXT(members.error)}
+            </ReportNotice>
+          ) : members.isLoading ? (
+            <p className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+              <CircleNotch className="size-4 animate-spin" aria-hidden="true" />
+              Loading members
+            </p>
+          ) : list.length === 0 ? (
+            <ReportNotice title="No one is in this group yet">
+              Invite people by email. They see your flows at this group’s depth
+              as soon as they sign in.
+            </ReportNotice>
+          ) : (
+            <ul className="divide-y divide-border">
+              {list.map((m) => {
+                const expired = !!m.valid_until && m.valid_until < now
+                const limited = !!m.valid_until && !expired
+                return (
+                  <li
+                    key={m.id}
+                    className={cn(
+                      'flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3',
+                      expired && 'text-muted-foreground',
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold [overflow-wrap:anywhere]">
+                        {m.profile?.full_name ?? m.user_email}
+                      </p>
+                      <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                        {m.profile?.full_name &&
+                        (m.profile.email || m.user_email)
+                          ? `${m.profile.email || m.user_email} · `
+                          : ''}
+                        {m.user_id ? 'Member' : 'Invited'} since{' '}
+                        {formatDate(m.valid_from)}
+                      </p>
+                      {m.notes && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {m.notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap',
+                          !limited && !expired && 'text-foreground',
+                          (limited || expired) && 'text-muted-foreground',
+                        )}
+                      >
+                        <ChainLine
+                          status={
+                            expired ? 'revoked' : limited ? 'pending' : 'active'
+                          }
+                          className="w-6"
+                        />
+                        {expired
+                          ? `Expired ${formatDate(m.valid_until!)}`
+                          : limited
+                            ? `Until ${formatDate(m.valid_until!)}`
+                            : 'No end date'}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-10 text-destructive"
+                        aria-label={`Remove ${m.profile?.full_name ?? m.user_email ?? 'member'}`}
+                        onClick={() => {
+                          removeMember.reset()
+                          setRemoving(m)
+                        }}
+                      >
+                        <Trash />
+                      </Button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <ChainLine status="active" className="w-7" /> No end date
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <ChainLine status="pending" className="w-7" /> Time-limited
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <ChainLine status="revoked" className="w-7" /> Expired, no access
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Members */}
-      <div className="mt-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-medium">Members</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowInvite(!showInvite)}
-          >
-            <UserPlus className="h-4 w-4" />
-            Invite Member
-          </Button>
-        </div>
-
-        {showInvite && (
-          <div className="mb-4 flex gap-2">
+        <form
+          onSubmit={onInvite}
+          noValidate
+          className="flex flex-col gap-4 border-t border-border pt-5 lg:col-span-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
+        >
+          <h3 className="text-xl">Invite someone</h3>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="invite-email" className="text-sm font-semibold">
+              Email
+            </label>
             <Input
+              id="invite-email"
               type="email"
-              placeholder="Enter email address"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="flex-1"
+              autoComplete="email"
+              placeholder="name@organisation.org"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setLastInvited(null)
+              }}
+              className="h-10"
+              aria-invalid={(touched && !!emailError) || undefined}
+              aria-describedby="invite-email-msg"
             />
-            <Button onClick={handleInvite} disabled={inviteMember.isPending}>
-              {inviteMember.isPending ? 'Inviting...' : 'Send Invite'}
-            </Button>
+            {touched && emailError && (
+              <p id="invite-email-msg" className="text-xs text-destructive">
+                {emailError}
+              </p>
+            )}
           </div>
-        )}
-
-        {membersLoading ? (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                <div className="h-8 w-8 skeleton-shimmer rounded-full bg-muted" />
-                <div className="h-4 w-32 skeleton-shimmer rounded bg-muted" />
-              </div>
-            ))}
-          </div>
-        ) : members?.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
-            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              No members in this group yet
+          <div className="flex flex-col gap-2">
+            <label htmlFor="invite-until" className="text-sm font-semibold">
+              Access ends{' '}
+              <span className="font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </label>
+            <DateField
+              id="invite-until"
+              min={todayISO()}
+              value={until}
+              onValueChange={setUntil}
+              pickerLabel="Choose the end date from a calendar"
+              className="h-10"
+              wrapperClassName="sm:w-56"
+              aria-invalid={(touched && !!untilError) || undefined}
+              aria-describedby="invite-until-msg"
+            />
+            <p
+              id="invite-until-msg"
+              className={cn(
+                'text-xs',
+                touched && untilError
+                  ? 'text-destructive'
+                  : 'text-muted-foreground',
+              )}
+            >
+              {touched && untilError
+                ? untilError
+                : 'Day, month, year. For auditors and short reviews; access stops at the end of that day.'}
             </p>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {members?.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-                    {(member.profile?.full_name?.[0] || member.user_email?.[0] || '?').toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {member.profile?.full_name || member.user_email}
-                    </p>
-                    {member.profile?.email && member.profile.email !== member.user_email && (
-                      <p className="text-xs text-muted-foreground">{member.profile.email}</p>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => removeMember.mutate({ id: member.id, groupId })}
-                >
-                  <Trash className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" className="h-10" disabled={invite.isPending}>
+              {invite.isPending ? (
+                <CircleNotch className="animate-spin" aria-hidden="true" />
+              ) : (
+                <UserPlus aria-hidden="true" />
+              )}
+              {invite.isPending ? 'Inviting' : `Invite to ${group.name}`}
+            </Button>
           </div>
-        )}
+          <p aria-live="polite" className="text-sm">
+            {invite.isError ? (
+              <span className="text-destructive">
+                Invite not sent. {ERROR_TEXT(invite.error)}
+              </span>
+            ) : lastInvited ? (
+              <span className="text-muted-foreground">
+                {lastInvited} is invited to {group.name}.
+              </span>
+            ) : null}
+          </p>
+        </form>
       </div>
-    </Card>
+
+      <AlertDialog
+        open={!!removing}
+        onOpenChange={(open) => !open && setRemoving(null)}
+      >
+        <AlertDialogContent
+          aria-modal="true"
+          className="border-t-[3px] border-foreground"
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">
+              Remove {removing?.profile?.full_name ?? removing?.user_email} from{' '}
+              {group.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              They lose this group’s access straight away. You can invite them
+              again later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {removeMember.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              Not removed. {ERROR_TEXT(removeMember.error)}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-10">Keep member</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              className="h-10"
+              disabled={removeMember.isPending}
+              onClick={() => {
+                if (!removing) return
+                removeMember.mutate(
+                  { id: removing.id, groupId: group.id },
+                  { onSuccess: () => setRemoving(null) },
+                )
+              }}
+            >
+              Remove member
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </ReportSection>
   )
 }
 
-function CreateGroupModal({ onClose }: { onClose: () => void }) {
-  const createGroup = useCreateAccessGroup()
-  const [name, setName] = useState('')
-  const [slug, setSlug] = useState('')
-  const [description, setDescription] = useState('')
-  const [color, setColor] = useState('#6366f1')
+// ---------------------------------------------------------------------------
+// Create / edit group
+// ---------------------------------------------------------------------------
 
-  const handleCreate = () => {
-    if (!name || !slug) return
-    createGroup.mutate(
-      {
-        name,
-        slug,
-        description,
-        color,
-        icon: 'users',
-        permissions: {
-          can_view_nodes: true,
-          can_view_amounts: true,
-          can_view_proofs: false,
-          can_view_executor: false,
-          can_view_full_proofs: false,
-          can_edit_nodes: false,
-          can_edit_transactions: false,
-          can_manage_members: false,
-          can_manage_groups: false,
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+const EMPTY_PERMISSIONS: AccessGroupPermissions = {
+  can_view_nodes: true,
+  can_view_amounts: true,
+  can_view_proofs: false,
+  can_view_executor: false,
+  can_view_full_proofs: false,
+  can_edit_nodes: false,
+  can_edit_transactions: false,
+  can_manage_members: false,
+  can_manage_groups: false,
+}
+
+type FlagKey = Exclude<
+  keyof AccessGroupPermissions,
+  'can_view_proofs' | 'can_view_full_proofs'
+>
+
+const SEE_FLAGS: Array<[FlagKey, string, string]> = [
+  ['can_view_nodes', 'The flow', 'Nodes and how money moves between them.'],
+  ['can_view_amounts', 'Amounts', 'The KES value of each movement.'],
+  [
+    'can_view_executor',
+    'Who handled it',
+    'The staff member or vendor behind each payment.',
+  ],
+]
+
+const DO_FLAGS: Array<[FlagKey, string, string]> = [
+  ['can_edit_nodes', 'Edit flows', 'Add and change nodes.'],
+  [
+    'can_edit_transactions',
+    'Edit transactions',
+    'Record transactions and attach proof.',
+  ],
+  ['can_manage_members', 'Manage members', 'Invite and remove people.'],
+  ['can_manage_groups', 'Manage groups', 'Create groups and change access.'],
+]
+
+function GroupFormDialog({
+  open,
+  group,
+  existing,
+  onClose,
+  onSaved,
+}: {
+  open: boolean
+  group: AccessGroup | null
+  existing: Array<AccessGroup>
+  onClose: () => void
+  onSaved: (id: string) => void
+}) {
+  const create = useCreateAccessGroup()
+  const update = useUpdateAccessGroup()
+  const mutation = group ? update : create
+  const nameRef = useRef<HTMLInputElement>(null)
+
+  const [name, setName] = useState(group?.name ?? '')
+  const [slug, setSlug] = useState(group?.slug ?? '')
+  const [slugEdited, setSlugEdited] = useState(!!group)
+  const [description, setDescription] = useState(group?.description ?? '')
+  const [scope, setScope] = useState<AccessGroup['node_scope']>(
+    group?.node_scope ?? 'assigned',
+  )
+  const [perms, setPerms] = useState<AccessGroupPermissions>(
+    group?.permissions ?? EMPTY_PERMISSIONS,
+  )
+  const [submitted, setSubmitted] = useState(false)
+
+  const others = existing.filter((g) => g.id !== group?.id)
+  const errors: { name?: string; slug?: string } = {}
+  if (name.trim().length < 2) errors.name = 'Give the group a name.'
+  else if (
+    others.some((g) => g.name.toLowerCase() === name.trim().toLowerCase())
+  )
+    errors.name = 'Another group already has this name.'
+  if (!slug) errors.slug = 'Enter a short ID.'
+  else if (!SLUG_PATTERN.test(slug))
+    errors.slug = 'Use lowercase letters, numbers and single hyphens.'
+  else if (others.some((g) => g.slug === slug))
+    errors.slug = 'Another group already uses this ID.'
+
+  const depth = proofDepth(perms)
+  const setDepth = (d: ProofDepth) =>
+    setPerms((p) => ({
+      ...p,
+      can_view_proofs: d !== 'none',
+      can_view_full_proofs: d === 'full',
+    }))
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitted(true)
+    if (errors.name || errors.slug) {
+      if (errors.name) nameRef.current?.focus()
+      return
+    }
+    const values = {
+      name: name.trim(),
+      slug,
+      description: description.trim() || null,
+      node_scope: scope,
+      permissions: perms,
+    }
+    if (group) {
+      update.mutate(
+        { id: group.id, updates: values },
+        {
+          onSuccess: () => {
+            onSaved(group.id)
+            onClose()
+          },
         },
-        node_scope: 'assigned',
-        is_default: false,
-        is_public: false,
-        priority: 50,
-      },
-      { onSuccess: onClose }
-    )
+      )
+    } else {
+      create.mutate(
+        {
+          ...values,
+          icon: 'users',
+          color: '#1C5FA8',
+          is_default: false,
+          is_public: false,
+          priority: 50,
+        },
+        {
+          onSuccess: (row) => {
+            onSaved(row.id)
+            onClose()
+          },
+        },
+      )
+    }
   }
 
+  const flag = ([key, label, hint]: [FlagKey, string, string]) => (
+    <label
+      key={key}
+      className="flex min-h-10 cursor-pointer items-start gap-3 py-1.5"
+    >
+      <ReportCheckbox
+        checked={perms[key]}
+        onCheckedChange={(v) => setPerms((p) => ({ ...p, [key]: v }))}
+        className="mt-0.5"
+      />
+      <span>
+        <span className="block text-sm font-semibold">{label}</span>
+        <span className="block text-xs text-muted-foreground">{hint}</span>
+      </span>
+    </label>
+  )
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-md p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Create Access Group</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Group Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value)
-                setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))
-              }}
-              placeholder="e.g., USAID Team"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="e.g., usaid-team"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this group for?"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="color">Color</Label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                id="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-10 w-14 cursor-pointer rounded border border-border"
-              />
-              <Input
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="flex-1"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
+    <ReportDialog
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title={group ? `Edit ${group.name}` : 'Create an access group'}
+      description={
+        group?.is_default
+          ? 'A default group. You can change its depth, but not delete it.'
+          : 'Set what this group sees. You can change it at any time.'
+      }
+      initialFocus={nameRef}
+      footer={
+        <>
+          <Button variant="outline" className="h-10" onClick={onClose}>
             Cancel
           </Button>
           <Button
-            className="flex-1"
-            onClick={handleCreate}
-            disabled={!name || !slug || createGroup.isPending}
+            type="submit"
+            form="group-form"
+            className="h-10"
+            disabled={mutation.isPending}
           >
-            {createGroup.isPending ? 'Creating...' : 'Create Group'}
+            {mutation.isPending && (
+              <CircleNotch className="animate-spin" aria-hidden="true" />
+            )}
+            {group
+              ? mutation.isPending
+                ? 'Saving'
+                : 'Save group'
+              : mutation.isPending
+                ? 'Creating'
+                : 'Create group'}
           </Button>
+        </>
+      }
+    >
+      <form
+        id="group-form"
+        onSubmit={onSubmit}
+        noValidate
+        className="flex flex-col gap-5"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="group-name" className="text-sm font-semibold">
+              Name
+            </label>
+            <Input
+              id="group-name"
+              ref={nameRef}
+              value={name}
+              placeholder="e.g. Harambee grant team"
+              onChange={(e) => {
+                setName(e.target.value)
+                if (!slugEdited) setSlug(slugify(e.target.value))
+              }}
+              className="h-10"
+              aria-invalid={(submitted && !!errors.name) || undefined}
+              aria-describedby="group-name-msg"
+            />
+            {submitted && errors.name && (
+              <p id="group-name-msg" className="text-xs text-destructive">
+                {errors.name}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="group-slug" className="text-sm font-semibold">
+              Short ID
+            </label>
+            <Input
+              id="group-slug"
+              value={slug}
+              disabled={!!group?.is_default}
+              onChange={(e) => {
+                setSlug(e.target.value.toLowerCase())
+                setSlugEdited(true)
+              }}
+              className="h-10 font-mono"
+              spellCheck={false}
+              autoCapitalize="none"
+              aria-invalid={(submitted && !!errors.slug) || undefined}
+              aria-describedby="group-slug-msg"
+            />
+            <p
+              id="group-slug-msg"
+              className={cn(
+                'text-xs',
+                submitted && errors.slug
+                  ? 'text-destructive'
+                  : 'text-muted-foreground',
+              )}
+            >
+              {submitted && errors.slug
+                ? errors.slug
+                : 'Used in links and the API.'}
+            </p>
+          </div>
         </div>
-      </Card>
-    </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="group-description" className="text-sm font-semibold">
+            Description{' '}
+            <span className="font-normal text-muted-foreground">
+              (optional)
+            </span>
+          </label>
+          <Textarea
+            id="group-description"
+            rows={2}
+            value={description}
+            placeholder="Who is in this group and why"
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <fieldset className="flex flex-col gap-1 border-t border-border pt-4">
+          <legend className="pt-0 text-sm font-semibold">What they see</legend>
+          <div className="mt-2 grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <span
+                id="group-scope-label"
+                className="text-xs text-muted-foreground"
+              >
+                Which flows
+              </span>
+              <Select
+                value={scope}
+                items={SCOPE_LABEL}
+                onValueChange={(v) => v && setScope(v)}
+              >
+                <SelectTrigger
+                  className="h-10 w-full"
+                  aria-labelledby="group-scope-label"
+                  aria-describedby="group-scope-hint"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(
+                    Object.keys(SCOPE_LABEL) as Array<AccessGroup['node_scope']>
+                  ).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {SCOPE_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p
+                id="group-scope-hint"
+                className="text-xs text-muted-foreground"
+              >
+                {SCOPE_HINT[scope]}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span
+                id="group-proofs-label"
+                className="text-xs text-muted-foreground"
+              >
+                Proofs
+              </span>
+              <Select
+                value={depth}
+                items={{
+                  none: 'No proofs',
+                  summary: 'Summaries',
+                  full: 'Originals',
+                }}
+                onValueChange={(v) => v && setDepth(v as ProofDepth)}
+              >
+                <SelectTrigger
+                  className="h-10 w-full"
+                  aria-labelledby="group-proofs-label"
+                  aria-describedby="group-proofs-hint"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No proofs</SelectItem>
+                  <SelectItem value="summary">Summaries</SelectItem>
+                  <SelectItem value="full">Originals</SelectItem>
+                </SelectContent>
+              </Select>
+              <p
+                id="group-proofs-hint"
+                className="text-xs text-muted-foreground"
+              >
+                {depth === 'full'
+                  ? 'Receipts, photos and documents themselves.'
+                  : depth === 'summary'
+                    ? 'Type, date and status of each proof.'
+                    : 'They see no proof attached to payments.'}
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 grid sm:grid-cols-2 sm:gap-x-4">
+            {SEE_FLAGS.map(flag)}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-1 border-t border-border pt-4">
+          <legend className="pt-0 text-sm font-semibold">
+            What they can do
+          </legend>
+          <div className="mt-2 grid sm:grid-cols-2 sm:gap-x-4">
+            {DO_FLAGS.map(flag)}
+          </div>
+        </fieldset>
+
+        {mutation.isError && (
+          <p role="alert" className="text-sm text-destructive">
+            Not saved. {ERROR_TEXT(mutation.error)}
+          </p>
+        )}
+      </form>
+    </ReportDialog>
   )
 }

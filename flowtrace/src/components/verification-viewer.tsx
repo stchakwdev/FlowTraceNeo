@@ -1,123 +1,42 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
-  Receipt,
-  Image as ImageIcon,
-  MapPin,
-  PencilLine,
-  Fingerprint,
-  Bank,
-  File,
-  FileText,
-  Video,
-  Shield,
-  Scroll,
-  Buildings,
-  Eye,
-  EyeSlash,
-  CheckCircle,
-  Clock,
-  XCircle,
-  X,
-  User,
-  Calendar,
-  Download,
-  MagnifyingGlassPlus,
-  MagnifyingGlassMinus,
-  ArrowsOut,
-  ArrowsIn,
   CaretLeft,
   CaretRight,
+  DownloadSimple,
+  MagnifyingGlassMinus,
+  MagnifyingGlassPlus,
+  X,
 } from '@phosphor-icons/react'
+import type { Verification } from '@/lib/supabase'
+import { formatDate, formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import type {
-  Verification,
-  VerificationType,
-  VerificationVisibility,
-} from '@/lib/supabase'
-import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import { StatusMark } from '@/components/report'
+import {
+  PROOF_STATE_LABEL,
+  PROOF_TYPE_ICON,
+  PROOF_TYPE_LABEL,
+  PROOF_VISIBILITY_LABEL,
+  proofMediaKind,
+  proofTrustPoints,
+} from '@/components/verification-gallery'
 
-// Icon map for verification types
-const VERIFICATION_ICONS: Record<VerificationType, React.ElementType> = {
-  receipt: Receipt,
-  photo: ImageIcon,
-  gps: MapPin,
-  signature: PencilLine,
-  biometric: Fingerprint,
-  bank_statement: Bank,
-  document: File,
-  invoice: FileText,
-  video: Video,
-  audit: Shield,
-  contract: Scroll,
-  government_doc: Buildings,
-}
-
-const TYPE_LABELS: Record<VerificationType, string> = {
-  receipt: 'Receipt',
-  photo: 'Photo Evidence',
-  document: 'Document',
-  bank_statement: 'Bank Statement',
-  signature: 'Signature',
-  gps: 'GPS Verification',
-  biometric: 'Biometric',
-  invoice: 'Invoice',
-  video: 'Video Evidence',
-  audit: 'Third-party Audit',
-  contract: 'Contract',
-  government_doc: 'Government Document',
-}
-
-const STATUS_CONFIG = {
-  pending: {
-    icon: Clock,
-    label: 'Pending Verification',
-    className: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20',
-  },
-  verified: {
-    icon: CheckCircle,
-    label: 'Verified',
-    className: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20',
-  },
-  rejected: {
-    icon: XCircle,
-    label: 'Rejected',
-    className: 'text-red-600 bg-red-50 dark:bg-red-900/20',
-  },
-}
-
-const VISIBILITY_CONFIG: Record<VerificationVisibility, { icon: React.ElementType; label: string; description: string }> = {
-  full: {
-    icon: Eye,
-    label: 'Full Access',
-    description: 'Board & Staff can see all details',
-  },
-  thumbnail: {
-    icon: Eye,
-    label: 'Thumbnail Only',
-    description: 'Donors see blurred version',
-  },
-  summary: {
-    icon: EyeSlash,
-    label: 'Summary Only',
-    description: 'Partners see indicator only',
-  },
-  hidden: {
-    icon: EyeSlash,
-    label: 'Hidden',
-    description: 'Not visible to public',
-  },
-}
+const VISIBILITY_DESCRIPTION = {
+  full: 'Board and staff see the original file.',
+  thumbnail: 'Donors see a low-resolution version.',
+  summary: 'Partners see that proof is attached, not the file.',
+  hidden: 'Not shown outside the organisation.',
+} as const
 
 interface VerificationViewerProps {
   verification: Verification | null
-  verifications?: Verification[]
+  verifications?: Array<Verification>
   onClose: () => void
   onNavigate?: (verification: Verification) => void
   className?: string
 }
 
+/** Full-screen proof viewer: the file on the left, its record on the right. */
 export function VerificationViewer({
   verification,
   verifications = [],
@@ -126,326 +45,275 @@ export function VerificationViewer({
   className,
 }: VerificationViewerProps) {
   const [zoom, setZoom] = useState(1)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  const index = verification
+    ? verifications.findIndex((v) => v.id === verification.id)
+    : -1
+  const prev = index > 0 ? verifications[index - 1] : null
+  const next =
+    index >= 0 && index < verifications.length - 1
+      ? verifications[index + 1]
+      : null
+
+  // Latest handlers, read by the key listener without re-subscribing.
+  const keys = useRef({ prev, next, onClose, onNavigate })
+  keys.current = { prev, next, onClose, onNavigate }
+  const isOpen = verification !== null
+
+  // Focus the dialog, trap Tab inside it, close on Escape, arrows navigate.
+  useEffect(() => {
+    if (!isOpen) return
+    const opener = document.activeElement as HTMLElement | null
+    closeRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      const k = keys.current
+      if (e.key === 'Escape') k.onClose()
+      else if (e.key === 'ArrowLeft' && k.prev && k.onNavigate)
+        k.onNavigate(k.prev)
+      else if (e.key === 'ArrowRight' && k.next && k.onNavigate)
+        k.onNavigate(k.next)
+      else if (e.key === 'Tab' && dialogRef.current) {
+        const items = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], iframe, video',
+        )
+        if (items.length === 0) return
+        const first = items[0]
+        const last = items[items.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = overflow
+      opener?.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => setZoom(1), [verification?.id])
 
   if (!verification) return null
 
-  const Icon = VERIFICATION_ICONS[verification.type] || File
-  const status = STATUS_CONFIG[verification.status]
-  const StatusIcon = status.icon
-  const visibility = VISIBILITY_CONFIG[verification.visibility_level || 'full']
-  const VisibilityIcon = visibility.icon
-  const trustPoints = verification.trust_points || VERIFICATION_TRUST_POINTS[verification.type] || 0
-
-  const isImage = verification.file_url?.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)
-  const isPDF = verification.file_url?.match(/\.pdf(\?|$)/i)
-  const isVideo = verification.file_url?.match(/\.(mp4|webm|mov)(\?|$)/i)
-
-  // Find current index for navigation
-  const currentIndex = verifications.findIndex((v) => v.id === verification.id)
-  const hasPrev = currentIndex > 0
-  const hasNext = currentIndex < verifications.length - 1
-
-  const handlePrev = () => {
-    if (hasPrev && onNavigate) {
-      onNavigate(verifications[currentIndex - 1])
-    }
-  }
-
-  const handleNext = () => {
-    if (hasNext && onNavigate) {
-      onNavigate(verifications[currentIndex + 1])
-    }
-  }
-
-  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.25, 3))
-  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.5))
-  const handleResetZoom = () => setZoom(1)
-
-  const handleDownload = () => {
-    if (verification.file_url) {
-      window.open(verification.file_url, '_blank')
-    }
-  }
+  const v = verification
+  const TypeIcon = PROOF_TYPE_ICON[v.type]
+  const kind = proofMediaKind(v)
+  const label = PROOF_TYPE_LABEL[v.type]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      {/* Close button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
-      >
-        <X className="h-6 w-6" />
-      </Button>
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${label}${v.description ? `: ${v.description}` : ''}`}
+      className="fixed inset-0 z-50 flex flex-col bg-foreground/97 text-background lg:flex-row"
+    >
+      {/* The file */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="flex h-14 shrink-0 items-center justify-between gap-2 px-4">
+          <p className="text-sm tabular-nums">
+            {verifications.length > 1 &&
+              `Proof ${index + 1} of ${verifications.length}`}
+          </p>
+          <div className="flex items-center gap-1">
+            {kind === 'image' && (
+              <>
+                <ViewerButton
+                  label="Zoom out"
+                  onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}
+                  disabled={zoom <= 0.5}
+                >
+                  <MagnifyingGlassMinus />
+                </ViewerButton>
+                <button
+                  type="button"
+                  onClick={() => setZoom(1)}
+                  className="h-10 min-w-14 px-2 text-sm tabular-nums hover:bg-background/15"
+                  aria-label="Reset zoom"
+                >
+                  {Math.round(zoom * 100)}%
+                </button>
+                <ViewerButton
+                  label="Zoom in"
+                  onClick={() => setZoom((z) => Math.min(z + 0.25, 3))}
+                  disabled={zoom >= 3}
+                >
+                  <MagnifyingGlassPlus />
+                </ViewerButton>
+              </>
+            )}
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Close proof viewer"
+              className="ml-2 flex size-10 items-center justify-center hover:bg-background/15 focus-visible:outline-2 focus-visible:outline-background"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+        </div>
 
-      {/* Navigation arrows */}
-      {hasPrev && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handlePrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20"
-        >
-          <CaretLeft className="h-8 w-8" />
-        </Button>
-      )}
-      {hasNext && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20"
-        >
-          <CaretRight className="h-8 w-8" />
-        </Button>
-      )}
+        <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 pb-4 sm:px-16">
+          {kind === 'image' && v.file_url ? (
+            <img
+              src={v.file_url}
+              alt={v.description ?? label}
+              className="max-h-full max-w-full object-contain transition-transform duration-150"
+              style={{ transform: `scale(${zoom})` }}
+            />
+          ) : kind === 'video' && v.file_url ? (
+            <video
+              src={v.file_url}
+              controls
+              className="max-h-full max-w-full"
+            />
+          ) : kind === 'pdf' && v.file_url ? (
+            <iframe
+              src={v.file_url}
+              className="size-full bg-background"
+              title={`${label} document`}
+            />
+          ) : (
+            <div className="flex max-w-sm flex-col items-center text-center">
+              <TypeIcon className="size-16 opacity-80" />
+              <p className="mt-4 font-semibold">{label}</p>
+              <p className="mt-1 text-sm opacity-80">
+                {v.file_url
+                  ? 'This file type cannot be previewed here. Download it to open it.'
+                  : 'This proof is a record without an attached file.'}
+              </p>
+            </div>
+          )}
 
-      <div
+          {prev && onNavigate && (
+            <ViewerButton
+              label="Previous proof"
+              onClick={() => onNavigate(prev)}
+              className="absolute top-1/2 left-2 -translate-y-1/2"
+            >
+              <CaretLeft className="size-6" />
+            </ViewerButton>
+          )}
+          {next && onNavigate && (
+            <ViewerButton
+              label="Next proof"
+              onClick={() => onNavigate(next)}
+              className="absolute top-1/2 right-2 -translate-y-1/2"
+            >
+              <CaretRight className="size-6" />
+            </ViewerButton>
+          )}
+        </div>
+      </div>
+
+      {/* The record */}
+      <aside
         className={cn(
-          'flex flex-col lg:flex-row gap-4 w-full max-w-6xl max-h-[90vh] mx-4',
-          isFullscreen && 'max-w-none h-full mx-0',
+          'max-h-[45vh] shrink-0 overflow-y-auto border-t-[3px] border-foreground bg-background p-5 text-foreground lg:max-h-none lg:w-96 lg:border-t-0 lg:border-l lg:border-l-border',
           className,
         )}
       >
-        {/* Media viewer */}
-        <div
-          className={cn(
-            'relative flex-1 bg-black/50 rounded-xl overflow-hidden',
-            'flex items-center justify-center',
-            isFullscreen ? 'rounded-none' : '',
-          )}
-        >
-          {isImage && verification.file_url ? (
-            <div
-              className="relative overflow-auto max-h-full max-w-full"
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
-            >
-              <img
-                src={verification.file_url}
-                alt={verification.type}
-                className="max-h-[70vh] object-contain"
-              />
-            </div>
-          ) : isVideo && verification.file_url ? (
-            <video
-              src={verification.file_url}
-              controls
-              className="max-h-[70vh] max-w-full"
-            />
-          ) : isPDF && verification.file_url ? (
-            <iframe
-              src={verification.file_url}
-              className="w-full h-[70vh]"
-              title="PDF viewer"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-white/70">
-              <Icon className="h-24 w-24 mb-4" weight="duotone" />
-              <p className="text-lg font-medium">{TYPE_LABELS[verification.type]}</p>
-              {verification.file_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownload}
-                  className="mt-4"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download File
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Zoom controls for images */}
-          {isImage && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-black/50 rounded-full">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={handleZoomOut}
-                className="text-white hover:bg-white/20"
-              >
-                <MagnifyingGlassMinus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetZoom}
-                className="text-white hover:bg-white/20 px-2 min-w-[60px]"
-              >
-                {Math.round(zoom * 100)}%
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={handleZoomIn}
-                className="text-white hover:bg-white/20"
-              >
-                <MagnifyingGlassPlus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="text-white hover:bg-white/20"
-              >
-                {isFullscreen ? (
-                  <ArrowsIn className="h-4 w-4" />
-                ) : (
-                  <ArrowsOut className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          )}
+        <h2 className="text-2xl">{label}</h2>
+        {v.description && (
+          <p className="mt-1 text-sm text-muted-foreground">{v.description}</p>
+        )}
+        <div className="mt-3">
+          <StatusMark status={v.status} label={PROOF_STATE_LABEL[v.status]} />
         </div>
 
-        {/* Details panel */}
-        {!isFullscreen && (
-          <Card className="w-full lg:w-80 shrink-0 p-4 overflow-y-auto max-h-[70vh]">
-            {/* Header */}
-            <div className="flex items-start gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <Icon className="h-6 w-6 text-primary" weight="duotone" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{TYPE_LABELS[verification.type]}</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                      status.className,
-                    )}
-                  >
-                    <StatusIcon className="h-3 w-3" weight="fill" />
-                    {status.label}
-                  </span>
-                </div>
-              </div>
-            </div>
+        <p className="figure mt-5 text-4xl">+{proofTrustPoints(v)}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          trust points toward the organisation's score
+        </p>
 
-            {/* Trust points */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 mb-4">
-              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                Trust Points
-              </span>
-              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                +{trustPoints}
-              </span>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-4">
-              {/* Visibility */}
-              <div className="flex items-start gap-3">
-                <VisibilityIcon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">{visibility.label}</p>
-                  <p className="text-xs text-muted-foreground">{visibility.description}</p>
-                </div>
-              </div>
-
-              {/* Executor */}
-              {verification.executor_name && (
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Executed by</p>
-                    <p className="text-sm font-medium">{verification.executor_name}</p>
-                  </div>
-                </div>
+        <dl className="mt-5 divide-y divide-border border-t border-border text-sm">
+          {v.executor_name && <Fact term="Captured by">{v.executor_name}</Fact>}
+          {(v.location_name || v.gps_latitude != null) && (
+            <Fact term="Location">
+              {v.location_name}
+              {v.gps_latitude != null && v.gps_longitude != null && (
+                <span className="block font-mono text-xs text-muted-foreground">
+                  {v.gps_latitude.toFixed(5)}, {v.gps_longitude.toFixed(5)}
+                  {v.gps_accuracy != null &&
+                    ` (±${Math.round(v.gps_accuracy)} m)`}
+                </span>
               )}
+            </Fact>
+          )}
+          <Fact term="Added">{formatDateTime(v.created_at)}</Fact>
+          {v.verified_at && v.status === 'verified' && (
+            <Fact term="Verified">{formatDate(v.verified_at)}</Fact>
+          )}
+          <Fact term="Who can see it">
+            {PROOF_VISIBILITY_LABEL[v.visibility_level]}
+            <span className="block text-xs text-muted-foreground">
+              {VISIBILITY_DESCRIPTION[v.visibility_level]}
+            </span>
+          </Fact>
+        </dl>
 
-              {/* Location */}
-              {(verification.location_name || verification.gps_latitude) && (
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
-                    {verification.location_name && (
-                      <p className="text-sm font-medium">{verification.location_name}</p>
-                    )}
-                    {verification.gps_latitude && verification.gps_longitude && (
-                      <p className="text-xs text-muted-foreground">
-                        {verification.gps_latitude.toFixed(6)}, {verification.gps_longitude.toFixed(6)}
-                        {verification.gps_accuracy && ` (±${Math.round(verification.gps_accuracy)}m)`}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              {verification.description && (
-                <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Description</p>
-                    <p className="text-sm">{verification.description}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Created date */}
-              <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Added</p>
-                  <p className="text-sm font-medium">
-                    {new Date(verification.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              {/* Verified by */}
-              {verification.verified_by && verification.verified_at && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" weight="fill" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Verified</p>
-                    <p className="text-sm font-medium">
-                      {new Date(verification.verified_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            {verification.file_url && (
-              <div className="mt-6 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownload}
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Original
-                </Button>
-              </div>
-            )}
-
-            {/* Navigation indicator */}
-            {verifications.length > 1 && (
-              <div className="mt-4 pt-4 border-t text-center">
-                <p className="text-xs text-muted-foreground">
-                  {currentIndex + 1} of {verifications.length} verifications
-                </p>
-              </div>
-            )}
-          </Card>
+        {v.file_url && (
+          <a
+            href={v.file_url}
+            target="_blank"
+            rel="noreferrer"
+            download
+            className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 border border-foreground/70 text-sm font-semibold hover:bg-muted"
+          >
+            <DownloadSimple className="size-4" />
+            Download original
+          </a>
         )}
-      </div>
+      </aside>
     </div>
+  )
+}
+
+function Fact({ term, children }: { term: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[7.5rem_1fr] gap-3 py-2.5">
+      <dt className="text-muted-foreground">{term}</dt>
+      <dd className="min-w-0 font-medium">{children}</dd>
+    </div>
+  )
+}
+
+function ViewerButton({
+  label,
+  onClick,
+  disabled,
+  className,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  disabled?: boolean
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-lg"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'text-background hover:bg-background/15 hover:text-background',
+        className,
+      )}
+    >
+      {children}
+    </Button>
   )
 }

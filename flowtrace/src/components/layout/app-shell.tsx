@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import {
-  CaretDown,
-  CaretLeft,
-  CaretRight,
-  FlowArrow,
-  SignOut,
-} from '@phosphor-icons/react'
+import { CaretDown, CaretLeft, CaretRight, SignOut } from '@phosphor-icons/react'
 import { ThemeToggle } from './theme-toggle'
 import { MobileNav, MobileNavTrigger } from './mobile-nav'
-import type {AuthUser} from '@/lib/auth';
+import { Wordmark } from './wordmark'
+import type { AuthUser } from '@/lib/auth'
 import { useAppAuth } from '@/lib/auth-context'
-import {
-  
-  DEV_MODE,
-  getUserDisplayName,
-  getUserInitials
-} from '@/lib/auth'
-import { navItems } from '@/lib/navigation'
+import { DEV_MODE, getUserDisplayName, getUserInitials } from '@/lib/auth'
+import { useOrg } from '@/lib/org-context'
+import { isNavItemActive, navItems } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -38,189 +29,198 @@ interface AppShellProps {
 function useSidebarState() {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
-    return localStorage.getItem('sidebar-collapsed') === 'true'
+    try {
+      return localStorage.getItem('sidebar-collapsed') === 'true'
+    } catch {
+      return false
+    }
   })
 
   useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(collapsed))
+    try {
+      localStorage.setItem('sidebar-collapsed', String(collapsed))
+    } catch {
+      // Storage unavailable (private mode); keep the in-memory state.
+    }
   }, [collapsed])
 
   return [collapsed, setCollapsed] as const
 }
 
+const mastheadButton =
+  'text-masthead-foreground hover:bg-masthead-foreground/12 hover:text-masthead-foreground aria-expanded:bg-masthead-foreground/12 aria-expanded:text-masthead-foreground'
+
 export function AppShell({
   children,
-  user: routeUser,
+  user,
   devMode = DEV_MODE,
 }: AppShellProps) {
   const { signOut } = useAppAuth()
-  const user = routeUser
-
-  const handleSignOut = signOut
-
+  const { organization } = useOrg()
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [collapsed, setCollapsed] = useSidebarState()
 
-  const sidebarWidth = collapsed ? 'w-16' : 'w-60'
-  const mainMargin = collapsed ? 'md:ml-16' : 'md:ml-60'
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border bg-card/80 backdrop-blur-md transition-all duration-200 md:flex',
-          sidebarWidth,
-        )}
-      >
-        {/* Logo */}
-        <div className="flex h-16 items-center gap-2 border-b border-border px-4">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-              <FlowArrow
-                className="size-5 text-primary-foreground"
-                weight="bold"
-              />
-            </div>
-            {!collapsed && (
-              <span className="font-display text-lg font-bold">FlowTrace</span>
-            )}
+      {/* Masthead: the committed ink band carrying identity and context */}
+      <header className="sticky top-0 z-40 bg-masthead text-masthead-foreground">
+        <div className="flex h-14 items-center gap-4 px-4 md:px-5">
+          <Link to="/dashboard" aria-label="FlowTrace dashboard">
+            <Wordmark />
           </Link>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4">
-          <div className="flex flex-col gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive =
-                location.pathname === item.href ||
-                (item.href !== '/dashboard' &&
-                  location.pathname.startsWith(item.href))
-
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    collapsed && 'justify-center px-0',
-                    isActive
-                      ? 'text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  )}
-                  title={collapsed ? item.label : undefined}
-                >
-                  {/* Active indicator bar */}
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
-                  )}
-                  <Icon
-                    className="size-4 shrink-0"
-                    weight={isActive ? 'fill' : 'regular'}
-                  />
-                  {!collapsed && item.label}
-                </Link>
-              )
-            })}
+          <span
+            aria-hidden="true"
+            className="hidden h-6 w-px bg-masthead-foreground/25 sm:block"
+          />
+          <p className="hidden min-w-0 truncate text-sm font-semibold sm:block">
+            {organization?.name ?? 'Your organisation'}
+          </p>
+          <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle className={mastheadButton} />
+            <UserMenu
+              user={user ?? null}
+              devMode={devMode}
+              onSignOut={() => signOut()}
+            />
+            <MobileNavTrigger
+              onClick={() => setMobileNavOpen(true)}
+              className={mastheadButton}
+            />
           </div>
-        </nav>
+        </div>
+        {devMode && (
+          <div className="border-t border-masthead-foreground/15 bg-primary px-4 py-1.5 text-xs leading-4 text-primary-foreground md:truncate md:px-5">
+            Demo: you're viewing Demo NGO Kenya. Changes reset when you
+            reload.{' '}
+            <Link to="/" className="font-semibold underline">
+              Back to the overview
+            </Link>
+          </div>
+        )}
+      </header>
 
-        {/* Bottom section */}
-        <div className="border-t border-border p-2">
-          <div className={cn('flex items-center', collapsed ? 'flex-col gap-2' : 'gap-2')}>
-            <ThemeToggle collapsed={collapsed} />
+      <div className="flex">
+        {/* Desktop navigation rail */}
+        <aside
+          className={cn(
+            'sticky hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 md:flex',
+            devMode
+              ? 'top-[5.25rem] h-[calc(100vh-5.25rem)]'
+              : 'top-14 h-[calc(100vh-3.5rem)]',
+            collapsed ? 'w-16' : 'w-56',
+          )}
+        >
+          <nav aria-label="Main" className="flex-1 overflow-y-auto py-3">
+            <ul className="flex flex-col">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const active = isNavItemActive(item.href, location.pathname)
+                return (
+                  <li key={item.href}>
+                    <Link
+                      to={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      title={collapsed ? item.label : undefined}
+                      className={cn(
+                        'mx-2 flex h-10 items-center gap-3 px-3 text-sm font-medium transition-colors',
+                        collapsed && 'justify-center px-0',
+                        active
+                          ? 'bg-foreground text-background'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent',
+                      )}
+                    >
+                      <Icon
+                        className="size-[1.125rem] shrink-0"
+                        weight={active ? 'bold' : 'regular'}
+                      />
+                      {!collapsed && item.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+          <div className="border-t border-sidebar-border p-2">
             <Button
               variant="ghost"
-              size="icon"
+              size={collapsed ? 'icon' : 'sm'}
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              className={cn(!collapsed && 'w-full justify-start')}
             >
               {collapsed ? (
                 <CaretRight className="size-4" />
               ) : (
-                <CaretLeft className="size-4" />
+                <>
+                  <CaretLeft className="size-4" />
+                  Collapse
+                </>
               )}
             </Button>
           </div>
+        </aside>
 
-          {/* User menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button
-                  className={cn(
-                    'mt-2 flex w-full items-center gap-2 rounded-lg p-2 text-sm transition-colors hover:bg-muted',
-                    collapsed && 'justify-center',
-                  )}
-                >
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                    {getUserInitials(user ?? null)}
-                  </div>
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1 truncate text-left text-sm font-medium">
-                        {getUserDisplayName(user ?? null)}
-                      </span>
-                      <CaretDown className="size-3 shrink-0 text-muted-foreground" />
-                    </>
-                  )}
-                </button>
-              }
-            />
-            <DropdownMenuContent side="top" align="start" sideOffset={8}>
-              <div className="px-2 py-2">
-                <p className="text-sm font-medium">
-                  {getUserDisplayName(user ?? null)}
-                </p>
-                {user?.email && (
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
-                )}
-                {devMode && (
-                  <p className="text-xs text-muted-foreground">Dev Mode</p>
-                )}
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleSignOut()}
-                className="text-destructive focus:text-destructive"
-              >
-                <SignOut className="size-4" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </aside>
+        <MobileNav
+          isOpen={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+        />
 
-      {/* Mobile Header */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-md md:hidden">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <FlowArrow
-              className="size-5 text-primary-foreground"
-              weight="bold"
-            />
-          </div>
-          <span className="font-display text-lg font-bold">FlowTrace</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <MobileNavTrigger onClick={() => setMobileNavOpen(true)} />
-        </div>
-      </header>
-
-      {/* Mobile Navigation Drawer */}
-      <MobileNav
-        isOpen={mobileNavOpen}
-        onClose={() => setMobileNavOpen(false)}
-      />
-
-      {/* Main Content */}
-      <main className={cn('transition-all duration-200', mainMargin)}>
-        <div className="page-enter">{children}</div>
-      </main>
+        <main className="min-w-0 flex-1">
+          <div className="page-enter">{children}</div>
+        </main>
+      </div>
     </div>
+  )
+}
+
+function UserMenu({
+  user,
+  devMode,
+  onSignOut,
+}: {
+  user: AuthUser | null
+  devMode: boolean
+  onSignOut: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            className={cn(
+              'flex h-9 items-center gap-2 px-2 text-sm transition-colors',
+              mastheadButton,
+            )}
+            aria-label="Account menu"
+          >
+            <span className="flex size-7 items-center justify-center bg-masthead-foreground text-xs font-bold text-masthead">
+              {getUserInitials(user)}
+            </span>
+            <span className="hidden max-w-36 truncate font-medium lg:inline">
+              {getUserDisplayName(user)}
+            </span>
+            <CaretDown className="size-3 shrink-0 opacity-70" />
+          </button>
+        }
+      />
+      <DropdownMenuContent align="end" sideOffset={8}>
+        <div className="px-2 py-2">
+          <p className="text-sm font-semibold">{getUserDisplayName(user)}</p>
+          {user?.email && (
+            <p className="text-xs text-muted-foreground">{user.email}</p>
+          )}
+          {devMode && (
+            <p className="mt-1 text-xs text-muted-foreground">Demo account</p>
+          )}
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onSignOut}>
+          <SignOut className="size-4" />
+          {devMode ? 'Leave the demo' : 'Sign out'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

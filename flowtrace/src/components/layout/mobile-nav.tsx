@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { List, X } from '@phosphor-icons/react'
-import { navItems } from '@/lib/navigation'
+import { isNavItemActive, navItems } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -33,7 +33,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
       {/* Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-opacity duration-300 md:hidden',
+          'fixed inset-0 z-40 bg-masthead/40 transition-opacity duration-300 md:hidden',
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={onClose}
@@ -43,13 +43,13 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
       {/* Drawer */}
       <nav
         className={cn(
-          'fixed right-0 top-0 z-50 h-full w-72 bg-card shadow-xl transition-transform duration-300 ease-in-out md:hidden',
+          'fixed top-0 right-0 z-50 h-full w-72 border-l-[3px] border-foreground bg-background shadow-[-8px_0_24px_-12px_rgb(0_0_0/0.35)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden',
           isOpen ? 'translate-x-0' : 'translate-x-full',
         )}
         aria-label="Mobile navigation"
       >
         <div className="flex h-14 items-center justify-between border-b border-border px-4">
-          <span className="font-display text-lg font-semibold">Menu</span>
+          <span className="section-label">Menu</span>
           <Button
             variant="ghost"
             size="icon"
@@ -60,32 +60,26 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           </Button>
         </div>
 
-        <div className="flex flex-col gap-1 p-4">
+        <div className="flex flex-col py-2">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive =
-              location.pathname === item.href ||
-              (item.href !== '/dashboard' &&
-                location.pathname.startsWith(item.href))
+            const isActive = isNavItemActive(item.href, location.pathname)
 
             return (
               <Link
                 key={item.href}
                 to={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'relative flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                  'mx-2 flex h-12 items-center gap-3 px-3 text-base font-medium transition-colors',
                   isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    ? 'bg-foreground text-background'
+                    : 'text-foreground hover:bg-muted',
                 )}
               >
-                {/* Active indicator bar */}
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
-                )}
                 <Icon
                   className="size-5"
-                  weight={isActive ? 'fill' : 'regular'}
+                  weight={isActive ? 'bold' : 'regular'}
                 />
                 {item.label}
               </Link>
@@ -97,13 +91,19 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   )
 }
 
-export function MobileNavTrigger({ onClick }: { onClick: () => void }) {
+export function MobileNavTrigger({
+  onClick,
+  className,
+}: {
+  onClick: () => void
+  className?: string
+}) {
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={onClick}
-      className="md:hidden"
+      className={cn('md:hidden', className)}
       aria-label="Open menu"
     >
       <List className="size-5" />

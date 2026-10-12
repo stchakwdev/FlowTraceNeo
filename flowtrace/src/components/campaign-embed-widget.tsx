@@ -1,7 +1,12 @@
 import { useEffect } from 'react'
-import { CircleNotch, Heart, ArrowSquareOut } from '@phosphor-icons/react'
-import { useCampaign, useCampaignStats } from '@/lib/queries'
-import { CampaignProgressBar } from './campaign-progress-bar'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowSquareOut } from '@phosphor-icons/react'
+import { campaignTiming } from './campaign-status-badge'
+import { FlowTraceMark } from '@/components/layout/wordmark'
+import { CoverageBar } from '@/components/report'
+import { buttonVariants } from '@/components/ui/button'
+import { getCampaignReport } from '@/lib/data'
+import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 interface CampaignEmbedWidgetProps {
@@ -12,6 +17,11 @@ interface CampaignEmbedWidgetProps {
   compact?: boolean
 }
 
+/**
+ * A campaign's coverage for embedding on another site: raised against
+ * target, the share spent with proof, and a link to give. Reads public data
+ * only, so it works without a signed-in organisation.
+ */
 export function CampaignEmbedWidget({
   campaignId,
   theme = 'light',
@@ -19,161 +29,171 @@ export function CampaignEmbedWidget({
   showDonors = true,
   compact = false,
 }: CampaignEmbedWidgetProps) {
-  const { data: campaign, isLoading, error } = useCampaign(campaignId)
-  const { data: stats } = useCampaignStats(campaignId)
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['campaign-report', campaignId, 'embed'],
+    queryFn: () => getCampaignReport(campaignId),
+    enabled: !!campaignId,
+    staleTime: 60 * 1000,
+  })
 
-  // Apply theme to document for embed
   useEffect(() => {
     document.documentElement.classList.remove('light', 'dark')
     document.documentElement.classList.add(theme)
   }, [theme])
 
-  // Send height to parent for iframe resizing
+  // Tell the host page our height so it can size the iframe.
   useEffect(() => {
-    const sendHeight = () => {
-      const height = document.body.scrollHeight
-      window.parent.postMessage({ type: 'flowtrace-embed-height', height }, '*')
-    }
-
-    sendHeight()
-    const observer = new ResizeObserver(sendHeight)
+    const send = () =>
+      window.parent.postMessage(
+        { type: 'flowtrace-embed-height', height: document.body.scrollHeight },
+        '*',
+      )
+    send()
+    const observer = new ResizeObserver(send)
     observer.observe(document.body)
-
     return () => observer.disconnect()
-  }, [campaign])
+  }, [data])
+
+  const frame = 'rule-heavy border-x border-b border-border bg-card text-card-foreground'
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <CircleNotch className="h-6 w-6 animate-spin text-primary" />
+      <div className={cn(frame, 'p-4 text-sm text-muted-foreground')} role="status">
+        Loading campaign
       </div>
     )
   }
 
-  if (error || !campaign) {
+  if (error || !data) {
     return (
-      <div className="p-4 text-center text-muted-foreground text-sm">
-        Campaign not available
+      <div className={cn(frame, 'p-4 text-sm')} role="alert">
+        <p className="font-semibold">This campaign is not available</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          It may have closed, or the embed code points to a campaign that was
+          removed.
+        </p>
       </div>
     )
   }
 
-  const donateUrl = campaign.public_slug
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/donate/${campaign.public_slug}`
-    : null
+  const { campaign, organization, evidenced_amount: evidenced } = data
+  const pct =
+    campaign.target_amount > 0
+      ? Math.round((campaign.current_amount / campaign.target_amount) * 100)
+      : 0
+  const timing = campaignTiming(campaign)
+  const open = campaign.status === 'active' && !timing.ended
+  const donateUrl =
+    campaign.public_slug && campaign.is_public
+      ? `${typeof window !== 'undefined' ? window.location.origin : ''}/donate/${campaign.public_slug}`
+      : null
+
+  const donateLink = donateUrl && open && (
+    <a
+      href={donateUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={buttonVariants({
+        size: compact ? 'default' : 'lg',
+        className: cn('h-10', !compact && 'w-full'),
+      })}
+    >
+      Give
+      <ArrowSquareOut />
+    </a>
+  )
 
   if (compact) {
     return (
-      <div
-        className={cn(
-          'p-4 rounded-lg border bg-card',
-          theme === 'dark' ? 'dark' : '',
-        )}
-      >
+      <div className={cn(frame, 'p-3')}>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-            <Heart className="h-5 w-5 text-primary" weight="fill" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm truncate">{campaign.name}</h3>
-            <p className="text-xs text-muted-foreground">
-              {Math.round((campaign.current_amount / campaign.target_amount) * 100)}% funded
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{campaign.name}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {formatMoney(campaign.current_amount, campaign.currency)} · {pct}% of
+              target
             </p>
           </div>
-          {donateUrl && (
-            <a
-              href={donateUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-primary font-medium hover:underline"
-            >
-              Donate
-            </a>
-          )}
+          {donateLink}
         </div>
+        <CoverageBar
+          total={Math.max(campaign.target_amount, campaign.current_amount)}
+          filled={campaign.current_amount}
+          evidenced={evidenced ?? undefined}
+          className="mt-2 h-2"
+          label={`${pct}% of target raised`}
+        />
       </div>
     )
   }
 
   return (
-    <div
-      className={cn(
-        'p-6 rounded-lg border bg-card',
-        theme === 'dark' ? 'dark' : '',
+    <div className={cn(frame, 'p-4')}>
+      <p className="text-xs text-muted-foreground">{organization.name}</p>
+      <h1 className="mt-0.5 text-2xl leading-tight">{campaign.name}</h1>
+      {campaign.short_description && (
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {campaign.short_description}
+        </p>
       )}
-    >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
-          <Heart className="h-6 w-6 text-primary" weight="fill" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-lg leading-tight">{campaign.name}</h3>
-          {campaign.short_description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {campaign.short_description}
+
+      {showAmount && (
+        <div className="mt-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="figure text-3xl">
+              {formatMoney(campaign.current_amount, campaign.currency)}
+            </span>
+            <span className="figure text-xl">{pct}%</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+            raised of {formatMoney(campaign.target_amount, campaign.currency)}
+          </p>
+          <CoverageBar
+            total={Math.max(campaign.target_amount, campaign.current_amount)}
+            filled={campaign.current_amount}
+            evidenced={evidenced ?? undefined}
+            className="mt-2 h-3"
+            label={`${pct}% of target raised`}
+          />
+          {evidenced !== null && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span aria-hidden="true" className="size-2.5 bg-primary" />
+              <span className="font-semibold text-foreground tabular-nums">
+                {formatMoney(evidenced, campaign.currency)}
+              </span>
+              spent with verified proof
             </p>
           )}
         </div>
-      </div>
-
-      {/* Progress */}
-      {showAmount && (
-        <div className="mb-4">
-          <CampaignProgressBar
-            current={campaign.current_amount}
-            target={campaign.target_amount}
-            currency={campaign.currency}
-            size="sm"
-          />
-        </div>
       )}
 
-      {/* Stats */}
       {showDonors && (
-        <div className="grid grid-cols-3 gap-2 text-center mb-4 py-3 bg-muted/50 rounded-lg">
-          <div>
-            <p className="text-lg font-bold text-primary">{stats?.donation_count || 0}</p>
-            <p className="text-xs text-muted-foreground">Donations</p>
+        <dl className="mt-4 grid grid-cols-2 border-y border-border text-sm">
+          <div className="py-2 pr-3">
+            <dt className="text-xs text-muted-foreground">Trust Score</dt>
+            <dd className="figure text-xl">
+              {organization.trust_score}
+              <span className="text-sm text-muted-foreground">/100</span>
+            </dd>
           </div>
-          <div>
-            <p className="text-lg font-bold text-primary">{stats?.unique_donors || 0}</p>
-            <p className="text-xs text-muted-foreground">Donors</p>
+          <div className="border-l border-border py-2 pl-3">
+            <dt className="text-xs text-muted-foreground">Timing</dt>
+            <dd className="text-sm font-semibold">{timing.label.split(',')[0]}</dd>
           </div>
-          <div>
-            <p className="text-lg font-bold text-primary">
-              {stats?.days_remaining ?? '∞'}
-            </p>
-            <p className="text-xs text-muted-foreground">Days Left</p>
-          </div>
-        </div>
+        </dl>
       )}
 
-      {/* Donate Button */}
-      {donateUrl && (
-        <a
-          href={donateUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
-        >
-          <Heart className="h-4 w-4" weight="fill" />
-          Donate Now
-          <ArrowSquareOut className="h-3.5 w-3.5 ml-1" />
-        </a>
-      )}
+      {donateLink && <div className="mt-4">{donateLink}</div>}
 
-      {/* Footer */}
-      <div className="mt-4 pt-3 border-t text-center">
-        <a
-          href="https://flowtrace.app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Powered by FlowTrace
-        </a>
-      </div>
+      <a
+        href={typeof window !== 'undefined' ? window.location.origin : '/'}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+      >
+        <FlowTraceMark className="text-foreground" />
+        Figures from FlowTrace
+      </a>
     </div>
   )
 }
