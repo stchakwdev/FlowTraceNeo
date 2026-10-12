@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignOutRouteImport } from './routes/sign-out'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DonateSlugRouteImport } from './routes/donate/$slug'
@@ -21,12 +22,18 @@ import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedCampaignsIndexRouteImport } from './routes/_authenticated/campaigns/index'
 import { Route as EmbedCampaignIdRouteImport } from './routes/embed/campaign.$id'
 import { Route as BadgeTrustOrgIdRouteImport } from './routes/badge/trust.$orgId'
+import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions/new'
 import { Route as AuthenticatedTransactionsIdRouteImport } from './routes/_authenticated/transactions/$id'
 import { Route as AuthenticatedSettingsEmbedRouteImport } from './routes/_authenticated/settings/embed'
 import { Route as AuthenticatedSettingsAccessGroupsRouteImport } from './routes/_authenticated/settings/access-groups'
 import { Route as AuthenticatedCampaignsIdRouteImport } from './routes/_authenticated/campaigns/$id'
 
+const SignOutRoute = SignOutRouteImport.update({
+  id: '/sign-out',
+  path: '/sign-out',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -89,6 +96,11 @@ const BadgeTrustOrgIdRoute = BadgeTrustOrgIdRouteImport.update({
   path: '/badge/trust/$orgId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
+  id: '/api/auth/callback',
+  path: '/api/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTransactionsNewRoute =
   AuthenticatedTransactionsNewRouteImport.update({
     id: '/transactions/new',
@@ -122,6 +134,7 @@ const AuthenticatedCampaignsIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sign-out': typeof SignOutRoute
   '/chains': typeof AuthenticatedChainsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
@@ -132,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
   '/campaigns': typeof AuthenticatedCampaignsIndexRoute
@@ -140,6 +154,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sign-out': typeof SignOutRoute
   '/chains': typeof AuthenticatedChainsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
@@ -150,6 +165,7 @@ export interface FileRoutesByTo {
   '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
   '/campaigns': typeof AuthenticatedCampaignsIndexRoute
@@ -160,6 +176,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/sign-out': typeof SignOutRoute
   '/_authenticated/chains': typeof AuthenticatedChainsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/flows': typeof AuthenticatedFlowsRoute
@@ -170,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/_authenticated/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
   '/_authenticated/campaigns/': typeof AuthenticatedCampaignsIndexRoute
@@ -180,6 +198,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/sign-out'
     | '/chains'
     | '/dashboard'
     | '/flows'
@@ -190,6 +209,7 @@ export interface FileRouteTypes {
     | '/settings/embed'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/api/auth/callback'
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
     | '/campaigns'
@@ -198,6 +218,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/sign-out'
     | '/chains'
     | '/dashboard'
     | '/flows'
@@ -208,6 +229,7 @@ export interface FileRouteTypes {
     | '/settings/embed'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/api/auth/callback'
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
     | '/campaigns'
@@ -217,6 +239,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/sign-out'
     | '/_authenticated/chains'
     | '/_authenticated/dashboard'
     | '/_authenticated/flows'
@@ -227,6 +250,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/embed'
     | '/_authenticated/transactions/$id'
     | '/_authenticated/transactions/new'
+    | '/api/auth/callback'
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
     | '/_authenticated/campaigns/'
@@ -237,13 +261,22 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  SignOutRoute: typeof SignOutRoute
   DonateSlugRoute: typeof DonateSlugRoute
+  ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
   BadgeTrustOrgIdRoute: typeof BadgeTrustOrgIdRoute
   EmbedCampaignIdRoute: typeof EmbedCampaignIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sign-out': {
+      id: '/sign-out'
+      path: '/sign-out'
+      fullPath: '/sign-out'
+      preLoaderRoute: typeof SignOutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -328,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BadgeTrustOrgIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/callback': {
+      id: '/api/auth/callback'
+      path: '/api/auth/callback'
+      fullPath: '/api/auth/callback'
+      preLoaderRoute: typeof ApiAuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/transactions/new': {
       id: '/_authenticated/transactions/new'
       path: '/transactions/new'
@@ -404,7 +444,9 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  SignOutRoute: SignOutRoute,
   DonateSlugRoute: DonateSlugRoute,
+  ApiAuthCallbackRoute: ApiAuthCallbackRoute,
   BadgeTrustOrgIdRoute: BadgeTrustOrgIdRoute,
   EmbedCampaignIdRoute: EmbedCampaignIdRoute,
 }
@@ -413,10 +455,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

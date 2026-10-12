@@ -49,38 +49,38 @@ const nodeConfig: Record<
 > = {
   donor: {
     icon: Handshake,
-    gradient: 'from-blue-500/20 to-blue-600/10',
-    glow: 'shadow-blue-500/20',
+    gradient: 'from-primary/20 to-primary/10',
+    glow: 'shadow-primary/20',
     label: 'Donor',
   },
   account: {
     icon: Wallet,
-    gradient: 'from-emerald-500/20 to-emerald-600/10',
-    glow: 'shadow-emerald-500/20',
+    gradient: 'from-success/20 to-success/10',
+    glow: 'shadow-success/20',
     label: 'Account',
   },
   department: {
     icon: Buildings,
-    gradient: 'from-violet-500/20 to-violet-600/10',
-    glow: 'shadow-violet-500/20',
+    gradient: 'from-chart-4/20 to-chart-4/10',
+    glow: 'shadow-chart-4/20',
     label: 'Department',
   },
   vendor: {
     icon: Storefront,
-    gradient: 'from-amber-500/20 to-amber-600/10',
-    glow: 'shadow-amber-500/20',
+    gradient: 'from-accent/20 to-accent/10',
+    glow: 'shadow-accent/20',
     label: 'Vendor',
   },
   beneficiary: {
     icon: Heart,
-    gradient: 'from-rose-500/20 to-rose-600/10',
-    glow: 'shadow-rose-500/20',
+    gradient: 'from-chart-3/20 to-chart-3/10',
+    glow: 'shadow-chart-3/20',
     label: 'Beneficiary',
   },
   project: {
     icon: Bank,
-    gradient: 'from-cyan-500/20 to-cyan-600/10',
-    glow: 'shadow-cyan-500/20',
+    gradient: 'from-chart-5/20 to-chart-5/10',
+    glow: 'shadow-chart-5/20',
     label: 'Project',
   },
 }
@@ -163,7 +163,7 @@ function AnimatedEdge({
         d={pathD}
         fill="none"
         className={`transition-all duration-300 ${
-          isHighlighted ? 'stroke-cyan-400/40' : 'stroke-transparent'
+          isHighlighted ? 'stroke-primary/40' : 'stroke-transparent'
         }`}
         strokeWidth={isHighlighted ? 8 : 0}
         strokeLinecap="round"
@@ -176,21 +176,21 @@ function AnimatedEdge({
         fill="none"
         className={`transition-all duration-300 ${
           isHighlighted
-            ? 'stroke-cyan-400'
-            : 'stroke-slate-600/60 dark:stroke-slate-500/40'
+            ? 'stroke-primary'
+            : 'stroke-muted-foreground/40'
         }`}
         strokeWidth={isHighlighted ? 2.5 : 1.5}
         strokeLinecap="round"
       />
 
       {/* Animated flow particles */}
-      <circle r={isHighlighted ? 4 : 3} className={isHighlighted ? 'fill-cyan-400' : 'fill-slate-500/60'}>
+      <circle r={isHighlighted ? 4 : 3} className={isHighlighted ? 'fill-primary' : 'fill-muted-foreground/60'}>
         <animateMotion dur="2s" repeatCount="indefinite" path={pathD} />
       </circle>
-      <circle r={isHighlighted ? 3 : 2} className={isHighlighted ? 'fill-cyan-300' : 'fill-slate-400/40'}>
+      <circle r={isHighlighted ? 3 : 2} className={isHighlighted ? 'fill-primary/70' : 'fill-muted-foreground/40'}>
         <animateMotion dur="2s" repeatCount="indefinite" path={pathD} begin="0.7s" />
       </circle>
-      <circle r={isHighlighted ? 2 : 1.5} className={isHighlighted ? 'fill-cyan-200' : 'fill-slate-400/30'}>
+      <circle r={isHighlighted ? 2 : 1.5} className={isHighlighted ? 'fill-primary/50' : 'fill-muted-foreground/30'}>
         <animateMotion dur="2s" repeatCount="indefinite" path={pathD} begin="1.4s" />
       </circle>
 
@@ -203,13 +203,13 @@ function AnimatedEdge({
             width={80}
             height={24}
             rx={12}
-            className="fill-slate-900/90 dark:fill-slate-800/90"
+            className="fill-foreground/90"
           />
           <text
             x={midX}
             y={(fromY + toY) / 2 + 4}
             textAnchor="middle"
-            className="fill-cyan-400 text-xs font-medium"
+            className="fill-primary-foreground text-xs font-medium"
           >
             {formatCurrency(amount)}
           </text>
@@ -246,7 +246,7 @@ function GlassNode({
           width={208}
           height={72}
           rx={18}
-          className="fill-cyan-500/20 animate-pulse"
+          className="fill-primary/20 animate-pulse"
           filter="url(#glow)"
         />
       )}
@@ -259,8 +259,8 @@ function GlassNode({
             transition-all duration-300 ease-out
             ${
               isSelected
-                ? 'border-cyan-500/50 bg-slate-800/80 shadow-lg shadow-cyan-500/20 scale-105'
-                : 'border-slate-700/50 bg-slate-900/60 hover:border-slate-600/60 hover:bg-slate-800/70 hover:scale-[1.02]'
+                ? 'border-primary/50 bg-card shadow-lg shadow-primary/20 scale-105'
+                : 'border-border bg-card/80 hover:border-primary/30 hover:bg-card hover:scale-[1.02]'
             }
           `}
         >
@@ -276,7 +276,7 @@ function GlassNode({
             >
               <Icon
                 className={`h-5 w-5 ${
-                  isSelected ? 'text-cyan-400' : 'text-slate-300'
+                  isSelected ? 'text-primary' : 'text-muted-foreground'
                 } transition-colors`}
                 weight="duotone"
               />
@@ -287,7 +287,7 @@ function GlassNode({
               <div className="flex items-center gap-2">
                 <p
                   className={`truncate text-sm font-semibold ${
-                    isSelected ? 'text-white' : 'text-slate-200'
+                    isSelected ? 'text-foreground' : 'text-foreground'
                   } transition-colors`}
                 >
                   {node.name}
@@ -301,7 +301,7 @@ function GlassNode({
                   />
                 )}
               </div>
-              <p className="text-xs text-slate-500">{config.label}</p>
+              <p className="text-xs text-muted-foreground">{config.label}</p>
             </div>
           </div>
         </div>
@@ -366,29 +366,25 @@ function FlowVisualization() {
   const handleResetZoom = () => setZoom(1)
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
-            <FlowArrow className="h-6 w-6 text-white" weight="bold" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Money Flow</h1>
-            <p className="text-muted-foreground">
-              Visualize how funds move through your organization
-            </p>
-          </div>
+        <div>
+          <p className="section-label">VISUALIZATION</p>
+          <h1 className="mt-1 font-display text-2xl font-bold">Money Flow</h1>
+          <p className="text-sm text-muted-foreground">
+            Visualize how funds move through your organization
+          </p>
         </div>
-        <div className="flex gap-2 rounded-xl border border-border bg-card/50 backdrop-blur-sm p-1">
+        <div className="flex gap-1 rounded-lg border border-border p-0.5">
           {['week', 'month', 'quarter', 'year'].map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 timeRange === range
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -404,10 +400,10 @@ function FlowVisualization() {
             {[...Array(4)].map((_, i) => (
               <div key={i} className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-5">
                 <div className="flex items-center justify-between">
-                  <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-                  <div className="h-10 w-10 animate-pulse rounded-xl bg-muted" />
+                  <div className="h-4 w-20 skeleton-shimmer rounded" />
+                  <div className="h-10 w-10 skeleton-shimmer rounded-lg" />
                 </div>
-                <div className="mt-3 h-8 w-28 animate-pulse rounded bg-muted" />
+                <div className="mt-3 h-8 w-28 skeleton-shimmer rounded" />
               </div>
             ))}
           </>
@@ -452,12 +448,12 @@ function FlowVisualization() {
           return (
             <div
               key={type}
-              className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-900/40 px-3 py-1.5 backdrop-blur-sm"
+              className="flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1.5"
             >
               <div className={`flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br ${config.gradient}`}>
-                <Icon className="h-3 w-3 text-slate-300" weight="duotone" />
+                <Icon className="h-3 w-3 text-muted-foreground" weight="duotone" />
               </div>
-              <span className="text-xs font-medium text-slate-400">{config.label}</span>
+              <span className="text-xs font-medium text-muted-foreground">{config.label}</span>
             </div>
           )
         })}
@@ -465,52 +461,52 @@ function FlowVisualization() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Flow Diagram */}
-        <div className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 lg:col-span-2 overflow-hidden">
+        <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2 overflow-hidden">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-200">Flow Diagram</h2>
-            <div className="flex gap-1 rounded-xl border border-slate-700/50 bg-slate-800/50 p-1">
+            <h2 className="font-display text-lg font-semibold">Flow Diagram</h2>
+            <div className="flex gap-1 rounded-lg border border-border p-0.5">
               <button
                 onClick={handleZoomOut}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700/50 hover:text-slate-200"
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <MagnifyingGlassMinus className="h-4 w-4" />
               </button>
               <button
                 onClick={handleZoomIn}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700/50 hover:text-slate-200"
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <MagnifyingGlassPlus className="h-4 w-4" />
               </button>
               <button
                 onClick={handleResetZoom}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700/50 hover:text-slate-200"
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <ArrowsOut className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          <div className="overflow-auto rounded-xl bg-slate-950/50 ring-1 ring-slate-800/50">
+          <div className="overflow-auto rounded-lg bg-muted/30 ring-1 ring-border">
             {isLoading ? (
               <div className="flex h-[500px] items-center justify-center">
                 <div className="text-center">
-                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-cyan-500/30 border-t-cyan-500" />
-                  <p className="mt-4 font-medium text-slate-400">Loading flow data...</p>
+                  <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
+                  <p className="mt-4 font-medium text-muted-foreground">Loading flow data...</p>
                 </div>
               </div>
             ) : positionedNodes.length === 0 ? (
               <div className="flex h-[500px] items-center justify-center">
                 <div className="text-center">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-800/50 ring-1 ring-slate-700/50">
-                    <FlowArrow className="h-10 w-10 text-slate-500" weight="duotone" />
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-lg bg-muted/30 ring-1 ring-border">
+                    <FlowArrow className="h-10 w-10 text-muted-foreground" weight="duotone" />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-slate-300">No flow nodes found</h3>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">No flow nodes found</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Add transactions to start visualizing your flows
                   </p>
                   <Link
                     to="/transactions/new"
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-cyan-500/40"
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     <Plus className="h-4 w-4" />
                     Add Transaction
@@ -589,7 +585,7 @@ function FlowVisualization() {
               </svg>
             )}
           </div>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             Click on a node to see details. Scroll to pan the diagram.
           </p>
         </div>
@@ -598,7 +594,7 @@ function FlowVisualization() {
         <div className="space-y-4">
           {selectedNodeData ? (
             <>
-              <div className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-slate-900 to-slate-950 p-6">
+              <div className="rounded-lg border border-border bg-card p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div
@@ -608,54 +604,54 @@ function FlowVisualization() {
                     >
                       {(() => {
                         const Icon = nodeConfig[selectedNodeData.node.type]?.icon || Bank
-                        return <Icon className="h-6 w-6 text-slate-200" weight="duotone" />
+                        return <Icon className="h-6 w-6 text-foreground" weight="duotone" />
                       })()}
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-100">
+                      <h2 className="text-lg font-semibold text-foreground">
                         {selectedNodeData.node.name}
                       </h2>
-                      <span className="text-sm text-slate-500">
+                      <span className="text-sm text-muted-foreground">
                         {nodeConfig[selectedNodeData.node.type]?.label || 'Node'}
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedNode(null)}
-                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
+                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <ArrowsIn className="h-4 w-4" />
                   </button>
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
+                  <div className="rounded-lg bg-success/10 p-4 ring-1 ring-success/20">
                     <div className="flex items-center gap-2">
-                      <TrendUp className="h-4 w-4 text-emerald-400" weight="bold" />
-                      <p className="text-xs font-medium text-emerald-400">Inflows</p>
+                      <TrendUp className="h-4 w-4 text-success" weight="bold" />
+                      <p className="text-xs font-medium text-success">Inflows</p>
                     </div>
-                    <p className="mt-2 text-xl font-bold text-emerald-400">
+                    <p className="mt-2 text-xl font-bold text-success">
                       {formatCurrency(selectedNodeData.totalIn)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
+                  <div className="rounded-lg bg-destructive/10 p-4 ring-1 ring-destructive/20">
                     <div className="flex items-center gap-2">
-                      <TrendDown className="h-4 w-4 text-red-400" weight="bold" />
-                      <p className="text-xs font-medium text-red-400">Outflows</p>
+                      <TrendDown className="h-4 w-4 text-destructive" weight="bold" />
+                      <p className="text-xs font-medium text-destructive">Outflows</p>
                     </div>
-                    <p className="mt-2 text-xl font-bold text-red-400">
+                    <p className="mt-2 text-xl font-bold text-destructive">
                       {formatCurrency(selectedNodeData.totalOut)}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl bg-slate-800/50 p-4 ring-1 ring-slate-700/50">
-                  <p className="text-xs font-medium text-slate-500">Net Balance</p>
+                <div className="mt-4 rounded-lg bg-muted/30 p-4 ring-1 ring-border">
+                  <p className="text-xs font-medium text-muted-foreground">Net Balance</p>
                   <p
                     className={`mt-1 text-2xl font-bold ${
                       selectedNodeData.totalIn - selectedNodeData.totalOut >= 0
-                        ? 'text-emerald-400'
-                        : 'text-red-400'
+                        ? 'text-success'
+                        : 'text-destructive'
                     }`}
                   >
                     {formatCurrency(selectedNodeData.totalIn - selectedNodeData.totalOut)}
@@ -676,8 +672,8 @@ function FlowVisualization() {
               </div>
 
               {selectedNodeData.inflows.length > 0 && (
-                <div className="rounded-2xl border border-slate-800/60 bg-slate-900/50 p-4">
-                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-emerald-400">
+                <div className="rounded-lg border border-border bg-card/50 p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-success">
                     <TrendUp className="h-4 w-4" weight="bold" />
                     Inflows ({selectedNodeData.inflows.length})
                   </h3>
@@ -687,10 +683,10 @@ function FlowVisualization() {
                       return (
                         <li
                           key={flow.id}
-                          className="flex items-center justify-between rounded-xl bg-slate-800/50 px-4 py-3 text-sm ring-1 ring-slate-700/30"
+                          className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3 text-sm ring-1 ring-border"
                         >
-                          <span className="truncate text-slate-300">{fromNode?.name ?? 'Unknown'}</span>
-                          <span className="shrink-0 font-semibold text-emerald-400">
+                          <span className="truncate text-foreground">{fromNode?.name ?? 'Unknown'}</span>
+                          <span className="shrink-0 font-semibold text-success">
                             {formatCurrency(flow.amount)}
                           </span>
                         </li>
@@ -701,8 +697,8 @@ function FlowVisualization() {
               )}
 
               {selectedNodeData.outflows.length > 0 && (
-                <div className="rounded-2xl border border-slate-800/60 bg-slate-900/50 p-4">
-                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-red-400">
+                <div className="rounded-lg border border-border bg-card/50 p-4">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold text-destructive">
                     <TrendDown className="h-4 w-4" weight="bold" />
                     Outflows ({selectedNodeData.outflows.length})
                   </h3>
@@ -712,10 +708,10 @@ function FlowVisualization() {
                       return (
                         <li
                           key={flow.id}
-                          className="flex items-center justify-between rounded-xl bg-slate-800/50 px-4 py-3 text-sm ring-1 ring-slate-700/30"
+                          className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3 text-sm ring-1 ring-border"
                         >
-                          <span className="truncate text-slate-300">{toNode?.name ?? 'Unknown'}</span>
-                          <span className="shrink-0 font-semibold text-red-400">
+                          <span className="truncate text-foreground">{toNode?.name ?? 'Unknown'}</span>
+                          <span className="shrink-0 font-semibold text-destructive">
                             {formatCurrency(flow.amount)}
                           </span>
                         </li>
@@ -726,12 +722,12 @@ function FlowVisualization() {
               )}
             </>
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-700/50 bg-slate-900/30 p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800/50 ring-1 ring-slate-700/50">
-                <GitBranch className="h-8 w-8 text-slate-500" weight="duotone" />
+            <div className="rounded-lg border border-dashed border-border bg-card/30 p-8 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-muted/30 ring-1 ring-border">
+                <GitBranch className="h-8 w-8 text-muted-foreground" weight="duotone" />
               </div>
-              <h3 className="mt-4 font-semibold text-slate-300">Select a Node</h3>
-              <p className="mt-1 text-sm text-slate-500">
+              <h3 className="mt-4 font-semibold text-foreground">Select a Node</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Click on any node in the diagram to see its flow details
               </p>
             </div>
@@ -757,17 +753,16 @@ function StatCard({
   glow: string
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-800/60 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-5 backdrop-blur-sm transition-all hover:border-slate-700/60">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+    <div className="group relative overflow-hidden rounded-lg border border-border bg-card p-5 transition-all hover:border-primary/30">
       <div className="relative flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-400">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} shadow-lg ${glow}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-lg ${glow}`}
         >
-          <Icon className="h-5 w-5 text-white" weight="duotone" />
+          <Icon className="h-5 w-5 text-primary-foreground" weight="duotone" />
         </div>
       </div>
-      <p className="relative mt-2 text-2xl font-bold text-slate-100">{value}</p>
+      <p className="relative mt-2 financial-figure text-2xl font-bold">{value}</p>
     </div>
   )
 }

@@ -99,7 +99,7 @@ function CampaignDetailPage() {
 
   if (!campaign) {
     return (
-      <div className="mx-auto max-w-7xl p-4 md:p-6">
+      <div className="px-6 py-6">
         <Card className="p-12 text-center">
           <h3 className="text-lg font-medium mb-2">Campaign not found</h3>
           <p className="text-muted-foreground mb-4">
@@ -114,7 +114,7 @@ function CampaignDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6">
+    <div className="px-6 py-6">
       {/* Back link */}
       <Link
         to="/campaigns"

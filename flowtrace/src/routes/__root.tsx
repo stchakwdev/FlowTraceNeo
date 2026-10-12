@@ -5,6 +5,8 @@ import {
   createRootRoute,
 } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AuthKitProvider } from '@workos/authkit-tanstack-react-start/client'
+import { getAuth } from '@workos/authkit-tanstack-react-start'
 import appCss from '../styles.css?url'
 import { ThemeProvider } from '@/lib/theme'
 import { OrgProvider } from '@/lib/org-context'
@@ -32,6 +34,11 @@ const themeScript = `
 `
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    // Server-side auth check - returns null if not authenticated
+    const auth = await getAuth()
+    return { auth }
+  },
   head: () => ({
     meta: [
       {
@@ -63,14 +70,18 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  const { auth } = Route.useRouteContext()
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <OrgProvider>
-        <ThemeProvider>
-          <Outlet />
-        </ThemeProvider>
-      </OrgProvider>
-    </QueryClientProvider>
+    <AuthKitProvider initialAuth={auth}>
+      <QueryClientProvider client={queryClient}>
+        <OrgProvider>
+          <ThemeProvider>
+            <Outlet />
+          </ThemeProvider>
+        </OrgProvider>
+      </QueryClientProvider>
+    </AuthKitProvider>
   )
 }
 

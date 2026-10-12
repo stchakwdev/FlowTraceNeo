@@ -5,13 +5,10 @@ import {
   FunnelSimple,
   Megaphone,
   Plus,
-  Target,
-  TrendUp,
-  Users,
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -81,12 +78,13 @@ function CampaignsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
-          <p className="text-muted-foreground">
+          <p className="section-label">FUNDRAISING</p>
+          <h1 className="mt-1 font-display text-2xl font-bold">Campaigns</h1>
+          <p className="text-sm text-muted-foreground">
             Create fundraising campaigns and track donor contributions
           </p>
         </div>
@@ -98,61 +96,38 @@ function CampaignsPage() {
 
       {/* Stats Cards */}
       <div className="mt-6 grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
-            <Megaphone className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{counts?.total_campaigns || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {counts?.active_campaigns || 0} active
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-            <TrendUp className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmount(counts?.total_raised || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Across all campaigns
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Donations</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{counts?.total_donations || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Confirmed donations
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <Target className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {counts?.completed_campaigns || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Fully funded campaigns
-            </p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Total Campaigns</p>
+            <p className="financial-figure text-2xl font-bold">{counts?.total_campaigns || 0}</p>
+            <p className="text-xs text-muted-foreground">{counts?.active_campaigns || 0} active</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-success" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Total Raised</p>
+            <p className="financial-figure text-2xl font-bold">{formatAmount(counts?.total_raised || 0)}</p>
+            <p className="text-xs text-muted-foreground">Across all campaigns</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-chart-4" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Total Donations</p>
+            <p className="financial-figure text-2xl font-bold">{counts?.total_donations || 0}</p>
+            <p className="text-xs text-muted-foreground">Confirmed donations</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-accent" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Completed</p>
+            <p className="financial-figure text-2xl font-bold">{counts?.completed_campaigns || 0}</p>
+            <p className="text-xs text-muted-foreground">Fully funded campaigns</p>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}

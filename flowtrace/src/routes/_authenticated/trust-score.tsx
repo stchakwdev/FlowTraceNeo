@@ -1,6 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { ArrowsClockwise, Shield, Receipt, CheckCircle, Clock, XCircle } from '@phosphor-icons/react'
+import {
+  ArrowsClockwise,
+  Check,
+  Shield,
+  TrendUp,
+  TrendDown,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from '@phosphor-icons/react'
 import { useOrg } from '@/lib/org-context'
 import { useOrgStats, useRecalculateTrustScore, useTrustHistory } from '@/lib/queries'
 import { getTrustGrade } from '@/lib/supabase'
@@ -16,13 +25,11 @@ function TrustScore() {
   const { data: stats, isLoading: statsLoading } = useOrgStats()
   const { data: trustHistory, isLoading: historyLoading, refetch: refetchHistory } = useTrustHistory()
 
-  // Recalculate trust score mutation
   const recalculateMutation = useRecalculateTrustScore()
 
   const handleRecalculate = async () => {
     try {
       await recalculateMutation.mutateAsync()
-      // Refetch data after recalculation
       await Promise.all([refetchOrg(), refetchHistory()])
     } catch (error) {
       console.error('Failed to recalculate trust score:', error)
@@ -31,15 +38,11 @@ function TrustScore() {
 
   const isLoading = orgLoading || statsLoading || historyLoading
 
-  // Compute trust score components from real data
   const trustData = useMemo(() => {
     const overallScore = organization?.trust_score ?? 0
     const grade = getTrustGrade(overallScore)
 
-    // Use the latest trust history entry if available for component breakdown
     const latestHistory = trustHistory?.[trustHistory.length - 1]
-
-    // Use proof coverage rate for documentation quality
     const proofCoverage = stats?.proofStats?.proofCoverageRate ?? 0
 
     const components = {
@@ -60,7 +63,6 @@ function TrustScore() {
       },
     }
 
-    // Format history for chart
     const history = (trustHistory ?? []).map((h) => {
       const date = new Date(h.calculated_at)
       return {
@@ -69,12 +71,11 @@ function TrustScore() {
       }
     })
 
-    // Generate recommendations based on stats
-    const recommendations = []
+    const recommendations: { id: string; priority: 'high' | 'medium' | 'low'; title: string; description: string; impact: string }[] = []
     if (stats && stats.pending > 0) {
       recommendations.push({
         id: '1',
-        priority: 'high' as const,
+        priority: 'high',
         title: 'Verify pending transactions',
         description: `${stats.pending} transactions are awaiting verification`,
         impact: '+5 points',
@@ -83,17 +84,16 @@ function TrustScore() {
     if (stats && stats.flagged > 0) {
       recommendations.push({
         id: '2',
-        priority: 'high' as const,
+        priority: 'high',
         title: 'Review flagged transactions',
         description: `${stats.flagged} transactions have been flagged for review`,
         impact: '+3 points',
       })
     }
-    // Recommend adding proofs if coverage is low
     if (proofCoverage < 50) {
       recommendations.push({
         id: '3',
-        priority: 'high' as const,
+        priority: 'high',
         title: 'Add proof documentation',
         description: `Only ${proofCoverage}% of transactions have proof attached. Add receipts, photos, or other evidence.`,
         impact: '+10 points',
@@ -101,17 +101,16 @@ function TrustScore() {
     } else if (proofCoverage < 80) {
       recommendations.push({
         id: '3',
-        priority: 'medium' as const,
+        priority: 'medium',
         title: 'Improve proof coverage',
         description: `${100 - proofCoverage}% of transactions are missing proof documentation`,
         impact: '+5 points',
       })
     }
-    // Recommend verifying pending proofs
     if (stats?.proofStats && stats.proofStats.pendingProofs > 0) {
       recommendations.push({
         id: '4',
-        priority: 'medium' as const,
+        priority: 'medium',
         title: 'Review pending proofs',
         description: `${stats.proofStats.pendingProofs} proof documents are awaiting verification`,
         impact: '+3 points',
@@ -147,38 +146,16 @@ function TrustScore() {
     switch (grade) {
       case 'A+':
       case 'A':
-        return 'text-green-600'
+        return 'text-success'
       case 'B':
-        return 'text-blue-600'
+        return 'text-primary'
       case 'C':
-        return 'text-yellow-600'
+        return 'text-warning'
       case 'D':
-        return 'text-orange-600'
+        return 'text-accent'
       default:
-        return 'text-red-600'
+        return 'text-destructive'
     }
-  }
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'stroke-green-500'
-    if (score >= 60) return 'stroke-yellow-500'
-    return 'stroke-red-500'
-  }
-
-  const getPriorityBadge = (priority: string) => {
-    const styles = {
-      high: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      medium:
-        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      low: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    }
-    return (
-      <span
-        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${styles[priority as keyof typeof styles]}`}
-      >
-        {priority}
-      </span>
-    )
   }
 
   const formatDate = (dateString: string) => {
@@ -191,12 +168,11 @@ function TrustScore() {
     })
   }
 
-  // Calculate circumference for circular progress
+  // Circular progress
   const radius = 80
   const circumference = 2 * Math.PI * radius
   const progress = (trustData.overallScore / 100) * circumference
 
-  // Calculate improvement from history
   const scoreImprovement = useMemo(() => {
     if (trustData.history.length < 2) return 0
     return (
@@ -207,28 +183,30 @@ function TrustScore() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="px-6 py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Trust Score</h1>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="section-label">ANALYTICS</p>
+          <h1 className="mt-1 font-display text-2xl font-bold">Trust Score</h1>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="h-64 animate-pulse rounded-lg bg-muted" />
+            <div className="h-64 skeleton-shimmer rounded-lg" />
           </div>
-          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+          <div className="h-64 skeleton-shimmer rounded-lg" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="px-6 py-6">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Trust Score</h1>
-          <p className="text-muted-foreground">
+          <p className="section-label">ANALYTICS</p>
+          <h1 className="mt-1 font-display text-2xl font-bold">Trust Score</h1>
+          <p className="text-sm text-muted-foreground">
             Your organization&apos;s financial transparency rating
           </p>
         </div>
@@ -249,9 +227,15 @@ function TrustScore() {
         <div className="lg:col-span-2">
           <div className="rounded-lg border border-border bg-card p-8">
             <div className="flex flex-col items-center gap-8 sm:flex-row">
-              {/* Circular Progress */}
+              {/* Circular Progress with gradient stroke */}
               <div className="relative">
                 <svg width="200" height="200" className="-rotate-90">
+                  <defs>
+                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="oklch(0.55 0.15 175)" />
+                      <stop offset="100%" stopColor="oklch(0.72 0.16 45)" />
+                    </linearGradient>
+                  </defs>
                   {/* Background circle */}
                   <circle
                     cx="100"
@@ -259,7 +243,7 @@ function TrustScore() {
                     r={radius}
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="12"
+                    strokeWidth="8"
                     className="text-muted/20"
                   />
                   {/* Progress circle */}
@@ -268,50 +252,56 @@ function TrustScore() {
                     cy="100"
                     r={radius}
                     fill="none"
-                    strokeWidth="12"
+                    stroke="url(#scoreGradient)"
+                    strokeWidth="8"
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={circumference - progress}
-                    className={`${getScoreColor(trustData.overallScore)} transition-all duration-1000`}
+                    className="transition-all duration-1000"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl font-bold">
+                  <span className="font-display text-5xl font-bold">
                     {trustData.overallScore}
                   </span>
                   <span
-                    className={`text-2xl font-bold ${getGradeColor(trustData.grade)}`}
+                    className={`font-display text-2xl font-bold ${getGradeColor(trustData.grade)}`}
                   >
                     Grade {trustData.grade}
                   </span>
                 </div>
               </div>
 
-              {/* Score Breakdown */}
-              <div className="flex-1 space-y-4">
+              {/* Score Components - battery-indicator style */}
+              <div className="flex-1 space-y-5">
                 <p className="text-sm text-muted-foreground">
                   Last updated: {formatDate(trustData.lastUpdated)}
                 </p>
 
                 {Object.entries(trustData.components).map(([key, data]) => (
                   <div key={key}>
-                    <div className="mb-1 flex items-center justify-between">
+                    <div className="mb-1.5 flex items-center justify-between">
                       <span className="text-sm font-medium">{data.label}</span>
-                      <span className="text-sm">
+                      <span className="financial-figure text-sm">
                         {Math.round(data.score)}% ({data.weight}% weight)
                       </span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted/20">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          data.score >= 80
-                            ? 'bg-green-500'
-                            : data.score >= 60
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
-                        }`}
-                        style={{ width: `${data.score}%` }}
-                      />
+                    {/* Segmented battery indicator */}
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-2 flex-1 rounded-sm transition-all duration-500 ${
+                            i < Math.round(data.score / 10)
+                              ? data.score >= 80
+                                ? 'bg-success'
+                                : data.score >= 60
+                                  ? 'bg-warning'
+                                  : 'bg-destructive'
+                              : 'bg-muted/20'
+                          }`}
+                        />
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -322,16 +312,16 @@ function TrustScore() {
           {/* History Chart */}
           <div className="mt-6 rounded-lg border border-border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Score History</h2>
-              <div className="flex gap-2">
+              <h2 className="font-display text-lg font-semibold">Score History</h2>
+              <div className="flex gap-1 rounded-lg border border-border p-0.5">
                 {['3m', '6m', '1y'].map((period) => (
                   <button
                     key={period}
                     onClick={() => setSelectedPeriod(period)}
-                    className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
+                    className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
                       selectedPeriod === period
                         ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent'
+                        : 'text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {period}
@@ -340,7 +330,7 @@ function TrustScore() {
               </div>
             </div>
 
-            {/* Simple bar chart */}
+            {/* Bar chart with thinner bars */}
             <div className="flex h-48 items-end gap-4">
               {trustData.history.length === 0 ? (
                 <div className="flex flex-1 items-center justify-center">
@@ -352,17 +342,11 @@ function TrustScore() {
                 trustData.history.map((item, i) => (
                   <div key={i} className="flex flex-1 flex-col items-center">
                     <div
-                      className={`w-full rounded-t-lg transition-all duration-500 ${
-                        item.score >= 80
-                          ? 'bg-green-500'
-                          : item.score >= 60
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
-                      }`}
+                      className="w-1.5 rounded-t-full bg-primary transition-all duration-500"
                       style={{ height: `${(item.score / 100) * 160}px` }}
                     />
                     <div className="mt-2 text-center">
-                      <p className="text-xs font-medium">{item.score}</p>
+                      <p className="financial-figure text-xs font-medium">{item.score}</p>
                       <p className="text-xs text-muted-foreground">
                         {item.month}
                       </p>
@@ -375,9 +359,9 @@ function TrustScore() {
             {scoreImprovement !== 0 && (
               <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 {scoreImprovement > 0 ? (
-                  <TrendUpIcon className="h-4 w-4 text-green-500" />
+                  <TrendUp className="h-4 w-4 text-success" weight="bold" />
                 ) : (
-                  <TrendDownIcon className="h-4 w-4 text-red-500" />
+                  <TrendDown className="h-4 w-4 text-destructive" weight="bold" />
                 )}
                 <span>
                   {scoreImprovement > 0 ? '+' : ''}
@@ -393,32 +377,32 @@ function TrustScore() {
         <div className="space-y-6">
           {/* Quick Stats */}
           <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Transaction Status</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold">Transaction Status</h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-green-500" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-success" />
                   <span className="text-sm">Verified</span>
                 </div>
-                <span className="font-medium">
+                <span className="financial-figure font-medium">
                   {trustData.breakdown.verified}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-warning" />
                   <span className="text-sm">Pending</span>
                 </div>
-                <span className="font-medium">
+                <span className="financial-figure font-medium">
                   {trustData.breakdown.pending}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-destructive" />
                   <span className="text-sm">Flagged</span>
                 </div>
-                <span className="font-medium">
+                <span className="financial-figure font-medium">
                   {trustData.breakdown.flagged}
                 </span>
               </div>
@@ -427,13 +411,13 @@ function TrustScore() {
                   <span className="text-sm font-medium">
                     Total Transactions
                   </span>
-                  <span className="font-bold">{trustData.breakdown.total}</span>
+                  <span className="financial-figure font-bold">{trustData.breakdown.total}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
                     Verification Rate
                   </span>
-                  <span className="font-medium text-green-600">
+                  <span className="financial-figure font-medium text-success">
                     {trustData.breakdown.total > 0
                       ? Math.round(
                           (trustData.breakdown.verified /
@@ -451,82 +435,91 @@ function TrustScore() {
           {/* Proof Documentation Stats */}
           <div className="rounded-lg border border-border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Proof Documentation</h2>
-              <div className="flex items-center gap-1 text-emerald-600">
+              <h2 className="font-display text-lg font-semibold">Proof Documentation</h2>
+              <div className="flex items-center gap-1 text-success">
                 <Shield className="h-4 w-4" weight="fill" />
-                <span className="text-sm font-bold">+{trustData.proofStats.totalTrustPoints}</span>
+                <span className="financial-figure text-sm font-bold">+{trustData.proofStats.totalTrustPoints}</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" weight="fill" />
+                  <CheckCircle className="h-4 w-4 text-success" weight="fill" />
                   <span className="text-sm">Verified Proofs</span>
                 </div>
-                <span className="font-medium">{trustData.proofStats.verifiedProofs}</span>
+                <span className="financial-figure font-medium">{trustData.proofStats.verifiedProofs}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-yellow-500" weight="fill" />
+                  <Clock className="h-4 w-4 text-warning" weight="fill" />
                   <span className="text-sm">Pending</span>
                 </div>
-                <span className="font-medium">{trustData.proofStats.pendingProofs}</span>
+                <span className="financial-figure font-medium">{trustData.proofStats.pendingProofs}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-red-500" weight="fill" />
+                  <XCircle className="h-4 w-4 text-destructive" weight="fill" />
                   <span className="text-sm">Rejected</span>
                 </div>
-                <span className="font-medium">{trustData.proofStats.rejectedProofs}</span>
+                <span className="financial-figure font-medium">{trustData.proofStats.rejectedProofs}</span>
               </div>
               <div className="mt-4 border-t border-border pt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Total Proofs</span>
-                  <span className="font-bold">{trustData.proofStats.totalProofs}</span>
+                  <span className="financial-figure font-bold">{trustData.proofStats.totalProofs}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Proof Coverage</span>
-                  <span className={`font-medium ${trustData.proofStats.proofCoverageRate >= 80 ? 'text-green-600' : trustData.proofStats.proofCoverageRate >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  <span className={`financial-figure font-medium ${trustData.proofStats.proofCoverageRate >= 80 ? 'text-success' : trustData.proofStats.proofCoverageRate >= 50 ? 'text-warning' : 'text-destructive'}`}>
                     {trustData.proofStats.proofCoverageRate}%
                   </span>
                 </div>
-                <div className="mt-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-muted/20">
+                <div className="mt-2 flex gap-0.5">
+                  {Array.from({ length: 10 }).map((_, i) => (
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        trustData.proofStats.proofCoverageRate >= 80
-                          ? 'bg-green-500'
-                          : trustData.proofStats.proofCoverageRate >= 50
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
+                      key={i}
+                      className={`h-2 flex-1 rounded-sm transition-all duration-500 ${
+                        i < Math.round(trustData.proofStats.proofCoverageRate / 10)
+                          ? trustData.proofStats.proofCoverageRate >= 80
+                            ? 'bg-success'
+                            : trustData.proofStats.proofCoverageRate >= 50
+                              ? 'bg-warning'
+                              : 'bg-destructive'
+                          : 'bg-muted/20'
                       }`}
-                      style={{ width: `${trustData.proofStats.proofCoverageRate}%` }}
                     />
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Recommendations */}
+          {/* Recommendations - numbered list */}
           <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Recommendations</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold">Recommendations</h2>
             {trustData.recommendations.length === 0 ? (
               <div className="text-center text-muted-foreground">
-                <CheckIcon className="mx-auto h-8 w-8 text-green-500" />
+                <Check className="mx-auto h-8 w-8 text-success" weight="bold" />
                 <p className="mt-2">
                   Great job! No recommendations at this time.
                 </p>
               </div>
             ) : (
-              <ul className="space-y-4">
-                {trustData.recommendations.map((rec) => (
+              <ol className="space-y-4">
+                {trustData.recommendations.map((rec, idx) => (
                   <li
                     key={rec.id}
                     className="border-b border-border pb-4 last:border-0 last:pb-0"
                   >
                     <div className="mb-1 flex items-center gap-2">
-                      {getPriorityBadge(rec.priority)}
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {idx + 1}
+                      </span>
+                      <span className={`text-xs font-medium ${
+                        rec.priority === 'high' ? 'text-destructive' : rec.priority === 'medium' ? 'text-warning' : 'text-primary'
+                      }`}>
+                        {rec.priority}
+                      </span>
                       <span className="text-xs text-primary">{rec.impact}</span>
                     </div>
                     <p className="font-medium">{rec.title}</p>
@@ -535,19 +528,19 @@ function TrustScore() {
                     </p>
                   </li>
                 ))}
-              </ul>
+              </ol>
             )}
           </div>
 
           {/* Share Badge */}
           <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Trust Badge</h2>
-            <div className="flex items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 p-6">
+            <h2 className="mb-4 font-display text-lg font-semibold">Trust Badge</h2>
+            <div className="flex items-center justify-center rounded-lg bg-primary/5 p-6">
               <div className="text-center">
-                <ShieldIcon className="mx-auto h-12 w-12 text-primary" />
+                <Shield className="mx-auto h-12 w-12 text-primary" weight="duotone" />
                 <p className="mt-2 text-sm font-medium">FlowTrace Verified</p>
                 <p
-                  className={`text-2xl font-bold ${getGradeColor(trustData.grade)}`}
+                  className={`font-display text-2xl font-bold ${getGradeColor(trustData.grade)}`}
                 >
                   Grade {trustData.grade}
                 </p>
@@ -563,78 +556,5 @@ function TrustScore() {
         </div>
       </div>
     </div>
-  )
-}
-
-// Icon components
-function TrendUpIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-      />
-    </svg>
-  )
-}
-
-function TrendDownIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"
-      />
-    </svg>
-  )
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 13l4 4L19 7"
-      />
-    </svg>
-  )
-}
-
-function ShieldIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-      />
-    </svg>
   )
 }

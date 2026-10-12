@@ -1,6 +1,9 @@
+import type { User } from '@workos/authkit-tanstack-react-start'
+
 // WorkOS client ID from environment
 export const workosClientId = import.meta.env.VITE_WORKOS_CLIENT_ID || ''
 export const isWorkosConfigured = !!workosClientId
+export const DEV_MODE = !isWorkosConfigured
 
 // Auth redirect paths
 export const AUTH_ROUTES = {
@@ -11,7 +14,7 @@ export const AUTH_ROUTES = {
   afterSignOut: '/',
 } as const
 
-// User type from WorkOS
+// User type for FlowTrace (mapped from WorkOS)
 export interface AuthUser {
   id: string
   email: string
@@ -26,6 +29,19 @@ export interface AuthState {
   user: AuthUser | null
   isLoading: boolean
   isAuthenticated: boolean
+}
+
+// Map WorkOS User to our AuthUser interface
+export function mapWorkOSUser(user: User | null): AuthUser | null {
+  if (!user) return null
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName ?? undefined,
+    lastName: user.lastName ?? undefined,
+    profilePictureUrl: user.profilePictureUrl ?? undefined,
+    organizationId: user.organizationId ?? undefined,
+  }
 }
 
 // Helper to get user display name

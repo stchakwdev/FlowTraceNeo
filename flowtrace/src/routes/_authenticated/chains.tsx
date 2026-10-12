@@ -17,7 +17,7 @@ import {
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ChainStatusBadge } from '@/components/chain-status-badge'
 import { ChainRequestModal } from '@/components/chain-request-modal'
@@ -76,12 +76,13 @@ function ChainsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 px-6 py-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Chain Links</h1>
-          <p className="text-muted-foreground">
+          <p className="section-label">PARTNERSHIPS</p>
+          <h1 className="mt-1 font-display text-2xl font-bold">Chain Links</h1>
+          <p className="text-sm text-muted-foreground">
             Connect with partner organizations for end-to-end transparency
           </p>
         </div>
@@ -93,91 +94,80 @@ function ChainsPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Chains</CardTitle>
-            <LinkSimple className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-success" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Active Chains</p>
+            <p className="financial-figure text-2xl font-bold">
               {(chainCounts?.outgoing_active || 0) + (chainCounts?.incoming_active || 0)}
-            </div>
+            </p>
             <p className="text-xs text-muted-foreground">
               {chainCounts?.outgoing_active || 0} outgoing, {chainCounts?.incoming_active || 0} incoming
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-            <Clock className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-accent" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Pending Requests</p>
+            <p className="financial-figure text-2xl font-bold">
               {(chainCounts?.outgoing_pending || 0) + (chainCounts?.incoming_pending || 0)}
-            </div>
+            </p>
             <p className="text-xs text-muted-foreground">
               {chainCounts?.outgoing_pending || 0} sent, {chainCounts?.incoming_pending || 0} received
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Outgoing Links</CardTitle>
-            <ArrowRight className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{chainCounts?.outgoing_active || 0}</div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Outgoing Links</p>
+            <p className="financial-figure text-2xl font-bold">{chainCounts?.outgoing_active || 0}</p>
             <p className="text-xs text-muted-foreground">Organizations you link to</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Incoming Links</CardTitle>
-            <ArrowLeft className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{chainCounts?.incoming_active || 0}</div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
+          <div className="absolute left-0 top-0 h-full w-1 bg-chart-4" />
+          <div className="pl-2">
+            <p className="text-sm text-muted-foreground">Incoming Links</p>
+            <p className="financial-figure text-2xl font-bold">{chainCounts?.incoming_active || 0}</p>
             <p className="text-xs text-muted-foreground">Organizations linking to you</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b">
+      {/* Segmented Control Tabs */}
+      <div className="flex gap-1 self-start rounded-lg border border-border p-0.5">
         <button
           className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+            'flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
             activeTab === 'outgoing'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground',
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted',
           )}
           onClick={() => setActiveTab('outgoing')}
         >
-          <ArrowRight className="h-4 w-4 inline mr-2" />
+          <ArrowRight className="h-4 w-4" />
           Outgoing
           {(chainCounts?.outgoing_pending || 0) > 0 && (
-            <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="px-1.5 py-0.5 text-xs rounded-full bg-accent/20 text-accent">
               {chainCounts?.outgoing_pending}
             </span>
           )}
         </button>
         <button
           className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+            'flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
             activeTab === 'incoming'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground',
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted',
           )}
           onClick={() => setActiveTab('incoming')}
         >
-          <ArrowLeft className="h-4 w-4 inline mr-2" />
+          <ArrowLeft className="h-4 w-4" />
           Incoming
           {(chainCounts?.incoming_pending || 0) > 0 && (
-            <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="px-1.5 py-0.5 text-xs rounded-full bg-accent/20 text-accent">
               {chainCounts?.incoming_pending}
             </span>
           )}
@@ -302,7 +292,7 @@ function ChainCard({ chain, direction, onReview, onCancel, onRevoke }: ChainCard
               </span>
             )}
             <span className="flex items-center gap-1">
-              <Shield className="h-3.5 w-3.5 text-emerald-600" />
+              <Shield className="h-3.5 w-3.5 text-success" />
               Trust: {getTrustGrade(org.trust_score)}
             </span>
             <span className="flex items-center gap-1">

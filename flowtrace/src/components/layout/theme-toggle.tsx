@@ -8,8 +8,36 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  collapsed?: boolean
+}
+
+export function ThemeToggle({ collapsed }: ThemeToggleProps) {
   const { theme, setTheme, resolvedTheme } = useTheme()
+
+  // When collapsed in sidebar, cycle on click instead of dropdown
+  if (collapsed) {
+    const cycle = () => {
+      const order = ['light', 'dark', 'system'] as const
+      const idx = order.indexOf(theme as (typeof order)[number])
+      setTheme(order[(idx + 1) % order.length])
+    }
+
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={cycle}
+        aria-label="Toggle theme"
+      >
+        {resolvedTheme === 'dark' ? (
+          <Moon className="size-4" weight="fill" />
+        ) : (
+          <Sun className="size-4" weight="fill" />
+        )}
+      </Button>
+    )
+  }
 
   return (
     <DropdownMenu>
@@ -27,21 +55,21 @@ export function ThemeToggle() {
       <DropdownMenuContent align="end" sideOffset={8}>
         <DropdownMenuItem
           onClick={() => setTheme('light')}
-          className={theme === 'light' ? 'bg-accent' : ''}
+          className={theme === 'light' ? 'bg-muted' : ''}
         >
           <Sun className="size-4" weight="regular" />
           Light
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme('dark')}
-          className={theme === 'dark' ? 'bg-accent' : ''}
+          className={theme === 'dark' ? 'bg-muted' : ''}
         >
           <Moon className="size-4" weight="regular" />
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme('system')}
-          className={theme === 'system' ? 'bg-accent' : ''}
+          className={theme === 'system' ? 'bg-muted' : ''}
         >
           <Monitor className="size-4" weight="regular" />
           System

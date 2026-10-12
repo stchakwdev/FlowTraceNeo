@@ -1,28 +1,9 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import {
-  CurrencyCircleDollar,
-  FlowArrow,
-  Gear,
-  House,
-  LinkSimple,
-  List,
-  Megaphone,
-  ShieldCheck,
-  X,
-} from '@phosphor-icons/react'
+import { List, X } from '@phosphor-icons/react'
+import { navItems } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-
-const navItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: House },
-  { label: 'Transactions', href: '/transactions', icon: CurrencyCircleDollar },
-  { label: 'Flows', href: '/flows', icon: FlowArrow },
-  { label: 'Campaigns', href: '/campaigns', icon: Megaphone },
-  { label: 'Chains', href: '/chains', icon: LinkSimple },
-  { label: 'Trust Score', href: '/trust-score', icon: ShieldCheck },
-  { label: 'Settings', href: '/settings', icon: Gear },
-]
 
 interface MobileNavProps {
   isOpen: boolean
@@ -32,12 +13,10 @@ interface MobileNavProps {
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const location = useLocation()
 
-  // Close nav on route change
   useEffect(() => {
     onClose()
   }, [location.pathname, onClose])
 
-  // Prevent body scroll when nav is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -69,8 +48,8 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         )}
         aria-label="Mobile navigation"
       >
-        <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          <span className="text-lg font-semibold">Menu</span>
+        <div className="flex h-14 items-center justify-between border-b border-border px-4">
+          <span className="font-display text-lg font-semibold">Menu</span>
           <Button
             variant="ghost"
             size="icon"
@@ -94,12 +73,16 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                  'relative flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
+                {/* Active indicator bar */}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
+                )}
                 <Icon
                   className="size-5"
                   weight={isActive ? 'fill' : 'regular'}

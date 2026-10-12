@@ -1,15 +1,43 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import { getAuth, getSignInUrl } from '@workos/authkit-tanstack-react-start'
 import { AppShell } from '@/components/layout/app-shell'
 
+// Dev mode detection - skip auth when WorkOS not configured
+const DEV_MODE = !import.meta.env.VITE_WORKOS_CLIENT_ID
+
 export const Route = createFileRoute('/_authenticated')({
+  // Use loader for server-side auth checks (not beforeLoad)
+  loader: async ({ location }) => {
+    // Skip auth check in dev mode
+    if (DEV_MODE) {
+      return {
+        user: null,
+        organizationId: null,
+        devMode: true,
+      }
+    }
+
+    // Production: Check auth
+    const { user, organizationId } = await getAuth()
+
+    if (!user) {
+      // Redirect to WorkOS sign-in with return URL
+      const signInUrl = await getSignInUrl({
+        data: { returnPathname: location.pathname },
+      })
+      throw redirect({ href: signInUrl })
+    }
+
+    return { user, organizationId, devMode: false }
+  },
   component: AuthenticatedLayout,
 })
 
 function AuthenticatedLayout() {
-  // In dev mode (WorkOS not configured), always render the shell
-  // When WorkOS is added, this will handle auth checks
+  const { user, organizationId, devMode } = Route.useLoaderData()
+
   return (
-    <AppShell>
+    <AppShell user={user} organizationId={organizationId} devMode={devMode}>
       <Outlet />
     </AppShell>
   )

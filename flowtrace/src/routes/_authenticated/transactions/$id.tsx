@@ -112,13 +112,13 @@ function TransactionDetail() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-8 h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="mb-8 h-8 w-48 skeleton-shimmer rounded bg-muted" />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <div className="h-48 animate-pulse rounded-lg bg-muted" />
-            <div className="h-32 animate-pulse rounded-lg bg-muted" />
+            <div className="h-48 skeleton-shimmer rounded-lg bg-muted" />
+            <div className="h-32 skeleton-shimmer rounded-lg bg-muted" />
           </div>
-          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+          <div className="h-64 skeleton-shimmer rounded-lg bg-muted" />
         </div>
       </div>
     )
