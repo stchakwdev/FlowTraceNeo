@@ -1,5 +1,6 @@
 # Vercel reports each deployment back to GitHub. This turns a failed Vercel
-# build into a failed workflow run (which GitHub emails about) and keeps one
+# build, or a green build whose site returns 5xx, into a failed workflow run
+# (which GitHub emails about) and keeps one
 # open issue per Vercel project so failures leave a trail.
 name: Vercel deploy status
 
@@ -29,10 +30,25 @@ jobs:
           existing=$(gh issue list --state open --label vercel-failure --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
 
           if [ "$STATE" = "success" ]; then
-            if [ -n "$existing" ]; then
-              gh issue close "$existing" --comment "Fixed: \`${SHA:0:7}\` deployed successfully."
+            # A green build can still serve errors (e.g. missing runtime env
+            # vars), so load the production alias and treat 5xx as a failure.
+            # Retries cover cold starts and alias propagation.
+            site="https://${ENVIRONMENT##* }.vercel.app/"
+            for attempt in 1 2 3 4 5; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$site" || true)
+              if [ "$code" != 000 ] && [ "$code" -lt 500 ]; then break; fi
+              sleep 15
+            done
+            echo "Smoke check $site -> HTTP $code"
+
+            if [ "$code" != 000 ] && [ "$code" -lt 500 ]; then
+              if [ -n "$existing" ]; then
+                gh issue close "$existing" --comment "Fixed: \`${SHA:0:7}\` deployed and $site returns HTTP $code."
+              fi
+              exit 0
             fi
-            exit 0
+            STATE="smoke check failed: $site returned HTTP $code"
+            DESCRIPTION="The build succeeded but the site is erroring. Check runtime logs: vercel logs $site"
           fi
 
           body="Deployment of \`${SHA:0:7}\` failed (${STATE}).
