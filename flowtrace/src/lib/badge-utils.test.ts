@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BADGE_COLORS,
   generateCampaignBadgeSVG,
   generateGradeBadgeSVG,
   generateTrustBadgeSVG,
@@ -27,8 +28,9 @@ describe('generateTrustBadgeSVG', () => {
   })
 
   it('colors by score band unless a color is given', () => {
-    expect(generateTrustBadgeSVG({ score: 85 })).toContain('#22c55e')
-    expect(generateTrustBadgeSVG({ score: 10 })).toContain('#ef4444')
+    expect(generateTrustBadgeSVG({ score: 85 })).toContain(BADGE_COLORS.report)
+    expect(generateTrustBadgeSVG({ score: 50 })).toContain(BADGE_COLORS.middling)
+    expect(generateTrustBadgeSVG({ score: 10 })).toContain(BADGE_COLORS.flag)
     expect(generateTrustBadgeSVG({ score: 10, color: '#123456' })).toContain('#123456')
   })
 })

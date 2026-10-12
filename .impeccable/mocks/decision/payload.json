@@ -1,0 +1,131 @@
+{
+  "title": "Choose FlowTrace's visual world",
+  "question": "The roll assigned the Situation Report. Keep it, take my pick or an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Situation Report",
+      "kicker": "THE ROLL",
+      "lineage": "OCHA humanitarian sitreps and the FTS funding tracker",
+      "thesis": "FlowTrace reads like the sitrep NGO leaders already trust, but it's about their own money and it updates live.",
+      "palette": ["#F5F6F3", "#13202D", "#1C5FA8", "#D6DCE2", "#D4521F"],
+      "materials": ["report rules and key-figure blocks", "funding-coverage bars", "condensed variable grotesque (Archivo)"],
+      "viewport": "Sitrep masthead dated 'as of'. Headline and the demo action on the left; live key figures and funding bars by donor on the right, built from demo data.",
+      "risk": "It could slide into generic dashboard blue if the report grammar (rules, dates, coverage bars) isn't held strictly.",
+      "raised": [
+        {"from": "operate-b-normalled-jackfield", "raise": "Verification state is drawn by the line's pattern (solid = evidenced, dashed = awaiting proof, broken = flagged), never by colour alone, everywhere in the app."},
+        {"from": "games-toys-physics-play-brick-build-instructions", "raise": "One strict module grid; history renders ghosted and the newest movement arrives bright."},
+        {"from": "scientific-notation-particle-detector-event-display", "raise": "Selecting a flow isolates it and dims the rest; line weight carries amount."},
+        {"from": "massin-stage-page", "raise": "Type size carries magnitude: key figures are set at a scale proportional to what they report."}
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html"
+    },
+    {
+      "id": "model-pick",
+      "label": "Duplicate Receipt Book",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "carbon-copy duplicate receipt books in every Kenyan office",
+      "thesis": "One transaction, every copy it needs: the white copy goes to the board, pink to donors, yellow to the public.",
+      "palette": ["#3E1A20", "#FFFFFF", "#F3C8CE", "#F4E59B", "#C2272D", "#5B3C99"],
+      "materials": ["carbon-copy paper", "perforations", "violet rubber stamps", "ballpoint entries"],
+      "viewport": "The open receipt book on its cover: a numbered receipt with its proof stamp, the donor and public copies fanned behind, headline and the demo action on the cover.",
+      "risk": "Skeuomorphic. Charming on the landing page, harder to carry into dense app screens without turning into a costume.",
+      "html": ".impeccable/mocks/decision/model-pick.html"
+    },
+    {
+      "id": "operate-b-normalled-jackfield",
+      "label": "Normalled Jackfield",
+      "verdict": "declined",
+      "lineage": "machine-room patch schedules",
+      "thesis": "Every flow is a numbered lane tied to its default by an amber link line.",
+      "palette": ["#0B0D10", "#F2A12E"],
+      "materials": ["black glass", "amber link lines"],
+      "viewport": "Numbered amber lanes on black glass, one inverted amber plate per screen.",
+      "case": "NGO leaders don't recognise a machine room. Black glass reads as a tool costume.",
+      "risk": "Alien to the audience.",
+      "kept": "State drawn by stroke pattern, not hue.",
+      "hero": "https://impeccable.style/worlds/cards/operate-b-normalled-jackfield-hero.webp"
+    },
+    {
+      "id": "games-toys-physics-play-brick-build-instructions",
+      "label": "Brick Build Instructions",
+      "verdict": "declined",
+      "lineage": "toy instruction booklets",
+      "thesis": "A grant's journey told as numbered build steps.",
+      "palette": ["#9CC9EA", "#111111", "#D7262B", "#F5C518"],
+      "materials": ["sky-blue pages", "stud grid"],
+      "viewport": "Oversized step numerals, a 1:1 proof call-out box.",
+      "case": "The playful register undercuts trust for finance leads.",
+      "risk": "Reads as a toy.",
+      "kept": "Strict module grid, with history ghosted and the new movement bright.",
+      "hero": "https://impeccable.style/worlds/cards/games-toys-physics-play-brick-build-instructions-hero.webp"
+    },
+    {
+      "id": "scientific-notation-particle-detector-event-display",
+      "label": "Particle Event Display",
+      "verdict": "declined",
+      "lineage": "collider event displays",
+      "thesis": "Money as tracks curling out of one frozen event.",
+      "palette": ["#06080C", "#5B7A99", "#F4D23C", "#E2453C"],
+      "materials": ["vacuum black", "WebGL tracks"],
+      "viewport": "Concentric detector rings with tracks.",
+      "case": "Spectacle over clarity; it's heavy on 3G and low-end Android.",
+      "risk": "Too heavy for the field.",
+      "kept": "Select a track to isolate it; weight carries amount.",
+      "hero": "https://impeccable.style/worlds/cards/scientific-notation-particle-detector-event-display-hero.webp"
+    },
+    {
+      "id": "massin-stage-page",
+      "label": "Massin Stage Page",
+      "verdict": "declined",
+      "lineage": "Massin's typographic theatre",
+      "thesis": "Donor and NGO voices typeset as dialogue.",
+      "palette": ["#FFFFFF", "#000000"],
+      "materials": ["stamped ink", "colliding type"],
+      "viewport": "Two voices colliding across the gutter.",
+      "case": "Expressive but obscures the offer.",
+      "risk": "Unreadable as a product page.",
+      "kept": "Type size carries magnitude.",
+      "hero": "https://impeccable.style/worlds/cards/massin-stage-page-hero.webp"
+    },
+    {
+      "id": "pop-culture-shelf-lowbrow-gallery-panel",
+      "label": "Lowbrow Gallery Panel",
+      "verdict": "declined",
+      "lineage": "hot-rod lowbrow art",
+      "thesis": "A crowded lacquered tableau.",
+      "palette": ["#E8452C", "#1B1B1B", "#F5D64C"],
+      "materials": ["candy lacquer", "black outline"],
+      "viewport": "Packed airbrushed tableau.",
+      "case": "No connection to the audience or the product.",
+      "risk": "Off-brand entirely.",
+      "kept": "Total commitment: colour owns whole regions, not accents.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-lowbrow-gallery-panel-hero.webp"
+    },
+    {
+      "id": "architecture-inhabitable-space-daylight-section",
+      "label": "Daylight Section",
+      "verdict": "declined",
+      "lineage": "architectural daylight sections",
+      "thesis": "Time read as light moving through a section.",
+      "palette": ["#F4F1EA", "#2A2A2A", "#E5B649", "#7E93AE"],
+      "materials": ["limewash", "section poche"],
+      "viewport": "One long section with a moving beam.",
+      "case": "Beautiful but abstract; it doesn't say what the product does.",
+      "risk": "Too abstract.",
+      "kept": "Tabular 'as of' time stamps on every figure.",
+      "hero": "https://impeccable.style/worlds/cards/architecture-inhabitable-space-daylight-section-hero.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean SaaS landing page and dashboard, executed impeccably.",
+    "palette": ["#FFFFFF", "#111827", "#0F766E"],
+    "materials": ["clean grid", "product screenshot"],
+    "viewport": "Headline and two buttons beside an app screenshot, then feature rows.",
+    "risk": "Indistinguishable from every other fintech, which is what you said to avoid."
+  },
+  "steer": true
+}

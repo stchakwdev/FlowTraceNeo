@@ -1,35 +1,33 @@
+import { useState } from 'react'
 import {
-  Receipt,
+  Bank,
+  Buildings,
+  CaretRight,
+  EyeSlash,
+  File,
+  FilePdf,
+  FileText,
+  Fingerprint,
   Image as ImageIcon,
   MapPin,
   PencilLine,
-  Fingerprint,
-  Bank,
-  File,
-  FileText,
-  Video,
-  Shield,
-  Scroll,
-  Buildings,
-  Eye,
-  EyeSlash,
-  CheckCircle,
-  Clock,
-  XCircle,
   Plus,
-  CaretRight,
+  Receipt,
+  Scroll,
+  Shield,
+  Video,
 } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
+import type { Verification, VerificationType } from '@/lib/supabase'
+import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import type {
-  Verification,
-  VerificationType,
-} from '@/lib/supabase'
-import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import { ReportNotice, StatusMark } from '@/components/report'
 
-// Icon map for verification types
-const VERIFICATION_ICONS: Record<VerificationType, React.ElementType> = {
+// Shared proof vocabulary, also used by the viewer and the upload panel.
+
+export const PROOF_TYPE_ICON: Record<VerificationType, Icon> = {
   receipt: Receipt,
   photo: ImageIcon,
   gps: MapPin,
@@ -44,41 +42,92 @@ const VERIFICATION_ICONS: Record<VerificationType, React.ElementType> = {
   government_doc: Buildings,
 }
 
-const TYPE_LABELS: Record<VerificationType, string> = {
+export const PROOF_TYPE_LABEL: Record<VerificationType, string> = {
   receipt: 'Receipt',
   photo: 'Photo',
   document: 'Document',
-  bank_statement: 'Bank Statement',
+  bank_statement: 'Bank statement',
   signature: 'Signature',
-  gps: 'GPS',
+  gps: 'GPS reading',
   biometric: 'Biometric',
   invoice: 'Invoice',
   video: 'Video',
-  audit: 'Audit',
+  audit: 'Third-party audit',
   contract: 'Contract',
-  government_doc: 'Gov. Doc',
+  government_doc: 'Government document',
 }
 
-const STATUS_CONFIG = {
-  pending: {
-    icon: Clock,
-    label: 'Pending',
-    className: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200',
-  },
-  verified: {
-    icon: CheckCircle,
-    label: 'Verified',
-    className: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200',
-  },
-  rejected: {
-    icon: XCircle,
-    label: 'Rejected',
-    className: 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200',
-  },
+export const PROOF_VISIBILITY_LABEL = {
+  full: 'Full file',
+  thumbnail: 'Thumbnail only',
+  summary: 'Summary only',
+  hidden: 'Hidden',
+} as const
+
+/** A proof's own state, worded for a document rather than a transaction. */
+export const PROOF_STATE_LABEL: Record<Verification['status'], string> = {
+  verified: 'Verified',
+  pending: 'Awaiting review',
+  rejected: 'Rejected',
+}
+
+export function proofTrustPoints(v: Verification) {
+  return v.trust_points || VERIFICATION_TRUST_POINTS[v.type] || 0
+}
+
+/** What kind of file a proof holds, from its URL or the recorded MIME type. */
+export function proofMediaKind(
+  v: Verification,
+): 'image' | 'pdf' | 'video' | null {
+  const url = v.file_url ?? ''
+  const mime =
+    typeof v.metadata.mime_type === 'string' ? v.metadata.mime_type : ''
+  if (/\.(jpe?g|png|gif|webp)(\?|$)/i.test(url) || mime.startsWith('image/'))
+    return 'image'
+  if (/\.pdf(\?|$)/i.test(url) || mime === 'application/pdf') return 'pdf'
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(url) || mime.startsWith('video/'))
+    return 'video'
+  return null
+}
+
+/** Square preview of a proof: the image itself, or its type drawn as an icon. */
+export function ProofPreview({
+  verification,
+  className,
+}: {
+  verification: Verification
+  className?: string
+}) {
+  const TypeIcon = PROOF_TYPE_ICON[verification.type]
+  const kind = proofMediaKind(verification)
+  const src = verification.thumbnail_url || verification.file_url
+  const [broken, setBroken] = useState(false)
+  return (
+    <div
+      className={cn(
+        'relative flex shrink-0 items-center justify-center overflow-hidden border border-border bg-muted',
+        className,
+      )}
+    >
+      {kind === 'image' && src && !broken ? (
+        <img
+          src={src}
+          alt=""
+          onError={() => setBroken(true)}
+          loading="lazy"
+          className="size-full object-cover"
+        />
+      ) : kind === 'pdf' ? (
+        <FilePdf className="size-6 text-muted-foreground" />
+      ) : (
+        <TypeIcon className="size-6 text-muted-foreground" />
+      )}
+    </div>
+  )
 }
 
 interface VerificationGalleryProps {
-  verifications: Verification[]
+  verifications: Array<Verification>
   onVerificationClick?: (verification: Verification) => void
   onAddClick?: () => void
   showAddButton?: boolean
@@ -87,6 +136,10 @@ interface VerificationGalleryProps {
   className?: string
 }
 
+/**
+ * Proofs as a list of document entries: preview, type, who and when, the
+ * trust points it carries and its verification state.
+ */
 export function VerificationGallery({
   verifications,
   onVerificationClick,
@@ -96,213 +149,124 @@ export function VerificationGallery({
   maxItems,
   className,
 }: VerificationGalleryProps) {
-  const displayedVerifications = maxItems
-    ? verifications.slice(0, maxItems)
-    : verifications
+  const shown = maxItems ? verifications.slice(0, maxItems) : verifications
+  const hidden = verifications.length - shown.length
 
-  const hasMore = maxItems && verifications.length > maxItems
-
-  // Calculate total trust points
-  const totalTrustPoints = verifications.reduce(
-    (sum, v) => sum + (v.trust_points || 0),
-    0,
-  )
-
-  if (verifications.length === 0 && !showAddButton) {
+  if (verifications.length === 0) {
     return (
-      <div className={cn('text-center py-8', className)}>
-        <File className="mx-auto h-12 w-12 text-muted-foreground/50" />
-        <p className="mt-2 text-sm text-muted-foreground">
-          No verifications attached
-        </p>
-      </div>
+      <ReportNotice
+        className={className}
+        title="No proof attached yet"
+        action={
+          showAddButton && onAddClick ? (
+            <Button onClick={onAddClick}>
+              <Plus />
+              Attach proof
+            </Button>
+          ) : undefined
+        }
+      >
+        Receipts, photos, bank statements and GPS readings attached to this
+        transaction will be listed here. Each one adds trust points.
+      </ReportNotice>
     )
   }
 
   return (
     <div className={className}>
-      {/* Summary header */}
-      {verifications.length > 0 && (
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">
-              {verifications.length} Verification{verifications.length !== 1 ? 's' : ''}
-            </span>
-            <span className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-              <Shield className="h-4 w-4" weight="fill" />
-              +{totalTrustPoints} points
-            </span>
-          </div>
-          {showAddButton && onAddClick && (
-            <Button size="sm" variant="outline" onClick={onAddClick}>
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Gallery grid */}
-      <div
-        className={cn(
-          'grid gap-3',
-          compact ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
-        )}
-      >
-        {displayedVerifications.map((verification) => (
-          <VerificationCard
-            key={verification.id}
-            verification={verification}
-            onClick={() => onVerificationClick?.(verification)}
-            compact={compact}
-          />
+      <ul className="divide-y divide-border">
+        {shown.map((v) => (
+          <li key={v.id}>
+            <ProofEntry
+              verification={v}
+              compact={compact}
+              onClick={
+                onVerificationClick ? () => onVerificationClick(v) : undefined
+              }
+            />
+          </li>
         ))}
-
-        {/* Add button as card */}
-        {showAddButton && onAddClick && verifications.length === 0 && (
-          <button
-            onClick={onAddClick}
-            className={cn(
-              'flex flex-col items-center justify-center gap-2 p-4 rounded-lg',
-              'border-2 border-dashed border-muted-foreground/25',
-              'hover:border-primary hover:bg-primary/5 transition-colors',
-              'text-muted-foreground hover:text-primary',
-              compact ? 'min-h-[100px]' : 'min-h-[140px]',
-            )}
-          >
-            <Plus className="h-8 w-8" />
-            <span className="text-sm font-medium">Add Proof</span>
-          </button>
-        )}
-      </div>
-
-      {/* Show more indicator */}
-      {hasMore && (
+      </ul>
+      {hidden > 0 && (
         <button
-          onClick={() => onVerificationClick?.(verifications[0])}
-          className="flex items-center justify-center gap-1 w-full mt-3 py-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+          type="button"
+          onClick={() => onVerificationClick?.(verifications[shown.length])}
+          className="flex min-h-10 w-full items-center justify-center gap-1 border-t border-border text-sm text-muted-foreground hover:text-foreground"
         >
-          +{verifications.length - maxItems} more
-          <CaretRight className="h-4 w-4" />
+          {hidden} more {hidden === 1 ? 'proof' : 'proofs'}
+          <CaretRight />
         </button>
       )}
     </div>
   )
 }
 
-interface VerificationCardProps {
+function ProofEntry({
+  verification: v,
+  compact,
+  onClick,
+}: {
   verification: Verification
-  onClick?: () => void
   compact?: boolean
-}
-
-function VerificationCard({ verification, onClick, compact }: VerificationCardProps) {
-  const Icon = VERIFICATION_ICONS[verification.type] || File
-  const status = STATUS_CONFIG[verification.status]
-  const StatusIcon = status.icon
-  const trustPoints = verification.trust_points || VERIFICATION_TRUST_POINTS[verification.type] || 0
-  const isImage = verification.file_url?.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)
-
-  return (
-    <Card
-      className={cn(
-        'group relative overflow-hidden cursor-pointer transition-all',
-        'hover:shadow-md hover:border-primary/30',
-        compact ? 'p-2' : 'p-3',
-      )}
-      onClick={onClick}
-    >
-      {/* Thumbnail or icon */}
-      <div
-        className={cn(
-          'relative rounded-lg bg-muted flex items-center justify-center overflow-hidden',
-          compact ? 'h-16' : 'h-24',
+  onClick?: () => void
+}) {
+  const who = [v.executor_name, v.location_name].filter(Boolean).join(', ')
+  const body = (
+    <>
+      <ProofPreview
+        verification={v}
+        className={compact ? 'size-12' : 'size-14 sm:size-16'}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="font-semibold">{PROOF_TYPE_LABEL[v.type]}</p>
+          <p className="figure text-lg text-foreground">
+            +{proofTrustPoints(v)}
+            <span className="ml-1 font-sans text-xs font-normal tracking-normal text-muted-foreground font-normal-width">
+              trust points
+            </span>
+          </p>
+        </div>
+        {v.description && (
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">
+            {v.description}
+          </p>
         )}
-      >
-        {isImage && verification.file_url ? (
-          <img
-            src={verification.thumbnail_url || verification.file_url}
-            alt={verification.type}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <Icon
-            className={cn(
-              'text-muted-foreground',
-              compact ? 'h-8 w-8' : 'h-12 w-12',
-            )}
-            weight="duotone"
-          />
-        )}
-
-        {/* Visibility indicator */}
-        {verification.visibility_level && verification.visibility_level !== 'full' && (
-          <div className="absolute top-1 right-1 p-1 rounded bg-background/80 backdrop-blur-sm">
-            {verification.visibility_level === 'hidden' ? (
-              <EyeSlash className="h-3 w-3 text-muted-foreground" />
-            ) : (
-              <Eye className="h-3 w-3 text-muted-foreground" />
-            )}
-          </div>
-        )}
-
-        {/* Status badge */}
-        <div
-          className={cn(
-            'absolute bottom-1 left-1 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
-            status.className,
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <StatusMark status={v.status} label={PROOF_STATE_LABEL[v.status]} />
+          <span>
+            Added {formatDate(v.created_at)}
+            {who && ` by ${who}`}
+          </span>
+          {v.visibility_level !== 'full' && (
+            <span className="inline-flex items-center gap-1">
+              <EyeSlash />
+              {PROOF_VISIBILITY_LABEL[v.visibility_level]}
+            </span>
           )}
-        >
-          <StatusIcon className="h-3 w-3" weight="fill" />
-          {!compact && status.label}
         </div>
       </div>
+    </>
+  )
 
-      {/* Info */}
-      <div className={cn('mt-2', compact ? 'space-y-0.5' : 'space-y-1')}>
-        <div className="flex items-center justify-between">
-          <span className={cn('font-medium truncate', compact ? 'text-xs' : 'text-sm')}>
-            {TYPE_LABELS[verification.type]}
-          </span>
-          <span
-            className={cn(
-              'text-emerald-600 dark:text-emerald-400 font-medium shrink-0',
-              compact ? 'text-[10px]' : 'text-xs',
-            )}
-          >
-            +{trustPoints}
-          </span>
-        </div>
-
-        {!compact && verification.description && (
-          <p className="text-xs text-muted-foreground truncate">
-            {verification.description}
-          </p>
-        )}
-
-        {!compact && verification.executor_name && (
-          <p className="text-xs text-muted-foreground truncate">
-            By: {verification.executor_name}
-          </p>
-        )}
-
-        {!compact && verification.location_name && (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-            <MapPin className="h-3 w-3 shrink-0" />
-            {verification.location_name}
-          </p>
-        )}
-      </div>
-
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-    </Card>
+  if (!onClick) {
+    return <div className="flex gap-4 py-4">{body}</div>
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Open ${PROOF_TYPE_LABEL[v.type]}${v.description ? `: ${v.description}` : ''}`}
+      className="-mx-2 flex w-[calc(100%+1rem)] gap-4 px-2 py-4 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    >
+      {body}
+    </button>
   )
 }
 
-// Compact inline list view
+// Compact inline list of proofs, for tight spaces.
 interface VerificationListProps {
-  verifications: Verification[]
+  verifications: Array<Verification>
   onVerificationClick?: (verification: Verification) => void
   className?: string
 }
@@ -312,31 +276,22 @@ export function VerificationList({
   onVerificationClick,
   className,
 }: VerificationListProps) {
-  if (verifications.length === 0) {
-    return null
-  }
-
+  if (verifications.length === 0) return null
   return (
     <div className={cn('flex flex-wrap gap-2', className)}>
-      {verifications.map((verification) => {
-        const Icon = VERIFICATION_ICONS[verification.type] || File
-        const status = STATUS_CONFIG[verification.status]
-
+      {verifications.map((v) => {
+        const TypeIcon = PROOF_TYPE_ICON[v.type]
         return (
           <button
-            key={verification.id}
-            onClick={() => onVerificationClick?.(verification)}
-            className={cn(
-              'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
-              'border transition-colors',
-              status.className,
-              'hover:opacity-80',
-            )}
+            key={v.id}
+            type="button"
+            onClick={() => onVerificationClick?.(v)}
+            className="inline-flex min-h-8 items-center gap-1.5 border border-border px-2 text-xs font-medium hover:bg-muted"
           >
-            <Icon className="h-3.5 w-3.5" />
-            {TYPE_LABELS[verification.type]}
-            <span className="text-emerald-600 dark:text-emerald-400">
-              +{verification.trust_points || VERIFICATION_TRUST_POINTS[verification.type]}
+            <TypeIcon />
+            {PROOF_TYPE_LABEL[v.type]}
+            <span className="tabular-nums text-muted-foreground">
+              +{proofTrustPoints(v)}
             </span>
           </button>
         )
@@ -345,7 +300,7 @@ export function VerificationList({
   )
 }
 
-// Verification count badge for compact display
+// Proof count with trust points, for compact display.
 interface VerificationBadgeProps {
   count: number
   totalTrustPoints: number
@@ -359,23 +314,17 @@ export function VerificationBadge({
   onClick,
   className,
 }: VerificationBadgeProps) {
-  if (count === 0) {
-    return null
-  }
-
+  if (count === 0) return null
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full',
-        'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
-        'text-xs font-medium transition-colors',
-        'hover:bg-emerald-100 dark:hover:bg-emerald-900/30',
+        'inline-flex min-h-8 items-center gap-1.5 border border-border px-2 text-xs font-medium tabular-nums hover:bg-muted',
         className,
       )}
     >
-      <Shield className="h-3.5 w-3.5" weight="fill" />
-      {count} proof{count !== 1 ? 's' : ''}
+      {count} {count === 1 ? 'proof' : 'proofs'}
       <span className="font-bold">+{totalTrustPoints}</span>
     </button>
   )

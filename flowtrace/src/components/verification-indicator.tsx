@@ -1,10 +1,5 @@
-import {
-  Shield,
-  CheckCircle,
-  Clock,
-  XCircle,
-} from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
+import { StatusLine } from '@/components/report'
 
 // Summary statistics for verifications
 interface VerificationStats {
@@ -15,7 +10,6 @@ interface VerificationStats {
   trustPoints: number
 }
 
-// Badge sizes
 type BadgeSize = 'sm' | 'md' | 'lg'
 
 interface VerificationIndicatorProps {
@@ -26,24 +20,22 @@ interface VerificationIndicatorProps {
   onClick?: () => void
 }
 
-const SIZE_CLASSES: Record<BadgeSize, { container: string; icon: string; text: string }> = {
-  sm: {
-    container: 'px-1.5 py-0.5 gap-1',
-    icon: 'h-3 w-3',
-    text: 'text-[10px]',
-  },
-  md: {
-    container: 'px-2 py-1 gap-1.5',
-    icon: 'h-3.5 w-3.5',
-    text: 'text-xs',
-  },
-  lg: {
-    container: 'px-3 py-1.5 gap-2',
-    icon: 'h-4 w-4',
-    text: 'text-sm',
-  },
+const SIZE_CLASSES: Record<BadgeSize, string> = {
+  sm: 'min-h-5 gap-1 px-1.5 text-[0.6875rem]',
+  md: 'min-h-6 gap-1.5 px-2 text-xs',
+  lg: 'min-h-8 gap-2 px-3 text-sm',
 }
 
+/** Overall proof state: every proof verified reads solid, otherwise dashed. */
+function overallStatus(stats: VerificationStats) {
+  if (stats.total === 0) return 'pending' as const
+  if (stats.rejected > 0) return 'rejected' as const
+  return stats.verified === stats.total
+    ? ('verified' as const)
+    : ('pending' as const)
+}
+
+/** Proof count for a record, with its state drawn as a line pattern. */
 export function VerificationIndicator({
   stats,
   size = 'md',
@@ -51,58 +43,32 @@ export function VerificationIndicator({
   className,
   onClick,
 }: VerificationIndicatorProps) {
-  const sizeClasses = SIZE_CLASSES[size]
-
-  if (stats.total === 0) {
-    return (
-      <div
-        className={cn(
-          'inline-flex items-center rounded-full',
-          'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400',
-          sizeClasses.container,
-          onClick && 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-colors',
-          className,
-        )}
-        onClick={onClick}
-      >
-        <Shield className={sizeClasses.icon} />
-        <span className={cn('font-medium', sizeClasses.text)}>No proofs</span>
-      </div>
-    )
-  }
-
-  // Determine overall status color
-  const verificationRate = stats.verified / stats.total
-  const statusColor =
-    verificationRate >= 0.8
-      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-      : verificationRate >= 0.5
-        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-        : 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400'
-
+  const Tag = onClick ? 'button' : 'span'
+  const status = overallStatus(stats)
   return (
-    <div
+    <Tag
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
       className={cn(
-        'inline-flex items-center rounded-full',
-        statusColor,
-        sizeClasses.container,
-        onClick && 'cursor-pointer hover:opacity-80 transition-opacity',
+        'inline-flex items-center border border-border font-medium tabular-nums',
+        stats.total === 0 && 'text-muted-foreground',
+        onClick && 'hover:bg-muted',
+        SIZE_CLASSES[size],
         className,
       )}
-      onClick={onClick}
     >
-      <Shield className={sizeClasses.icon} weight="fill" />
-      <span className={cn('font-medium', sizeClasses.text)}>
-        {stats.total} proof{stats.total !== 1 ? 's' : ''}
-      </span>
+      <StatusLine status={status} width={14} />
+      {stats.total === 0
+        ? 'No proof'
+        : `${stats.total} ${stats.total === 1 ? 'proof' : 'proofs'}`}
       {showDetails && stats.trustPoints > 0 && (
-        <span className={cn('font-bold', sizeClasses.text)}>+{stats.trustPoints}</span>
+        <span className="font-bold">+{stats.trustPoints}</span>
       )}
-    </div>
+    </Tag>
   )
 }
 
-// Compact inline badge for flow nodes
+// Compact proof count for flow nodes.
 interface NodeVerificationBadgeProps {
   count: number
   trustPoints: number
@@ -117,126 +83,95 @@ export function NodeVerificationBadge({
   className,
 }: NodeVerificationBadgeProps) {
   if (count === 0) return null
-
-  const verificationRate = count > 0 ? verifiedCount / count : 0
-  const bgColor =
-    verificationRate >= 0.8
-      ? 'bg-emerald-500/20 border-emerald-500/30'
-      : verificationRate >= 0.5
-        ? 'bg-amber-500/20 border-amber-500/30'
-        : 'bg-slate-500/20 border-slate-500/30'
-  const textColor =
-    verificationRate >= 0.8
-      ? 'text-emerald-400'
-      : verificationRate >= 0.5
-        ? 'text-amber-400'
-        : 'text-slate-400'
-
+  const status = verifiedCount >= count ? 'verified' : 'pending'
   return (
-    <div
+    <span
+      title={`${count} ${count === 1 ? 'proof' : 'proofs'}, ${verifiedCount} verified, +${trustPoints} trust points`}
       className={cn(
-        'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full',
-        'border text-[10px] font-medium',
-        bgColor,
-        textColor,
+        'inline-flex shrink-0 items-center gap-1 border border-border px-1 text-[0.6875rem] font-semibold tabular-nums',
+        status === 'pending' && 'text-muted-foreground',
         className,
       )}
     >
-      <Shield className="h-3 w-3" weight="fill" />
-      <span>{count}</span>
-      {trustPoints > 0 && <span className="font-bold">+{trustPoints}</span>}
-    </div>
+      <StatusLine status={status} width={10} />
+      {count}
+      {trustPoints > 0 && <span>+{trustPoints}</span>}
+    </span>
   )
 }
 
-// Detailed breakdown component for node details panel
+// Breakdown of proofs by state, for a node's detail panel.
 interface VerificationBreakdownProps {
   stats: VerificationStats
   className?: string
 }
 
-export function VerificationBreakdown({ stats, className }: VerificationBreakdownProps) {
+export function VerificationBreakdown({
+  stats,
+  className,
+}: VerificationBreakdownProps) {
   if (stats.total === 0) {
     return (
-      <div className={cn('rounded-xl bg-slate-800/30 p-4 ring-1 ring-slate-700/30', className)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-400">Verifications</span>
-          </div>
-        </div>
-        <p className="mt-2 text-sm text-slate-500">No verifications attached to transactions</p>
+      <div className={cn('border-t border-border pt-3', className)}>
+        <p className="text-sm font-semibold">Proofs</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          No proof is attached to this node's transactions yet.
+        </p>
       </div>
     )
   }
 
-  const verificationRate = Math.round((stats.verified / stats.total) * 100)
+  const pct = (n: number) => (n / stats.total) * 100
+  const rate = Math.round(pct(stats.verified))
 
   return (
-    <div className={cn('rounded-xl bg-slate-800/30 p-4 ring-1 ring-slate-700/30', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-emerald-400" weight="fill" />
-          <span className="text-sm font-medium text-slate-200">Verifications</span>
-        </div>
-        <div className="flex items-center gap-1 text-emerald-400">
-          <span className="text-sm font-bold">+{stats.trustPoints}</span>
-          <span className="text-xs text-slate-500">pts</span>
-        </div>
+    <div className={cn('border-t border-border pt-3', className)}>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm font-semibold">Proofs</p>
+        <p className="text-sm tabular-nums">
+          <span className="font-bold">+{stats.trustPoints}</span>{' '}
+          <span className="text-muted-foreground">trust points</span>
+        </p>
       </div>
 
-      {/* Progress bar */}
-      <div className="mt-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-slate-400">{verificationRate}% verified</span>
-          <span className="text-slate-500">{stats.total} total</span>
-        </div>
-        <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
-          <div className="flex h-full">
-            {stats.verified > 0 && (
-              <div
-                className="bg-emerald-500 transition-all"
-                style={{ width: `${(stats.verified / stats.total) * 100}%` }}
-              />
-            )}
-            {stats.pending > 0 && (
-              <div
-                className="bg-amber-500 transition-all"
-                style={{ width: `${(stats.pending / stats.total) * 100}%` }}
-              />
-            )}
-            {stats.rejected > 0 && (
-              <div
-                className="bg-red-500 transition-all"
-                style={{ width: `${(stats.rejected / stats.total) * 100}%` }}
-              />
-            )}
+      <div
+        role="img"
+        aria-label={`${rate}% of ${stats.total} proofs verified`}
+        className="mt-3 flex h-3 bg-gap"
+      >
+        <div
+          className="bg-primary"
+          style={{ width: `${pct(stats.verified)}%` }}
+        />
+        <div
+          className="bg-report"
+          style={{ width: `${pct(stats.pending)}%` }}
+        />
+        <div
+          className="bg-destructive"
+          style={{ width: `${pct(stats.rejected)}%` }}
+        />
+      </div>
+
+      <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        {(
+          [
+            ['verified', 'Verified', stats.verified],
+            ['pending', 'Awaiting review', stats.pending],
+            ['rejected', 'Rejected', stats.rejected],
+          ] as const
+        ).map(([status, label, n]) => (
+          <div key={status} className="min-w-0">
+            <dt className="flex items-center gap-1.5 text-muted-foreground">
+              <StatusLine status={status} width={14} />
+              {label}
+            </dt>
+            <dd className="mt-0.5 font-semibold tabular-nums">{n}</dd>
           </div>
-        </div>
-      </div>
-
-      {/* Status counts */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <div className="flex items-center gap-1.5 text-xs">
-          <CheckCircle className="h-3.5 w-3.5 text-emerald-400" weight="fill" />
-          <span className="text-slate-300">{stats.verified}</span>
-          <span className="text-slate-500">verified</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <Clock className="h-3.5 w-3.5 text-amber-400" weight="fill" />
-          <span className="text-slate-300">{stats.pending}</span>
-          <span className="text-slate-500">pending</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <XCircle className="h-3.5 w-3.5 text-red-400" weight="fill" />
-          <span className="text-slate-300">{stats.rejected}</span>
-          <span className="text-slate-500">rejected</span>
-        </div>
-      </div>
+        ))}
+      </dl>
     </div>
   )
 }
 
-// Export types for external use
 export type { VerificationStats }

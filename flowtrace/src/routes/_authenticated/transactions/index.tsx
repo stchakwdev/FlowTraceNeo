@@ -1,205 +1,475 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { ArrowRight, MagnifyingGlass, Plus } from '@phosphor-icons/react'
+import type { TransactionWithNodes } from '@/lib/supabase'
+import { useTransactions } from '@/lib/queries'
+import { formatAmount, formatDate, formatShortDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
-  ArrowRight,
-  MagnifyingGlass,
-  Plus,
-} from '@phosphor-icons/react'
-import { useOrgStats, useTransactions } from '@/lib/queries'
+  ProofLegend,
+  ReportNotice,
+  ReportSection,
+  StatusLine,
+  StatusMark,
+} from '@/components/report'
+
+// Status filter values in the URL use the stored verification states, so
+// other screens can link straight to e.g. /transactions?status=pending.
+const FILTERS = [
+  { value: undefined, label: 'All' },
+  { value: 'verified', label: 'Evidenced' },
+  { value: 'pending', label: 'Awaiting proof' },
+  { value: 'flagged', label: 'Flagged' },
+] as const
+
+type StatusFilter = 'verified' | 'pending' | 'flagged'
+
+const ALIASES: Record<string, StatusFilter> = {
+  verified: 'verified',
+  evidenced: 'verified',
+  pending: 'pending',
+  'awaiting-proof': 'pending',
+  awaiting: 'pending',
+  flagged: 'flagged',
+}
+
+// Search params pass through unchanged (rewriting them on the server makes
+// the router answer a hard load with an empty redirect); aliases such as
+// ?status=evidenced or the older ?filter=pending are resolved when read.
+type TransactionSearch = { status?: string; filter?: string; q?: string }
+
+const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined)
+
+function resolveStatus(search: TransactionSearch): StatusFilter | undefined {
+  const raw = search.status ?? search.filter
+  return raw ? ALIASES[raw.toLowerCase()] : undefined
+}
 
 export const Route = createFileRoute('/_authenticated/transactions/')({
+  validateSearch: (search: Record<string, unknown>): TransactionSearch => ({
+    status: str(search.status),
+    filter: str(search.filter),
+    q: str(search.q),
+  }),
   component: TransactionList,
 })
 
 function TransactionList() {
-  const [filter, setFilter] = useState<
-    'all' | 'pending' | 'verified' | 'flagged'
-  >('all')
-  const [search, setSearch] = useState('')
+  const search = Route.useSearch()
+  const status = resolveStatus(search)
+  const q = search.q
+  const navigate = useNavigate({ from: Route.fullPath })
+  const {
+    data: transactions,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useTransactions()
 
-  const { data: transactions, isLoading, error } = useTransactions()
-  const { data: stats } = useOrgStats()
+  const counts = useMemo(() => {
+    const c = { all: 0, verified: 0, pending: 0, flagged: 0 }
+    for (const t of transactions ?? []) {
+      c.all++
+      if (t.verification_status in c) c[t.verification_status as StatusFilter]++
+    }
+    return c
+  }, [transactions])
 
-  const filteredTransactions = useMemo(() => {
-    if (!transactions) return []
-    return transactions.filter((t) => {
-      const matchesFilter = filter === 'all' || t.verification_status === filter
-      const fromName = t.from_node?.name ?? ''
-      const toName = t.to_node?.name ?? ''
-      const matchesSearch =
-        t.description.toLowerCase().includes(search.toLowerCase()) ||
-        fromName.toLowerCase().includes(search.toLowerCase()) ||
-        toName.toLowerCase().includes(search.toLowerCase())
-      return matchesFilter && matchesSearch
+  const rows = useMemo(() => {
+    const needle = (q ?? '').trim().toLowerCase()
+    return (transactions ?? []).filter((t) => {
+      if (status && t.verification_status !== status) return false
+      if (!needle) return true
+      return [
+        t.description,
+        t.reference,
+        t.category,
+        t.from_node?.name,
+        t.to_node?.name,
+      ].some((field) => field?.toLowerCase().includes(needle))
     })
-  }, [transactions, filter, search])
+  }, [transactions, status, q])
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
+  const currencies = new Set(rows.map((t) => t.currency))
+  const total =
+    currencies.size === 1 ? rows.reduce((sum, t) => sum + t.amount, 0) : null
 
-  const statusDot = {
-    pending: 'bg-warning',
-    verified: 'bg-success',
-    flagged: 'bg-destructive',
-    rejected: 'bg-muted-foreground',
-  }
+  const setSearch = (value: string) =>
+    navigate({
+      search: (prev) => ({ ...prev, q: value || undefined }),
+      replace: true,
+    })
+
+  const filtered = status !== undefined || !!q
 
   return (
-    <div className="px-6 py-6">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="section-label">FINANCE</p>
-          <h1 className="mt-1 font-display text-2xl font-bold">Transactions</h1>
-          <p className="text-sm text-muted-foreground">
-            Track and verify all financial transactions
+          <h1 className="text-4xl sm:text-5xl">Transactions</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {transactions
+              ? `${counts.all} movements recorded · ${counts.pending} awaiting proof · ${counts.flagged} flagged`
+              : 'Every movement of money, with the proof attached to it'}
           </p>
         </div>
         <Link
           to="/transactions/new"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" />
-          Add Transaction
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search transactions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
-        <div className="flex gap-1 rounded-lg border border-border p-0.5">
-          {(['all', 'pending', 'verified', 'flagged'] as const).map(
-            (status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  filter === status
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </button>
-            ),
+          className={cn(
+            buttonVariants({ size: 'lg' }),
+            'self-start sm:self-auto',
           )}
-        </div>
-      </div>
+        >
+          <Plus />
+          Record a transaction
+        </Link>
+      </header>
 
-      {/* Stats Row - with left accent bars */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="financial-figure text-2xl font-bold">{stats?.total ?? 0}</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-warning" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Pending</p>
-            <p className="financial-figure text-2xl font-bold">
-              {stats?.pending ?? 0}
-            </p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-success" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Verified</p>
-            <p className="financial-figure text-2xl font-bold">
-              {stats?.verified ?? 0}
-            </p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-destructive" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Flagged</p>
-            <p className="financial-figure text-2xl font-bold">
-              {stats?.flagged ?? 0}
-            </p>
-          </div>
-        </div>
-      </div>
+      <ReportSection
+        className="mt-8"
+        title="Movements"
+        meta={<ProofLegend className="hidden md:flex" />}
+      >
+        {/* Filters */}
+        <div className="flex flex-col gap-3 border-b border-border py-3 lg:flex-row lg:items-center lg:justify-between">
+          <nav aria-label="Filter by proof status" className="flex">
+            <ul className="flex flex-wrap gap-px border border-border bg-border">
+              {FILTERS.map((f) => {
+                const active = status === f.value
+                const n = f.value ? counts[f.value] : counts.all
+                return (
+                  <li key={f.label} className="grow bg-background sm:grow-0">
+                    <Link
+                      to="/transactions"
+                      search={(prev) => ({ q: prev.q, status: f.value })}
+                      replace
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'flex h-10 items-center justify-center gap-2 px-3 text-sm whitespace-nowrap transition-colors',
+                        active
+                          ? 'bg-primary font-semibold text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      )}
+                    >
+                      {f.value && (
+                        <StatusLine
+                          status={f.value}
+                          width={20}
+                          className={cn(
+                            active &&
+                              '[&_line]:stroke-primary-foreground [&_path]:stroke-primary-foreground',
+                          )}
+                        />
+                      )}
+                      {f.label}
+                      {transactions && (
+                        <span className="tabular-nums opacity-80">{n}</span>
+                      )}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
 
-      {/* Transaction List */}
-      <div className="rounded-lg border border-border bg-card">
+          <div className="relative w-full lg:max-w-xs">
+            <label htmlFor="txn-search" className="sr-only">
+              Search transactions
+            </label>
+            <MagnifyingGlass
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              id="txn-search"
+              type="search"
+              value={q ?? ''}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Description, reference or node"
+              className="h-10 pl-9"
+            />
+          </div>
+        </div>
+
         {isLoading ? (
-          <div className="divide-y divide-border">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4">
-                <div className="flex-1 space-y-2">
-                  <div className="h-5 w-48 skeleton-shimmer rounded" />
-                  <div className="h-4 w-64 skeleton-shimmer rounded" />
-                </div>
-                <div className="h-6 w-24 skeleton-shimmer rounded" />
-              </div>
-            ))}
-          </div>
+          <LoadingRows />
         ) : error ? (
-          <div className="p-8 text-center">
-            <p className="text-destructive">Error loading transactions</p>
-          </div>
-        ) : filteredTransactions.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground">No transactions found</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {filteredTransactions.map((transaction) => (
-              <Link
-                key={transaction.id}
-                to="/transactions/$id"
-                params={{ id: transaction.id }}
-                className="flex items-center justify-between p-4 transition-colors hover:bg-muted"
+          <ReportNotice
+            tone="error"
+            title="Transactions could not be loaded"
+            action={
+              <Button
+                variant="outline"
+                onClick={() => refetch()}
+                disabled={isRefetching}
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <p className="font-medium">{transaction.description}</p>
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span
-                        className={`inline-flex h-1.5 w-1.5 rounded-full ${statusDot[transaction.verification_status]}`}
-                      />
-                      {transaction.verification_status}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{transaction.from_node?.name ?? 'Unknown'}</span>
-                    <ArrowRight className="h-3 w-3" />
-                    <span>{transaction.to_node?.name ?? 'Unknown'}</span>
-                    <span className="mx-2">&middot;</span>
-                    <span>{transaction.transaction_date}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="financial-figure font-semibold">
-                    {formatCurrency(transaction.amount, transaction.currency)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {transaction.category ?? 'Uncategorized'}
-                  </p>
-                </div>
+                {isRefetching ? 'Trying again…' : 'Try again'}
+              </Button>
+            }
+          >
+            {error instanceof Error ? `${error.message}. ` : ''}Check your
+            connection, then try again.
+          </ReportNotice>
+        ) : counts.all === 0 ? (
+          <ReportNotice
+            title="No transactions recorded yet"
+            action={
+              <Link to="/transactions/new" className={buttonVariants()}>
+                <Plus />
+                Record a transaction
               </Link>
-            ))}
-          </div>
+            }
+          >
+            Each grant received, budget allocated and payment made appears here
+            with its proof. Record the first one to start the report.
+          </ReportNotice>
+        ) : rows.length === 0 ? (
+          <ReportNotice
+            title="No transactions match"
+            action={
+              <Link
+                to="/transactions"
+                search={{}}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Clear filters
+              </Link>
+            }
+          >
+            {q
+              ? `Nothing ${status ? `${FILTERS.find((f) => f.value === status)?.label.toLowerCase()} ` : ''}matches “${q}”.`
+              : 'No transactions have this status.'}
+          </ReportNotice>
+        ) : (
+          <>
+            <TransactionTable rows={rows} total={total} filtered={filtered} />
+            <TransactionStack rows={rows} total={total} filtered={filtered} />
+          </>
         )}
-      </div>
+      </ReportSection>
+    </div>
+  )
+}
+
+function TotalLabel({ count, filtered }: { count: number; filtered: boolean }) {
+  return (
+    <>
+      {filtered ? 'Shown' : 'Total'}: {count}{' '}
+      {count === 1 ? 'transaction' : 'transactions'}
+    </>
+  )
+}
+
+function TransactionTable({
+  rows,
+  total,
+  filtered,
+}: {
+  rows: Array<TransactionWithNodes>
+  total: number | null
+  filtered: boolean
+}) {
+  const navigate = useNavigate()
+  return (
+    <div className="hidden overflow-x-auto md:block">
+      <table className="w-full min-w-[56rem] text-sm">
+        <caption className="sr-only">
+          Transactions with amount, nodes and proof status
+        </caption>
+        <thead>
+          <tr className="border-b border-border text-left text-xs text-muted-foreground">
+            <th scope="col" className="py-2.5 pr-4 font-semibold">
+              Date
+            </th>
+            <th scope="col" className="py-2.5 pr-4 font-semibold">
+              Description
+            </th>
+            <th scope="col" className="py-2.5 pr-4 font-semibold">
+              From → To
+            </th>
+            <th scope="col" className="py-2.5 pr-4 text-right font-semibold">
+              Amount
+            </th>
+            <th scope="col" className="py-2.5 pr-4 text-right font-semibold">
+              Proofs
+            </th>
+            <th scope="col" className="py-2.5 font-semibold">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t) => (
+            <tr
+              key={t.id}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest('a')) return
+                navigate({ to: '/transactions/$id', params: { id: t.id } })
+              }}
+              className="cursor-pointer border-b border-border align-top transition-colors hover:bg-muted"
+            >
+              <td className="py-3 pr-4 whitespace-nowrap tabular-nums text-muted-foreground">
+                <time dateTime={t.transaction_date}>
+                  {formatDate(t.transaction_date)}
+                </time>
+              </td>
+              <td className="max-w-[22rem] py-3 pr-4">
+                <Link
+                  to="/transactions/$id"
+                  params={{ id: t.id }}
+                  className="font-semibold underline-offset-4 hover:underline focus-visible:underline"
+                >
+                  {t.description}
+                </Link>
+                <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                  {t.reference ?? 'No reference'}
+                </p>
+              </td>
+              <td className="py-3 pr-4">
+                <span className="inline-flex flex-wrap items-center gap-x-1.5">
+                  <span>{t.from_node?.name ?? 'Unassigned'}</span>
+                  <ArrowRight
+                    aria-label="to"
+                    className="size-3.5 text-muted-foreground"
+                  />
+                  <span>{t.to_node?.name ?? 'Unassigned'}</span>
+                </span>
+              </td>
+              <td className="py-3 pr-4 text-right whitespace-nowrap">
+                <span className="text-xs text-muted-foreground">
+                  {t.currency}
+                </span>{' '}
+                <span className="font-semibold tabular-nums">
+                  {formatAmount(t.amount)}
+                </span>
+              </td>
+              <td
+                className={cn(
+                  'py-3 pr-4 text-right tabular-nums',
+                  t.verification_count === 0 && 'text-muted-foreground',
+                )}
+              >
+                {t.verification_count}
+              </td>
+              <td className="py-3">
+                <StatusMark status={t.verification_status} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        {total !== null && (
+          <tfoot>
+            <tr className="border-t-2 border-foreground">
+              <td
+                colSpan={3}
+                className="py-3 pr-4 text-xs text-muted-foreground"
+              >
+                <TotalLabel count={rows.length} filtered={filtered} />
+              </td>
+              <td className="py-3 pr-4 text-right whitespace-nowrap">
+                <span className="text-xs text-muted-foreground">
+                  {rows[0].currency}
+                </span>{' '}
+                <span className="font-bold tabular-nums">
+                  {formatAmount(total)}
+                </span>
+              </td>
+              <td colSpan={2} />
+            </tr>
+          </tfoot>
+        )}
+      </table>
+    </div>
+  )
+}
+
+function TransactionStack({
+  rows,
+  total,
+  filtered,
+}: {
+  rows: Array<TransactionWithNodes>
+  total: number | null
+  filtered: boolean
+}) {
+  return (
+    <div className="md:hidden">
+      <ul className="divide-y divide-border">
+        {rows.map((t) => (
+          <li key={t.id}>
+            <Link
+              to="/transactions/$id"
+              params={{ id: t.id }}
+              className="-mx-4 block px-4 py-3.5 transition-colors hover:bg-muted"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 font-semibold">{t.description}</p>
+                <p className="shrink-0 text-right whitespace-nowrap">
+                  <span className="text-xs text-muted-foreground">
+                    {t.currency}
+                  </span>{' '}
+                  <span className="font-semibold tabular-nums">
+                    {formatAmount(t.amount)}
+                  </span>
+                </p>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t.from_node?.name ?? 'Unassigned'} →{' '}
+                {t.to_node?.name ?? 'Unassigned'}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <StatusMark status={t.verification_status} />
+                <span className="tabular-nums">
+                  {formatShortDate(t.transaction_date)}
+                </span>
+                <span className="tabular-nums">
+                  {t.verification_count}{' '}
+                  {t.verification_count === 1 ? 'proof' : 'proofs'}
+                </span>
+                {t.reference && (
+                  <span className="font-mono">{t.reference}</span>
+                )}
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {total !== null && (
+        <p className="flex items-baseline justify-between gap-3 border-t-2 border-foreground py-3 text-xs text-muted-foreground">
+          <span>
+            <TotalLabel count={rows.length} filtered={filtered} />
+          </span>
+          <span>
+            {rows[0].currency}{' '}
+            <span className="text-sm font-bold text-foreground tabular-nums">
+              {formatAmount(total)}
+            </span>
+          </span>
+        </p>
+      )}
+    </div>
+  )
+}
+
+function LoadingRows() {
+  return (
+    <div aria-busy="true" aria-label="Loading transactions">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-6 border-b border-border py-4"
+        >
+          <div className="skeleton-shimmer h-4 w-20" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton-shimmer h-4 w-2/3 max-w-sm" />
+            <div className="skeleton-shimmer h-3 w-1/3 max-w-40" />
+          </div>
+          <div className="skeleton-shimmer h-4 w-24" />
+        </div>
+      ))}
     </div>
   )
 }

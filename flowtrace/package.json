@@ -14,9 +14,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
-    "@fontsource-variable/dm-sans": "^5.2.8",
+    "@fontsource-variable/archivo": "5.2.8",
     "@fontsource/ibm-plex-mono": "^5.2.7",
-    "@fontsource/ibm-plex-sans": "^5.2.8",
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/vite": "^4.0.6",

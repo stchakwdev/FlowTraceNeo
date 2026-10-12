@@ -1,379 +1,449 @@
 import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
-  Calendar,
-  CircleNotch,
-  Clock,
+  ArrowSquareOut,
   DotsThree,
-  Heart,
-  PencilSimple,
+  Pause,
+  Play,
+  Plus,
   Trash,
-  TrendUp,
-  Users,
 } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { CampaignStatus } from '@/lib/supabase'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { CampaignProgressBar } from '@/components/campaign-progress-bar'
-import { CampaignStatusBadge, PaymentStatusBadge } from '@/components/campaign-status-badge'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  KeyFigure,
+  KeyFigures,
+  ProofLegend,
+  ReportNotice,
+  ReportSection,
+} from '@/components/report'
+import { CampaignCoverage } from '@/components/campaign-progress-bar'
+import {
+  CampaignStatusMark,
+  PaymentStatusMark,
+  campaignTiming,
+} from '@/components/campaign-status-badge'
 import { DonationModal } from '@/components/donation-modal'
+import {
+  EarmarkList,
+  ProofSpendingList,
+} from '@/components/public-campaign-header'
 import {
   useCampaign,
   useCampaignStats,
+  useDeleteCampaign,
   useDonations,
   useUpdateCampaign,
-  useDeleteCampaign,
 } from '@/lib/queries'
-import type { CampaignStatus } from '@/lib/supabase'
+import { getCampaignReport } from '@/lib/data'
+import { formatDate, formatMoney, formatShortDate } from '@/lib/format'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$id')({
   component: CampaignDetailPage,
 })
 
+const METHOD_LABEL: Record<string, string> = {
+  mpesa: 'M-Pesa',
+  card: 'Card',
+  bank: 'Bank transfer',
+  paypal: 'PayPal',
+}
+
 function CampaignDetailPage() {
   const { id } = Route.useParams()
   const navigate = Route.useNavigate()
-  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false)
+  const [donationOpen, setDonationOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  const { data: campaign, isLoading } = useCampaign(id)
+  const { data: campaign, isLoading, error, refetch } = useCampaign(id)
   const { data: stats } = useCampaignStats(id)
-  const { data: donations, isLoading: loadingDonations } = useDonations(id)
+  const donationsQuery = useDonations(id)
+  const report = useQuery({
+    queryKey: ['campaign-report', id, campaign?.current_amount],
+    queryFn: () => getCampaignReport(id),
+    enabled: !!campaign,
+    staleTime: 30 * 1000,
+  })
   const updateCampaign = useUpdateCampaign()
   const deleteCampaign = useDeleteCampaign()
 
-  const formatAmount = (amount: number, currency = 'KES') => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'N/A'
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
-  const handleStatusChange = async (newStatus: CampaignStatus) => {
+  const setStatus = async (status: CampaignStatus) => {
+    setActionError(null)
     try {
-      await updateCampaign.mutateAsync({
-        id,
-        updates: { status: newStatus },
-      })
-    } catch (error) {
-      console.error('Failed to update campaign status:', error)
+      await updateCampaign.mutateAsync({ id, updates: { status } })
+    } catch (e) {
+      setActionError(
+        `The campaign status did not change${e instanceof Error ? `: ${e.message}` : '.'} Try again.`,
+      )
     }
   }
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this campaign? This cannot be undone.')) {
-      try {
-        await deleteCampaign.mutateAsync(id)
-        navigate({ to: '/campaigns' })
-      } catch (error) {
-        console.error('Failed to delete campaign:', error)
-      }
+    try {
+      await deleteCampaign.mutateAsync(id)
+      setDeleteOpen(false)
+      void navigate({ to: '/campaigns' })
+    } catch (e) {
+      setDeleteOpen(false)
+      setActionError(
+        `The draft was not deleted${e instanceof Error ? `: ${e.message}` : '.'}`,
+      )
     }
   }
 
+  const page = 'mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8'
+  const backLink = (
+    <Link
+      to="/campaigns"
+      className="inline-flex min-h-10 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft />
+      All campaigns
+    </Link>
+  )
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <CircleNotch className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className={page}>
+        {backLink}
+        <ReportNotice title="Loading campaign" />
       </div>
     )
   }
 
-  if (!campaign) {
+  if (error || !campaign) {
     return (
-      <div className="px-6 py-6">
-        <Card className="p-12 text-center">
-          <h3 className="text-lg font-medium mb-2">Campaign not found</h3>
-          <p className="text-muted-foreground mb-4">
-            The campaign you're looking for doesn't exist or has been deleted.
-          </p>
-          <Button nativeButton={false} render={<Link to="/campaigns" />}>
-            Back to Campaigns
-          </Button>
-        </Card>
+      <div className={page}>
+        {backLink}
+        <ReportSection title="Campaign" className="mt-4">
+          <ReportNotice
+            tone={error ? 'error' : 'neutral'}
+            title={error ? 'This campaign could not be loaded' : 'Campaign not found'}
+            action={
+              error ? (
+                <Button variant="outline" className="h-10" onClick={() => void refetch()}>
+                  Try again
+                </Button>
+              ) : (
+                <Link to="/campaigns" className={buttonVariants({ variant: 'outline' })}>
+                  Back to campaigns
+                </Link>
+              )
+            }
+          >
+            {error
+              ? error.message
+              : 'It may have been deleted, or the link is wrong. Open it again from the campaign list.'}
+          </ReportNotice>
+        </ReportSection>
       </div>
     )
   }
+
+  const timing = campaignTiming(campaign)
+  const donations = donationsQuery.data ?? []
+  const publicUrl =
+    campaign.is_public && campaign.public_slug ? `/donate/${campaign.public_slug}` : null
+  const canReceive = campaign.status === 'active' && !timing.ended
 
   return (
-    <div className="px-6 py-6">
-      {/* Back link */}
-      <Link
-        to="/campaigns"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Campaigns
-      </Link>
+    <div className={page}>
+      {backLink}
 
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold tracking-tight">{campaign.name}</h1>
-            <CampaignStatusBadge status={campaign.status} />
-          </div>
-          {campaign.description && (
-            <p className="text-muted-foreground max-w-2xl">{campaign.description}</p>
-          )}
-          {campaign.category && (
-            <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground capitalize">
-              {campaign.category}
-            </span>
-          )}
+      <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-4xl sm:text-5xl">{campaign.name}</h1>
+          <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <CampaignStatusMark status={campaign.status} />
+            <span>{timing.label}</span>
+            {campaign.target_node && <span>Funds {campaign.target_node.name}</span>}
+          </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          {campaign.status === 'active' && (
-            <Button onClick={() => setIsDonationModalOpen(true)}>
-              <Heart className="h-4 w-4 mr-2" weight="fill" />
-              Donate
+        <div className="flex flex-wrap items-center gap-2">
+          {canReceive && (
+            <Button className="h-10" onClick={() => setDonationOpen(true)}>
+              <Plus />
+              Record donation
             </Button>
           )}
+          {publicUrl && campaign.status === 'active' && (
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: 'outline', className: 'h-10' })}
+            >
+              <ArrowSquareOut />
+              Donate page
+            </a>
+          )}
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
-              <DotsThree className="h-5 w-5" weight="bold" />
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-10"
+                  aria-label="More campaign actions"
+                />
+              }
+            >
+              <DotsThree className="size-5" weight="bold" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <PencilSimple className="h-4 w-4 mr-2" />
-                Edit Campaign
-              </DropdownMenuItem>
               {campaign.status === 'draft' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('active')}>
-                  <TrendUp className="h-4 w-4 mr-2" />
-                  Activate Campaign
+                <DropdownMenuItem onClick={() => void setStatus('active')}>
+                  <Play />
+                  Open to donors
                 </DropdownMenuItem>
               )}
               {campaign.status === 'active' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('paused')}>
-                  <Clock className="h-4 w-4 mr-2" />
-                  Pause Campaign
+                <DropdownMenuItem onClick={() => void setStatus('paused')}>
+                  <Pause />
+                  Pause campaign
                 </DropdownMenuItem>
               )}
               {campaign.status === 'paused' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('active')}>
-                  <TrendUp className="h-4 w-4 mr-2" />
-                  Resume Campaign
+                <DropdownMenuItem onClick={() => void setStatus('active')}>
+                  <Play />
+                  Resume campaign
                 </DropdownMenuItem>
               )}
               {campaign.status === 'draft' && (
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                  <Trash className="h-4 w-4 mr-2" />
-                  Delete Campaign
+                <DropdownMenuItem
+                  onClick={() => setDeleteOpen(true)}
+                  className="text-destructive"
+                >
+                  <Trash />
+                  Delete draft
                 </DropdownMenuItem>
               )}
+              {campaign.status !== 'draft' &&
+                campaign.status !== 'active' &&
+                campaign.status !== 'paused' && (
+                  <DropdownMenuItem disabled>No actions for a closed campaign</DropdownMenuItem>
+                )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Progress Card */}
-      <Card className="mt-6">
-        <CardContent className="p-6">
-          <CampaignProgressBar
-            current={campaign.current_amount}
+      {actionError && (
+        <p role="alert" className="mt-3 text-sm font-semibold text-destructive">
+          {actionError}
+        </p>
+      )}
+
+      {campaign.description && (
+        <p className="mt-4 max-w-[68ch] text-base text-foreground/85">
+          {campaign.description}
+        </p>
+      )}
+
+      <ReportSection
+        title="Funding coverage"
+        className="mt-8"
+        meta={<span>{campaign.currency}</span>}
+      >
+        <div className="py-5">
+          <CampaignCoverage
+            raised={campaign.current_amount}
             target={campaign.target_amount}
+            evidenced={report.data?.evidenced_amount}
             currency={campaign.currency}
             size="lg"
           />
-        </CardContent>
-      </Card>
-
-      {/* Stats Grid */}
-      <div className="mt-6 grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-            <TrendUp className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmount(stats?.total_raised || campaign.current_amount, campaign.currency)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Donations</CardTitle>
-            <Heart className="h-4 w-4 text-pink-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.donation_count || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.unique_donors || 0} unique donors
+          {report.error && (
+            <p className="mt-2 text-xs text-destructive">
+              Spending with proof could not be loaded: {report.error.message}
             </p>
-          </CardContent>
-        </Card>
+          )}
+        </div>
+        <KeyFigures className="border-t">
+          <KeyFigure scale="sm" value={stats?.donation_count ?? '–'} label="Confirmed donations" />
+          <KeyFigure scale="sm" value={stats?.unique_donors ?? '–'} label="Donors" />
+          <KeyFigure
+            scale="sm"
+            value={stats ? formatMoney(stats.avg_donation, campaign.currency) : '–'}
+            label="Average gift"
+          />
+          <KeyFigure
+            scale="sm"
+            value={
+              timing.daysLeft !== null
+                ? timing.daysLeft
+                : timing.ended
+                  ? 'Ended'
+                  : 'Open'
+            }
+            label={
+              timing.daysLeft !== null
+                ? `Days left, to ${formatShortDate(campaign.ends_at!)}`
+                : timing.ended && campaign.ends_at
+                  ? `on ${formatDate(campaign.ends_at)}`
+                  : 'No end date'
+            }
+          />
+        </KeyFigures>
+      </ReportSection>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Avg Donation</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmount(stats?.avg_donation || 0, campaign.currency)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Days Active</CardTitle>
-            <Calendar className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.days_active || 0}</div>
-            {stats?.days_remaining !== null && stats?.days_remaining !== undefined && (
-              <p className="text-xs text-muted-foreground">
-                {stats.days_remaining} days remaining
-              </p>
+      <div className="mt-8 grid gap-8 lg:grid-cols-3">
+        <div className="min-w-0 space-y-8 lg:col-span-2">
+          <ReportSection
+            title="Donations"
+            meta={<span className="tabular-nums">{donations.length} recorded</span>}
+          >
+            {donationsQuery.isLoading ? (
+              <ReportNotice title="Loading donations" />
+            ) : donationsQuery.error ? (
+              <ReportNotice tone="error" title="Donations could not be loaded">
+                {donationsQuery.error.message}
+              </ReportNotice>
+            ) : donations.length === 0 ? (
+              <ReportNotice title="No donations yet">
+                Gifts appear here as they are made on the donate page or recorded
+                with Record donation.
+              </ReportNotice>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[34rem] text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                      <th scope="col" className="py-2 pr-4 font-semibold">Donor</th>
+                      <th scope="col" className="py-2 pr-4 font-semibold">Date</th>
+                      <th scope="col" className="py-2 pr-4 font-semibold">Payment</th>
+                      <th scope="col" className="py-2 text-right font-semibold">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {donations.map((d) => (
+                      <tr key={d.id} className="border-b border-border">
+                        <td className="py-2.5 pr-4 font-medium">
+                          {d.is_anonymous ? 'Anonymous' : d.donor_name || 'Anonymous'}
+                          {d.earmarked_node && (
+                            <span className="block text-xs font-normal text-muted-foreground">
+                              For {d.earmarked_node.name}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-4 text-muted-foreground tabular-nums">
+                          {formatShortDate(d.created_at)}
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <PaymentStatusMark status={d.payment_status} />
+                          <span className="block text-xs text-muted-foreground">
+                            {METHOD_LABEL[d.payment_method ?? ''] ?? d.payment_method}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right font-semibold tabular-nums">
+                          {formatMoney(d.amount, d.currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </ReportSection>
 
-      {/* Campaign Details */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* Donations List */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Donations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingDonations ? (
-                <div className="flex items-center justify-center py-8">
-                  <CircleNotch className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : donations && donations.length > 0 ? (
-                <div className="space-y-3">
-                  {donations.map((donation) => (
-                    <div
-                      key={donation.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                          <Heart className="h-5 w-5 text-primary" weight="fill" />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {donation.is_anonymous
-                              ? 'Anonymous'
-                              : donation.donor_name || 'Anonymous'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(donation.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <PaymentStatusBadge status={donation.payment_status} size="sm" />
-                        <span className="font-semibold">
-                          {formatAmount(donation.amount, donation.currency)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Heart className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No donations yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ReportSection title="Recent programme spending" meta={<ProofLegend />}>
+            {report.isLoading ? (
+              <ReportNotice title="Loading spending" />
+            ) : report.error ? (
+              <ReportNotice tone="error" title="Spending could not be loaded">
+                {report.error.message}
+              </ReportNotice>
+            ) : report.data && report.data.spending.length > 0 ? (
+              <ProofSpendingList spending={report.data.spending} />
+            ) : (
+              <ReportNotice title="No spending recorded yet">
+                Payments out of this campaign's projects appear here with their
+                proof once they are recorded as transactions.
+              </ReportNotice>
+            )}
+          </ReportSection>
         </div>
 
-        {/* Campaign Info Sidebar */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Campaign Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Target</span>
-                <span className="font-medium">
-                  {formatAmount(campaign.target_amount, campaign.currency)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Currency</span>
-                <span className="font-medium">{campaign.currency}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Started</span>
-                <span className="font-medium">{formatDate(campaign.starts_at)}</span>
-              </div>
-              {campaign.ends_at && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Ends</span>
-                  <span className="font-medium">{formatDate(campaign.ends_at)}</span>
+        <div className="min-w-0 space-y-8">
+          <ReportSection title="Details">
+            <dl className="divide-y divide-border text-sm">
+              {[
+                ['Target', formatMoney(campaign.target_amount, campaign.currency)],
+                ['Funds', campaign.target_node?.name ?? 'Not tied to one project'],
+                ['Category', campaign.category ? campaign.category[0].toUpperCase() + campaign.category.slice(1) : 'None'],
+                ['Started', formatDate(campaign.starts_at)],
+                ['Ends', campaign.ends_at ? formatDate(campaign.ends_at) : 'No end date'],
+                ['Visibility', campaign.is_public ? 'Public donate page' : 'Private'],
+                ['After target', campaign.allow_overflow ? 'Keeps accepting gifts' : 'Closes to new gifts'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 py-2.5">
+                  <dt className="text-muted-foreground">{k}</dt>
+                  <dd className="text-right font-medium tabular-nums">{v}</dd>
                 </div>
-              )}
-              {campaign.target_node && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Target Project</span>
-                  <span className="font-medium">{campaign.target_node.name}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Visibility</span>
-                <span className="font-medium">
-                  {campaign.is_public ? 'Public' : 'Private'}
-                </span>
+              ))}
+            </dl>
+            {publicUrl && (
+              <div className="border-t border-border py-3">
+                <p className="text-xs text-muted-foreground">Public link</p>
+                <code className="mt-1 block font-mono text-xs break-all">{publicUrl}</code>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Allow Overflow</span>
-                <span className="font-medium">
-                  {campaign.allow_overflow ? 'Yes' : 'No'}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+          </ReportSection>
 
-          {campaign.public_slug && campaign.is_public && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Public Link</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <code className="block p-2 rounded bg-muted text-xs break-all">
-                  /donate/{campaign.public_slug}
-                </code>
-              </CardContent>
-            </Card>
+          {report.data && report.data.earmarks.length > 0 && (
+            <ReportSection title="Where gifts can go">
+              <EarmarkList earmarks={report.data.earmarks} currency={campaign.currency} />
+            </ReportSection>
           )}
         </div>
       </div>
 
-      {/* Donation Modal */}
       <DonationModal
         campaign={campaign}
-        isOpen={isDonationModalOpen}
-        onClose={() => setIsDonationModalOpen(false)}
+        earmarks={report.data?.earmarks}
+        isOpen={donationOpen}
+        onClose={() => setDonationOpen(false)}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {campaign.name} has not been opened to donors. Deleting it cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep draft</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={deleteCampaign.isPending}
+              onClick={() => void handleDelete()}
+            >
+              Delete draft
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

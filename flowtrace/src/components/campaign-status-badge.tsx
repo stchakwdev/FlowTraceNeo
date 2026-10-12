@@ -1,124 +1,125 @@
-import {
-  CheckCircle,
-  Circle,
-  Clock,
-  Pause,
-  XCircle,
-} from '@phosphor-icons/react'
+import type { Campaign, CampaignStatus, PaymentStatus } from '@/lib/supabase'
+import { StatusMark } from '@/components/report'
+import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { CampaignStatus } from '@/lib/supabase'
 
-interface CampaignStatusBadgeProps {
-  status: CampaignStatus
-  size?: 'sm' | 'md'
-  showIcon?: boolean
-}
-
-const statusConfig: Record<
+// Campaign state is drawn as a short line sample plus a word, like proof
+// state: a solid blue line for a live campaign, solid ink once it is complete,
+// dashed while it is a draft or paused, dotted when it was cancelled.
+const CAMPAIGN_STATUS: Record<
   CampaignStatus,
-  {
-    label: string
-    icon: typeof Circle
-    className: string
-  }
+  { label: string; dash?: string; stroke: string; text: string }
 > = {
+  active: { label: 'Active', stroke: 'stroke-primary', text: 'text-foreground' },
+  completed: {
+    label: 'Completed',
+    stroke: 'stroke-foreground',
+    text: 'text-foreground',
+  },
   draft: {
     label: 'Draft',
-    icon: Circle,
-    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  },
-  active: {
-    label: 'Active',
-    icon: Clock,
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    dash: '6 5',
+    stroke: 'stroke-muted-foreground',
+    text: 'text-muted-foreground',
   },
   paused: {
     label: 'Paused',
-    icon: Pause,
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  },
-  completed: {
-    label: 'Completed',
-    icon: CheckCircle,
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    dash: '6 5',
+    stroke: 'stroke-muted-foreground',
+    text: 'text-muted-foreground',
   },
   cancelled: {
     label: 'Cancelled',
-    icon: XCircle,
-    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    dash: '2 5',
+    stroke: 'stroke-muted-foreground',
+    text: 'text-muted-foreground',
   },
 }
 
-export function CampaignStatusBadge({
+export function CampaignStatusMark({
   status,
-  size = 'md',
-  showIcon = true,
-}: CampaignStatusBadgeProps) {
-  const config = statusConfig[status]
-  const Icon = config.icon
-
+  className,
+}: {
+  status: CampaignStatus
+  className?: string
+}) {
+  const s = CAMPAIGN_STATUS[status]
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full font-medium',
-        config.className,
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs',
+        'inline-flex items-center gap-2 text-xs font-semibold whitespace-nowrap',
+        s.text,
+        className,
       )}
     >
-      {showIcon && (
-        <Icon
-          className={cn('shrink-0', size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5')}
-          weight="fill"
+      <svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true">
+        <line
+          x1="0"
+          y1="5"
+          x2="22"
+          y2="5"
+          strokeWidth="3"
+          strokeDasharray={s.dash}
+          className={s.stroke}
         />
-      )}
-      {config.label}
+      </svg>
+      {s.label}
     </span>
   )
 }
 
-// Payment status badge for donations
-interface PaymentStatusBadgeProps {
-  status: 'pending' | 'confirmed' | 'failed' | 'refunded'
-  size?: 'sm' | 'md'
+// Payment state reuses the proof line patterns: a confirmed payment is solid,
+// a pending one dashed, a failed one flagged.
+const PAYMENT_STATUS = {
+  confirmed: { status: 'verified', label: 'Confirmed' },
+  pending: { status: 'pending', label: 'Awaiting payment' },
+  failed: { status: 'flagged', label: 'Failed' },
+  refunded: { status: 'rejected', label: 'Refunded' },
+} as const
+
+export function PaymentStatusMark({
+  status,
+  className,
+}: {
+  status: PaymentStatus
+  className?: string
+}) {
+  const p = PAYMENT_STATUS[status]
+  return <StatusMark status={p.status} label={p.label} className={className} />
 }
 
-const paymentStatusConfig: Record<
-  PaymentStatusBadgeProps['status'],
-  {
-    label: string
-    className: string
+const DAY = 24 * 60 * 60 * 1000
+
+/**
+ * Where a campaign stands in time, stated honestly: "Ended 30 Jun 2026" once
+ * the end date has passed, never "0 days left".
+ */
+export function campaignTiming(
+  campaign: Pick<Campaign, 'ends_at' | 'starts_at' | 'status'>,
+  now = Date.now(),
+): { ended: boolean; label: string; daysLeft: number | null } {
+  if (!campaign.ends_at) {
+    return {
+      ended: campaign.status === 'completed' || campaign.status === 'cancelled',
+      label: 'No end date',
+      daysLeft: null,
+    }
   }
-> = {
-  pending: {
-    label: 'Pending',
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  },
-  confirmed: {
-    label: 'Confirmed',
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  },
-  failed: {
-    label: 'Failed',
-    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  },
-  refunded: {
-    label: 'Refunded',
-    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  },
-}
-
-export function PaymentStatusBadge({ status, size = 'md' }: PaymentStatusBadgeProps) {
-  const config = paymentStatusConfig[status]
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full font-medium',
-        config.className,
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs',
-      )}
-    >
-      {config.label}
-    </span>
-  )
+  const end = new Date(campaign.ends_at).getTime()
+  if (end <= now) {
+    return {
+      ended: true,
+      label: `Ended ${formatDate(campaign.ends_at)}`,
+      daysLeft: null,
+    }
+  }
+  const daysLeft = Math.ceil((end - now) / DAY)
+  return {
+    ended: false,
+    label:
+      daysLeft <= 1
+        ? `Last day, ends ${formatDate(campaign.ends_at)}`
+        : `${daysLeft} days left, ends ${formatDate(campaign.ends_at)}`,
+    daysLeft,
+  }
 }

@@ -17,3 +17,9 @@ export const navItems = [
   { label: 'Trust Score', href: '/trust-score', icon: ShieldCheck },
   { label: 'Settings', href: '/settings', icon: Gear },
 ]
+
+export function isNavItemActive(href: string, pathname: string) {
+  return (
+    pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+  )
+}

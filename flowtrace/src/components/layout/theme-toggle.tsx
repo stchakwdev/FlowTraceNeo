@@ -10,9 +10,10 @@ import {
 
 interface ThemeToggleProps {
   collapsed?: boolean
+  className?: string
 }
 
-export function ThemeToggle({ collapsed }: ThemeToggleProps) {
+export function ThemeToggle({ collapsed, className }: ThemeToggleProps) {
   const { theme, setTheme, resolvedTheme } = useTheme()
 
   // When collapsed in sidebar, cycle on click instead of dropdown
@@ -29,6 +30,7 @@ export function ThemeToggle({ collapsed }: ThemeToggleProps) {
         size="icon"
         onClick={cycle}
         aria-label="Toggle theme"
+        className={className}
       >
         {resolvedTheme === 'dark' ? (
           <Moon className="size-4" weight="fill" />
@@ -43,7 +45,12 @@ export function ThemeToggle({ collapsed }: ThemeToggleProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" aria-label="Toggle theme">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle theme"
+            className={className}
+          >
             {resolvedTheme === 'dark' ? (
               <Moon className="size-4" weight="fill" />
             ) : (

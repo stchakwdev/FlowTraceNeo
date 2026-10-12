@@ -1,31 +1,42 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  CheckCircle,
   CloudArrowUp,
   File,
   FileImage,
   FilePdf,
-  Trash,
-  X,
-  CheckCircle,
-  Warning,
-  SpinnerGap,
   MapPin,
-  Eye,
-  EyeSlash,
-  User,
-  CaretDown,
+  SpinnerGap,
+  Trash,
+  Warning,
+  X,
 } from '@phosphor-icons/react'
+import type { VerificationType, VerificationVisibility } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
-  supabase,
-  type VerificationType,
-  type VerificationVisibility,
-  VERIFICATION_TRUST_POINTS,
-} from '@/lib/supabase'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import {
+  createVerification,
+  deleteVerificationFile,
+  uploadVerificationFile,
+} from '@/lib/data'
+import { queryKeys } from '@/lib/queries'
+import { useOrg } from '@/lib/org-context'
+import {
+  PROOF_TYPE_LABEL,
+  PROOF_VISIBILITY_LABEL,
+} from '@/components/verification-gallery'
 
 export type { VerificationType, VerificationVisibility }
 
@@ -57,27 +68,10 @@ export interface UploadResult extends UploadedFile {
   trustPoints: number
 }
 
-interface FileUploadProps {
-  organizationId: string
-  transactionId: string
-  verificationType: VerificationType
-  onUploadComplete?: (file: UploadedFile) => void
-  onFileRemove?: (fileId: string) => void
-  maxFiles?: number
-  maxSizeMB?: number
-  accept?: string
-  className?: string
-  disabled?: boolean
-  // New Phase 3 options
-  showVisibilitySelector?: boolean
-  showGPSCapture?: boolean
-  showExecutorName?: boolean
-  showDescription?: boolean
-  defaultVisibility?: VerificationVisibility
-  createdBy?: string
-}
+export type { UploadedFile }
 
-const ALLOWED_TYPES: Record<string, string[]> = {
+/** File types each kind of proof accepts. */
+export const PROOF_ACCEPT: Record<VerificationType, Array<string>> = {
   receipt: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
   photo: ['image/jpeg', 'image/png', 'image/webp'],
   document: [
@@ -89,9 +83,8 @@ const ALLOWED_TYPES: Record<string, string[]> = {
   ],
   bank_statement: ['application/pdf', 'image/jpeg', 'image/png'],
   signature: ['image/jpeg', 'image/png', 'image/webp'],
-  gps: ['application/json', 'text/plain'],
+  gps: ['application/json', 'text/plain', 'image/jpeg', 'image/png'],
   biometric: ['application/json'],
-  // New Phase 3 types
   invoice: ['application/pdf', 'image/jpeg', 'image/png'],
   video: ['video/mp4', 'video/webm', 'video/quicktime'],
   audit: ['application/pdf'],
@@ -99,54 +92,260 @@ const ALLOWED_TYPES: Record<string, string[]> = {
   government_doc: ['application/pdf', 'image/jpeg', 'image/png'],
 }
 
-const TYPE_LABELS: Record<VerificationType, string> = {
-  receipt: 'Receipt',
-  photo: 'Photo Evidence',
-  document: 'Document',
-  bank_statement: 'Bank Statement',
-  signature: 'Signature',
-  gps: 'GPS Verification',
-  biometric: 'Biometric',
-  // New Phase 3 types
-  invoice: 'Invoice',
-  video: 'Video Evidence',
-  audit: 'Third-party Audit',
-  contract: 'Contract',
-  government_doc: 'Government Document',
+const EXTENSION: Record<string, string> = {
+  'image/jpeg': 'JPG',
+  'image/png': 'PNG',
+  'image/webp': 'WebP',
+  'application/pdf': 'PDF',
+  'application/msword': 'DOC',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'DOCX',
+  'application/json': 'JSON',
+  'text/plain': 'TXT',
+  'video/mp4': 'MP4',
+  'video/webm': 'WebM',
+  'video/quicktime': 'MOV',
 }
 
-const VISIBILITY_LABELS: Record<VerificationVisibility, string> = {
-  full: 'Full Access',
-  thumbnail: 'Thumbnail Only',
-  summary: 'Summary Only',
-  hidden: 'Hidden',
+/** "PDF, JPG or PNG" */
+export function describeAccepted(types: Array<string>) {
+  const names = [...new Set(types.map((t) => EXTENSION[t] ?? t))]
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`
 }
 
-const VISIBILITY_DESCRIPTIONS: Record<VerificationVisibility, string> = {
-  full: 'Board & Staff can see original file with all details',
-  thumbnail: 'Donors see blurred/low-res version',
-  summary: 'Partners see "Proof attached" indicator only',
-  hidden: 'Not visible to public',
+/** Returns why a file can't be used as proof, or null when it can. */
+export function validateProofFile(
+  file: File,
+  allowedTypes: Array<string>,
+  maxSizeMB: number,
+): string | null {
+  if (!allowedTypes.includes(file.type)) {
+    return `${file.name} is not a ${describeAccepted(allowedTypes)} file.`
+  }
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    return `${file.name} is ${formatFileSize(file.size)}; the limit is ${maxSizeMB} MB.`
+  }
+  return null
 }
 
-function formatFileSize(bytes: number): string {
+export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B'
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
-function getFileIcon(mimeType: string) {
-  if (mimeType.startsWith('image/')) {
-    return FileImage
-  }
-  if (mimeType === 'application/pdf') {
-    return FilePdf
-  }
+export function fileIcon(mimeType: string) {
+  if (mimeType.startsWith('image/')) return FileImage
+  if (mimeType === 'application/pdf') return FilePdf
   return File
 }
 
+// Storage path inside the verifications bucket, from a public or signed URL.
+function storagePath(url: string) {
+  return url.match(/\/verifications\/([^?]+)/)?.[1] ?? url
+}
+
+/**
+ * A drop target for proof files with a keyboard-reachable Browse button.
+ * It only hands the chosen files over; callers decide what happens next.
+ */
+export function ProofDropzone({
+  accept,
+  maxSizeMB,
+  multiple = true,
+  disabled = false,
+  onFiles,
+  hint,
+  invalid = false,
+  describedBy,
+  className,
+}: {
+  accept: Array<string>
+  maxSizeMB: number
+  multiple?: boolean
+  disabled?: boolean
+  onFiles: (files: Array<File>) => void
+  hint?: React.ReactNode
+  invalid?: boolean
+  describedBy?: string
+  className?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const hintId = useId()
+  const [isDragging, setIsDragging] = useState(false)
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault()
+        if (!disabled) setIsDragging(true)
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault()
+        setIsDragging(false)
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        setIsDragging(false)
+        if (disabled) return
+        const files = Array.from(e.dataTransfer.files)
+        if (files.length > 0) onFiles(multiple ? files : files.slice(0, 1))
+      }}
+      className={cn(
+        'flex flex-col items-center gap-3 border-2 border-dashed px-4 py-6 text-center transition-colors sm:flex-row sm:text-left',
+        isDragging
+          ? 'border-primary bg-report/25'
+          : invalid
+            ? 'border-destructive'
+            : 'border-foreground/45',
+        disabled && 'opacity-50',
+        className,
+      )}
+    >
+      <CloudArrowUp
+        className={cn(
+          'size-8 shrink-0',
+          isDragging ? 'text-primary' : 'text-muted-foreground',
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">
+          {isDragging ? 'Drop to add' : 'Drag files here, or browse'}
+        </p>
+        <p id={hintId} className="mt-0.5 text-xs text-muted-foreground">
+          {hint ?? `${describeAccepted(accept)}, up to ${maxSizeMB} MB each`}
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-10"
+        disabled={disabled}
+        aria-describedby={cn(hintId, describedBy) || undefined}
+        onClick={() => inputRef.current?.click()}
+      >
+        Browse files
+      </Button>
+      <input
+        ref={inputRef}
+        type="file"
+        tabIndex={-1}
+        aria-hidden="true"
+        accept={accept.join(',')}
+        multiple={multiple}
+        disabled={disabled}
+        className="sr-only"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? [])
+          if (files.length > 0) onFiles(files)
+          // Allow choosing the same file again
+          e.target.value = ''
+        }}
+      />
+    </div>
+  )
+}
+
+/** A chosen or uploaded file as a document row. */
+export function FileRow({
+  name,
+  size,
+  type,
+  status,
+  error,
+  onRemove,
+  removeDisabled,
+}: {
+  name: string
+  size: number
+  type: string
+  status?: 'uploading' | 'success' | 'error' | 'queued'
+  error?: string
+  onRemove?: () => void
+  removeDisabled?: boolean
+}) {
+  const Icon = fileIcon(type)
+  return (
+    <li className="flex items-center gap-3 py-2.5">
+      <Icon
+        className={cn(
+          'size-5 shrink-0',
+          status === 'error' ? 'text-destructive' : 'text-muted-foreground',
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{name}</p>
+        <p
+          className={cn(
+            'text-xs',
+            status === 'error' ? 'text-destructive' : 'text-muted-foreground',
+          )}
+        >
+          {error ??
+            `${formatFileSize(size)}${
+              status === 'uploading'
+                ? ' · Uploading…'
+                : status === 'success'
+                  ? ' · Uploaded'
+                  : ''
+            }`}
+        </p>
+      </div>
+      {status === 'uploading' && (
+        <SpinnerGap
+          className="size-4 shrink-0 animate-spin text-primary"
+          aria-hidden="true"
+        />
+      )}
+      {status === 'success' && (
+        <CheckCircle className="size-4 shrink-0" aria-hidden="true" />
+      )}
+      {status === 'error' && (
+        <Warning
+          className="size-4 shrink-0 text-destructive"
+          aria-hidden="true"
+        />
+      )}
+      {onRemove && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-10"
+          onClick={onRemove}
+          disabled={removeDisabled}
+          aria-label={`Remove ${name}`}
+        >
+          {status === 'error' ? <X /> : <Trash />}
+        </Button>
+      )}
+    </li>
+  )
+}
+
+interface FileUploadProps {
+  organizationId: string
+  transactionId: string
+  verificationType: VerificationType
+  onUploadComplete?: (file: UploadedFile) => void
+  onFileRemove?: (fileId: string) => void
+  maxFiles?: number
+  maxSizeMB?: number
+  accept?: string
+  className?: string
+  disabled?: boolean
+  showVisibilitySelector?: boolean
+  showGPSCapture?: boolean
+  showExecutorName?: boolean
+  showDescription?: boolean
+  defaultVisibility?: VerificationVisibility
+  createdBy?: string
+}
+
+/** Uploads proof files to storage as soon as they are chosen. */
 export function FileUpload({
   organizationId,
   transactionId,
@@ -159,18 +358,16 @@ export function FileUpload({
   className,
   disabled = false,
 }: FileUploadProps) {
-  const [files, setFiles] = useState<UploadedFile[]>([])
-  const [isDragging, setIsDragging] = useState(false)
+  const [files, setFiles] = useState<Array<UploadedFile>>([])
 
-  const allowedTypes = ALLOWED_TYPES[verificationType] || ALLOWED_TYPES.document
-  const acceptStr = accept || allowedTypes.join(',')
-  const maxSizeBytes = maxSizeMB * 1024 * 1024
+  const allowedTypes = accept
+    ? accept.split(',')
+    : PROOF_ACCEPT[verificationType]
 
   const uploadFile = useCallback(
     async (file: File): Promise<UploadedFile> => {
-      const fileId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-      const uploadedFile: UploadedFile = {
-        id: fileId,
+      const entry: UploadedFile = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         name: file.name,
         size: file.size,
         type: file.type,
@@ -178,328 +375,198 @@ export function FileUpload({
         status: 'uploading',
         progress: 0,
       }
+      setFiles((prev) => [...prev, entry])
 
-      // Add to state immediately
-      setFiles((prev) => [...prev, uploadedFile])
-
-      try {
-        // Validate file type
-        if (!allowedTypes.includes(file.type)) {
-          throw new Error(
-            `Invalid file type. Allowed: ${allowedTypes.map((t) => t.split('/')[1]).join(', ')}`,
+      let result: UploadedFile
+      const problem = validateProofFile(file, allowedTypes, maxSizeMB)
+      if (problem) {
+        result = { ...entry, status: 'error', error: problem }
+      } else {
+        try {
+          const url = await uploadVerificationFile(
+            organizationId,
+            transactionId,
+            file,
           )
+          result = { ...entry, url, status: 'success', progress: 100 }
+        } catch (err) {
+          result = {
+            ...entry,
+            status: 'error',
+            error: `${file.name} did not upload${
+              err instanceof Error && err.message ? `: ${err.message}` : ''
+            }. Check your connection and try again.`,
+          }
         }
-
-        // Validate file size
-        if (file.size > maxSizeBytes) {
-          throw new Error(`File too large. Maximum size: ${maxSizeMB}MB`)
-        }
-
-        // Generate unique filename
-        const fileExt = file.name.split('.').pop() || 'bin'
-        const fileName = `${organizationId}/${transactionId}/${fileId}.${fileExt}`
-
-        // Simulate progress updates (Supabase doesn't provide real progress)
-        const progressInterval = setInterval(() => {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileId && f.progress < 90
-                ? { ...f, progress: f.progress + 10 }
-                : f,
-            ),
-          )
-        }, 100)
-
-        // Upload to Supabase Storage
-        const { data, error } = await supabase.storage
-          .from('verifications')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          })
-
-        clearInterval(progressInterval)
-
-        if (error) throw error
-
-        // Get the URL (signed URL for private bucket)
-        const { data: signed } = await supabase.storage
-          .from('verifications')
-          .createSignedUrl(data.path, 60 * 60 * 24 * 7) // 7 days
-
-        const successFile: UploadedFile = {
-          ...uploadedFile,
-          url: signed?.signedUrl || '',
-          status: 'success',
-          progress: 100,
-        }
-
-        setFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? successFile : f)),
-        )
-
-        return successFile
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Upload failed'
-        const errorFile: UploadedFile = {
-          ...uploadedFile,
-          status: 'error',
-          progress: 0,
-          error: errorMessage,
-        }
-
-        setFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? errorFile : f)),
-        )
-
-        return errorFile
       }
+      setFiles((prev) => prev.map((f) => (f.id === entry.id ? result : f)))
+      return result
     },
-    [organizationId, transactionId, allowedTypes, maxSizeBytes, maxSizeMB],
+    [organizationId, transactionId, allowedTypes, maxSizeMB],
   )
 
   const handleFiles = useCallback(
-    async (fileList: FileList | File[]) => {
-      const filesToUpload = Array.from(fileList).slice(
-        0,
-        maxFiles - files.length,
-      )
-
-      for (const file of filesToUpload) {
+    async (chosen: Array<File>) => {
+      for (const file of chosen.slice(0, maxFiles - files.length)) {
         const result = await uploadFile(file)
-        if (result.status === 'success' && onUploadComplete) {
-          onUploadComplete(result)
-        }
+        if (result.status === 'success') onUploadComplete?.(result)
       }
     },
     [files.length, maxFiles, uploadFile, onUploadComplete],
-  )
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      setIsDragging(false)
-
-      if (disabled) return
-
-      const droppedFiles = e.dataTransfer.files
-      if (droppedFiles.length > 0) {
-        handleFiles(droppedFiles)
-      }
-    },
-    [disabled, handleFiles],
-  )
-
-  const handleDragOver = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      if (!disabled) {
-        setIsDragging(true)
-      }
-    },
-    [disabled],
-  )
-
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFiles = e.target.files
-      if (selectedFiles && selectedFiles.length > 0) {
-        handleFiles(selectedFiles)
-      }
-      // Reset input value to allow selecting the same file again
-      e.target.value = ''
-    },
-    [handleFiles],
   )
 
   const removeFile = useCallback(
     async (fileId: string) => {
       const file = files.find((f) => f.id === fileId)
       if (!file) return
-
-      // If file was uploaded successfully, delete from storage
       if (file.status === 'success' && file.url) {
         try {
-          const pathMatch = file.url.match(/verifications\/(.+)\?/)
-          if (pathMatch) {
-            await supabase.storage.from('verifications').remove([pathMatch[1]])
-          }
+          await deleteVerificationFile(storagePath(file.url))
         } catch {
-          // Ignore deletion errors
+          // The file stays in storage; nothing references it.
         }
       }
-
       setFiles((prev) => prev.filter((f) => f.id !== fileId))
       onFileRemove?.(fileId)
     },
     [files, onFileRemove],
   )
 
-  const canUploadMore = files.length < maxFiles && !disabled
+  const full = files.length >= maxFiles
 
   return (
-    <div className={cn('space-y-3', className)}>
-      {/* Drop zone */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className={cn(
-          'relative border-2 border-dashed rounded-lg p-6 text-center transition-colors',
-          isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-muted-foreground/50',
-          disabled && 'opacity-50 cursor-not-allowed',
-          !disabled && 'cursor-pointer',
-        )}
-      >
-        <input
-          type="file"
-          accept={acceptStr}
-          multiple={maxFiles > 1}
-          onChange={handleInputChange}
-          disabled={!canUploadMore}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-        />
-
-        <div className="flex flex-col items-center gap-2">
-          <div
-            className={cn(
-              'p-3 rounded-full',
-              isDragging ? 'bg-primary/10' : 'bg-muted',
-            )}
-          >
-            <CloudArrowUp
-              className={cn(
-                'size-6',
-                isDragging ? 'text-primary' : 'text-muted-foreground',
-              )}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-sm font-medium">
-              {isDragging ? (
-                'Drop files here'
-              ) : (
-                <>
-                  <span className="text-primary">Click to upload</span> or drag
-                  and drop
-                </>
-              )}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {TYPE_LABELS[verificationType]} - Max {maxSizeMB}MB
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {files.length}/{maxFiles} files
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* File list */}
+    <div className={cn('space-y-2', className)}>
+      <ProofDropzone
+        accept={allowedTypes}
+        maxSizeMB={maxSizeMB}
+        multiple={maxFiles > 1}
+        disabled={disabled || full}
+        onFiles={handleFiles}
+        hint={
+          full
+            ? `That's the limit of ${maxFiles} files at once.`
+            : `${PROOF_TYPE_LABEL[verificationType]}: ${describeAccepted(allowedTypes)}, up to ${maxSizeMB} MB each`
+        }
+      />
       {files.length > 0 && (
-        <ul className="space-y-2">
-          {files.map((file) => {
-            const FileIcon = getFileIcon(file.type)
-
-            return (
-              <li
-                key={file.id}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-lg border bg-card',
-                  file.status === 'error' && 'border-destructive/50 bg-destructive/5',
-                  file.status === 'success' && 'border-green-500/50',
-                )}
-              >
-                <div
-                  className={cn(
-                    'shrink-0 p-2 rounded',
-                    file.status === 'error' ? 'bg-destructive/10' : 'bg-muted',
-                  )}
-                >
-                  <FileIcon
-                    className={cn(
-                      'size-5',
-                      file.status === 'error'
-                        ? 'text-destructive'
-                        : 'text-muted-foreground',
-                    )}
-                  />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatFileSize(file.size)}
-                    {file.error && (
-                      <span className="text-destructive ml-2">{file.error}</span>
-                    )}
-                  </p>
-
-                  {/* Progress bar */}
-                  {file.status === 'uploading' && (
-                    <div className="mt-1.5 h-1 w-full bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all duration-200"
-                        style={{ width: `${file.progress}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="shrink-0 flex items-center gap-1">
-                  {file.status === 'uploading' && (
-                    <SpinnerGap className="size-4 text-primary animate-spin" />
-                  )}
-                  {file.status === 'success' && (
-                    <CheckCircle className="size-4 text-green-500" weight="fill" />
-                  )}
-                  {file.status === 'error' && (
-                    <Warning className="size-4 text-destructive" weight="fill" />
-                  )}
-
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => removeFile(file.id)}
-                    disabled={file.status === 'uploading'}
-                  >
-                    {file.status === 'error' ? (
-                      <X className="size-3.5" />
-                    ) : (
-                      <Trash className="size-3.5" />
-                    )}
-                  </Button>
-                </div>
-              </li>
-            )
-          })}
+        <ul className="divide-y divide-border border-b border-border">
+          {files.map((file) => (
+            <FileRow
+              key={file.id}
+              name={file.name}
+              size={file.size}
+              type={file.type}
+              status={file.status}
+              error={file.error}
+              onRemove={() => removeFile(file.id)}
+              removeDisabled={file.status === 'uploading'}
+            />
+          ))}
         </ul>
       )}
     </div>
   )
 }
 
-// GPS capture hook
+export interface AttachProofsInput {
+  transactionId: string
+  type: VerificationType
+  /** Files still on the device; they are uploaded first. */
+  files?: Array<File>
+  /** Files already in storage (from FileUpload). */
+  uploaded?: Array<Pick<UploadedFile, 'url' | 'name' | 'type' | 'size'>>
+  description?: string
+  executorName?: string
+  visibilityLevel?: VerificationVisibility
+  location?: GPSLocation | null
+}
+
+/**
+ * Creates one proof record per file (or a single record with no file, e.g. a
+ * GPS reading), uploading local files first. Resolves with how many failed.
+ */
+export function useAttachProofs() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: AttachProofsInput) => {
+      const record = (file?: {
+        url: string
+        name: string
+        type: string
+        size: number
+      }) =>
+        createVerification({
+          transaction_id: input.transactionId,
+          type: input.type,
+          file_url: file?.url ?? null,
+          ocr_data: null,
+          metadata: file
+            ? { file_name: file.name, mime_type: file.type, size: file.size }
+            : {},
+          status: 'pending',
+          verified_by: null,
+          visibility_level: input.visibilityLevel ?? 'full',
+          thumbnail_url: null,
+          executor_name: input.executorName || null,
+          description: input.description || file?.name || null,
+          gps_latitude: input.location?.latitude ?? null,
+          gps_longitude: input.location?.longitude ?? null,
+          gps_accuracy: input.location?.accuracy ?? null,
+          location_name: input.location?.locationName ?? null,
+          created_by: null,
+        })
+
+      const ready = [...(input.uploaded ?? [])]
+      let failed = 0
+      for (const file of input.files ?? []) {
+        try {
+          const url = await uploadVerificationFile(
+            organizationId!,
+            input.transactionId,
+            file,
+          )
+          ready.push({ url, name: file.name, type: file.type, size: file.size })
+        } catch {
+          failed++
+        }
+      }
+      if (ready.length === 0 && failed === 0) {
+        await record()
+      }
+      for (const file of ready) {
+        await record(file)
+      }
+      return { attached: ready.length || (failed ? 0 : 1), failed }
+    },
+    onSettled: (_data, _error, input) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.verifications(input.transactionId),
+      })
+      queryClient.invalidateQueries({
+        predicate: (q) =>
+          (q.queryKey[0] === 'transaction' &&
+            q.queryKey[1] === input.transactionId) ||
+          q.queryKey[0] === 'transactions' ||
+          q.queryKey[0] === 'org-stats',
+      })
+    },
+  })
+}
+
+// GPS capture hook. Reverse geocoding is a nicety: if it fails or is slow,
+// the coordinates are kept and no error is shown.
 export function useGPSCapture() {
   const [location, setLocation] = useState<GPSLocation | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const captureLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser')
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setError('This browser cannot share its location.')
       return
     }
-
     setLoading(true)
     setError(null)
 
@@ -510,25 +577,31 @@ export function useGPSCapture() {
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
         }
-
-        // Try to get location name via reverse geocoding (optional)
         try {
+          const controller = new AbortController()
+          const timer = setTimeout(() => controller.abort(), 5000)
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${loc.latitude}&lon=${loc.longitude}&format=json`,
+            { signal: controller.signal },
           )
+          clearTimeout(timer)
           if (response.ok) {
-            const data = await response.json()
-            loc.locationName = data.display_name?.split(',').slice(0, 3).join(',')
+            const data = (await response.json()) as { display_name?: string }
+            const name = data.display_name?.split(',').slice(0, 3).join(',')
+            if (name) loc.locationName = name
           }
         } catch {
-          // Ignore geocoding errors
+          // Place name is optional; coordinates are enough.
         }
-
         setLocation(loc)
         setLoading(false)
       },
       (err) => {
-        setError(err.message || 'Failed to get location')
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location access was declined. Allow it in your browser settings to attach a GPS reading.'
+            : 'Could not read your location. Move to open sky or try again.',
+        )
         setLoading(false)
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -543,7 +616,13 @@ export function useGPSCapture() {
   return { location, loading, error, captureLocation, clearLocation }
 }
 
-// Visibility selector component
+const VISIBILITY_DESCRIPTIONS: Record<VerificationVisibility, string> = {
+  full: 'Board and staff see the original file.',
+  thumbnail: 'Donors see a low-resolution version.',
+  summary: 'Partners see that proof is attached, not the file.',
+  hidden: 'Not shown outside the organisation.',
+}
+
 interface VisibilitySelectorProps {
   value: VerificationVisibility
   onChange: (value: VerificationVisibility) => void
@@ -557,68 +636,42 @@ export function VisibilitySelector({
   disabled,
   className,
 }: VisibilitySelectorProps) {
-  const [isOpen, setIsOpen] = useState(false)
-
+  const id = useId()
   return (
-    <div className={cn('relative', className)}>
-      <Label className="text-sm font-medium mb-1.5 block">Visibility Level</Label>
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+    <div className={className}>
+      <Label htmlFor={id} className="mb-1.5 text-sm font-medium">
+        Who can see the file
+      </Label>
+      <Select
+        value={value}
         disabled={disabled}
-        className={cn(
-          'flex items-center justify-between w-full px-3 py-2 text-sm border rounded-lg bg-background',
-          'hover:bg-muted transition-colors',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
+        items={PROOF_VISIBILITY_LABEL}
+        onValueChange={(v) => v && onChange(v as VerificationVisibility)}
       >
-        <span className="flex items-center gap-2">
-          {value === 'hidden' ? (
-            <EyeSlash className="size-4 text-muted-foreground" />
-          ) : (
-            <Eye className="size-4 text-muted-foreground" />
-          )}
-          {VISIBILITY_LABELS[value]}
-        </span>
-        <CaretDown className="size-4 text-muted-foreground" />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 border rounded-lg bg-card shadow-lg">
-          {(Object.keys(VISIBILITY_LABELS) as VerificationVisibility[]).map((level) => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => {
-                onChange(level)
-                setIsOpen(false)
-              }}
-              className={cn(
-                'flex flex-col w-full px-3 py-2 text-left hover:bg-muted transition-colors',
-                'first:rounded-t-lg last:rounded-b-lg',
-                value === level && 'bg-primary/10',
-              )}
-            >
-              <span className="flex items-center gap-2 text-sm font-medium">
-                {level === 'hidden' ? (
-                  <EyeSlash className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-                {VISIBILITY_LABELS[level]}
-              </span>
-              <span className="text-xs text-muted-foreground mt-0.5">
-                {VISIBILITY_DESCRIPTIONS[level]}
-              </span>
-            </button>
+        <SelectTrigger
+          id={id}
+          aria-describedby={`${id}-desc`}
+          className="h-10 w-full"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {(
+            Object.keys(PROOF_VISIBILITY_LABEL) as Array<VerificationVisibility>
+          ).map((level) => (
+            <SelectItem key={level} value={level}>
+              {PROOF_VISIBILITY_LABEL[level]}
+            </SelectItem>
           ))}
-        </div>
-      )}
+        </SelectContent>
+      </Select>
+      <p id={`${id}-desc`} className="mt-1 text-xs text-muted-foreground">
+        {VISIBILITY_DESCRIPTIONS[value]}
+      </p>
     </div>
   )
 }
 
-// GPS capture button component
 interface GPSCaptureButtonProps {
   location: GPSLocation | null
   loading: boolean
@@ -639,57 +692,57 @@ export function GPSCaptureButton({
   className,
 }: GPSCaptureButtonProps) {
   return (
-    <div className={cn('space-y-2', className)}>
-      <Label className="text-sm font-medium">GPS Location</Label>
+    <div className={cn('space-y-1.5', className)}>
+      <p className="text-sm font-medium">GPS reading</p>
       {!location ? (
         <Button
           type="button"
           variant="outline"
-          size="sm"
           onClick={onCapture}
           disabled={disabled || loading}
-          className="w-full"
+          className="h-10 w-full"
         >
-          {loading ? (
-            <SpinnerGap className="size-4 animate-spin mr-2" />
-          ) : (
-            <MapPin className="size-4 mr-2" />
-          )}
-          {loading ? 'Getting location...' : 'Capture GPS Location'}
+          {loading ? <SpinnerGap className="animate-spin" /> : <MapPin />}
+          {loading ? 'Reading location…' : 'Add my current location'}
         </Button>
       ) : (
-        <div className="flex items-start gap-2 p-2 rounded-lg border bg-muted/30">
-          <MapPin className="size-4 text-emerald-600 shrink-0 mt-0.5" weight="fill" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium">
-              {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+        <div className="flex items-start gap-2 border border-border p-2">
+          <MapPin className="mt-0.5 size-4 shrink-0" />
+          <div className="min-w-0 flex-1 text-xs">
+            <p className="font-mono">
+              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
             </p>
             {location.locationName && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="truncate text-muted-foreground">
                 {location.locationName}
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Accuracy: ±{Math.round(location.accuracy)}m
+            <p className="text-muted-foreground">
+              Accurate to {Math.round(location.accuracy)} m
             </p>
           </div>
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon"
+            className="size-10"
             onClick={onClear}
             disabled={disabled}
+            aria-label="Remove location"
           >
-            <X className="size-3.5" />
+            <X />
           </Button>
         </div>
       )}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   )
 }
 
-// Enhanced verification upload form with all Phase 3 fields
 interface EnhancedUploadFormProps {
   verificationType: VerificationType
   visibilityLevel: VerificationVisibility
@@ -707,6 +760,7 @@ interface EnhancedUploadFormProps {
   className?: string
 }
 
+/** The details that travel with a proof: who, what, where, who may see it. */
 export function EnhancedUploadForm({
   verificationType,
   visibilityLevel,
@@ -723,64 +777,55 @@ export function EnhancedUploadForm({
   disabled,
   className,
 }: EnhancedUploadFormProps) {
+  const ids = useId()
   const trustPoints = VERIFICATION_TRUST_POINTS[verificationType] || 0
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Trust points indicator */}
-      <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-          {TYPE_LABELS[verificationType]}
+      <p className="flex items-baseline justify-between gap-3 border-b border-border pb-2 text-sm">
+        <span className="font-medium">
+          {PROOF_TYPE_LABEL[verificationType]}
         </span>
-        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-          +{trustPoints} Trust Points
+        <span className="tabular-nums">
+          <span className="font-bold">+{trustPoints}</span>{' '}
+          <span className="text-muted-foreground">trust points</span>
         </span>
-      </div>
+      </p>
 
-      {/* Visibility selector */}
-      <VisibilitySelector
-        value={visibilityLevel}
-        onChange={onVisibilityChange}
-        disabled={disabled}
-      />
-
-      {/* Executor name */}
       <div>
-        <Label htmlFor="executor-name" className="text-sm font-medium">
-          Executor Name
-        </Label>
-        <div className="relative mt-1.5">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            id="executor-name"
-            value={executorName}
-            onChange={(e) => onExecutorNameChange(e.target.value)}
-            placeholder="Who executed this transaction?"
-            disabled={disabled}
-            className="pl-9"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Visibility controlled by access group permissions
-        </p>
-      </div>
-
-      {/* Description */}
-      <div>
-        <Label htmlFor="description" className="text-sm font-medium">
-          Description
+        <Label htmlFor={`${ids}-desc`} className="mb-1.5 text-sm font-medium">
+          What it shows
         </Label>
         <Textarea
-          id="description"
+          id={`${ids}-desc`}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Add notes about this verification..."
+          placeholder="e.g. Receipt from Lokichar Hardware for drilling pipes"
           disabled={disabled}
-          className="mt-1.5 min-h-[80px]"
         />
       </div>
 
-      {/* GPS capture */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <Label htmlFor={`${ids}-who`} className="mb-1.5 text-sm font-medium">
+            Captured by
+          </Label>
+          <Input
+            id={`${ids}-who`}
+            value={executorName}
+            onChange={(e) => onExecutorNameChange(e.target.value)}
+            placeholder="Name of the person in the field"
+            disabled={disabled}
+            className="h-10"
+          />
+        </div>
+        <VisibilitySelector
+          value={visibilityLevel}
+          onChange={onVisibilityChange}
+          disabled={disabled}
+        />
+      </div>
+
       <GPSCaptureButton
         location={gpsLocation}
         loading={gpsLoading}
@@ -793,7 +838,6 @@ export function EnhancedUploadForm({
   )
 }
 
-// Compact version for inline use
 interface CompactFileUploadProps {
   organizationId: string
   transactionId: string
@@ -803,6 +847,7 @@ interface CompactFileUploadProps {
   className?: string
 }
 
+/** One-button upload for tight spaces. */
 export function CompactFileUpload({
   organizationId,
   transactionId,
@@ -813,45 +858,30 @@ export function CompactFileUpload({
 }: CompactFileUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const allowedTypes = ALLOWED_TYPES[verificationType] || ALLOWED_TYPES.document
+  const allowedTypes = PROOF_ACCEPT[verificationType]
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
-
+    const problem = validateProofFile(file, allowedTypes, 10)
+    if (problem) {
+      setError(problem)
+      return
+    }
     setIsUploading(true)
     setError(null)
-
     try {
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Invalid file type')
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('File too large (max 10MB)')
-      }
-
-      const fileExt = file.name.split('.').pop() || 'bin'
-      const fileId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-      const fileName = `${organizationId}/${transactionId}/${fileId}.${fileExt}`
-
-      const { data, error: uploadError } = await supabase.storage
-        .from('verifications')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
-
-      if (uploadError) throw uploadError
-
-      const { data: signed } = await supabase.storage
-        .from('verifications')
-        .createSignedUrl(data.path, 60 * 60 * 24 * 7)
-
-      onUploadComplete?.(signed?.signedUrl || '')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      const url = await uploadVerificationFile(
+        organizationId,
+        transactionId,
+        file,
+      )
+      onUploadComplete?.(url)
+    } catch {
+      setError('Upload failed. Check your connection and try again.')
     } finally {
       setIsUploading(false)
-      e.target.value = ''
     }
   }
 
@@ -859,10 +889,8 @@ export function CompactFileUpload({
     <div className={cn('inline-flex items-center gap-2', className)}>
       <label
         className={cn(
-          'inline-flex items-center gap-1.5 px-2.5 h-8 text-xs font-medium rounded-none border cursor-pointer transition-colors',
-          'border-border bg-background hover:bg-muted',
-          disabled && 'opacity-50 cursor-not-allowed',
-          isUploading && 'pointer-events-none',
+          'inline-flex h-10 cursor-pointer items-center gap-1.5 border border-foreground/70 px-3 text-xs font-semibold transition-colors hover:bg-muted has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring/50',
+          (disabled || isUploading) && 'pointer-events-none opacity-50',
         )}
       >
         {isUploading ? (
@@ -870,7 +898,7 @@ export function CompactFileUpload({
         ) : (
           <CloudArrowUp className="size-4" />
         )}
-        <span>{isUploading ? 'Uploading...' : 'Upload'}</span>
+        {isUploading ? 'Uploading…' : 'Upload'}
         <input
           type="file"
           accept={allowedTypes.join(',')}
@@ -879,7 +907,11 @@ export function CompactFileUpload({
           className="sr-only"
         />
       </label>
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span role="alert" className="text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </div>
   )
 }

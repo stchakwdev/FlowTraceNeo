@@ -1,8 +1,12 @@
 import { useState } from 'react'
-import { CircleNotch, X } from '@phosphor-icons/react'
+import { CircleNotch } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  DateField,
+  localTodayISO,
+  parseDayMonthYear,
+} from '@/components/ui/date-field'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -11,8 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  CheckboxField,
+  FormField,
+  ReportDialog,
+  fieldAria,
+} from '@/components/report-dialog'
 import { useCreateCampaign, useNodes } from '@/lib/queries'
-import type { CampaignStatus } from '@/lib/supabase'
+
+// ---------------------------------------------------------------------------
+// Create campaign
+// ---------------------------------------------------------------------------
 
 interface CampaignCreateModalProps {
   isOpen: boolean
@@ -20,235 +33,256 @@ interface CampaignCreateModalProps {
 }
 
 const CATEGORIES = [
+  { value: 'water', label: 'Water and sanitation' },
   { value: 'education', label: 'Education' },
   { value: 'health', label: 'Health' },
   { value: 'infrastructure', label: 'Infrastructure' },
-  { value: 'emergency', label: 'Emergency Relief' },
+  { value: 'emergency', label: 'Emergency relief' },
   { value: 'environment', label: 'Environment' },
-  { value: 'community', label: 'Community Development' },
+  { value: 'community', label: 'Community development' },
   { value: 'other', label: 'Other' },
 ]
 
 const CURRENCIES = [
-  { value: 'KES', label: 'KES - Kenyan Shilling' },
-  { value: 'USD', label: 'USD - US Dollar' },
-  { value: 'EUR', label: 'EUR - Euro' },
-  { value: 'GBP', label: 'GBP - British Pound' },
+  { value: 'KES', label: 'KES' },
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
 ]
+
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  short_description: '',
+  target_amount: '',
+  currency: 'KES',
+  target_node_id: '',
+  category: '',
+  is_public: true,
+  allow_overflow: false,
+  ends_at: '',
+}
+
+type FormErrors = Partial<Record<'name' | 'target_amount' | 'ends_at', string>>
+
+function endDateIso(text: string) {
+  return parseDayMonthYear(text)?.iso ?? null
+}
+
+function validate(form: typeof EMPTY_FORM): FormErrors {
+  const errors: FormErrors = {}
+  if (!form.name.trim()) errors.name = 'Give the campaign a name donors will recognise.'
+  const amount = Number(form.target_amount)
+  if (!form.target_amount) errors.target_amount = 'Enter the amount you need to raise.'
+  else if (!Number.isFinite(amount) || amount <= 0)
+    errors.target_amount = 'The target must be more than zero.'
+  const end = parseDayMonthYear(form.ends_at)
+  if (end?.error) errors.ends_at = end.error
+  else if (end?.iso && end.iso < localTodayISO())
+    errors.ends_at = 'The end date has passed. Pick today or a later date.'
+  return errors
+}
 
 export function CampaignCreateModal({ isOpen, onClose }: CampaignCreateModalProps) {
   const createCampaign = useCreateCampaign()
   const { data: nodes } = useNodes()
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    short_description: '',
-    target_amount: '',
-    currency: 'KES',
-    target_node_id: '',
-    category: '',
-    is_public: true,
-    allow_overflow: false,
-    ends_at: '',
-    status: 'draft' as CampaignStatus,
-  })
+  const projects = (nodes ?? []).filter(
+    (n) => n.type === 'project' || n.type === 'department',
+  )
 
-  const handleSubmit = async (e: React.FormEvent, saveAsDraft = false) => {
-    e.preventDefault()
+  const set = <TKey extends keyof typeof EMPTY_FORM>(
+    key: TKey,
+    value: (typeof EMPTY_FORM)[TKey],
+  ) => {
+    setForm((f) => ({ ...f, [key]: value }))
+    if (key in errors) setErrors((e) => ({ ...e, [key]: undefined }))
+  }
 
+  const close = () => {
+    setForm(EMPTY_FORM)
+    setErrors({})
+    setSubmitError(null)
+    onClose()
+  }
+
+  const submit = async (asDraft: boolean) => {
+    const found = validate(form)
+    setErrors(found)
+    if (Object.values(found).some(Boolean)) return
+    setSubmitError(null)
     try {
       await createCampaign.mutateAsync({
-        name: formData.name,
-        description: formData.description || null,
-        short_description: formData.short_description || null,
+        name: form.name.trim(),
+        description: form.description.trim() || null,
+        short_description: form.short_description.trim() || null,
         image_url: null,
-        target_amount: parseFloat(formData.target_amount),
-        currency: formData.currency,
-        target_node_id: formData.target_node_id || null,
-        status: saveAsDraft ? 'draft' : 'active',
-        allow_overflow: formData.allow_overflow,
+        target_amount: Number(form.target_amount),
+        currency: form.currency,
+        target_node_id: form.target_node_id || null,
+        status: asDraft ? 'draft' : 'active',
+        allow_overflow: form.allow_overflow,
         overflow_campaign_id: null,
         overflow_consent_message: null,
         starts_at: new Date().toISOString(),
-        ends_at: formData.ends_at ? new Date(formData.ends_at).toISOString() : null,
-        is_public: formData.is_public,
-        public_slug: null, // Will be auto-generated
-        category: formData.category || null,
+        ends_at: endDateIso(form.ends_at)
+          ? `${endDateIso(form.ends_at)}T23:59:59Z`
+          : null,
+        is_public: form.is_public,
+        public_slug: null,
+        category: form.category || null,
         tags: null,
         metadata: {},
         created_by: null,
       })
-      onClose()
-      resetForm()
+      close()
     } catch (error) {
-      console.error('Failed to create campaign:', error)
+      setSubmitError(
+        error instanceof Error
+          ? `The campaign was not saved: ${error.message}`
+          : 'The campaign was not saved. Check your connection and try again.',
+      )
     }
   }
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      short_description: '',
-      target_amount: '',
-      currency: 'KES',
-      target_node_id: '',
-      category: '',
-      is_public: true,
-      allow_overflow: false,
-      ends_at: '',
-      status: 'draft',
-    })
-  }
-
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <ReportDialog
+      bodyClassName=""
+      open={isOpen}
+      onOpenChange={(open) => !open && close()}
+      title="New campaign"
+      description="Set what you are raising for. You can save it as a draft and open it to donors later."
+    >
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submit(false)
+        }}
+        className="space-y-4 px-5 py-4"
+      >
+        <FormField id="campaign-name" label="Campaign name" required error={errors.name}>
+          <Input
+            id="campaign-name"
+            value={form.name}
+            onChange={(e) => set('name', e.target.value)}
+            placeholder="e.g. Clean water for Turkana schools"
+            className="h-10"
+            {...fieldAria('campaign-name', errors.name)}
+          />
+        </FormField>
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-auto rounded-lg border bg-card shadow-lg">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-lg font-semibold">Create Campaign</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <FormField
+          id="campaign-summary"
+          label="One-line summary"
+          hint="Shown on the donate page and in embeds. Up to 150 characters."
+        >
+          <Input
+            id="campaign-summary"
+            value={form.short_description}
+            onChange={(e) => set('short_description', e.target.value)}
+            maxLength={150}
+            className="h-10"
+            {...fieldAria('campaign-summary', undefined, true)}
+          />
+        </FormField>
 
-        {/* Form */}
-        <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 space-y-4">
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Campaign Name *</Label>
+        <FormField id="campaign-story" label="The story">
+          <Textarea
+            id="campaign-story"
+            value={form.description}
+            onChange={(e) => set('description', e.target.value)}
+            placeholder="What the money will do, where, and for whom."
+            rows={3}
+          />
+        </FormField>
+
+        <div className="grid grid-cols-[1fr_6.5rem] gap-3">
+          <FormField
+            id="campaign-target"
+            label="Target"
+            required
+            error={errors.target_amount}
+          >
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Clean Water for Schools 2024"
-              required
+              id="campaign-target"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              step="1"
+              value={form.target_amount}
+              onChange={(e) => set('target_amount', e.target.value)}
+              placeholder="e.g. 500,000"
+              className="h-10 tabular-nums"
+              {...fieldAria('campaign-target', errors.target_amount)}
             />
-          </div>
-
-          {/* Short Description */}
-          <div className="space-y-2">
-            <Label htmlFor="short_description">Short Description</Label>
-            <Input
-              id="short_description"
-              value={formData.short_description}
-              onChange={(e) =>
-                setFormData({ ...formData, short_description: e.target.value })
-              }
-              placeholder="Brief summary for cards (max 150 chars)"
-              maxLength={150}
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Full Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="Detailed description of the campaign..."
-              rows={3}
-            />
-          </div>
-
-          {/* Amount and Currency */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="target_amount">Target Amount *</Label>
-              <Input
-                id="target_amount"
-                type="number"
-                min="1"
-                step="0.01"
-                value={formData.target_amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, target_amount: e.target.value })
-                }
-                placeholder="100000"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Select
-                value={formData.currency}
-                items={CURRENCIES}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, currency: value ?? '' })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Target Node */}
-          <div className="space-y-2">
-            <Label htmlFor="target_node">Target Project/Department</Label>
+          </FormField>
+          <FormField id="campaign-currency" label="Currency">
             <Select
-              value={formData.target_node_id}
-              items={{
-                '': 'Select target...',
-                ...Object.fromEntries(
-                  (nodes ?? []).map((node) => [
-                    node.id,
-                    `${node.name} (${node.type})`,
-                  ]),
-                ),
-              }}
-              onValueChange={(value) =>
-                setFormData({ ...formData, target_node_id: value ?? '' })
-              }
+              value={form.currency}
+              items={CURRENCIES}
+              onValueChange={(v) => set('currency', v ?? 'KES')}
             >
-              <SelectTrigger>
+              <SelectTrigger id="campaign-currency" className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {nodes?.map((node) => (
-                  <SelectItem key={node.id} value={node.id}>
-                    {node.name} ({node.type})
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </FormField>
+        </div>
 
-          {/* Category */}
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select
-              value={formData.category}
-              items={[{ value: '', label: 'Select category...' }, ...CATEGORIES]}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category: value ?? '' })
-              }
+        <FormField
+          id="campaign-project"
+          label="Project it funds"
+          hint="Donations flow into this project, so spending from it shows as proof on the campaign."
+        >
+          <Select
+            value={form.target_node_id}
+            items={{
+              '': 'Not tied to one project',
+              ...Object.fromEntries(projects.map((n) => [n.id, n.name])),
+            }}
+            onValueChange={(v) => set('target_node_id', v ?? '')}
+          >
+            <SelectTrigger
+              id="campaign-project"
+              className="h-10 w-full"
+              {...fieldAria('campaign-project', undefined, true)}
             >
-              <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Not tied to one project</SelectItem>
+              {projects.map((n) => (
+                <SelectItem key={n.id} value={n.id}>
+                  {n.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField id="campaign-category" label="Category">
+            <Select
+              value={form.category}
+              items={[{ value: '', label: 'None' }, ...CATEGORIES]}
+              onValueChange={(v) => set('category', v ?? '')}
+            >
+              <SelectTrigger id="campaign-category" className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">None</SelectItem>
                 {CATEGORIES.map((c) => (
                   <SelectItem key={c.value} value={c.value}>
                     {c.label}
@@ -256,71 +290,65 @@ export function CampaignCreateModal({ isOpen, onClose }: CampaignCreateModalProp
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* End Date */}
-          <div className="space-y-2">
-            <Label htmlFor="ends_at">End Date (Optional)</Label>
-            <Input
-              id="ends_at"
-              type="date"
-              value={formData.ends_at}
-              onChange={(e) => setFormData({ ...formData, ends_at: e.target.value })}
-              min={new Date().toISOString().split('T')[0]}
+          </FormField>
+          <FormField
+            id="campaign-ends"
+            label="End date"
+            error={errors.ends_at}
+            hint="Day, month, year. Leave empty for no end date."
+          >
+            <DateField
+              id="campaign-ends"
+              value={form.ends_at}
+              min={localTodayISO()}
+              onValueChange={(v) => set('ends_at', v)}
+              pickerLabel="Choose the end date from a calendar"
+              className="h-10"
+              {...fieldAria('campaign-ends', errors.ends_at, true)}
             />
-          </div>
+          </FormField>
+        </div>
 
-          {/* Options */}
-          <div className="space-y-3 pt-2">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.is_public}
-                onChange={(e) =>
-                  setFormData({ ...formData, is_public: e.target.checked })
-                }
-                className="rounded border-input"
-              />
-              <span className="text-sm">Make campaign public</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.allow_overflow}
-                onChange={(e) =>
-                  setFormData({ ...formData, allow_overflow: e.target.checked })
-                }
-                className="rounded border-input"
-              />
-              <span className="text-sm">Allow donations beyond target</span>
-            </label>
-          </div>
+        <fieldset className="border-t border-border pt-2">
+          <legend className="sr-only">Options</legend>
+          <CheckboxField
+            checked={form.is_public}
+            onCheckedChange={(v) => set('is_public', v)}
+            label="Public donate page"
+            hint="Anyone with the link can see the campaign and give."
+          />
+          <CheckboxField
+            checked={form.allow_overflow}
+            onCheckedChange={(v) => set('allow_overflow', v)}
+            label="Keep accepting gifts after the target is reached"
+          />
+        </fieldset>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={(e) => handleSubmit(e, true)}
-              disabled={createCampaign.isPending}
-            >
-              {createCampaign.isPending && (
-                <CircleNotch className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Save as Draft
-            </Button>
-            <Button type="submit" disabled={createCampaign.isPending}>
-              {createCampaign.isPending && (
-                <CircleNotch className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Create & Activate
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {submitError && (
+          <p role="alert" className="text-sm font-semibold text-destructive">
+            {submitError}
+          </p>
+        )}
+
+        <div className="-mx-5 flex flex-col-reverse gap-2 border-t border-border px-5 pt-4 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" className="h-10" onClick={close}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10"
+            disabled={createCampaign.isPending}
+            onClick={() => void submit(true)}
+          >
+            Save as draft
+          </Button>
+          <Button type="submit" className="h-10" disabled={createCampaign.isPending}>
+            {createCampaign.isPending && <CircleNotch className="animate-spin" />}
+            Create and open to donors
+          </Button>
+        </div>
+      </form>
+    </ReportDialog>
   )
 }

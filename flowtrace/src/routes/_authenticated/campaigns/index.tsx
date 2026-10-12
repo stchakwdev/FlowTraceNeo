@@ -1,13 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  CircleNotch,
-  FunnelSimple,
-  Megaphone,
-  Plus,
-} from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
+import type { CampaignStatus, CampaignWithDetails } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -16,21 +11,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CampaignCard } from '@/components/campaign-card'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  AsOf,
+  KeyFigure,
+  KeyFigures,
+  ReportNotice,
+  ReportSection,
+} from '@/components/report'
+import { CampaignTable } from '@/components/campaign-card'
 import { CampaignCreateModal } from '@/components/campaign-create-modal'
 import {
-  useCampaigns,
   useCampaignCounts,
+  useCampaigns,
   useDeleteCampaign,
 } from '@/lib/queries'
-import type { CampaignStatus } from '@/lib/supabase'
+import { useOrg } from '@/lib/org-context'
+import { formatCompact } from '@/lib/format'
 
 export const Route = createFileRoute('/_authenticated/campaigns/')({
   component: CampaignsPage,
 })
 
-const STATUS_FILTERS: { value: CampaignStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'All Campaigns' },
+const STATUS_FILTERS: Array<{ value: CampaignStatus | 'all'; label: string }> = [
+  { value: 'all', label: 'All statuses' },
   { value: 'active', label: 'Active' },
   { value: 'draft', label: 'Drafts' },
   { value: 'paused', label: 'Paused' },
@@ -39,167 +51,207 @@ const STATUS_FILTERS: { value: CampaignStatus | 'all'; label: string }[] = [
 ]
 
 function CampaignsPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const { organization } = useOrg()
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'all'>('all')
+  const [pendingDelete, setPendingDelete] = useState<CampaignWithDetails | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const { data: campaigns, isLoading } = useCampaigns()
+  const { data: campaigns, isLoading, error, refetch } = useCampaigns()
   const { data: counts } = useCampaignCounts()
   const deleteCampaign = useDeleteCampaign()
 
-  // Filter campaigns
-  const filteredCampaigns = campaigns?.filter((c) => {
+  const q = query.trim().toLowerCase()
+  const filtered = (campaigns ?? []).filter((c) => {
     const matchesSearch =
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.category?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || c.status === statusFilter
-    return matchesSearch && matchesStatus
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.description?.toLowerCase().includes(q) ||
+      c.category?.toLowerCase().includes(q)
+    return matchesSearch && (statusFilter === 'all' || c.status === statusFilter)
   })
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const handleDeleteCampaign = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this campaign?')) {
-      try {
-        await deleteCampaign.mutateAsync(id)
-      } catch (error) {
-        console.error('Failed to delete campaign:', error)
-      }
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    setDeleteError(null)
+    try {
+      await deleteCampaign.mutateAsync(pendingDelete.id)
+      setPendingDelete(null)
+    } catch (e) {
+      setDeleteError(
+        e instanceof Error
+          ? `The draft was not deleted: ${e.message}`
+          : 'The draft was not deleted. Try again.',
+      )
     }
   }
 
   return (
-    <div className="px-6 py-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="section-label">FUNDRAISING</p>
-          <h1 className="mt-1 font-display text-2xl font-bold">Campaigns</h1>
-          <p className="text-sm text-muted-foreground">
-            Create fundraising campaigns and track donor contributions
+          <h1 className="text-4xl sm:text-5xl">Campaigns</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {organization?.name ?? 'Your organisation'} · fundraising campaigns ·{' '}
+            <AsOf date={new Date()} />
           </p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Campaign
+        <Button className="h-10 self-start sm:self-auto" onClick={() => setIsCreateOpen(true)}>
+          <Plus />
+          New campaign
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="mt-6 grid gap-4 md:grid-cols-4">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Total Campaigns</p>
-            <p className="financial-figure text-2xl font-bold">{counts?.total_campaigns || 0}</p>
-            <p className="text-xs text-muted-foreground">{counts?.active_campaigns || 0} active</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-success" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Total Raised</p>
-            <p className="financial-figure text-2xl font-bold">{formatAmount(counts?.total_raised || 0)}</p>
-            <p className="text-xs text-muted-foreground">Across all campaigns</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-chart-4" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Total Donations</p>
-            <p className="financial-figure text-2xl font-bold">{counts?.total_donations || 0}</p>
-            <p className="text-xs text-muted-foreground">Confirmed donations</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4">
-          <div className="absolute left-0 top-0 h-full w-1 bg-accent" />
-          <div className="pl-2">
-            <p className="text-sm text-muted-foreground">Completed</p>
-            <p className="financial-figure text-2xl font-bold">{counts?.completed_campaigns || 0}</p>
-            <p className="text-xs text-muted-foreground">Fully funded campaigns</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Input
-            placeholder="Search campaigns..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          <FunnelSimple className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        </div>
-
-        <Select
-          value={statusFilter}
-          onValueChange={(value) =>
-            setStatusFilter(value as CampaignStatus | 'all')
+      <KeyFigures className="mt-6 rule-heavy">
+        <KeyFigure
+          scale="md"
+          value={`KES ${formatCompact(counts?.total_raised ?? 0)}`}
+          label="Raised across campaigns"
+        />
+        <KeyFigure
+          value={counts?.active_campaigns ?? 0}
+          label="Open to donors"
+          detail={
+            <span className="text-muted-foreground">
+              of {counts?.total_campaigns ?? 0} campaigns
+            </span>
           }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_FILTERS.map((filter) => (
-              <SelectItem key={filter.value} value={filter.value}>
-                {filter.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        />
+        <KeyFigure value={counts?.total_donations ?? 0} label="Confirmed donations" />
+        <KeyFigure value={counts?.completed_campaigns ?? 0} label="Completed" />
+      </KeyFigures>
 
-      {/* Campaigns Grid */}
-      <div className="mt-6">
+      <ReportSection
+        title="All campaigns"
+        className="mt-8"
+        meta={
+          campaigns ? (
+            <span className="tabular-nums">
+              {filtered.length} of {campaigns.length}
+            </span>
+          ) : null
+        }
+      >
+        <div className="flex flex-col gap-2 border-b border-border py-3 sm:flex-row sm:items-center">
+          <div className="relative sm:max-w-xs sm:flex-1">
+            <MagnifyingGlass
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              type="search"
+              aria-label="Search campaigns"
+              placeholder="Search by name or category"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-10 pl-9"
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            items={STATUS_FILTERS}
+            onValueChange={(v) => setStatusFilter((v ?? 'all') as CampaignStatus | 'all')}
+          >
+            <SelectTrigger aria-label="Filter by status" className="h-10 w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTERS.map((f) => (
+                <SelectItem key={f.value} value={f.value}>
+                  {f.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <CircleNotch className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredCampaigns && filteredCampaigns.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCampaigns.map((campaign) => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-                onDelete={() => handleDeleteCampaign(campaign.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="p-12 text-center">
-            <Megaphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No campaigns found</h3>
-            <p className="text-muted-foreground mb-4">
-              {searchQuery || statusFilter !== 'all'
-                ? 'Try adjusting your filters'
-                : 'Create your first campaign to start accepting donations'}
-            </p>
-            {!searchQuery && statusFilter === 'all' && (
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Campaign
+          <ReportNotice title="Loading campaigns" />
+        ) : error ? (
+          <ReportNotice
+            tone="error"
+            title="Campaigns could not be loaded"
+            action={
+              <Button variant="outline" className="h-10" onClick={() => void refetch()}>
+                Try again
               </Button>
-            )}
-          </Card>
+            }
+          >
+            {error.message}
+          </ReportNotice>
+        ) : filtered.length > 0 ? (
+          <CampaignTable campaigns={filtered} onDelete={setPendingDelete} />
+        ) : campaigns && campaigns.length > 0 ? (
+          <ReportNotice
+            title="No campaigns match"
+            action={
+              <Button
+                variant="outline"
+                className="h-10"
+                onClick={() => {
+                  setQuery('')
+                  setStatusFilter('all')
+                }}
+              >
+                Clear filters
+              </Button>
+            }
+          >
+            Nothing matches “{query || STATUS_FILTERS.find((f) => f.value === statusFilter)?.label}”.
+          </ReportNotice>
+        ) : (
+          <ReportNotice
+            title="No campaigns yet"
+            action={
+              <Button className="h-10" onClick={() => setIsCreateOpen(true)}>
+                <Plus />
+                New campaign
+              </Button>
+            }
+          >
+            Campaigns you create appear here with what they have raised and how
+            much of it is spent with proof.
+          </ReportNotice>
         )}
-      </div>
+      </ReportSection>
 
-      {/* Create Modal */}
-      <CampaignCreateModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
+      <CampaignCreateModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDelete(null)
+            setDeleteError(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.name} has not been opened to donors. Deleting it
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && (
+            <p role="alert" className="text-xs font-semibold text-destructive">
+              {deleteError}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep draft</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={deleteCampaign.isPending}
+              onClick={() => void confirmDelete()}
+            >
+              Delete draft
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
