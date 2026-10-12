@@ -55,7 +55,7 @@ jobs:
 
           ${DESCRIPTION}
 
-          Logs: ${LOG_URL}"
+          Deployment: ${LOG_URL}"
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
