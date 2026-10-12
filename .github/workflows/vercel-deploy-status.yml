@@ -1,0 +1,50 @@
+# Vercel reports each deployment back to GitHub. This turns a failed Vercel
+# build into a failed workflow run (which GitHub emails about) and keeps one
+# open issue per Vercel project so failures leave a trail.
+name: Vercel deploy status
+
+on: deployment_status
+
+permissions:
+  issues: write
+
+jobs:
+  report:
+    if: >-
+      contains(fromJSON('["failure", "error", "success"]'), github.event.deployment_status.state) &&
+      startsWith(github.event.deployment.environment, 'Production')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open, update or close the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          STATE: ${{ github.event.deployment_status.state }}
+          ENVIRONMENT: ${{ github.event.deployment.environment }}
+          SHA: ${{ github.event.deployment.sha }}
+          LOG_URL: ${{ github.event.deployment_status.target_url }}
+          DESCRIPTION: ${{ github.event.deployment_status.description }}
+        run: |
+          title="Vercel deploy failing: ${ENVIRONMENT}"
+          existing=$(gh issue list --state open --label vercel-failure --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+
+          if [ "$STATE" = "success" ]; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Fixed: \`${SHA:0:7}\` deployed successfully."
+            fi
+            exit 0
+          fi
+
+          body="Deployment of \`${SHA:0:7}\` failed (${STATE}).
+
+          ${DESCRIPTION}
+
+          Logs: ${LOG_URL}"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh label create vercel-failure --color B60205 --description "Vercel deployment failed" 2>/dev/null || true
+            gh issue create --title "$title" --label vercel-failure --body "$body"
+          fi
+          echo "::error title=Vercel deploy failed::${ENVIRONMENT} @ ${SHA:0:7}: ${LOG_URL}"
+          exit 1
