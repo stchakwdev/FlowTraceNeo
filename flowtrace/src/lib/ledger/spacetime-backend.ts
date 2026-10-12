@@ -1,0 +1,294 @@
+// The SpacetimeDB ledger backend. Loaded lazily (ledger-client.ts uses
+// import.meta.glob), so the demo bundle never pulls in the SDK.
+//
+// - load: subscribes to the caller's `my_*` views for one organisation and
+//   reassembles a LedgerState from the client cache.
+// - run: calls the `run_command` reducer with the command as JSON. The
+//   server derives the actor from the caller's identity (the `actor`
+//   argument is ignored), applies the command with the same engine, and
+//   rolls back on a LedgerError, which is rebuilt here with its issues.
+//
+// Config: VITE_SPACETIMEDB_URI (e.g. wss://maincloud.spacetimedb.com) and
+// VITE_SPACETIMEDB_MODULE (the database name). The connection token is kept
+// in localStorage so the browser keeps one identity across visits.
+import { DbConnection } from './spacetime-bindings'
+import {
+  DOC_COLLECTIONS,
+  DOC_COLLECTION_KEYS,
+  LEDGER_ERROR_PREFIX,
+  assembleState,
+  emptyDocs,
+} from './spacetime-codec'
+import { LedgerError } from './errors'
+import type { DocRow, DocTable, EntryRow, LineRow, OrgRow, OrgRows } from './spacetime-codec'
+import type { Issue } from './errors'
+import type { LedgerBackend } from './backend'
+import type { CommandResult, LedgerCommand } from './commands'
+import type { LedgerState } from './types'
+
+const TOKEN_KEY = 'flowtrace.spacetimedb.token'
+const RESULT_TIMEOUT_MS = 15_000
+
+interface Rows<T> {
+  iter: () => Iterable<T>
+}
+interface Watchable<T> {
+  onInsert: (cb: (ctx: unknown, row: T) => void) => void
+  removeOnInsert: (cb: (ctx: unknown, row: T) => void) => void
+  onUpdate: (cb: (ctx: unknown, oldRow: T, newRow: T) => void) => void
+  removeOnUpdate: (cb: (ctx: unknown, oldRow: T, newRow: T) => void) => void
+  onDelete: (cb: (ctx: unknown, row: T) => void) => void
+  removeOnDelete: (cb: (ctx: unknown, row: T) => void) => void
+}
+type ViewHandle<T> = Rows<T> & Watchable<T>
+
+interface CommandResultRow {
+  orgId: string
+  requestId: string
+  resultJson: string
+}
+
+function config() {
+  const uri = import.meta.env.VITE_SPACETIMEDB_URI as string | undefined
+  const moduleName = import.meta.env.VITE_SPACETIMEDB_MODULE as string | undefined
+  if (!uri || !moduleName) {
+    throw new Error('Set VITE_SPACETIMEDB_URI and VITE_SPACETIMEDB_MODULE to use the SpacetimeDB ledger.')
+  }
+  return { uri, moduleName }
+}
+
+function readToken(): string | undefined {
+  try {
+    return localStorage.getItem(TOKEN_KEY) ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
+function saveToken(token: string) {
+  try {
+    localStorage.setItem(TOKEN_KEY, token)
+  } catch {
+    // Private mode or blocked storage: the identity lasts this session only.
+  }
+}
+
+let connection: Promise<DbConnection> | null = null
+
+function connect(): Promise<DbConnection> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('The SpacetimeDB ledger runs in the browser only.'))
+  }
+  connection ??= new Promise<DbConnection>((resolve, reject) => {
+    const { uri, moduleName } = config()
+    DbConnection.builder()
+      .withUri(uri)
+      .withDatabaseName(moduleName)
+      .withToken(readToken())
+      .onConnect((conn, _identity, token) => {
+        saveToken(token)
+        resolve(conn)
+      })
+      .onConnectError((_ctx, error) => {
+        connection = null
+        reject(error)
+      })
+      .onDisconnect(() => {
+        connection = null
+        subscriptions.clear()
+      })
+      .build()
+  })
+  return connection
+}
+
+// ---------------------------------------------------------------------------
+// Views, by the accessor names of the generated bindings
+// ---------------------------------------------------------------------------
+
+const viewAccessor = (table: string) => `my${table[0].toUpperCase()}${table.slice(1)}`
+const viewName = (table: string) => `my_${table.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)}`
+
+const LEDGER_TABLES: Array<string> = ['ledgerOrg', 'journalEntry', 'journalLine', ...Object.values(DOC_COLLECTIONS)]
+
+function view<T>(conn: DbConnection, table: string): ViewHandle<T> {
+  return (conn.db as unknown as Record<string, ViewHandle<T>>)[viewAccessor(table)]
+}
+
+const ORG_ID = /^[A-Za-z0-9_-]{1,128}$/
+
+const subscriptions = new Map<string, Promise<void>>()
+
+/** Subscribes once per organisation; resolves when the first rows arrive. */
+function ensureSubscribed(conn: DbConnection, orgId: string): Promise<void> {
+  if (!ORG_ID.test(orgId)) return Promise.reject(new Error(`Invalid organisation id ${orgId}.`))
+  let sub = subscriptions.get(orgId)
+  if (!sub) {
+    sub = new Promise<void>((resolve, reject) => {
+      const queries = LEDGER_TABLES.map((table) => `SELECT * FROM ${viewName(table)} WHERE org_id = '${orgId}'`)
+      queries.push(`SELECT * FROM my_command_result`)
+      conn
+        .subscriptionBuilder()
+        .onApplied(() => resolve())
+        .onError((ctx) => {
+          subscriptions.delete(orgId)
+          reject(ctx.event ?? new Error('SpacetimeDB subscription failed.'))
+        })
+        .subscribe(queries)
+    })
+    subscriptions.set(orgId, sub)
+  }
+  return sub
+}
+
+function readState(conn: DbConnection, orgId: string): LedgerState {
+  const mine = <T extends { orgId: string }>(table: string) =>
+    [...view<T>(conn, table).iter()].filter((r) => r.orgId === orgId)
+  const org = mine<OrgRow & { orgId: string }>('ledgerOrg')[0] as OrgRow | undefined
+  if (!org) throw new Error(`No ledger for organisation ${orgId}, or you are not a member of it.`)
+  const rows: OrgRows = {
+    org,
+    entries: mine<EntryRow>('journalEntry'),
+    lines: mine<LineRow>('journalLine'),
+    docs: emptyDocs(),
+  }
+  for (const k of DOC_COLLECTION_KEYS) rows.docs[k] = mine<DocRow>(DOC_COLLECTIONS[k] satisfies DocTable)
+  return assembleState(rows)
+}
+
+/** A reducer error back into the engine's error, when it was one. */
+function toLedgerError(e: unknown): unknown {
+  const message = e instanceof Error ? e.message : String(e)
+  if (!message.startsWith(LEDGER_ERROR_PREFIX)) return e
+  try {
+    return new LedgerError(JSON.parse(message.slice(LEDGER_ERROR_PREFIX.length)) as Array<Issue>)
+  } catch {
+    return e
+  }
+}
+
+function waitForResult(conn: DbConnection, requestId: string) {
+  const results = view<CommandResultRow>(conn, 'commandResult')
+  let cancel = () => {}
+  const promise = new Promise<CommandResult>((resolve, reject) => {
+    const check = (row: CommandResultRow) => {
+      if (row.requestId !== requestId) return
+      cancel()
+      resolve(JSON.parse(row.resultJson) as CommandResult)
+    }
+    const onInsert = (_ctx: unknown, row: CommandResultRow) => check(row)
+    const onUpdate = (_ctx: unknown, _old: CommandResultRow, row: CommandResultRow) => check(row)
+    const timer = setTimeout(() => {
+      cancel()
+      reject(new Error('The ledger did not confirm the command in time.'))
+    }, RESULT_TIMEOUT_MS)
+    cancel = () => {
+      clearTimeout(timer)
+      results.removeOnInsert(onInsert)
+      results.removeOnUpdate(onUpdate)
+    }
+    results.onInsert(onInsert)
+    results.onUpdate(onUpdate)
+  })
+  const cached = () => [...results.iter()].find((r) => r.requestId === requestId)
+  return { promise, cached, cancel: () => cancel() }
+}
+
+export const spacetimeLedgerBackend: LedgerBackend = {
+  kind: 'spacetimedb',
+
+  load: async (organizationId) => {
+    const conn = await connect()
+    await ensureSubscribed(conn, organizationId)
+    return readState(conn, organizationId)
+  },
+
+  run: async (organizationId, cmd: LedgerCommand) => {
+    const conn = await connect()
+    await ensureSubscribed(conn, organizationId)
+    const requestId = crypto.randomUUID()
+    const waiter = waitForResult(conn, requestId)
+    try {
+      await conn.reducers.runCommand({ orgId: organizationId, requestId, commandJson: JSON.stringify(cmd) })
+    } catch (e) {
+      waiter.cancel()
+      throw toLedgerError(e)
+    }
+    const row = waiter.cached()
+    if (row) {
+      waiter.cancel()
+      return JSON.parse(row.resultJson) as CommandResult
+    }
+    return waiter.promise
+  },
+
+  subscribe: (organizationId, onChange) => {
+    let stopped = false
+    let pending = false
+    let detach = () => {}
+    const emit = () => {
+      if (pending || stopped) return
+      pending = true
+      // One callback per transaction, not one per row.
+      setTimeout(() => {
+        pending = false
+        if (stopped) return
+        void connection?.then((conn) => {
+          try {
+            onChange(readState(conn, organizationId))
+          } catch {
+            // The organisation is gone or access was revoked; load() reports it.
+          }
+        })
+      }, 0)
+    }
+    void connect()
+      .then(async (conn) => {
+        await ensureSubscribed(conn, organizationId)
+        if (stopped) return
+        const onRow = (_ctx: unknown, row: { orgId: string }) => {
+          if (row.orgId === organizationId) emit()
+        }
+        const onUpdate = (_ctx: unknown, _old: { orgId: string }, row: { orgId: string }) => {
+          if (row.orgId === organizationId) emit()
+        }
+        const views = LEDGER_TABLES.map((table) => view<{ orgId: string }>(conn, table))
+        for (const v of views) {
+          v.onInsert(onRow)
+          v.onUpdate(onUpdate)
+          v.onDelete(onRow)
+        }
+        detach = () => {
+          for (const v of views) {
+            v.removeOnInsert(onRow)
+            v.removeOnUpdate(onUpdate)
+            v.removeOnDelete(onRow)
+          }
+        }
+      })
+      .catch(() => {
+        // Connection errors surface through load() and run().
+      })
+    return () => {
+      stopped = true
+      detach()
+    }
+  },
+}
+
+/** Opens books for a new organisation; the caller becomes its owner. */
+export async function createSpacetimeOrgLedger(
+  organizationId: string,
+  baseCurrency: string,
+  fiscalYear: number,
+  displayName: string,
+) {
+  const conn = await connect()
+  await conn.reducers.createOrgLedger({ orgId: organizationId, baseCurrency, fiscalYear, displayName })
+}
+
+/** The identity of this browser's connection, to hand to an org admin. */
+export async function spacetimeIdentity() {
+  const conn = await connect()
+  return conn.identity?.toHexString() ?? null
+}

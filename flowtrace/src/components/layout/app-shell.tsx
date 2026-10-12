@@ -8,7 +8,7 @@ import type { AuthUser } from '@/lib/auth'
 import { useAppAuth } from '@/lib/auth-context'
 import { DEV_MODE, getUserDisplayName, getUserInitials } from '@/lib/auth'
 import { useOrg } from '@/lib/org-context'
-import { isNavItemActive, navItems } from '@/lib/navigation'
+import { isNavItemActive, navSections } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -112,34 +112,46 @@ export function AppShell({
           )}
         >
           <nav aria-label="Main" className="flex-1 overflow-y-auto py-3">
-            <ul className="flex flex-col">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const active = isNavItemActive(item.href, location.pathname)
-                return (
-                  <li key={item.href}>
-                    <Link
-                      to={item.href}
-                      aria-current={active ? 'page' : undefined}
-                      title={collapsed ? item.label : undefined}
-                      className={cn(
-                        'mx-2 flex h-10 items-center gap-3 px-3 text-sm font-medium transition-colors',
-                        collapsed && 'justify-center px-0',
-                        active
-                          ? 'bg-foreground text-background'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent',
-                      )}
-                    >
-                      <Icon
-                        className="size-[1.125rem] shrink-0"
-                        weight={active ? 'bold' : 'regular'}
-                      />
-                      {!collapsed && item.label}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+            {navSections.map((section, i) => (
+              <div key={section.title ?? i} className={cn(i > 0 && 'mt-3')}>
+                {section.title &&
+                  (collapsed ? (
+                    <div className="mx-4 mb-3 border-t border-sidebar-border" />
+                  ) : (
+                    <p className="section-label mx-5 mb-1 text-[0.6875rem] text-muted-foreground">
+                      {section.title}
+                    </p>
+                  ))}
+                <ul className="flex flex-col">
+                  {section.items.map((item) => {
+                    const Icon = item.icon
+                    const active = isNavItemActive(item.href, location.pathname)
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          to={item.href}
+                          aria-current={active ? 'page' : undefined}
+                          title={collapsed ? item.label : undefined}
+                          className={cn(
+                            'mx-2 flex h-10 items-center gap-3 px-3 text-sm font-medium transition-colors',
+                            collapsed && 'justify-center px-0',
+                            active
+                              ? 'bg-foreground text-background'
+                              : 'text-sidebar-foreground hover:bg-sidebar-accent',
+                          )}
+                        >
+                          <Icon
+                            className="size-[1.125rem] shrink-0"
+                            weight={active ? 'bold' : 'regular'}
+                          />
+                          {!collapsed && item.label}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
           <div className="border-t border-sidebar-border p-2">
             <Button

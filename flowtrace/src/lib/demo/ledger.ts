@@ -61,6 +61,59 @@ const GRANT = {
   paef: 'grant-paef-education',
 }
 
+// How the demo's flow nodes map onto the books.
+const cashByNode = new Map([
+  [N('a11'), A('1110')], // General Fund
+  [N('a13'), A('1120')], // Operations Budget
+  [N('a14'), A('1130')], // Project Fund
+  [N('a19'), A('1140')], // Payroll
+])
+// Income follows the donor's grant; known spend follows its programme.
+const grantByDonor: Record<string, string> = {
+  [N('a12')]: GRANT.harambee,
+  [N('a20')]: GRANT.northlight,
+  [N('a30')]: GRANT.kisima,
+  [N('a31')]: GRANT.paef,
+}
+const grantBySpend: Record<string, string> = {
+  [T('b10')]: GRANT.kisima, // borehole phase 1
+  [T('b11')]: GRANT.harambee, // community health worker stipends
+  [T('b13')]: GRANT.northlight, // maternal health equipment
+  [T('b16')]: GRANT.kisima, // unexplained withdrawal from the projects account
+}
+// New spend through a project node is charged to that project's grant.
+const grantByProject: Record<string, string> = {
+  [N('a35')]: GRANT.kisima, // Clean Water Turkana
+  [N('a36')]: GRANT.northlight, // Maternal Health Kilifi
+  [N('a37')]: GRANT.paef, // Turkana Schools
+}
+const expenseOverrides: Record<string, string> = {
+  [T('b10')]: A('5100'), // borehole drilling: water and sanitation
+  [T('b11')]: A('5400'), // stipends
+  [T('b13')]: A('5500'), // equipment
+  [T('b14')]: A('1150'), // M-Pesa float top-up: a transfer to the till
+}
+
+export function demoBridgeContext(ledger: Ledger): BridgeContext {
+  const fundOfGrant = (g: string) => ledger.grant(g)!.fund_id
+  return {
+    baseCurrency: ledger.state.settings.base_currency,
+    nodes: new Map<string, BridgeNode>(flowNodes.map((n) => [n.id, { id: n.id, name: n.name, type: n.type }])),
+    cashAccountForNode: (id) => cashByNode.get(id),
+    defaultCashAccount: A('1110'),
+    dimensionForNode: (id) => ledger.state.dimensions.find((d) => d.node_id === id)?.id,
+    grantFor: (t) => {
+      const g =
+        (t.from_node_id && grantByDonor[t.from_node_id]) ||
+        grantBySpend[t.id] ||
+        (t.to_node_id && grantByProject[t.to_node_id]) ||
+        (t.from_node_id && grantByProject[t.from_node_id])
+      return g && ledger.grant(g) ? { grant_id: g, fund_id: fundOfGrant(g) } : null
+    },
+    expenseAccountFor: (t) => expenseOverrides[t.id],
+  }
+}
+
 function seedEnv(): LedgerEnv {
   let n = 0
   return {
@@ -117,12 +170,6 @@ export function buildDemoLedger(): Ledger {
   }
 
   // Bank and mobile-money accounts -------------------------------------------
-  const cashByNode = new Map([
-    [N('a11'), A('1110')], // General Fund
-    [N('a13'), A('1120')], // Operations Budget
-    [N('a14'), A('1130')], // Project Fund
-    [N('a19'), A('1140')], // Payroll
-  ])
   ledger.addBankAccount(sys, { id: 'bank-main', name: 'Main operating account', kind: 'bank', provider: 'Equity Bank', account_id: A('1110'), currency: 'KES', number_masked: '•••• 4821' })
   ledger.addBankAccount(sys, { id: 'bank-ops', name: 'Operations account', kind: 'bank', provider: 'Equity Bank', account_id: A('1120'), currency: 'KES', number_masked: '•••• 4839' })
   ledger.addBankAccount(sys, { id: 'bank-projects', name: 'Restricted projects account', kind: 'bank', provider: 'KCB', account_id: A('1130'), currency: 'KES', number_masked: '•••• 0917' })
@@ -146,39 +193,7 @@ export function buildDemoLedger(): Ledger {
   for (const p of ledger.state.periods.filter((x) => x.fiscal_year === 2025 && x.end_date < '2025-12-01')) ledger.lockPeriod(sys, p.id)
 
   // Backfill: every bundled transaction through the bridge -------------------
-  const nodes = new Map<string, BridgeNode>(flowNodes.map((n) => [n.id, { id: n.id, name: n.name, type: n.type }]))
-  // Which grant each spend belongs to. Income follows the donor's grant.
-  const grantByDonor: Record<string, string> = {
-    [N('a12')]: GRANT.harambee,
-    [N('a20')]: GRANT.northlight,
-    [N('a30')]: GRANT.kisima,
-    [N('a31')]: GRANT.paef,
-  }
-  const grantBySpend: Record<string, string> = {
-    [T('b10')]: GRANT.kisima, // borehole phase 1
-    [T('b11')]: GRANT.harambee, // community health worker stipends
-    [T('b13')]: GRANT.northlight, // maternal health equipment
-    [T('b16')]: GRANT.kisima, // unexplained withdrawal from the projects account
-  }
-  const fundOfGrant = (g: string) => ledger.grant(g)!.fund_id
-  const ctx: BridgeContext = {
-    baseCurrency: 'KES',
-    nodes,
-    cashAccountForNode: (id) => cashByNode.get(id),
-    defaultCashAccount: A('1110'),
-    dimensionForNode: (id) => dimByNode.get(id),
-    grantFor: (t) => {
-      const g = (t.from_node_id && grantByDonor[t.from_node_id]) || grantBySpend[t.id]
-      return g ? { grant_id: g, fund_id: fundOfGrant(g) } : null
-    },
-    expenseAccountFor: (t) =>
-      ({
-        [T('b10')]: A('5100'), // borehole drilling: water and sanitation
-        [T('b11')]: A('5400'), // stipends
-        [T('b13')]: A('5500'), // equipment
-        [T('b14')]: A('1150'), // M-Pesa float top-up: a transfer to the till
-      })[t.id],
-  }
+  const ctx = demoBridgeContext(ledger)
   const allocations: Array<{ node: string; amount: number }> = []
   for (const t of [...transactions].sort((a, b) => a.transaction_date.localeCompare(b.transaction_date))) {
     const r = bridgeTransaction(t as BridgeTransaction, ctx)
@@ -399,4 +414,32 @@ export const demoLedgerBackend: LedgerBackend = {
     listeners.add(onChange)
     return () => listeners.delete(onChange)
   },
+}
+
+/**
+ * Posts a newly recorded transaction to the demo books, the way the live
+ * bridge does: an entry for money that moved, a budget line for an
+ * allocation. Returns why it was not posted, if it was not.
+ */
+export async function postDemoTransaction(t: BridgeTransaction): Promise<string | null> {
+  const ledger = current()
+  const r = bridgeTransaction(t, demoBridgeContext(ledger))
+  try {
+    if (r.kind === 'entry') {
+      await demoLedgerBackend.run(DEMO_ORG_ID, { type: 'entry.post', input: r.input }, DEMO_ACTOR)
+    } else if (r.kind === 'allocation') {
+      const dim = ledger.state.dimensions.find((d) => d.node_id === r.dimensionNodeId)
+      await demoLedgerBackend.run(
+        DEMO_ORG_ID,
+        {
+          type: 'budgetLine.set',
+          input: { budget_id: 'budget-2026', account_id: null, fund_id: null, grant_id: null, dimension_id: dim?.id ?? null, period_id: null, amount: fromMajor(r.amount) },
+        },
+        DEMO_ACTOR,
+      )
+    } else return r.reason
+    return null
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e)
+  }
 }

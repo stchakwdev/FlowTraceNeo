@@ -1,0 +1,19 @@
+{
+  "name": "flowtrace-ledger-module",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SpacetimeDB server module for the FlowTrace double-entry ledger",
+  "scripts": {
+    "build": "spacetime build",
+    "typecheck": "tsc --noEmit",
+    "publish:local": "spacetime publish flowtrace-ledger --server local --yes",
+    "generate": "spacetime generate --lang typescript --out-dir ../flowtrace/src/lib/ledger/spacetime-bindings --module-path ."
+  },
+  "dependencies": {
+    "spacetimedb": "2.11.*"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.0"
+  }
+}

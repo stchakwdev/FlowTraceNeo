@@ -100,3 +100,32 @@ describe('demo backend', () => {
     expect(after.entries.length).toBe(before.entries.length + 1)
   })
 })
+
+describe('live bridge', () => {
+  beforeEach(() => resetDemoLedger())
+
+  it('posts a newly recorded transaction, charged to its project’s grant', async () => {
+    const { postDemoTransaction } = await import('./ledger')
+    const before = await demoLedgerBackend.load(DEMO_ORG_ID)
+    const reason = await postDemoTransaction({
+      id: 'new-txn',
+      from_node_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14',
+      to_node_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35',
+      amount: 120_000,
+      currency: 'KES',
+      exchange_rate: null,
+      description: 'Pump spares',
+      category: 'Programs',
+      reference: 'PS-1',
+      verification_status: 'pending',
+      transaction_date: '2026-02-04',
+    })
+    expect(reason).toBeNull()
+    const after = await demoLedgerBackend.load(DEMO_ORG_ID)
+    const entry = after.entries.find((e) => e.source_id === 'new-txn')!
+    expect(entry.status).toBe('posted')
+    const spend = after.lines.find((l) => l.entry_id === entry.id && l.debit > 0)!
+    expect(spend.grant_id).toBe('grant-kisima-wash')
+    expect(after.entries.length).toBe(before.entries.length + 1)
+  })
+})

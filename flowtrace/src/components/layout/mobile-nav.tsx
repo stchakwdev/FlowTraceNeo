@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { List, X } from '@phosphor-icons/react'
-import { isNavItemActive, navItems } from '@/lib/navigation'
+import { isNavItemActive, navSections } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -61,30 +61,39 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         </div>
 
         <div className="flex flex-col py-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = isNavItemActive(item.href, location.pathname)
+          {navSections.map((section, i) => (
+            <div key={section.title ?? i} className={cn(i > 0 && 'mt-2')}>
+              {section.title && (
+                <p className="section-label mx-5 mt-2 mb-1 text-[0.6875rem] text-muted-foreground">
+                  {section.title}
+                </p>
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon
+                const isActive = isNavItemActive(item.href, location.pathname)
 
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'mx-2 flex h-12 items-center gap-3 px-3 text-base font-medium transition-colors',
-                  isActive
-                    ? 'bg-foreground text-background'
-                    : 'text-foreground hover:bg-muted',
-                )}
-              >
-                <Icon
-                  className="size-5"
-                  weight={isActive ? 'bold' : 'regular'}
-                />
-                {item.label}
-              </Link>
-            )
-          })}
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'mx-2 flex h-12 items-center gap-3 px-3 text-base font-medium transition-colors',
+                      isActive
+                        ? 'bg-foreground text-background'
+                        : 'text-foreground hover:bg-muted',
+                    )}
+                  >
+                    <Icon
+                      className="size-5"
+                      weight={isActive ? 'bold' : 'regular'}
+                    />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </div>
       </nav>
     </>
