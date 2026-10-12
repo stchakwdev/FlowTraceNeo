@@ -419,7 +419,8 @@ export function cashFlow(state: LedgerState, from: ISODate, to: ISODate): CashFl
     // Classify by the largest non-cash counterpart.
     const counter = group
       .filter((l) => !isCash(l.account_id))
-      .sort((a, b) => Math.abs(b.base_amount) - Math.abs(a.base_amount))[0]
+      .sort((a, b) => Math.abs(b.base_amount) - Math.abs(a.base_amount))
+      .at(0)
     const cls = counter ? (accounts.get(counter.account_id)?.cash_flow_class ?? 'operating') : 'operating'
     if (cls === 'investing') investing += cashMove
     else if (cls === 'financing') financing += cashMove

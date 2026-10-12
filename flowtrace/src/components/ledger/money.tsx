@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils'
 import type { Minor } from '@/lib/ledger'
+import { cn } from '@/lib/utils'
 
 /**
  * 1,250.50 from 125050 minor units. Accounting style: negatives in

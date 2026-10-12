@@ -307,13 +307,15 @@ export class Ledger {
 
     const byFund = new Map<string, Minor>()
     let total = 0
-    let lineIssues = false
+    // An object, not a let: TypeScript does not track writes made inside
+    // the forEach callback below.
+    const seen = { lineIssues: false }
 
     input.lines.forEach((l, i) => {
       const debit = l.debit ?? 0
       const credit = l.credit ?? 0
       const at = (code: Issue['code'], message: string, overridable = false) => {
-        lineIssues = true
+        seen.lineIssues = true
         issues.push({ code, message: `Line ${i + 1}: ${message}`, line: i, overridable })
       }
       if (!Number.isSafeInteger(debit) || !Number.isSafeInteger(credit))
@@ -369,7 +371,7 @@ export class Ledger {
       }
     })
 
-    if (!lineIssues && input.lines.length >= 2) {
+    if (!seen.lineIssues && input.lines.length >= 2) {
       if (total !== 0)
         issues.push({
           code: 'UNBALANCED',
@@ -385,7 +387,7 @@ export class Ledger {
     }
 
     // Over-award: posted spend on the grant plus this entry's spend.
-    if (!lineIssues) {
+    if (!seen.lineIssues) {
       const spendByGrant = new Map<string, Minor>()
       for (const l of input.lines) {
         const a = this.account(l.account_id)

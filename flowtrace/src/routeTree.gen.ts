@@ -18,7 +18,12 @@ import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChainsRouteImport } from './routes/_authenticated/chains'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions/index'
+import { Route as AuthenticatedSpendIndexRouteImport } from './routes/_authenticated/spend/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
+import { Route as AuthenticatedReconcileIndexRouteImport } from './routes/_authenticated/reconcile/index'
+import { Route as AuthenticatedLedgerIndexRouteImport } from './routes/_authenticated/ledger/index'
+import { Route as AuthenticatedGrantsIndexRouteImport } from './routes/_authenticated/grants/index'
 import { Route as AuthenticatedCampaignsIndexRouteImport } from './routes/_authenticated/campaigns/index'
 import { Route as EmbedCampaignIdRouteImport } from './routes/embed/campaign.$id'
 import { Route as BadgeTrustOrgIdRouteImport } from './routes/badge/trust.$orgId'
@@ -27,7 +32,22 @@ import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_auth
 import { Route as AuthenticatedTransactionsIdRouteImport } from './routes/_authenticated/transactions/$id'
 import { Route as AuthenticatedSettingsEmbedRouteImport } from './routes/_authenticated/settings/embed'
 import { Route as AuthenticatedSettingsAccessGroupsRouteImport } from './routes/_authenticated/settings/access-groups'
+import { Route as AuthenticatedReconcileBankIdRouteImport } from './routes/_authenticated/reconcile/$bankId'
+import { Route as AuthenticatedLedgerPeriodsRouteImport } from './routes/_authenticated/ledger/periods'
+import { Route as AuthenticatedLedgerNewRouteImport } from './routes/_authenticated/ledger/new'
+import { Route as AuthenticatedLedgerImportRouteImport } from './routes/_authenticated/ledger/import'
+import { Route as AuthenticatedLedgerGeneralRouteImport } from './routes/_authenticated/ledger/general'
+import { Route as AuthenticatedLedgerAccountsRouteImport } from './routes/_authenticated/ledger/accounts'
+import { Route as AuthenticatedGrantsBudgetsRouteImport } from './routes/_authenticated/grants/budgets'
+import { Route as AuthenticatedGrantsIdRouteImport } from './routes/_authenticated/grants/$id'
 import { Route as AuthenticatedCampaignsIdRouteImport } from './routes/_authenticated/campaigns/$id'
+import { Route as AuthenticatedSpendClaimsIndexRouteImport } from './routes/_authenticated/spend/claims.index'
+import { Route as AuthenticatedSpendBillsIndexRouteImport } from './routes/_authenticated/spend/bills.index'
+import { Route as AuthenticatedSpendClaimsNewRouteImport } from './routes/_authenticated/spend/claims.new'
+import { Route as AuthenticatedSpendClaimsIdRouteImport } from './routes/_authenticated/spend/claims.$id'
+import { Route as AuthenticatedSpendBillsNewRouteImport } from './routes/_authenticated/spend/bills.new'
+import { Route as AuthenticatedSpendBillsIdRouteImport } from './routes/_authenticated/spend/bills.$id'
+import { Route as AuthenticatedLedgerEntriesIdRouteImport } from './routes/_authenticated/ledger/entries.$id'
 
 const SignOutRoute = SignOutRouteImport.update({
   id: '/sign-out',
@@ -74,10 +94,39 @@ const AuthenticatedTransactionsIndexRoute =
     path: '/transactions/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSpendIndexRoute = AuthenticatedSpendIndexRouteImport.update({
+  id: '/spend/',
+  path: '/spend/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
     path: '/settings/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportsIndexRoute =
+  AuthenticatedReportsIndexRouteImport.update({
+    id: '/reports/',
+    path: '/reports/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReconcileIndexRoute =
+  AuthenticatedReconcileIndexRouteImport.update({
+    id: '/reconcile/',
+    path: '/reconcile/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLedgerIndexRoute =
+  AuthenticatedLedgerIndexRouteImport.update({
+    id: '/ledger/',
+    path: '/ledger/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGrantsIndexRoute =
+  AuthenticatedGrantsIndexRouteImport.update({
+    id: '/grants/',
+    path: '/grants/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCampaignsIndexRoute =
@@ -125,10 +174,98 @@ const AuthenticatedSettingsAccessGroupsRoute =
     path: '/settings/access-groups',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedReconcileBankIdRoute =
+  AuthenticatedReconcileBankIdRouteImport.update({
+    id: '/reconcile/$bankId',
+    path: '/reconcile/$bankId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLedgerPeriodsRoute =
+  AuthenticatedLedgerPeriodsRouteImport.update({
+    id: '/ledger/periods',
+    path: '/ledger/periods',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLedgerNewRoute = AuthenticatedLedgerNewRouteImport.update({
+  id: '/ledger/new',
+  path: '/ledger/new',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLedgerImportRoute =
+  AuthenticatedLedgerImportRouteImport.update({
+    id: '/ledger/import',
+    path: '/ledger/import',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLedgerGeneralRoute =
+  AuthenticatedLedgerGeneralRouteImport.update({
+    id: '/ledger/general',
+    path: '/ledger/general',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLedgerAccountsRoute =
+  AuthenticatedLedgerAccountsRouteImport.update({
+    id: '/ledger/accounts',
+    path: '/ledger/accounts',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGrantsBudgetsRoute =
+  AuthenticatedGrantsBudgetsRouteImport.update({
+    id: '/grants/budgets',
+    path: '/grants/budgets',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGrantsIdRoute = AuthenticatedGrantsIdRouteImport.update({
+  id: '/grants/$id',
+  path: '/grants/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCampaignsIdRoute =
   AuthenticatedCampaignsIdRouteImport.update({
     id: '/campaigns/$id',
     path: '/campaigns/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSpendClaimsIndexRoute =
+  AuthenticatedSpendClaimsIndexRouteImport.update({
+    id: '/spend/claims/',
+    path: '/spend/claims/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSpendBillsIndexRoute =
+  AuthenticatedSpendBillsIndexRouteImport.update({
+    id: '/spend/bills/',
+    path: '/spend/bills/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSpendClaimsNewRoute =
+  AuthenticatedSpendClaimsNewRouteImport.update({
+    id: '/spend/claims/new',
+    path: '/spend/claims/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSpendClaimsIdRoute =
+  AuthenticatedSpendClaimsIdRouteImport.update({
+    id: '/spend/claims/$id',
+    path: '/spend/claims/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSpendBillsNewRoute =
+  AuthenticatedSpendBillsNewRouteImport.update({
+    id: '/spend/bills/new',
+    path: '/spend/bills/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSpendBillsIdRoute =
+  AuthenticatedSpendBillsIdRouteImport.update({
+    id: '/spend/bills/$id',
+    path: '/spend/bills/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLedgerEntriesIdRoute =
+  AuthenticatedLedgerEntriesIdRouteImport.update({
+    id: '/ledger/entries/$id',
+    path: '/ledger/entries/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -141,6 +278,14 @@ export interface FileRoutesByFullPath {
   '/trust-score': typeof AuthenticatedTrustScoreRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
+  '/grants/$id': typeof AuthenticatedGrantsIdRoute
+  '/grants/budgets': typeof AuthenticatedGrantsBudgetsRoute
+  '/ledger/accounts': typeof AuthenticatedLedgerAccountsRoute
+  '/ledger/general': typeof AuthenticatedLedgerGeneralRoute
+  '/ledger/import': typeof AuthenticatedLedgerImportRoute
+  '/ledger/new': typeof AuthenticatedLedgerNewRoute
+  '/ledger/periods': typeof AuthenticatedLedgerPeriodsRoute
+  '/reconcile/$bankId': typeof AuthenticatedReconcileBankIdRoute
   '/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
   '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
@@ -149,8 +294,20 @@ export interface FileRoutesByFullPath {
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
   '/campaigns': typeof AuthenticatedCampaignsIndexRoute
+  '/grants': typeof AuthenticatedGrantsIndexRoute
+  '/ledger': typeof AuthenticatedLedgerIndexRoute
+  '/reconcile': typeof AuthenticatedReconcileIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
+  '/spend': typeof AuthenticatedSpendIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
+  '/ledger/entries/$id': typeof AuthenticatedLedgerEntriesIdRoute
+  '/spend/bills/$id': typeof AuthenticatedSpendBillsIdRoute
+  '/spend/bills/new': typeof AuthenticatedSpendBillsNewRoute
+  '/spend/claims/$id': typeof AuthenticatedSpendClaimsIdRoute
+  '/spend/claims/new': typeof AuthenticatedSpendClaimsNewRoute
+  '/spend/bills': typeof AuthenticatedSpendBillsIndexRoute
+  '/spend/claims': typeof AuthenticatedSpendClaimsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -161,6 +318,14 @@ export interface FileRoutesByTo {
   '/trust-score': typeof AuthenticatedTrustScoreRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
+  '/grants/$id': typeof AuthenticatedGrantsIdRoute
+  '/grants/budgets': typeof AuthenticatedGrantsBudgetsRoute
+  '/ledger/accounts': typeof AuthenticatedLedgerAccountsRoute
+  '/ledger/general': typeof AuthenticatedLedgerGeneralRoute
+  '/ledger/import': typeof AuthenticatedLedgerImportRoute
+  '/ledger/new': typeof AuthenticatedLedgerNewRoute
+  '/ledger/periods': typeof AuthenticatedLedgerPeriodsRoute
+  '/reconcile/$bankId': typeof AuthenticatedReconcileBankIdRoute
   '/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
   '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
@@ -169,8 +334,20 @@ export interface FileRoutesByTo {
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
   '/campaigns': typeof AuthenticatedCampaignsIndexRoute
+  '/grants': typeof AuthenticatedGrantsIndexRoute
+  '/ledger': typeof AuthenticatedLedgerIndexRoute
+  '/reconcile': typeof AuthenticatedReconcileIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
+  '/spend': typeof AuthenticatedSpendIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
+  '/ledger/entries/$id': typeof AuthenticatedLedgerEntriesIdRoute
+  '/spend/bills/$id': typeof AuthenticatedSpendBillsIdRoute
+  '/spend/bills/new': typeof AuthenticatedSpendBillsNewRoute
+  '/spend/claims/$id': typeof AuthenticatedSpendClaimsIdRoute
+  '/spend/claims/new': typeof AuthenticatedSpendClaimsNewRoute
+  '/spend/bills': typeof AuthenticatedSpendBillsIndexRoute
+  '/spend/claims': typeof AuthenticatedSpendClaimsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -183,6 +360,14 @@ export interface FileRoutesById {
   '/_authenticated/trust-score': typeof AuthenticatedTrustScoreRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/_authenticated/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
+  '/_authenticated/grants/$id': typeof AuthenticatedGrantsIdRoute
+  '/_authenticated/grants/budgets': typeof AuthenticatedGrantsBudgetsRoute
+  '/_authenticated/ledger/accounts': typeof AuthenticatedLedgerAccountsRoute
+  '/_authenticated/ledger/general': typeof AuthenticatedLedgerGeneralRoute
+  '/_authenticated/ledger/import': typeof AuthenticatedLedgerImportRoute
+  '/_authenticated/ledger/new': typeof AuthenticatedLedgerNewRoute
+  '/_authenticated/ledger/periods': typeof AuthenticatedLedgerPeriodsRoute
+  '/_authenticated/reconcile/$bankId': typeof AuthenticatedReconcileBankIdRoute
   '/_authenticated/settings/access-groups': typeof AuthenticatedSettingsAccessGroupsRoute
   '/_authenticated/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/_authenticated/transactions/$id': typeof AuthenticatedTransactionsIdRoute
@@ -191,8 +376,20 @@ export interface FileRoutesById {
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
   '/_authenticated/campaigns/': typeof AuthenticatedCampaignsIndexRoute
+  '/_authenticated/grants/': typeof AuthenticatedGrantsIndexRoute
+  '/_authenticated/ledger/': typeof AuthenticatedLedgerIndexRoute
+  '/_authenticated/reconcile/': typeof AuthenticatedReconcileIndexRoute
+  '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/_authenticated/spend/': typeof AuthenticatedSpendIndexRoute
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
+  '/_authenticated/ledger/entries/$id': typeof AuthenticatedLedgerEntriesIdRoute
+  '/_authenticated/spend/bills/$id': typeof AuthenticatedSpendBillsIdRoute
+  '/_authenticated/spend/bills/new': typeof AuthenticatedSpendBillsNewRoute
+  '/_authenticated/spend/claims/$id': typeof AuthenticatedSpendClaimsIdRoute
+  '/_authenticated/spend/claims/new': typeof AuthenticatedSpendClaimsNewRoute
+  '/_authenticated/spend/bills/': typeof AuthenticatedSpendBillsIndexRoute
+  '/_authenticated/spend/claims/': typeof AuthenticatedSpendClaimsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,6 +402,14 @@ export interface FileRouteTypes {
     | '/trust-score'
     | '/donate/$slug'
     | '/campaigns/$id'
+    | '/grants/$id'
+    | '/grants/budgets'
+    | '/ledger/accounts'
+    | '/ledger/general'
+    | '/ledger/import'
+    | '/ledger/new'
+    | '/ledger/periods'
+    | '/reconcile/$bankId'
     | '/settings/access-groups'
     | '/settings/embed'
     | '/transactions/$id'
@@ -213,8 +418,20 @@ export interface FileRouteTypes {
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
     | '/campaigns'
+    | '/grants'
+    | '/ledger'
+    | '/reconcile'
+    | '/reports'
     | '/settings'
+    | '/spend'
     | '/transactions'
+    | '/ledger/entries/$id'
+    | '/spend/bills/$id'
+    | '/spend/bills/new'
+    | '/spend/claims/$id'
+    | '/spend/claims/new'
+    | '/spend/bills'
+    | '/spend/claims'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -225,6 +442,14 @@ export interface FileRouteTypes {
     | '/trust-score'
     | '/donate/$slug'
     | '/campaigns/$id'
+    | '/grants/$id'
+    | '/grants/budgets'
+    | '/ledger/accounts'
+    | '/ledger/general'
+    | '/ledger/import'
+    | '/ledger/new'
+    | '/ledger/periods'
+    | '/reconcile/$bankId'
     | '/settings/access-groups'
     | '/settings/embed'
     | '/transactions/$id'
@@ -233,8 +458,20 @@ export interface FileRouteTypes {
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
     | '/campaigns'
+    | '/grants'
+    | '/ledger'
+    | '/reconcile'
+    | '/reports'
     | '/settings'
+    | '/spend'
     | '/transactions'
+    | '/ledger/entries/$id'
+    | '/spend/bills/$id'
+    | '/spend/bills/new'
+    | '/spend/claims/$id'
+    | '/spend/claims/new'
+    | '/spend/bills'
+    | '/spend/claims'
   id:
     | '__root__'
     | '/'
@@ -246,6 +483,14 @@ export interface FileRouteTypes {
     | '/_authenticated/trust-score'
     | '/donate/$slug'
     | '/_authenticated/campaigns/$id'
+    | '/_authenticated/grants/$id'
+    | '/_authenticated/grants/budgets'
+    | '/_authenticated/ledger/accounts'
+    | '/_authenticated/ledger/general'
+    | '/_authenticated/ledger/import'
+    | '/_authenticated/ledger/new'
+    | '/_authenticated/ledger/periods'
+    | '/_authenticated/reconcile/$bankId'
     | '/_authenticated/settings/access-groups'
     | '/_authenticated/settings/embed'
     | '/_authenticated/transactions/$id'
@@ -254,8 +499,20 @@ export interface FileRouteTypes {
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
     | '/_authenticated/campaigns/'
+    | '/_authenticated/grants/'
+    | '/_authenticated/ledger/'
+    | '/_authenticated/reconcile/'
+    | '/_authenticated/reports/'
     | '/_authenticated/settings/'
+    | '/_authenticated/spend/'
     | '/_authenticated/transactions/'
+    | '/_authenticated/ledger/entries/$id'
+    | '/_authenticated/spend/bills/$id'
+    | '/_authenticated/spend/bills/new'
+    | '/_authenticated/spend/claims/$id'
+    | '/_authenticated/spend/claims/new'
+    | '/_authenticated/spend/bills/'
+    | '/_authenticated/spend/claims/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -333,11 +590,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/spend/': {
+      id: '/_authenticated/spend/'
+      path: '/spend'
+      fullPath: '/spend'
+      preLoaderRoute: typeof AuthenticatedSpendIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings/': {
       id: '/_authenticated/settings/'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports/': {
+      id: '/_authenticated/reports/'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reconcile/': {
+      id: '/_authenticated/reconcile/'
+      path: '/reconcile'
+      fullPath: '/reconcile'
+      preLoaderRoute: typeof AuthenticatedReconcileIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/': {
+      id: '/_authenticated/ledger/'
+      path: '/ledger'
+      fullPath: '/ledger'
+      preLoaderRoute: typeof AuthenticatedLedgerIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grants/': {
+      id: '/_authenticated/grants/'
+      path: '/grants'
+      fullPath: '/grants'
+      preLoaderRoute: typeof AuthenticatedGrantsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/campaigns/': {
@@ -396,11 +688,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccessGroupsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/reconcile/$bankId': {
+      id: '/_authenticated/reconcile/$bankId'
+      path: '/reconcile/$bankId'
+      fullPath: '/reconcile/$bankId'
+      preLoaderRoute: typeof AuthenticatedReconcileBankIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/periods': {
+      id: '/_authenticated/ledger/periods'
+      path: '/ledger/periods'
+      fullPath: '/ledger/periods'
+      preLoaderRoute: typeof AuthenticatedLedgerPeriodsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/new': {
+      id: '/_authenticated/ledger/new'
+      path: '/ledger/new'
+      fullPath: '/ledger/new'
+      preLoaderRoute: typeof AuthenticatedLedgerNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/import': {
+      id: '/_authenticated/ledger/import'
+      path: '/ledger/import'
+      fullPath: '/ledger/import'
+      preLoaderRoute: typeof AuthenticatedLedgerImportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/general': {
+      id: '/_authenticated/ledger/general'
+      path: '/ledger/general'
+      fullPath: '/ledger/general'
+      preLoaderRoute: typeof AuthenticatedLedgerGeneralRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/accounts': {
+      id: '/_authenticated/ledger/accounts'
+      path: '/ledger/accounts'
+      fullPath: '/ledger/accounts'
+      preLoaderRoute: typeof AuthenticatedLedgerAccountsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grants/budgets': {
+      id: '/_authenticated/grants/budgets'
+      path: '/grants/budgets'
+      fullPath: '/grants/budgets'
+      preLoaderRoute: typeof AuthenticatedGrantsBudgetsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grants/$id': {
+      id: '/_authenticated/grants/$id'
+      path: '/grants/$id'
+      fullPath: '/grants/$id'
+      preLoaderRoute: typeof AuthenticatedGrantsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/campaigns/$id': {
       id: '/_authenticated/campaigns/$id'
       path: '/campaigns/$id'
       fullPath: '/campaigns/$id'
       preLoaderRoute: typeof AuthenticatedCampaignsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spend/claims/': {
+      id: '/_authenticated/spend/claims/'
+      path: '/spend/claims'
+      fullPath: '/spend/claims'
+      preLoaderRoute: typeof AuthenticatedSpendClaimsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spend/bills/': {
+      id: '/_authenticated/spend/bills/'
+      path: '/spend/bills'
+      fullPath: '/spend/bills'
+      preLoaderRoute: typeof AuthenticatedSpendBillsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spend/claims/new': {
+      id: '/_authenticated/spend/claims/new'
+      path: '/spend/claims/new'
+      fullPath: '/spend/claims/new'
+      preLoaderRoute: typeof AuthenticatedSpendClaimsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spend/claims/$id': {
+      id: '/_authenticated/spend/claims/$id'
+      path: '/spend/claims/$id'
+      fullPath: '/spend/claims/$id'
+      preLoaderRoute: typeof AuthenticatedSpendClaimsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spend/bills/new': {
+      id: '/_authenticated/spend/bills/new'
+      path: '/spend/bills/new'
+      fullPath: '/spend/bills/new'
+      preLoaderRoute: typeof AuthenticatedSpendBillsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spend/bills/$id': {
+      id: '/_authenticated/spend/bills/$id'
+      path: '/spend/bills/$id'
+      fullPath: '/spend/bills/$id'
+      preLoaderRoute: typeof AuthenticatedSpendBillsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ledger/entries/$id': {
+      id: '/_authenticated/ledger/entries/$id'
+      path: '/ledger/entries/$id'
+      fullPath: '/ledger/entries/$id'
+      preLoaderRoute: typeof AuthenticatedLedgerEntriesIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
@@ -412,13 +809,33 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFlowsRoute: typeof AuthenticatedFlowsRoute
   AuthenticatedTrustScoreRoute: typeof AuthenticatedTrustScoreRoute
   AuthenticatedCampaignsIdRoute: typeof AuthenticatedCampaignsIdRoute
+  AuthenticatedGrantsIdRoute: typeof AuthenticatedGrantsIdRoute
+  AuthenticatedGrantsBudgetsRoute: typeof AuthenticatedGrantsBudgetsRoute
+  AuthenticatedLedgerAccountsRoute: typeof AuthenticatedLedgerAccountsRoute
+  AuthenticatedLedgerGeneralRoute: typeof AuthenticatedLedgerGeneralRoute
+  AuthenticatedLedgerImportRoute: typeof AuthenticatedLedgerImportRoute
+  AuthenticatedLedgerNewRoute: typeof AuthenticatedLedgerNewRoute
+  AuthenticatedLedgerPeriodsRoute: typeof AuthenticatedLedgerPeriodsRoute
+  AuthenticatedReconcileBankIdRoute: typeof AuthenticatedReconcileBankIdRoute
   AuthenticatedSettingsAccessGroupsRoute: typeof AuthenticatedSettingsAccessGroupsRoute
   AuthenticatedSettingsEmbedRoute: typeof AuthenticatedSettingsEmbedRoute
   AuthenticatedTransactionsIdRoute: typeof AuthenticatedTransactionsIdRoute
   AuthenticatedTransactionsNewRoute: typeof AuthenticatedTransactionsNewRoute
   AuthenticatedCampaignsIndexRoute: typeof AuthenticatedCampaignsIndexRoute
+  AuthenticatedGrantsIndexRoute: typeof AuthenticatedGrantsIndexRoute
+  AuthenticatedLedgerIndexRoute: typeof AuthenticatedLedgerIndexRoute
+  AuthenticatedReconcileIndexRoute: typeof AuthenticatedReconcileIndexRoute
+  AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+  AuthenticatedSpendIndexRoute: typeof AuthenticatedSpendIndexRoute
   AuthenticatedTransactionsIndexRoute: typeof AuthenticatedTransactionsIndexRoute
+  AuthenticatedLedgerEntriesIdRoute: typeof AuthenticatedLedgerEntriesIdRoute
+  AuthenticatedSpendBillsIdRoute: typeof AuthenticatedSpendBillsIdRoute
+  AuthenticatedSpendBillsNewRoute: typeof AuthenticatedSpendBillsNewRoute
+  AuthenticatedSpendClaimsIdRoute: typeof AuthenticatedSpendClaimsIdRoute
+  AuthenticatedSpendClaimsNewRoute: typeof AuthenticatedSpendClaimsNewRoute
+  AuthenticatedSpendBillsIndexRoute: typeof AuthenticatedSpendBillsIndexRoute
+  AuthenticatedSpendClaimsIndexRoute: typeof AuthenticatedSpendClaimsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -427,14 +844,34 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFlowsRoute: AuthenticatedFlowsRoute,
   AuthenticatedTrustScoreRoute: AuthenticatedTrustScoreRoute,
   AuthenticatedCampaignsIdRoute: AuthenticatedCampaignsIdRoute,
+  AuthenticatedGrantsIdRoute: AuthenticatedGrantsIdRoute,
+  AuthenticatedGrantsBudgetsRoute: AuthenticatedGrantsBudgetsRoute,
+  AuthenticatedLedgerAccountsRoute: AuthenticatedLedgerAccountsRoute,
+  AuthenticatedLedgerGeneralRoute: AuthenticatedLedgerGeneralRoute,
+  AuthenticatedLedgerImportRoute: AuthenticatedLedgerImportRoute,
+  AuthenticatedLedgerNewRoute: AuthenticatedLedgerNewRoute,
+  AuthenticatedLedgerPeriodsRoute: AuthenticatedLedgerPeriodsRoute,
+  AuthenticatedReconcileBankIdRoute: AuthenticatedReconcileBankIdRoute,
   AuthenticatedSettingsAccessGroupsRoute:
     AuthenticatedSettingsAccessGroupsRoute,
   AuthenticatedSettingsEmbedRoute: AuthenticatedSettingsEmbedRoute,
   AuthenticatedTransactionsIdRoute: AuthenticatedTransactionsIdRoute,
   AuthenticatedTransactionsNewRoute: AuthenticatedTransactionsNewRoute,
   AuthenticatedCampaignsIndexRoute: AuthenticatedCampaignsIndexRoute,
+  AuthenticatedGrantsIndexRoute: AuthenticatedGrantsIndexRoute,
+  AuthenticatedLedgerIndexRoute: AuthenticatedLedgerIndexRoute,
+  AuthenticatedReconcileIndexRoute: AuthenticatedReconcileIndexRoute,
+  AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+  AuthenticatedSpendIndexRoute: AuthenticatedSpendIndexRoute,
   AuthenticatedTransactionsIndexRoute: AuthenticatedTransactionsIndexRoute,
+  AuthenticatedLedgerEntriesIdRoute: AuthenticatedLedgerEntriesIdRoute,
+  AuthenticatedSpendBillsIdRoute: AuthenticatedSpendBillsIdRoute,
+  AuthenticatedSpendBillsNewRoute: AuthenticatedSpendBillsNewRoute,
+  AuthenticatedSpendClaimsIdRoute: AuthenticatedSpendClaimsIdRoute,
+  AuthenticatedSpendClaimsNewRoute: AuthenticatedSpendClaimsNewRoute,
+  AuthenticatedSpendBillsIndexRoute: AuthenticatedSpendBillsIndexRoute,
+  AuthenticatedSpendClaimsIndexRoute: AuthenticatedSpendClaimsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

@@ -14,7 +14,6 @@ import type {
   CommandResult,
   LedgerBackend,
   LedgerCommand,
-  LedgerState,
 } from './ledger'
 
 const BACKEND = (import.meta.env.VITE_LEDGER_BACKEND as string | undefined) ??
@@ -30,7 +29,7 @@ let backendPromise: Promise<LedgerBackend | null> | null = null
 export function getLedgerBackend(): Promise<LedgerBackend | null> {
   backendPromise ??= (async () => {
     if (BACKEND === 'spacetimedb') {
-      const load = Object.values(spacetimeLoaders)[0]
+      const load = Object.values(spacetimeLoaders).at(0)
       if (!load) throw new Error('The SpacetimeDB ledger backend is not built into this app.')
       return (await load()).spacetimeLedgerBackend
     }
@@ -96,7 +95,7 @@ export function useLedgerState() {
 export function useLedger() {
   const query = useLedgerState()
   const ledger = useMemo(
-    () => (query.data ? new Ledger(query.data as LedgerState) : null),
+    () => (query.data ? new Ledger(query.data) : null),
     [query.data],
   )
   return { ...query, ledger, state: query.data ?? null }

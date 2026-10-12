@@ -14,7 +14,7 @@ export function parseMoney(raw: string): Minor | null {
   const s = raw.replace(/[,\s]/g, '').replace(/^\((.*)\)$/, '-$1')
   const m = /^(-)?(\d+)(?:\.(\d{1,2}))?$/.exec(s)
   if (!m) return null
-  const minor = Number(m[2]) * 100 + Number((m[3] ?? '').padEnd(2, '0'))
+  const minor = Number(m[2]) * 100 + Number((m.at(3) ?? '').padEnd(2, '0'))
   if (!Number.isSafeInteger(minor)) return null
   return m[1] ? -minor : minor
 }

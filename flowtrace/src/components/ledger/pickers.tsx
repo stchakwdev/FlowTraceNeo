@@ -1,8 +1,8 @@
 // Selects for the ledger's reference data, built on the shared FormSelect.
 import { useMemo } from 'react'
-import { FormSelect } from '@/components/form'
 import type { ControlProps } from '@/components/form'
 import type { AccountType, LedgerState } from '@/lib/ledger'
+import { FormSelect } from '@/components/form'
 
 const TYPE_LABEL: Record<AccountType, string> = {
   asset: 'Assets',

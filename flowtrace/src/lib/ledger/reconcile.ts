@@ -24,7 +24,10 @@ export interface ParseResult {
 }
 
 const pick = (r: Record<string, string>, names: Array<string>) => {
-  for (const n of names) if (r[n] !== undefined && r[n] !== '') return r[n]
+  for (const n of names) {
+    const v = r[n] as string | undefined
+    if (v) return v
+  }
   return ''
 }
 

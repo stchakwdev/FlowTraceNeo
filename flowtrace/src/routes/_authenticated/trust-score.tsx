@@ -14,11 +14,15 @@ import {
 import { getTrustGrade } from '@/lib/supabase'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { ledgerSignals } from '@/lib/ledger'
+import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { Button } from '@/components/ui/button'
 import {
   AsOf,
   CoverageBar,
   DemoTag,
+  KeyFigure,
+  KeyFigures,
   ReportNotice,
   ReportSection,
   StatusLine,
@@ -281,6 +285,8 @@ function TrustScore() {
               />
             </ReportSection>
           </div>
+
+          <LedgerSignals />
         </div>
       )}
     </div>
@@ -612,6 +618,88 @@ function RaiseActions({
         </li>
       ))}
     </ol>
+  )
+}
+
+/**
+ * What the books say about the same organisation: how much cash movement
+ * is matched to a statement, how much spend sits within budget, and how
+ * much is coded to a grant. Shown beside the score, not part of it. Hidden
+ * when the books are not connected or still loading.
+ */
+function LedgerSignals() {
+  const { state } = useLedger()
+  const asOf = useLedgerAsOf()
+  const signals = useMemo(
+    () => (state ? ledgerSignals(state, asOf) : null),
+    [state, asOf],
+  )
+  if (!signals) return null
+  const pct = (n: number) => `${Math.round(n * 100)}%`
+  const linkClass =
+    'inline-flex min-h-10 items-center gap-1 text-sm font-medium text-primary hover:underline'
+  return (
+    <ReportSection
+      title="Ledger signals"
+      meta={
+        <>
+          <AsOf date={asOf} />
+          {DEV_MODE && <DemoTag />}
+        </>
+      }
+    >
+      <p className="border-b border-border py-3 text-sm text-muted-foreground">
+        Read from the books, alongside the score. They do not change it.
+      </p>
+      <KeyFigures className="sm:grid-cols-3">
+        <KeyFigure
+          value={pct(signals.reconciledShare)}
+          label="Cash movement reconciled"
+          detail={
+            <>
+              <span className="block text-muted-foreground">
+                Share of bank and mobile-money movement, by value, matched to a
+                statement line.
+              </span>
+              <Link to="/reconcile" className={linkClass}>
+                Reconcile accounts
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </>
+          }
+        />
+        <KeyFigure
+          value={pct(signals.inBudgetShare)}
+          label="Spend within budget"
+          detail={
+            <>
+              <span className="block text-muted-foreground">
+                Share of budgeted spend on budget lines that are not over.
+              </span>
+              <Link to="/grants/budgets" className={linkClass}>
+                Budget against actual
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </>
+          }
+        />
+        <KeyFigure
+          value={pct(signals.grantCodedShare)}
+          label="Spend coded to a grant"
+          detail={
+            <>
+              <span className="block text-muted-foreground">
+                Share of spend charged to a named grant, so donors can trace it.
+              </span>
+              <Link to="/grants" className={linkClass}>
+                See grants
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </>
+          }
+        />
+      </KeyFigures>
+    </ReportSection>
   )
 }
 

@@ -64,7 +64,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       {/* Masthead: the committed ink band carrying identity and context */}
-      <header className="sticky top-0 z-40 bg-masthead text-masthead-foreground">
+      <header className="sticky top-0 z-40 bg-masthead text-masthead-foreground print:hidden">
         <div className="flex h-14 items-center gap-4 px-4 md:px-5">
           <Link to="/dashboard" aria-label="FlowTrace dashboard">
             <Wordmark />
@@ -104,7 +104,7 @@ export function AppShell({
         {/* Desktop navigation rail */}
         <aside
           className={cn(
-            'sticky hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 md:flex',
+            'sticky hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 md:flex print:hidden',
             devMode
               ? 'top-[5.25rem] h-[calc(100vh-5.25rem)]'
               : 'top-14 h-[calc(100vh-3.5rem)]',
