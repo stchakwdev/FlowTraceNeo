@@ -109,7 +109,7 @@ function Masthead({ signedIn }: { signedIn: boolean }) {
         <Link to="/" aria-label="FlowTrace home">
           <Wordmark />
         </Link>
-        <p className="hidden text-xs tracking-[0.14em] text-muted-foreground uppercase lg:block [font-stretch:87%]">
+        <p className="hidden text-xs tracking-[0.14em] text-muted-foreground uppercase lg:block font-narrow">
           Situation report · Demo NGO Kenya ·{' '}
           <AsOf date={REPORT_DATE} className="text-xs" />
         </p>
@@ -187,7 +187,7 @@ function Hero() {
       <div className="lg:col-span-7">
         <div className="rule-heavy">
           <div className="flex items-center justify-between border-b border-border py-2">
-            <h2 className="section-label font-sans [font-stretch:100%]">
+            <h2 className="section-label">
               Key figures, Q1 2026
             </h2>
             <DemoTag />
@@ -203,7 +203,7 @@ function Hero() {
             <KeyFigure value="87" label="Trust Score" />
           </KeyFigures>
 
-          <h3 className="section-label mt-6 mb-3 font-sans [font-stretch:100%]">
+          <h3 className="section-label mt-6 mb-3">
             Funding received, by donor
           </h3>
           <ul

@@ -147,7 +147,7 @@ function MovementList({
 }) {
   return (
     <section className="mt-6">
-      <h3 className="section-label font-sans [font-stretch:100%]">{title}</h3>
+      <h3 className="section-label">{title}</h3>
       <ul className="mt-2 border-t border-border">
         {transactions.map((t) => {
           const who = counterparty(t)

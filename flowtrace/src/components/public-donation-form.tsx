@@ -136,7 +136,7 @@ export function PublicDonationForm({
   if (submitted !== null) {
     return (
       <div role="status" className="py-2">
-        <p className="text-2xl font-[750] [font-stretch:75%]">
+        <p className="text-2xl font-[750] font-condensed">
           Thank you. {formatMoney(submitted, currency)} pledged.
         </p>
         <StatusMark status="pending" label="Awaiting payment" className="mt-3" />

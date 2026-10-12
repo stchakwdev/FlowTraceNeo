@@ -26,7 +26,7 @@ export function ReportSection({
   return (
     <Tag id={id} className={cn('rule-heavy scroll-mt-28', className)}>
       <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border py-2">
-        <h2 className="section-label font-sans [font-stretch:100%]">{title}</h2>
+        <h2 className="section-label">{title}</h2>
         {(meta || actions) && (
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {meta}

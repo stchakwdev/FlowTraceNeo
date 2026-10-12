@@ -445,7 +445,7 @@ function ChainRow({
             ) : score ? (
               <span className="figure text-2xl">
                 {score.aggregated_score}
-                <span className="ml-1 text-xs font-normal text-muted-foreground [font-stretch:100%]">
+                <span className="ml-1 text-xs font-normal text-muted-foreground font-normal-width">
                   / 100
                 </span>
               </span>

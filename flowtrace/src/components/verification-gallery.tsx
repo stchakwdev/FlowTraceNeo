@@ -222,7 +222,7 @@ function ProofEntry({
           <p className="font-semibold">{PROOF_TYPE_LABEL[v.type]}</p>
           <p className="figure text-lg text-foreground">
             +{proofTrustPoints(v)}
-            <span className="ml-1 font-sans text-xs font-normal tracking-normal text-muted-foreground [font-stretch:100%]">
+            <span className="ml-1 font-sans text-xs font-normal tracking-normal text-muted-foreground font-normal-width">
               trust points
             </span>
           </p>

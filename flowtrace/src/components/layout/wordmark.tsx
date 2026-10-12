@@ -55,7 +55,7 @@ export function Wordmark({
     <span className={cn('inline-flex items-center gap-2', className)}>
       <FlowTraceMark />
       {!collapsed && (
-        <span className="text-lg font-extrabold tracking-[-0.01em] [font-stretch:87%]">
+        <span className="text-lg font-extrabold tracking-[-0.01em] font-narrow">
           FlowTrace
         </span>
       )}

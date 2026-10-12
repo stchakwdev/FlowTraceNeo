@@ -189,7 +189,8 @@
   /* Report section heading: small caps title sitting on a heavy ink rule.
      It IS the heading, never a label stacked above another heading. */
   .section-label {
-    @apply text-xs font-bold uppercase text-foreground;
+    @apply font-sans text-xs font-bold uppercase text-foreground;
+    font-stretch: 100%;
     letter-spacing: 0.14em;
   }
   .financial-figure {
@@ -205,6 +206,9 @@
   .font-narrow {
     font-stretch: 87%;
   }
+  .font-normal-width {
+    font-stretch: 100%;
+  }
   .rule-heavy {
     border-top: 3px solid var(--foreground);
   }
@@ -216,18 +220,15 @@
     letter-spacing: -0.01em;
   }
 
+  /* Flat pulse between muted and gap grey. No gradients in this system. */
   .skeleton-shimmer {
-    background: linear-gradient(90deg, var(--muted) 0%, var(--gap) 50%, var(--muted) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
+    background-color: var(--muted);
+    animation: shimmer 1.5s ease-in-out infinite alternate;
   }
 
   @keyframes shimmer {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
+    to {
+      background-color: var(--gap);
     }
   }
 

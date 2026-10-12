@@ -411,7 +411,7 @@ function HistoryChart({ history }: { history: Array<TrustScoreHistory> }) {
               fill="none"
               vectorEffect="non-scaling-stroke"
               strokeWidth="2.5"
-              strokeLinejoin="round"
+              strokeLinejoin="miter"
               className="stroke-primary"
             />
           </svg>
@@ -422,7 +422,7 @@ function HistoryChart({ history }: { history: Array<TrustScoreHistory> }) {
                 key={h.id}
                 aria-hidden="true"
                 className={cn(
-                  'absolute -translate-x-1/2 -translate-y-1/2 rounded-full',
+                  'absolute -translate-x-1/2 -translate-y-1/2',
                   isLast
                     ? 'size-3 bg-primary ring-2 ring-background'
                     : 'size-1.5 bg-primary',
