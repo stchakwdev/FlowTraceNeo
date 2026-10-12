@@ -17,7 +17,7 @@ import type { InferSchema, ReducerCtx } from 'spacetimedb/server'
 import type { Identity } from 'spacetimedb'
 import { Ledger } from '../../flowtrace/src/lib/ledger/engine'
 import { LedgerError } from '../../flowtrace/src/lib/ledger/errors'
-import { applyCommand } from '../../flowtrace/src/lib/ledger/commands'
+import { applyCommand, sanitizeCommand } from '../../flowtrace/src/lib/ledger/commands'
 import { createOrgLedger as seedOrgLedger } from '../../flowtrace/src/lib/ledger/setup'
 import {
   DOC_COLLECTIONS,
@@ -610,19 +610,26 @@ export const addMember = spacetimedb.reducer(
     if (!actor.can_close) throw new SenderError('Only members who can close periods can manage members.')
     if (!args.userId.trim()) throw new SenderError('A member needs a user id.')
     const key = memberKey(args.orgId, args.identity)
+    const existing = ctx.db.member.key.find(key)
+    // A user id is the person behind approvals and the audit trail, so it
+    // is fixed once given and can never be borrowed from another member:
+    // otherwise someone could approve their own claim under another name.
+    const userId = existing ? existing.userId : args.userId.trim()
+    for (const m of ctx.db.member.orgId.filter(args.orgId))
+      if (m.userId === userId && !m.identity.isEqual(args.identity))
+        throw new SenderError('That user id belongs to another member.')
     const self = args.identity.isEqual(ctx.sender)
     if (self && !args.canClose) throw new SenderError('You cannot remove your own close permission.')
     const row = {
       key,
       identity: args.identity,
       orgId: args.orgId,
-      userId: args.userId.trim(),
-      name: args.name.trim() || args.userId.trim(),
+      userId,
+      name: args.name.trim() || userId,
       canPost: args.canPost,
       canApprove: args.canApprove,
       canClose: args.canClose,
     }
-    const existing = ctx.db.member.key.find(key)
     if (existing) ctx.db.member.key.update(row)
     else ctx.db.member.insert(row)
     const perms = [row.canPost && 'post', row.canApprove && 'approve', row.canClose && 'close'].filter(Boolean).join(', ') || 'read only'
@@ -660,8 +667,10 @@ export const runCommand = spacetimedb.reducer(
     } catch {
       throw new SenderError('The command is not valid JSON.')
     }
-    if (typeof cmd !== 'object' || cmd === null || typeof cmd.type !== 'string') {
-      throw new SenderError('The command has no type.')
+    try {
+      cmd = sanitizeCommand(cmd)
+    } catch (e) {
+      rethrow(e)
     }
 
     const { loaded, state } = loadOrg(ctx, orgId)

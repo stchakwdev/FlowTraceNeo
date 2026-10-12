@@ -217,7 +217,7 @@ describe('multi-currency', () => {
   it('books a realised FX difference when a foreign bill is paid at a new rate', () => {
     const l = fresh()
     const v = l.addVendor(admin, { name: 'Pump supplier', node_id: null, payment_details: null })
-    const b = l.createBill(admin, {
+    const b = l.createBill(clerk, {
       vendor_id: v.id,
       number: 'INV-1',
       bill_date: '2026-01-05',

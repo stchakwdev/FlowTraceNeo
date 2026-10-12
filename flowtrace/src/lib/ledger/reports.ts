@@ -2,7 +2,7 @@
 // trial balance nets to zero, the Statement of Financial Position balances,
 // and the Statement of Activities' change in net assets equals the change
 // shown on the balance sheet.
-import { sum } from './money'
+import { convert, sum } from './money'
 import type {
   Account,
   AccountType,
@@ -82,6 +82,15 @@ export function postedLines(state: LedgerState, f: LineFilter = {}): Array<Repor
 }
 
 function toCashBasis(state: LedgerState, lines: Array<ReportLine>): Array<ReportLine> {
+  // A reversed entry and its reversal cancel out; on a cash basis the
+  // reversal of an accrual would otherwise show as negative spend.
+  const cancelled = new Set<string>()
+  for (const e of state.entries)
+    if (e.status === 'reversed') {
+      cancelled.add(e.id)
+      if (e.reversed_by) cancelled.add(e.reversed_by)
+    }
+  lines = lines.filter((l) => !cancelled.has(l.entry_id))
   const sys = state.settings.system_accounts
   const payables = new Set([sys.accounts_payable, sys.claims_payable])
   const accrualSources = new Set(['bill', 'expense_claim'])
@@ -549,11 +558,12 @@ export function grantSummary(state: LedgerState, grantId: string, asOf: ISODate)
   const lines = postedLines(state, { grantId, to: asOf, excludeClosing: true })
   const spent = sum(lines.filter((l) => accounts.get(l.account_id)?.type === 'expense').map((l) => l.base_amount))
   const received = -sum(lines.filter((l) => accounts.get(l.account_id)?.type === 'income').map((l) => l.base_amount))
-  const codedTo = (docLines: Array<{ grant_id: string | null; amount: Minor }>) =>
-    sum(docLines.filter((l) => l.grant_id === grantId).map((l) => l.amount))
+  // Documents can be in another currency; commitments count in base.
+  const codedTo = (doc: { fx_rate: number; lines: Array<{ grant_id: string | null; amount: Minor }> }) =>
+    sum(doc.lines.filter((l) => l.grant_id === grantId).map((l) => convert(l.amount, doc.fx_rate)))
   const committed =
-    sum(state.bills.filter((b) => b.status === 'approved').map((b) => codedTo(b.lines))) +
-    sum(state.claims.filter((c) => c.status === 'submitted').map((c) => codedTo(c.lines)))
+    sum(state.bills.filter((b) => b.status === 'approved').map(codedTo)) +
+    sum(state.claims.filter((c) => c.status === 'submitted').map(codedTo))
   const remaining = grant.award - spent - committed
   const used = grant.award > 0 ? (spent + committed) / grant.award : 0
   const elapsed = Math.max(1, monthsBetween(grant.start_date, asOf < grant.end_date ? asOf : grant.end_date))

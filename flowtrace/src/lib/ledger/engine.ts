@@ -176,6 +176,7 @@ export class Ledger {
     this.require(actor, 'can_post')
     if (!input.code.trim() || !input.name.trim())
       fail('INVALID_INPUT', 'An account needs a code and a name.')
+    if (input.id && this.account(input.id)) fail('DUPLICATE', 'An account with this id already exists.')
     if (this.accountByCode(input.code))
       fail('DUPLICATE', `Account code ${input.code} is already in use.`)
     if (input.parent_id) {
@@ -208,13 +209,27 @@ export class Ledger {
     const a = this.account(id) ?? fail('NOT_FOUND', 'Account not found.')
     if (patch.name !== undefined && !patch.name.trim())
       fail('INVALID_INPUT', 'An account needs a name.')
-    Object.assign(a, patch)
-    this.audit(actor, 'account.update', id, JSON.stringify(patch))
+    // Only these fields may change: type, code and normal balance would
+    // re-state every posted line on the account.
+    const clean: typeof patch = {}
+    if (typeof patch.name === 'string') clean.name = patch.name.trim()
+    if (typeof patch.is_active === 'boolean') clean.is_active = patch.is_active
+    if (patch.expense_function !== undefined) {
+      if (a.type !== 'expense') fail('INVALID_INPUT', 'Only expense accounts have a function.')
+      if (!['program', 'management', 'fundraising'].includes(patch.expense_function ?? ''))
+        fail('INVALID_INPUT', 'Choose programme, management or fundraising.')
+      clean.expense_function = patch.expense_function
+    }
+    if (clean.is_active === false && Object.values(this.state.settings.system_accounts).includes(a.id))
+      fail('INVALID_INPUT', `${a.code} ${a.name} is used by the system and cannot be deactivated.`)
+    Object.assign(a, clean)
+    this.audit(actor, 'account.update', id, JSON.stringify(clean))
     return a
   }
 
   addFund(actor: Actor, input: Omit<Fund, 'id'> & { id?: string }): Fund {
     this.require(actor, 'can_post')
+    if (input.id && this.fund(input.id)) fail('DUPLICATE', 'A fund with this id already exists.')
     const fund = { ...input, id: input.id ?? this.env.newId() }
     this.state.funds.push(fund)
     this.audit(actor, 'fund.create', fund.id, fund.name)
@@ -224,6 +239,7 @@ export class Ledger {
   addGrant(actor: Actor, input: Omit<Grant, 'id'> & { id?: string }): Grant {
     this.require(actor, 'can_post')
     if (!this.fund(input.fund_id)) fail('UNKNOWN_FUND', 'Fund not found.')
+    if (input.id && this.grant(input.id)) fail('DUPLICATE', 'A grant with this id already exists.')
     assertMinor(input.award, 'Award')
     if (input.award <= 0) fail('INVALID_INPUT', 'The award must be positive.')
     if (input.end_date < input.start_date)
@@ -242,6 +258,14 @@ export class Ledger {
     const d = { ...input, id: input.id ?? this.env.newId() }
     this.state.dimensions.push(d)
     return d
+  }
+
+  /** Opens the periods of a new fiscal year (a command; needs can_close). */
+  openFiscalYear(actor: Actor, year: number) {
+    this.require(actor, 'can_close')
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) fail('INVALID_INPUT', 'Choose a year between 2000 and 2100.')
+    this.ensureFiscalYear(year)
+    this.audit(actor, 'year.open', String(year))
   }
 
   /** Creates the twelve monthly periods of a fiscal year if missing. */
@@ -273,7 +297,11 @@ export class Ledger {
    * Overridable issues are reported even when an override reason is given,
    * flagged with `overridable` so callers can decide.
    */
-  validateEntry(input: EntryInput, ignoreEntryId?: string): Array<Issue> {
+  validateEntry(
+    input: EntryInput,
+    ignoreEntryId?: string,
+    opts: { system?: boolean } = {},
+  ): Array<Issue> {
     const issues: Array<Issue> = []
     const base = this.state.settings.base_currency
 
@@ -331,7 +359,7 @@ export class Ledger {
       if (!account) return at('UNKNOWN_ACCOUNT', 'choose an account.')
       if (account.is_group)
         at('GROUP_ACCOUNT', `${account.code} ${account.name} is a header account; post to one of its sub-accounts.`)
-      if (!account.is_active)
+      if (!account.is_active && !opts.system)
         at('INACTIVE_ACCOUNT', `${account.code} ${account.name} is inactive.`)
 
       const fund = this.fund(l.fund_id)
@@ -343,14 +371,16 @@ export class Ledger {
 
       const currency = l.currency ?? base
       const rate = currency === base ? 1 : l.fx_rate
-      if (!rate || !(rate > 0))
+      if (typeof rate !== 'number' || !(rate > 0) || !Number.isFinite(rate))
         return at('FX_RATE_REQUIRED', `enter the ${currency} to ${base} rate.`)
       const baseAmount = convert(debit - credit, rate)
       total += baseAmount
       byFund.set(fund.id, (byFund.get(fund.id) ?? 0) + baseAmount)
 
       // Restricted-fund and grant rules apply to spend: expense debits.
-      const isSpend = account.type === 'expense' && debit > 0
+      // System postings (reversals, year-end close) only move what is
+      // already booked, so the spend rules do not apply to them.
+      const isSpend = account.type === 'expense' && debit > 0 && !opts.system
       if (l.grant_id) {
         const grant = this.grant(l.grant_id)
         if (!grant) return at('UNKNOWN_GRANT', 'the grant no longer exists.')
@@ -387,12 +417,12 @@ export class Ledger {
     }
 
     // Over-award: posted spend on the grant plus this entry's spend.
-    if (!seen.lineIssues) {
+    if (!seen.lineIssues && !opts.system) {
       const spendByGrant = new Map<string, Minor>()
       for (const l of input.lines) {
         const a = this.account(l.account_id)
         if (!l.grant_id || a?.type !== 'expense') continue
-        const rate = (l.currency ?? base) === base ? 1 : (l.fx_rate ?? 1)
+        const rate = (l.currency ?? base) === base ? 1 : (l.fx_rate as number)
         const amt = convert((l.debit ?? 0) - (l.credit ?? 0), rate)
         spendByGrant.set(l.grant_id, (spendByGrant.get(l.grant_id) ?? 0) + amt)
       }
@@ -494,9 +524,9 @@ export class Ledger {
   }
 
   /** Validates and posts a new entry in one step. */
-  post(actor: Actor, input: EntryInput): JournalEntry {
+  post(actor: Actor, input: EntryInput, opts: { system?: boolean } = {}): JournalEntry {
     this.require(actor, 'can_post')
-    const issues = this.blocking(this.validateEntry(input), input.override_reason)
+    const issues = this.blocking(this.validateEntry(input, undefined, opts), input.override_reason)
     if (issues.length) throw new LedgerError(issues)
     const entry = this.saveDraft(actor, input)
     entry.status = 'posted'
@@ -583,6 +613,35 @@ export class Ledger {
     if (e.status !== 'posted')
       fail('INVALID_STATE', `${e.number} is ${e.status} and cannot be reversed.`)
     if (!reason.trim()) fail('INVALID_INPUT', 'Give a reason for the reversal.')
+    if (e.source_type === 'reversal') fail('INVALID_STATE', `${e.number} is itself a reversal. Post a new entry instead.`)
+    // Entries that belong to a document reverse with it, so the document's
+    // status and what is owed stay true.
+    const docPayments = (kind: Payment['applies_to']['kind'], id: string) =>
+      this.state.payments.filter((p) => p.applies_to.kind === kind && p.applies_to.id === id && this.entry(p.entry_id)?.status === 'posted')
+    let onReversed = () => {}
+    if (e.source_type === 'bill') {
+      const b = this.bill(e.source_id ?? '')
+      if (docPayments('bill', b.id).length) fail('INVALID_STATE', `Bill ${b.number} has payments. Reverse the payments first.`)
+      onReversed = () => { b.status = 'void' }
+    } else if (e.source_type === 'expense_claim') {
+      const c = this.claim(e.source_id ?? '')
+      if (docPayments('expense_claim', c.id).length) fail('INVALID_STATE', `Claim ${c.number} has been reimbursed. Reverse the reimbursement first.`)
+      onReversed = () => {
+        c.status = 'rejected'
+        c.approvals.push({ at: this.env.now(), by: actor.id, action: 'rejected', note: `Reversed: ${reason.trim()}` })
+      }
+    } else if (e.source_type === 'payment' || e.source_type === 'reimbursement') {
+      const kind = e.source_type === 'payment' ? 'bill' : 'expense_claim'
+      onReversed = () => {
+        if (kind === 'bill') {
+          const b = this.bill(e.source_id ?? '')
+          if (b.status === 'paid') b.status = 'posted'
+        } else {
+          const c = this.claim(e.source_id ?? '')
+          if (c.status === 'reimbursed') c.status = 'posted'
+        }
+      }
+    }
     const original = this.inputOf(entryId)
     const input: EntryInput = {
       date,
@@ -593,10 +652,11 @@ export class Ledger {
       override_reason: 'Reversal',
       lines: original.lines.map((l) => ({ ...l, debit: l.credit, credit: l.debit })),
     }
-    const rev = this.post(actor, input)
+    const rev = this.post(actor, input, { system: true })
     rev.reversal_of = e.id
     e.status = 'reversed'
     e.reversed_by = rev.id
+    onReversed()
     this.audit(actor, 'entry.reverse', e.id, reason)
     return rev
   }
@@ -662,7 +722,7 @@ export class Ledger {
     const periods = this.state.periods.filter((p) => p.fiscal_year === year)
     if (periods.length === 0) fail('NOT_FOUND', `There are no periods for ${year}.`)
     const last = periods[periods.length - 1]
-    if (this.state.entries.some((e) => e.source_type === 'year_end_close' && e.date === last.end_date))
+    if (this.state.entries.some((e) => e.source_type === 'year_end_close' && e.status === 'posted' && e.date === last.end_date))
       fail('INVALID_STATE', `${year} has already been closed.`)
     const yearIds = new Set(periods.map((p) => p.id))
     const posted = new Set(
@@ -673,7 +733,7 @@ export class Ledger {
       if (!posted.has(l.entry_id)) continue
       const a = this.account(l.account_id)
       if (a?.type !== 'income' && a?.type !== 'expense') continue
-      const key = `${l.account_id}|${l.fund_id}`
+      const key = `${l.account_id}|${l.fund_id}|${l.grant_id ?? ''}`
       balances.set(key, (balances.get(key) ?? 0) + l.base_amount)
     }
     const sys = this.state.settings.system_accounts
@@ -681,8 +741,8 @@ export class Ledger {
     const netByFund = new Map<string, Minor>()
     for (const [key, bal] of balances) {
       if (bal === 0) continue
-      const [account_id, fund_id] = key.split('|')
-      lines.push({ account_id, fund_id, debit: bal < 0 ? -bal : 0, credit: bal > 0 ? bal : 0 })
+      const [account_id, fund_id, grant] = key.split('|')
+      lines.push({ account_id, fund_id, grant_id: grant || null, debit: bal < 0 ? -bal : 0, credit: bal > 0 ? bal : 0 })
       netByFund.set(fund_id, (netByFund.get(fund_id) ?? 0) + bal)
     }
     for (const [fund_id, net] of netByFund) {
@@ -706,7 +766,7 @@ export class Ledger {
         source_type: 'year_end_close',
         lines,
         override_reason: 'Year-end close',
-      })
+      }, { system: true })
     }
     for (const p of periods) if (p.status === 'open') p.status = 'closed'
     this.audit(actor, 'year.close', String(year), entry?.number ?? 'nothing to close')
@@ -788,6 +848,7 @@ export class Ledger {
     this.require(actor, 'can_approve')
     const b = this.bill(billId)
     if (b.status !== 'draft') fail('INVALID_STATE', `Bill ${b.number} is ${b.status}.`)
+    if (b.created_by === actor.id) fail('SELF_APPROVAL', 'You cannot approve a bill you entered.')
     b.status = 'approved'
     b.approved_by = actor.id
     this.audit(actor, 'bill.approve', b.id, b.number)
@@ -818,7 +879,7 @@ export class Ledger {
     const total = sum(doc.lines.map((l) => l.amount))
     const paid = sum(
       this.state.payments
-        .filter((p) => p.applies_to.kind === kind && p.applies_to.id === id)
+        .filter((p) => p.applies_to.kind === kind && p.applies_to.id === id && this.entry(p.entry_id)?.status === 'posted')
         .map((p) => p.amount),
     )
     return total - paid
@@ -929,6 +990,7 @@ export class Ledger {
   ) {
     const c = this.claim(claimId)
     if (c.status !== 'posted') fail('INVALID_STATE', `Claim ${c.number} must be approved before it is reimbursed.`)
+    if (c.claimant === actor.id) fail('SELF_APPROVAL', 'You cannot pay out your own claim.')
     const payment = this.pay(actor, { kind: 'expense_claim', id: c.id }, c.lines, c.currency, c.fx_rate,
       { ...input, amount: this.outstanding('expense_claim', c.id) },
       this.state.settings.system_accounts.claims_payable, `Reimbursement of ${c.number} · ${c.claimant_name}`)
@@ -973,6 +1035,18 @@ export class Ledger {
     }))
     for (const [fund_id, amount] of this.byFund(coded)) {
       lines.push({ account_id: payable, credit: amount, currency, fx_rate, fund_id, flow_node_id: nodeId })
+      // Lines convert one by one; the payable converts as a total. Any cent
+      // of rounding between them goes to exchange differences.
+      const debits = sum(coded.filter((l) => l.fund_id === fund_id).map((l) => convert(l.amount, fx_rate)))
+      const diff = debits - convert(amount, fx_rate)
+      if (diff !== 0)
+        lines.push({
+          account_id: this.state.settings.system_accounts.fx_gain_loss,
+          fund_id,
+          debit: diff < 0 ? -diff : 0,
+          credit: diff > 0 ? diff : 0,
+          memo: 'Currency rounding',
+        })
     }
     return lines
   }
@@ -1005,12 +1079,26 @@ export class Ledger {
     if (input.amount <= 0) fail('NEGATIVE_AMOUNT', 'The payment must be more than zero.')
     if (input.amount > owed) fail('INVALID_INPUT', `Only ${(owed / 100).toFixed(2)} is outstanding.`)
     const payRate = currency === base ? 1 : (input.fx_rate ?? docRate)
-    const total = sum(coded.map((l) => l.amount))
+    // Split across funds by what each fund still owes, so partial payments
+    // clear every fund's payable exactly when the document is paid.
+    const paidByFund = new Map<string, Minor>()
+    for (const p of this.state.payments) {
+      if (p.applies_to.kind !== appliesTo.kind || p.applies_to.id !== appliesTo.id) continue
+      if (this.entry(p.entry_id)?.status !== 'posted') continue
+      for (const l of this.linesOf(p.entry_id))
+        if (l.account_id === payable) paidByFund.set(l.fund_id, (paidByFund.get(l.fund_id) ?? 0) + l.debit)
+    }
     const shares = [...this.byFund(coded)]
+      .map(([fund_id, amount]) => [fund_id, amount - (paidByFund.get(fund_id) ?? 0)] as const)
+      .filter(([, remaining]) => remaining > 0)
+    const remainingTotal = sum(shares.map(([, r]) => r))
     let allocated = 0
     const lines: Array<LineInput> = []
-    shares.forEach(([fund_id, amount], i) => {
-      const part = i === shares.length - 1 ? input.amount - allocated : Math.round((input.amount * amount) / total)
+    shares.forEach(([fund_id, remaining], i) => {
+      const part =
+        i === shares.length - 1
+          ? input.amount - allocated
+          : Math.min(remaining, Math.round((input.amount * remaining) / remainingTotal))
       allocated += part
       if (part === 0) return
       // The payable clears at the rate it was booked at; cash leaves at
@@ -1077,15 +1165,22 @@ export class Ledger {
       fail('NOT_FOUND', 'Bank account not found.')
     const key = (r: Pick<StatementLine, 'date' | 'amount' | 'reference' | 'description'>) =>
       `${r.date}|${r.amount}|${r.reference ?? r.description}`
-    const seen = new Set(
-      this.state.statementLines.filter((s) => s.bank_account_id === bankAccountId).map(key),
-    )
+    // A file can hold two identical rows (two ATM withdrawals of the same
+    // amount on one day), so compare counts, not just presence: a row is new
+    // when this file has more of it than earlier imports did.
+    const earlier = new Map<string, number>()
+    for (const s of this.state.statementLines)
+      if (s.bank_account_id === bankAccountId) earlier.set(key(s), (earlier.get(key(s)) ?? 0) + 1)
     const batch = this.env.newId()
     const added: Array<StatementLine> = []
     for (const r of rows) {
       assertMinor(r.amount, 'Statement amount')
-      if (seen.has(key(r))) continue
-      seen.add(key(r))
+      const k = key(r)
+      const left = earlier.get(k) ?? 0
+      if (left > 0) {
+        earlier.set(k, left - 1)
+        continue
+      }
       const line: StatementLine = {
         ...r,
         id: this.env.newId(),

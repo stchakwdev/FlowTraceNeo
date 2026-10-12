@@ -13,6 +13,7 @@ import {
   bridgeTransaction,
   createOrgLedger,
   fromMajor,
+  sanitizeCommand,
 } from '../ledger'
 import { DEMO_ORG_ID, DEMO_USER_ID, flowNodes, transactions } from './dataset'
 import type {
@@ -390,6 +391,22 @@ const liveEnv: LedgerEnv = {
 const settle = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), 12))
 
+/**
+ * Applies a change to a copy, so a rejected command leaves nothing
+ * half-done, the way a SpacetimeDB reducer rolls back.
+ */
+function applyToDemo<T>(fn: (ledger: Ledger) => T): Promise<T> {
+  const draft = new Ledger(structuredClone(current().state), liveEnv)
+  try {
+    const result = fn(draft)
+    demoLedger = draft
+    for (const l of listeners) l(draft.state)
+    return settle(result)
+  } catch (e) {
+    return new Promise((_, reject) => setTimeout(() => reject(e), 12))
+  }
+}
+
 export const demoLedgerBackend: LedgerBackend = {
   kind: 'demo',
   load: (organizationId) => {
@@ -398,17 +415,8 @@ export const demoLedgerBackend: LedgerBackend = {
   },
   run: (organizationId, cmd, actor) => {
     if (organizationId !== DEMO_ORG_ID) return Promise.reject(new Error('Only the demo organisation has books in demo mode.'))
-    // Apply to a copy so a rejected command leaves nothing half-done, the
-    // way a SpacetimeDB reducer rolls back.
-    const draft = new Ledger(structuredClone(current().state), liveEnv)
-    try {
-      const result = applyCommand(draft, actor, cmd)
-      demoLedger = draft
-      for (const fn of listeners) fn(draft.state)
-      return settle(result)
-    } catch (e) {
-      return new Promise((_, reject) => setTimeout(() => reject(e), 12))
-    }
+    // Same boundary as the server: commands from the UI are untrusted.
+    return applyToDemo((ledger) => applyCommand(ledger, actor, sanitizeCommand(cmd)))
   },
   subscribe: (_org, onChange) => {
     listeners.add(onChange)
@@ -426,7 +434,8 @@ export async function postDemoTransaction(t: BridgeTransaction): Promise<string 
   const r = bridgeTransaction(t, demoBridgeContext(ledger))
   try {
     if (r.kind === 'entry') {
-      await demoLedgerBackend.run(DEMO_ORG_ID, { type: 'entry.post', input: r.input }, DEMO_ACTOR)
+      // The bridge is trusted code: it keeps source_type 'transaction'.
+      await applyToDemo((l) => l.post(DEMO_ACTOR, r.input))
     } else if (r.kind === 'allocation') {
       const dim = ledger.state.dimensions.find((d) => d.node_id === r.dimensionNodeId)
       await demoLedgerBackend.run(

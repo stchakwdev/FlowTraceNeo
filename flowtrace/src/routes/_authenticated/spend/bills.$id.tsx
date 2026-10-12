@@ -177,7 +177,12 @@ function BillDetail({
       <ReportSection title="What happens next">
         <div className="space-y-3 py-4 text-sm">
           {bill.status === 'draft' &&
-            (actor?.can_approve ? (
+            (actor?.id === bill.created_by ? (
+              <p className="text-muted-foreground">
+                You entered this bill, so someone else has to approve it. The
+                person who records a bill never approves it.
+              </p>
+            ) : actor?.can_approve ? (
               <>
                 <p>Check the bill against the delivery, then approve it. Approval commits the money against its grant and budget lines.</p>
                 <Button size="lg" onClick={() => setDialog('approve')}>Approve bill</Button>

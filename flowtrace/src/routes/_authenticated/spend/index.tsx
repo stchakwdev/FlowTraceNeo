@@ -301,7 +301,7 @@ function WaitingSection({ items }: { items: Array<Waiting> }) {
             const b = w.doc
             const action =
               b.status === 'draft'
-                ? actor?.can_approve
+                ? actor?.can_approve && actor.id !== b.created_by
                   ? { label: 'Approve', cmd: { type: 'bill.approve', billId: b.id } as LedgerCommand, msg: `Approved bill ${b.number}.` }
                   : null
                 : { label: 'Post', cmd: { type: 'bill.post', billId: b.id } as LedgerCommand, msg: `Posted bill ${b.number}.` }
@@ -322,7 +322,11 @@ function WaitingSection({ items }: { items: Array<Waiting> }) {
                     </p>
                     <p className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
                       <DocStatus kind="bill" status={b.status} />
-                      {b.status === 'approved' ? 'Approved, not yet posted' : 'Needs approval'}
+                      {b.status === 'approved'
+                        ? 'Approved, not yet posted'
+                        : actor?.id === b.created_by
+                          ? 'You entered it: someone else approves it'
+                          : 'Needs approval'}
                     </p>
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end">

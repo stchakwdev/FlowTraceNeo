@@ -89,6 +89,19 @@ function PeriodsPage() {
     }
   }
 
+  const nextYear = years.length ? Math.max(...years.map((y) => y.year)) + 1 : null
+  const openYear = async () => {
+    if (nextYear === null) return
+    setFailure(null)
+    setDone(null)
+    try {
+      await command.mutateAsync({ type: 'year.open', year: nextYear })
+      setDone(`Fiscal year ${nextYear} is open: twelve monthly periods were added.`)
+    } catch (e) {
+      setFailure(e)
+    }
+  }
+
   const openDialog = (d: Pending) => {
     setReason('')
     setReasonError(undefined)
@@ -125,6 +138,13 @@ function PeriodsPage() {
       title="Periods"
       lede="Each month is a fiscal period. Close a month once its entries are complete, so nothing is backdated into figures already reported. Lock it once the accounts for it are signed off."
       nav={<SubNav label="Ledger" items={LEDGER_NAV} />}
+      actions={
+        nextYear !== null && (
+          <Button variant="outline" size="lg" onClick={openYear} disabled={command.isPending}>
+            Open fiscal year {nextYear}
+          </Button>
+        )
+      }
     >
       {!state ? (
         <BooksState isLoading={isLoading} error={error} refetch={refetch} label="periods" />

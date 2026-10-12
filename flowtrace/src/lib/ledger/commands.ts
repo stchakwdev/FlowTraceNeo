@@ -1,6 +1,7 @@
 // Every ledger write as a serialisable command. The demo store applies them
 // in memory; the SpacetimeDB module applies the same command in a reducer.
 // One dispatcher means one set of rules, wherever the books live.
+import { LedgerError } from './errors'
 import { autoMatch } from './reconcile'
 import type { AutoMatchResult } from './reconcile'
 import type { Ledger } from './engine'
@@ -41,6 +42,7 @@ export type LedgerCommand =
   | { type: 'period.reopen'; periodId: string; reason: string }
   | { type: 'period.lock'; periodId: string }
   | { type: 'year.close'; year: number }
+  | { type: 'year.open'; year: number }
   | { type: 'vendor.add'; input: Omit<Vendor, 'id'> }
   | {
       type: 'bill.create'
@@ -87,6 +89,53 @@ export type CommandResult =
  * should then discard the state change (the demo store applies commands to
  * a copy, SpacetimeDB rolls the reducer back).
  */
+const COMMAND_TYPES = new Set([
+  'entry.post', 'entry.saveDraft', 'entry.updateDraft', 'entry.postDraft', 'entry.deleteDraft', 'entry.reverse', 'entry.import',
+  'account.add', 'account.update', 'grant.add', 'budgetLine.set', 'period.close', 'period.reopen', 'period.lock', 'year.close',
+  'year.open', 'vendor.add', 'bill.create', 'bill.approve', 'bill.post', 'bill.pay', 'claim.create', 'claim.submit', 'claim.approve',
+  'claim.reject', 'claim.reimburse', 'bank.add', 'statement.import', 'statement.autoMatch', 'statement.match', 'statement.unmatch',
+  'statement.post',
+])
+
+/**
+ * Commands arrive as JSON from a client, so nothing in them is trusted:
+ * an entry a person writes is always 'manual' (or 'import'), never a
+ * system source such as a bill or the year-end close, and new records
+ * never choose their own ids (except claims, whose client id makes an
+ * offline resend idempotent).
+ */
+export function sanitizeCommand(raw: unknown): LedgerCommand {
+  if (!raw || typeof raw !== 'object' || !COMMAND_TYPES.has((raw as { type?: unknown }).type as string))
+    throw new LedgerError({ code: 'INVALID_INPUT', message: 'Unknown command.' })
+  const cmd = structuredClone(raw) as LedgerCommand
+  // Typed loosely on purpose: this checks JSON that may not match the types.
+  const asManual = (value: unknown, source: 'manual' | 'import' = 'manual'): EntryInput => {
+    const input = value as Partial<EntryInput> | null
+    if (!input || typeof input !== 'object' || !Array.isArray(input.lines) || typeof input.memo !== 'string' || typeof input.date !== 'string')
+      throw new LedgerError({ code: 'INVALID_INPUT', message: 'An entry needs a date, a memo and lines.' })
+    return { ...(input as EntryInput), source_type: source, source_id: null }
+  }
+  switch (cmd.type) {
+    case 'entry.post':
+    case 'entry.saveDraft':
+    case 'entry.updateDraft':
+      cmd.input = asManual(cmd.input)
+      break
+    case 'entry.import':
+      if (!Array.isArray(cmd.inputs)) throw new LedgerError({ code: 'INVALID_INPUT', message: 'Nothing to import.' })
+      cmd.inputs = cmd.inputs.map((i) => asManual(i, 'import'))
+      break
+    case 'account.add':
+    case 'grant.add':
+    case 'vendor.add':
+    case 'bank.add':
+    case 'bill.create':
+      delete (cmd.input as { id?: string }).id
+      break
+  }
+  return cmd
+}
+
 export function applyCommand(ledger: Ledger, actor: Actor, cmd: LedgerCommand): CommandResult {
   const id = (x: { id: string } | null) => (x ? { type: 'id' as const, id: x.id } : { type: 'none' as const })
   switch (cmd.type) {
@@ -121,6 +170,9 @@ export function applyCommand(ledger: Ledger, actor: Actor, cmd: LedgerCommand): 
       return id(ledger.lockPeriod(actor, cmd.periodId))
     case 'year.close':
       return id(ledger.closeYear(actor, cmd.year))
+    case 'year.open':
+      ledger.openFiscalYear(actor, cmd.year)
+      return { type: 'none' }
     case 'vendor.add':
       return id(ledger.addVendor(actor, cmd.input))
     case 'bill.create':

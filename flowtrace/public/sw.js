@@ -3,9 +3,9 @@
 // phone (src/lib/offline-claims.ts sends them when the connection returns).
 //
 // - Pages: network first, falling back to the last copy; a page never seen
-//   falls back to the claim form, which is precached at install.
+//   redirects to the claim form, which is precached at install.
 // - Built assets (/assets/*, fonts): cache first; their names are hashed.
-const VERSION = 'flowtrace-v1'
+const VERSION = 'flowtrace-v2'
 const OFFLINE_PAGE = '/spend/claims/new'
 
 async function precache() {
@@ -51,7 +51,14 @@ self.addEventListener('fetch', (event) => {
           }
           return res
         })
-        .catch(async () => (await caches.match(req)) ?? (await caches.match(OFFLINE_PAGE)) ?? Response.error()),
+        .catch(async () => {
+          const hit = await caches.match(req)
+          if (hit) return hit
+          // A page never opened online cannot run offline (its code was never
+          // downloaded), so send the officer to the claim form, which can.
+          if (await caches.match(OFFLINE_PAGE)) return Response.redirect(OFFLINE_PAGE, 302)
+          return Response.error()
+        }),
     )
     return
   }
