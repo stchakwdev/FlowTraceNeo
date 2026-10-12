@@ -1,0 +1,476 @@
+/**
+ * Origami Node Styles
+ * Comprehensive styling for dynamic origami visualization
+ */
+
+/* Base Origami Node Styles */
+.origami-node {
+  position: absolute;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, filter;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.origami-node.origami-loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.origami-node.origami-hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+/* Size Classes */
+.origami-size-xl {
+  width: 200px;
+  height: 200px;
+}
+
+.origami-size-lg {
+  width: 160px;
+  height: 160px;
+}
+
+.origami-size-md {
+  width: 130px;
+  height: 130px;
+}
+
+.origami-size-sm {
+  width: 100px;
+  height: 100px;
+}
+
+.origami-size-xs {
+  width: 80px;
+  height: 80px;
+}
+
+/* Floating Animations */
+@keyframes origami-float-slow {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  33% {
+    transform: translateY(-3px) translateX(1px);
+  }
+  66% {
+    transform: translateY(2px) translateX(-1px);
+  }
+}
+
+@keyframes origami-float-medium {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-5px) translateX(2px);
+  }
+  50% {
+    transform: translateY(3px) translateX(-1px);
+  }
+  75% {
+    transform: translateY(-2px) translateX(-2px);
+  }
+}
+
+@keyframes origami-float-fast {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  20% {
+    transform: translateY(-8px) translateX(3px);
+  }
+  40% {
+    transform: translateY(5px) translateX(-2px);
+  }
+  60% {
+    transform: translateY(-4px) translateX(-3px);
+  }
+  80% {
+    transform: translateY(6px) translateX(2px);
+  }
+}
+
+@keyframes origami-float-intense {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  16% {
+    transform: translateY(-12px) translateX(4px) rotate(1deg);
+  }
+  33% {
+    transform: translateY(8px) translateX(-3px) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-6px) translateX(-4px) rotate(0.5deg);
+  }
+  66% {
+    transform: translateY(10px) translateX(3px) rotate(-0.5deg);
+  }
+  83% {
+    transform: translateY(-4px) translateX(-2px) rotate(0deg);
+  }
+}
+
+/* Apply floating animations */
+.origami-float-slow {
+  animation: origami-float-slow 6s ease-in-out infinite;
+}
+
+.origami-float-medium {
+  animation: origami-float-medium 4s ease-in-out infinite;
+}
+
+.origami-float-fast {
+  animation: origami-float-fast 3s ease-in-out infinite;
+}
+
+.origami-float-intense {
+  animation: origami-float-intense 2s ease-in-out infinite;
+}
+
+/* Paper rustle effect on click */
+@keyframes origami-rustle {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-1deg) scale(0.98);
+  }
+  50% {
+    transform: rotate(1deg) scale(1.02);
+  }
+  75% {
+    transform: rotate(-0.5deg) scale(0.99);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.origami-rustling {
+  animation: origami-rustle 0.4s ease-out !important;
+}
+
+/* Expand animation for unfolding */
+@keyframes origami-unfold {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) scale(1);
+    filter: brightness(1);
+  }
+  100% {
+    transform: rotateX(15deg) rotateY(-15deg) scale(0.95);
+    filter: brightness(1.1);
+  }
+}
+
+.origami-expanded .origami-shape {
+  animation: origami-unfold 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Path highlight pulse */
+@keyframes origami-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px rgba(0, 212, 170, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 40px rgba(0, 212, 170, 0.9));
+  }
+}
+
+.origami-highlighted {
+  animation: origami-pulse 2s ease-in-out infinite;
+  z-index: 100 !important;
+}
+
+.origami-highlighted .origami-fold-face {
+  fill: url(#origami-highlight) !important;
+  stroke: rgba(0, 212, 170, 0.6) !important;
+  stroke-width: 1.5 !important;
+}
+
+/* Hover effects */
+.origami-node:hover {
+  transform: translateY(-5px) scale(1.02);
+  filter: drop-shadow(0 15px 40px rgba(0, 102, 255, 0.5));
+}
+
+.origami-node:hover .origami-expand-btn {
+  background: rgba(0, 102, 255, 1);
+  transform: scale(1.1);
+}
+
+/* SVG Shape Styles */
+.origami-shape {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.origami-fold-face {
+  transition: all 0.3s ease;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 0.5;
+}
+
+/* Paper texture overlay */
+.origami-paper-texture {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0.15;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Content Styles */
+.origami-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+  color: #fff;
+}
+
+.origami-icon {
+  background: linear-gradient(135deg, #0066ff, #00d4aa);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.origami-node:hover .origami-icon {
+  transform: scale(1.1);
+}
+
+.origami-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin-bottom: 4px;
+}
+
+.origami-title {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
+}
+
+.origami-transactions {
+  color: rgba(0, 212, 170, 0.8);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+
+.origami-trust-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  border-radius: 50%;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.origami-node:hover .origami-trust-indicator {
+  transform: scale(1.2);
+}
+
+/* Expand/Collapse Button */
+.origami-expand-btn {
+  position: absolute;
+  bottom: -12px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 102, 255, 0.8);
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  pointer-events: all;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.origami-expand-btn:hover {
+  background: rgba(0, 102, 255, 1);
+  transform: scale(1.1);
+}
+
+.origami-expand-btn:active {
+  transform: scale(0.95);
+}
+
+/* Transition Classes */
+.origami-transition-transform {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.origami-transition-filter {
+  transition: filter 0.3s ease;
+}
+
+.origami-transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Performance Optimizations */
+.origami-node {
+  contain: layout style paint;
+  will-change: transform, filter, opacity;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .origami-node,
+  .origami-shape,
+  .origami-fold-face,
+  .origami-icon,
+  .origami-trust-indicator,
+  .origami-expand-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .origami-float-slow,
+  .origami-float-medium,
+  .origami-float-fast,
+  .origami-float-intense {
+    animation: none !important;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .origami-size-xl {
+    width: 160px;
+    height: 160px;
+  }
+
+  .origami-size-lg {
+    width: 130px;
+    height: 130px;
+  }
+
+  .origami-size-md {
+    width: 100px;
+    height: 100px;
+  }
+
+  .origami-size-sm {
+    width: 80px;
+    height: 80px;
+  }
+
+  .origami-size-xs {
+    width: 60px;
+    height: 60px;
+  }
+
+  /* Reduce animation intensity on mobile */
+  .origami-float-intense {
+    animation: origami-float-fast 3s ease-in-out infinite;
+  }
+
+  .origami-float-fast {
+    animation: origami-float-medium 4s ease-in-out infinite;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .origami-node:hover {
+    transform: none;
+    filter: none;
+  }
+
+  .origami-node:active {
+    transform: scale(0.95);
+  }
+}
+
+/* High Performance Mode */
+.origami-performance-mode .origami-node {
+  animation: none !important;
+  transition: transform 0.15s ease !important;
+}
+
+.origami-performance-mode .origami-float-slow,
+.origami-performance-mode .origami-float-medium,
+.origami-performance-mode .origami-float-fast,
+.origami-performance-mode .origami-float-intense {
+  animation: none !important;
+}
+
+/* Loading States */
+.origami-node:not(.origami-loaded) {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+/* Focus states for accessibility */
+.origami-node:focus,
+.origami-expand-btn:focus {
+  outline: 2px solid #0066ff;
+  outline-offset: 2px;
+}
+
+/* Container for multiple nodes */
+.origami-nodes-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Connection lines styling */
+.origami-connection {
+  stroke: rgba(0, 102, 255, 0.2);
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 5, 5;
+  animation: origami-dash 20s linear infinite;
+  transition: all 0.3s ease;
+}
+
+.origami-connection.highlighted {
+  stroke: rgba(0, 212, 170, 0.8);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 170, 0.6));
+  animation: origami-dash 5s linear infinite;
+}
+
+@keyframes origami-dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}

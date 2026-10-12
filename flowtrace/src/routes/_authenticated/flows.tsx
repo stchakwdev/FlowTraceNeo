@@ -21,7 +21,11 @@ import {
 } from '@phosphor-icons/react'
 import { useFlowData } from '@/lib/queries'
 import type { FlowDataNode } from '@/lib/supabase'
-import { VerificationBreakdown, NodeVerificationBadge } from '@/components/verification-indicator'
+import {
+  VerificationBreakdown,
+  NodeVerificationBadge,
+} from '@/components/verification-indicator'
+import { OrigamiFlow } from '@/components/origami/flow'
 
 export const Route = createFileRoute('/_authenticated/flows')({
   component: FlowVisualization,
@@ -174,23 +178,44 @@ function AnimatedEdge({
         d={pathD}
         fill="none"
         className={`transition-all duration-300 ${
-          isHighlighted
-            ? 'stroke-primary'
-            : 'stroke-muted-foreground/40'
+          isHighlighted ? 'stroke-primary' : 'stroke-muted-foreground/40'
         }`}
         strokeWidth={isHighlighted ? 2.5 : 1.5}
         strokeLinecap="round"
       />
 
       {/* Animated flow particles */}
-      <circle r={isHighlighted ? 4 : 3} className={isHighlighted ? 'fill-primary' : 'fill-muted-foreground/60'}>
+      <circle
+        r={isHighlighted ? 4 : 3}
+        className={isHighlighted ? 'fill-primary' : 'fill-muted-foreground/60'}
+      >
         <animateMotion dur="2s" repeatCount="indefinite" path={pathD} />
       </circle>
-      <circle r={isHighlighted ? 3 : 2} className={isHighlighted ? 'fill-primary/70' : 'fill-muted-foreground/40'}>
-        <animateMotion dur="2s" repeatCount="indefinite" path={pathD} begin="0.7s" />
+      <circle
+        r={isHighlighted ? 3 : 2}
+        className={
+          isHighlighted ? 'fill-primary/70' : 'fill-muted-foreground/40'
+        }
+      >
+        <animateMotion
+          dur="2s"
+          repeatCount="indefinite"
+          path={pathD}
+          begin="0.7s"
+        />
       </circle>
-      <circle r={isHighlighted ? 2 : 1.5} className={isHighlighted ? 'fill-primary/50' : 'fill-muted-foreground/30'}>
-        <animateMotion dur="2s" repeatCount="indefinite" path={pathD} begin="1.4s" />
+      <circle
+        r={isHighlighted ? 2 : 1.5}
+        className={
+          isHighlighted ? 'fill-primary/50' : 'fill-muted-foreground/30'
+        }
+      >
+        <animateMotion
+          dur="2s"
+          repeatCount="indefinite"
+          path={pathD}
+          begin="1.4s"
+        />
       </circle>
 
       {/* Amount label - only show on highlight */}
@@ -313,6 +338,7 @@ function FlowVisualization() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState('month')
   const [zoom, setZoom] = useState(1)
+  const [view, setView] = useState<'classic' | 'origami'>('classic')
 
   const { data: flowData, isLoading } = useFlowData()
 
@@ -397,7 +423,10 @@ function FlowVisualization() {
         {isLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-5">
+              <div
+                key={i}
+                className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-5"
+              >
                 <div className="flex items-center justify-between">
                   <div className="h-4 w-20 skeleton-shimmer rounded" />
                   <div className="h-10 w-10 skeleton-shimmer rounded-lg" />
@@ -431,7 +460,11 @@ function FlowVisualization() {
             />
             <StatCard
               label="Avg Flow"
-              value={edges.length > 0 ? formatCurrency(totalFlow / edges.length) : 'N/A'}
+              value={
+                edges.length > 0
+                  ? formatCurrency(totalFlow / edges.length)
+                  : 'N/A'
+              }
               icon={TrendUp}
               gradient="from-amber-500 to-orange-600"
               glow="shadow-amber-500/25"
@@ -449,10 +482,17 @@ function FlowVisualization() {
               key={type}
               className="flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1.5"
             >
-              <div className={`flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br ${config.gradient}`}>
-                <Icon className="h-3 w-3 text-muted-foreground" weight="duotone" />
+              <div
+                className={`flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br ${config.gradient}`}
+              >
+                <Icon
+                  className="h-3 w-3 text-muted-foreground"
+                  weight="duotone"
+                />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">{config.label}</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {config.label}
+              </span>
             </div>
           )
         })}
@@ -463,25 +503,44 @@ function FlowVisualization() {
         <div className="rounded-lg border border-border bg-card p-4 lg:col-span-2 overflow-hidden">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold">Flow Diagram</h2>
-            <div className="flex gap-1 rounded-lg border border-border p-0.5">
-              <button
-                onClick={handleZoomOut}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <MagnifyingGlassMinus className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleZoomIn}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <MagnifyingGlassPlus className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleResetZoom}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <ArrowsOut className="h-4 w-4" />
-              </button>
+            <div className="flex gap-2">
+              <div className="flex gap-1 rounded-lg border border-border p-0.5">
+                {(['classic', 'origami'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      view === v
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {v === 'classic' ? 'Classic' : 'Origami'}
+                  </button>
+                ))}
+              </div>
+              {view === 'classic' && (
+                <div className="flex gap-1 rounded-lg border border-border p-0.5">
+                  <button
+                    onClick={handleZoomOut}
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <MagnifyingGlassMinus className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleZoomIn}
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <MagnifyingGlassPlus className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleResetZoom}
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <ArrowsOut className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -490,16 +549,23 @@ function FlowVisualization() {
               <div className="flex h-[500px] items-center justify-center">
                 <div className="text-center">
                   <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
-                  <p className="mt-4 font-medium text-muted-foreground">Loading flow data...</p>
+                  <p className="mt-4 font-medium text-muted-foreground">
+                    Loading flow data...
+                  </p>
                 </div>
               </div>
             ) : positionedNodes.length === 0 ? (
               <div className="flex h-[500px] items-center justify-center">
                 <div className="text-center">
                   <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-lg bg-muted/30 ring-1 ring-border">
-                    <FlowArrow className="h-10 w-10 text-muted-foreground" weight="duotone" />
+                    <FlowArrow
+                      className="h-10 w-10 text-muted-foreground"
+                      weight="duotone"
+                    />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-foreground">No flow nodes found</h3>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">
+                    No flow nodes found
+                  </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Add transactions to start visualizing your flows
                   </p>
@@ -512,6 +578,14 @@ function FlowVisualization() {
                   </Link>
                 </div>
               </div>
+            ) : view === 'origami' && flowData ? (
+              <div className="overflow-hidden rounded-lg bg-slate-950">
+                <OrigamiFlow
+                  data={flowData}
+                  height={500}
+                  onNodeClick={setSelectedNode}
+                />
+              </div>
             ) : (
               <svg
                 width={svgWidth * zoom}
@@ -522,21 +596,46 @@ function FlowVisualization() {
               >
                 {/* Definitions for filters and gradients */}
                 <defs>
-                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <filter
+                    id="glow"
+                    x="-50%"
+                    y="-50%"
+                    width="200%"
+                    height="200%"
+                  >
                     <feGaussianBlur stdDeviation="4" result="coloredBlur" />
                     <feMerge>
                       <feMergeNode in="coloredBlur" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
-                  <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="rgb(34, 211, 238)" stopOpacity="0.6" />
-                    <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0.6" />
+                  <linearGradient
+                    id="edgeGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="rgb(34, 211, 238)"
+                      stopOpacity="0.6"
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="rgb(59, 130, 246)"
+                      stopOpacity="0.6"
+                    />
                   </linearGradient>
                 </defs>
 
                 {/* Background grid pattern */}
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <pattern
+                  id="grid"
+                  width="40"
+                  height="40"
+                  patternUnits="userSpaceOnUse"
+                >
                   <path
                     d="M 40 0 L 0 0 0 40"
                     fill="none"
@@ -549,11 +648,14 @@ function FlowVisualization() {
                 {/* Edges layer */}
                 <g className="edges">
                   {edges.map((edge) => {
-                    const fromNode = positionedNodes.find((n) => n.id === edge.from)
+                    const fromNode = positionedNodes.find(
+                      (n) => n.id === edge.from,
+                    )
                     const toNode = positionedNodes.find((n) => n.id === edge.to)
                     if (!fromNode || !toNode) return null
 
-                    const isHighlighted = selectedNode === edge.from || selectedNode === edge.to
+                    const isHighlighted =
+                      selectedNode === edge.from || selectedNode === edge.to
 
                     return (
                       <AnimatedEdge
@@ -577,7 +679,11 @@ function FlowVisualization() {
                       key={node.id}
                       node={node}
                       isSelected={selectedNode === node.id}
-                      onClick={() => setSelectedNode(selectedNode === node.id ? null : node.id)}
+                      onClick={() =>
+                        setSelectedNode(
+                          selectedNode === node.id ? null : node.id,
+                        )
+                      }
                     />
                   ))}
                 </g>
@@ -598,12 +704,19 @@ function FlowVisualization() {
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${
-                        nodeConfig[selectedNodeData.node.type]?.gradient || nodeConfig.account.gradient
+                        nodeConfig[selectedNodeData.node.type]?.gradient ||
+                        nodeConfig.account.gradient
                       } border border-white/10`}
                     >
                       {(() => {
-                        const Icon = nodeConfig[selectedNodeData.node.type]?.icon || Bank
-                        return <Icon className="h-6 w-6 text-foreground" weight="duotone" />
+                        const Icon =
+                          nodeConfig[selectedNodeData.node.type]?.icon || Bank
+                        return (
+                          <Icon
+                            className="h-6 w-6 text-foreground"
+                            weight="duotone"
+                          />
+                        )
                       })()}
                     </div>
                     <div>
@@ -611,7 +724,8 @@ function FlowVisualization() {
                         {selectedNodeData.node.name}
                       </h2>
                       <span className="text-sm text-muted-foreground">
-                        {nodeConfig[selectedNodeData.node.type]?.label || 'Node'}
+                        {nodeConfig[selectedNodeData.node.type]?.label ||
+                          'Node'}
                       </span>
                     </div>
                   </div>
@@ -627,7 +741,9 @@ function FlowVisualization() {
                   <div className="rounded-lg bg-success/10 p-4 ring-1 ring-success/20">
                     <div className="flex items-center gap-2">
                       <TrendUp className="h-4 w-4 text-success" weight="bold" />
-                      <p className="text-xs font-medium text-success">Inflows</p>
+                      <p className="text-xs font-medium text-success">
+                        Inflows
+                      </p>
                     </div>
                     <p className="mt-2 text-xl font-bold text-success">
                       {formatCurrency(selectedNodeData.totalIn)}
@@ -635,8 +751,13 @@ function FlowVisualization() {
                   </div>
                   <div className="rounded-lg bg-destructive/10 p-4 ring-1 ring-destructive/20">
                     <div className="flex items-center gap-2">
-                      <TrendDown className="h-4 w-4 text-destructive" weight="bold" />
-                      <p className="text-xs font-medium text-destructive">Outflows</p>
+                      <TrendDown
+                        className="h-4 w-4 text-destructive"
+                        weight="bold"
+                      />
+                      <p className="text-xs font-medium text-destructive">
+                        Outflows
+                      </p>
                     </div>
                     <p className="mt-2 text-xl font-bold text-destructive">
                       {formatCurrency(selectedNodeData.totalOut)}
@@ -645,7 +766,9 @@ function FlowVisualization() {
                 </div>
 
                 <div className="mt-4 rounded-lg bg-muted/30 p-4 ring-1 ring-border">
-                  <p className="text-xs font-medium text-muted-foreground">Net Balance</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Net Balance
+                  </p>
                   <p
                     className={`mt-1 text-2xl font-bold ${
                       selectedNodeData.totalIn - selectedNodeData.totalOut >= 0
@@ -653,7 +776,9 @@ function FlowVisualization() {
                         : 'text-destructive'
                     }`}
                   >
-                    {formatCurrency(selectedNodeData.totalIn - selectedNodeData.totalOut)}
+                    {formatCurrency(
+                      selectedNodeData.totalIn - selectedNodeData.totalOut,
+                    )}
                   </p>
                 </div>
 
@@ -678,13 +803,17 @@ function FlowVisualization() {
                   </h3>
                   <ul className="space-y-2">
                     {selectedNodeData.inflows.map((flow) => {
-                      const fromNode = positionedNodes.find((n) => n.id === flow.from)
+                      const fromNode = positionedNodes.find(
+                        (n) => n.id === flow.from,
+                      )
                       return (
                         <li
                           key={flow.id}
                           className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3 text-sm ring-1 ring-border"
                         >
-                          <span className="truncate text-foreground">{fromNode?.name ?? 'Unknown'}</span>
+                          <span className="truncate text-foreground">
+                            {fromNode?.name ?? 'Unknown'}
+                          </span>
                           <span className="shrink-0 font-semibold text-success">
                             {formatCurrency(flow.amount)}
                           </span>
@@ -703,13 +832,17 @@ function FlowVisualization() {
                   </h3>
                   <ul className="space-y-2">
                     {selectedNodeData.outflows.map((flow) => {
-                      const toNode = positionedNodes.find((n) => n.id === flow.to)
+                      const toNode = positionedNodes.find(
+                        (n) => n.id === flow.to,
+                      )
                       return (
                         <li
                           key={flow.id}
                           className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3 text-sm ring-1 ring-border"
                         >
-                          <span className="truncate text-foreground">{toNode?.name ?? 'Unknown'}</span>
+                          <span className="truncate text-foreground">
+                            {toNode?.name ?? 'Unknown'}
+                          </span>
                           <span className="shrink-0 font-semibold text-destructive">
                             {formatCurrency(flow.amount)}
                           </span>
@@ -723,9 +856,14 @@ function FlowVisualization() {
           ) : (
             <div className="rounded-lg border border-dashed border-border bg-card/30 p-8 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-muted/30 ring-1 ring-border">
-                <GitBranch className="h-8 w-8 text-muted-foreground" weight="duotone" />
+                <GitBranch
+                  className="h-8 w-8 text-muted-foreground"
+                  weight="duotone"
+                />
               </div>
-              <h3 className="mt-4 font-semibold text-foreground">Select a Node</h3>
+              <h3 className="mt-4 font-semibold text-foreground">
+                Select a Node
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Click on any node in the diagram to see its flow details
               </p>
@@ -761,7 +899,9 @@ function StatCard({
           <Icon className="h-5 w-5 text-primary-foreground" weight="duotone" />
         </div>
       </div>
-      <p className="relative mt-2 financial-figure text-2xl font-bold">{value}</p>
+      <p className="relative mt-2 financial-figure text-2xl font-bold">
+        {value}
+      </p>
     </div>
   )
 }

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowTrace Dynamic Origami Nodes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0A0F1C;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Background pattern */
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Origami Node Base Styles */
+        .origami-node {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+            filter: drop-shadow(0 10px 30px rgba(0, 102, 255, 0.3));
+        }
+
+        .origami-node:hover {
+            transform: translateY(-5px) scale(1.02);
+            filter: drop-shadow(0 15px 40px rgba(0, 102, 255, 0.5));
+        }
+
+        /* Highlighted state when tracing path */
+        .origami-node.path-highlighted {
+            filter: drop-shadow(0 0 30px rgba(0, 212, 170, 0.8));
+            z-index: 100;
+        }
+
+        .origami-node.path-highlighted .fold-face {
+            fill: url(#highlightGradient) !important;
+            stroke: rgba(0, 212, 170, 0.6) !important;
+            stroke-width: 1.5 !important;
+        }
+
+        /* Paper texture overlay */
+        .paper-texture {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+            background: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.03) 2px,
+                    rgba(255, 255, 255, 0.03) 4px
+                ),
+                repeating-linear-gradient(
+                    -45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.02) 2px,
+                    rgba(255, 255, 255, 0.02) 4px
+                );
+            pointer-events: none;
+        }
+
+        /* SVG polygon shapes */
+        .origami-shape {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Folded paper effect with gradients */
+        .fold-face {
+            fill: url(#foldGradient);
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .fold-shadow {
+            fill: url(#shadowGradient);
+            opacity: 0.3;
+        }
+
+        /* Content inside the node */
+        .node-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .node-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 4px;
+        }
+
+        .node-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .node-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0066FF, #00D4AA);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
+        }
+
+        .node-transactions {
+            font-size: 10px;
+            color: rgba(0, 212, 170, 0.8);
+            margin-top: 2px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Different sizes */
+        .size-xl { width: 200px; height: 200px; }
+        .size-lg { width: 160px; height: 160px; }
+        .size-md { width: 130px; height: 130px; }
+        .size-sm { width: 100px; height: 100px; }
+        .size-xs { width: 80px; height: 80px; }
+
+        /* Smaller text for smaller nodes */
+        .size-sm .node-value { font-size: 18px; }
+        .size-sm .node-title { font-size: 12px; }
+        .size-sm .node-icon { width: 24px; height: 24px; font-size: 14px; }
+        .size-sm .node-transactions { font-size: 9px; }
+        
+        .size-xs .node-value { font-size: 16px; }
+        .size-xs .node-title { font-size: 11px; }
+        .size-xs .node-icon { display: none; }
+        .size-xs .node-transactions { display: none; }
+
+        /* Unfolding animation for expanded state */
+        .origami-node.expanded .origami-shape {
+            transform: rotateX(15deg) rotateY(-15deg) scale(0.95);
+        }
+
+        .origami-node.expanded .fold-face {
+            fill: url(#foldGradientExpanded);
+        }
+
+        /* Connection lines */
+        .connection-line {
+            stroke: rgba(0, 102, 255, 0.2);
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 5, 5;
+            animation: dash 20s linear infinite;
+            transition: all 0.3s ease;
+        }
+
+        /* Highlighted connection */
+        .connection-line.highlighted {
+            stroke: rgba(0, 212, 170, 0.8);
+            stroke-width: 3;
+            filter: drop-shadow(0 0 10px rgba(0, 212, 170, 0.6));
+            animation: dash 5s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -100; }
+        }
+
+        /* Dynamic floating animations */
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            33% { transform: translateY(-3px) translateX(1px); }
+            66% { transform: translateY(2px) translateX(-1px); }
+        }
+
+        @keyframes float-medium {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            25% { transform: translateY(-5px) translateX(2px); }
+            50% { transform: translateY(3px) translateX(-1px); }
+            75% { transform: translateY(-2px) translateX(-2px); }
+        }
+
+        @keyframes float-fast {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            20% { transform: translateY(-8px) translateX(3px); }
+            40% { transform: translateY(5px) translateX(-2px); }
+            60% { transform: translateY(-4px) translateX(-3px); }
+            80% { transform: translateY(6px) translateX(2px); }
+        }
+
+        @keyframes float-intense {
+            0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+            16% { transform: translateY(-12px) translateX(4px) rotate(1deg); }
+            33% { transform: translateY(8px) translateX(-3px) rotate(-1deg); }
+            50% { transform: translateY(-6px) translateX(-4px) rotate(0.5deg); }
+            66% { transform: translateY(10px) translateX(3px) rotate(-0.5deg); }
+            83% { transform: translateY(-4px) translateX(-2px) rotate(0deg); }
+        }
+
+        /* Apply floating classes */
+        .float-slow { animation: float-slow 6s ease-in-out infinite; }
+        .float-medium { animation: float-medium 4s ease-in-out infinite; }
+        .float-fast { animation: float-fast 3s ease-in-out infinite; }
+        .float-intense { animation: float-intense 2s ease-in-out infinite; }
+
+        /* Paper rustle effect on click */
+        @keyframes rustle {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-1deg) scale(0.98); }
+            50% { transform: rotate(1deg) scale(1.02); }
+            75% { transform: rotate(-0.5deg) scale(0.99); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        .rustling {
+            animation: rustle 0.4s ease-out !important;
+        }
+
+        /* Info panel */
+        .info-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 300px;
+        }
+
+        .info-panel h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #00D4AA;
+        }
+
+        .info-panel p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .info-panel .legend {
+            font-size: 12px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .legend-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        button {
+            background: rgba(0, 102, 255, 0.2);
+            border: 1px solid rgba(0, 102, 255, 0.3);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: rgba(0, 102, 255, 0.3);
+            border-color: rgba(0, 102, 255, 0.5);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <div class="info-panel">
+        <h3>Dynamic Origami Flow</h3>
+        <p>Each node has a unique origami pattern. Hover to trace paths back to the source.</p>
+        <p>Nodes float based on transaction volume - more activity means more movement!</p>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-indicator" style="background: linear-gradient(135deg, #0066FF20, #0066FF40);"></div>
+                <span>Low Activity</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-indicator" style="background: linear-gradient(135deg, #0066FF40, #00D4AA40);"></div>
+                <span>High Activity</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="nodeContainer">
+        <!-- SVG for connection lines -->
+        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+            <defs>
+                <!-- Gradients for paper effect -->
+                <linearGradient id="foldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1a2332;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#243142;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#1a2332;stop-opacity:1" />
+                </linearGradient>
+                
+                <linearGradient id="foldGradientExpanded" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1e2938;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#2a3848;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#1e2938;stop-opacity:1" />
+                </linearGradient>
+                
+                <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00D4AA;stop-opacity:0.3" />
+                    <stop offset="50%" style="stop-color:#00D4AA;stop-opacity:0.4" />
+                    <stop offset="100%" style="stop-color:#0066FF;stop-opacity:0.3" />
+                </linearGradient>
+                
+                <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#000000;stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:#000000;stop-opacity:0.1" />
+                </linearGradient>
+            </defs>
+            <g id="connections"></g>
+        </svg>
+    </div>
+
+    <div class="controls">
+        <button onclick="expandAll()">Unfold All</button>
+        <button onclick="collapseAll()">Fold All</button>
+        <button onclick="randomizeActivity()">Simulate Activity</button>
+    </div>
+
+    <script>
+        // Node data structure with transaction activity
+        const nodes = [
+            { id: 'hq', title: 'Headquarters', value: 450000, icon: '🏢', x: 400, y: 300, size: 'xl', level: 0, children: ['ops', 'programs', 'finance'], transactions: 245, frequency: 'high' },
+            { id: 'ops', title: 'Operations', value: 125000, icon: '⚙️', x: 200, y: 200, size: 'lg', level: 1, parent: 'hq', children: ['it', 'hr'], transactions: 89, frequency: 'medium' },
+            { id: 'programs', title: 'Programs', value: 230000, icon: '📋', x: 600, y: 200, size: 'lg', level: 1, parent: 'hq', children: ['water', 'education', 'health'], transactions: 156, frequency: 'high' },
+            { id: 'finance', title: 'Finance', value: 95000, icon: '💰', x: 400, y: 500, size: 'md', level: 1, parent: 'hq', children: [], transactions: 67, frequency: 'medium' },
+            { id: 'it', title: 'IT Dept', value: 45000, icon: '💻', x: 100, y: 100, size: 'sm', level: 2, parent: 'ops', transactions: 23, frequency: 'low' },
+            { id: 'hr', title: 'HR Dept', value: 80000, icon: '👥', x: 150, y: 350, size: 'md', level: 2, parent: 'ops', transactions: 45, frequency: 'medium' },
+            { id: 'water', title: 'Water Access', value: 95000, icon: '💧', x: 500, y: 100, size: 'md', level: 2, parent: 'programs', transactions: 78, frequency: 'high' },
+            { id: 'education', title: 'Education', value: 85000, icon: '📚', x: 700, y: 150, size: 'md', level: 2, parent: 'programs', transactions: 52, frequency: 'medium' },
+            { id: 'health', title: 'Healthcare', value: 50000, icon: '🏥', x: 650, y: 350, size: 'sm', level: 2, parent: 'programs', transactions: 34, frequency: 'low' }
+        ];
+
+        // Multiple origami patterns for each size
+        const origamiPatterns = {
+            xl: [
+                // Pattern 1: Complex hexagon
+                `<polygon class="fold-shadow" points="50,10 150,10 190,90 150,190 50,190 10,90" transform="translate(2,2)" />
+                <polygon class="fold-face" points="50,10 100,10 100,100 50,100" />
+                <polygon class="fold-face" points="100,10 150,10 150,100 100,100" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="150,10 190,90 150,100 100,100" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="100,100 150,100 150,190 100,190" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="50,100 100,100 100,190 50,190" style="fill-opacity: 0.95" />
+                <polygon class="fold-face" points="10,90 50,100 50,190 10,90" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 2: Star-like
+                `<polygon class="fold-shadow" points="100,5 130,70 195,70 150,110 170,175 100,135 30,175 50,110 5,70 70,70" transform="translate(2,2)" />
+                <polygon class="fold-face" points="100,5 130,70 100,90 70,70" />
+                <polygon class="fold-face" points="130,70 195,70 150,110 100,90" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="100,90 150,110 170,175 100,135" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="100,90 100,135 30,175 50,110" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="70,70 100,90 50,110 5,70" style="fill-opacity: 0.95" />`,
+                
+                // Pattern 3: Diamond cascade
+                `<polygon class="fold-shadow" points="100,10 160,50 160,130 100,190 40,130 40,50" transform="translate(2,2)" />
+                <polygon class="fold-face" points="100,10 130,30 130,70 100,90 70,70 70,30" />
+                <polygon class="fold-face" points="130,30 160,50 160,90 130,70" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="130,70 160,90 160,130 130,150 100,130 100,90" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="70,30 70,70 40,90 40,50" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="70,70 100,90 100,130 70,150 40,130 40,90" style="fill-opacity: 0.95" />
+                <polygon class="fold-face" points="100,130 130,150 100,190 70,150" style="fill-opacity: 0.75" />`
+            ],
+            lg: [
+                // Pattern 1: Pentagon fold
+                `<polygon class="fold-shadow" points="40,10 120,10 150,80 80,150 10,80" transform="translate(2,2)" />
+                <polygon class="fold-face" points="40,10 80,10 80,80 40,80" />
+                <polygon class="fold-face" points="80,10 120,10 120,80 80,80" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="120,10 150,80 80,80" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="40,80 80,80 80,150 40,150" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="10,80 40,80 40,150 10,80" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 2: Windmill
+                `<polygon class="fold-shadow" points="80,20 140,40 140,100 100,140 40,120 20,60" transform="translate(2,2)" />
+                <polygon class="fold-face" points="80,20 80,80 40,60 20,60" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="80,20 140,40 140,80 80,80" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="80,80 140,80 140,100 100,140" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="80,80 100,140 40,120 40,80" style="fill-opacity: 0.95" />
+                <polygon class="fold-face" points="40,60 40,80 80,80" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 3: Crystal
+                `<polygon class="fold-shadow" points="80,10 120,30 140,80 80,150 20,80 40,30" transform="translate(2,2)" />
+                <polygon class="fold-face" points="80,10 120,30 80,60 40,30" />
+                <polygon class="fold-face" points="120,30 140,80 80,60" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="80,60 140,80 80,150" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="80,60 80,150 20,80" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="40,30 80,60 20,80" style="fill-opacity: 0.95" />`
+            ],
+            md: [
+                // Pattern 1: Triangle composition
+                `<polygon class="fold-shadow" points="30,10 100,10 120,65 65,120 10,65" transform="translate(2,2)" />
+                <polygon class="fold-face" points="30,10 65,10 65,65 30,65" />
+                <polygon class="fold-face" points="65,10 100,10 100,65 65,65" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="100,10 120,65 65,65" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="30,65 65,65 65,120 30,120" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="10,65 30,65 30,120 10,65" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 2: Asymmetric
+                `<polygon class="fold-shadow" points="20,20 90,10 110,60 90,110 30,100 10,50" transform="translate(2,2)" />
+                <polygon class="fold-face" points="20,20 60,15 60,60 20,60" />
+                <polygon class="fold-face" points="60,15 90,10 90,60 60,60" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="90,10 110,60 90,60" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="60,60 90,60 90,110 60,100" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="20,60 60,60 60,100 30,100" style="fill-opacity: 0.95" />
+                <polygon class="fold-face" points="10,50 20,60 20,20" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 3: Kite
+                `<polygon class="fold-shadow" points="65,10 110,40 65,120 20,40" transform="translate(2,2)" />
+                <polygon class="fold-face" points="65,10 90,25 65,50 40,25" />
+                <polygon class="fold-face" points="90,25 110,40 65,50" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="65,50 110,40 65,120" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="65,50 65,120 20,40" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="40,25 65,50 20,40" style="fill-opacity: 0.95" />`
+            ],
+            sm: [
+                // Pattern 1: Simple diamond
+                `<polygon class="fold-shadow" points="25,10 75,10 90,50 50,90 10,50" transform="translate(1,1)" />
+                <polygon class="fold-face" points="25,10 50,10 50,50 25,50" />
+                <polygon class="fold-face" points="50,10 75,10 75,50 50,50" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="75,10 90,50 50,50" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="25,50 50,50 50,90 25,90" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="10,50 25,50 25,90 10,50" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 2: Arrow
+                `<polygon class="fold-shadow" points="50,10 80,30 80,60 50,90 20,60 20,30" transform="translate(1,1)" />
+                <polygon class="fold-face" points="50,10 65,20 50,40 35,20" />
+                <polygon class="fold-face" points="65,20 80,30 80,60 65,50 50,40" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="50,40 65,50 50,90" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="35,20 50,40 50,90 35,50 20,60 20,30" style="fill-opacity: 0.8" />`,
+                
+                // Pattern 3: Butterfly
+                `<polygon class="fold-shadow" points="50,20 70,10 85,40 70,70 50,80 30,70 15,40 30,10" transform="translate(1,1)" />
+                <polygon class="fold-face" points="50,20 70,10 70,40 50,50" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="70,40 85,40 70,70 50,50" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="50,50 70,70 50,80" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="50,20 50,50 30,40 30,10" style="fill-opacity: 0.95" />
+                <polygon class="fold-face" points="30,40 50,50 50,80 30,70 15,40" style="fill-opacity: 0.75" />`
+            ],
+            xs: [
+                // Pattern 1: Triangle
+                `<polygon class="fold-shadow" points="20,10 60,10 70,40 40,70 10,40" transform="translate(1,1)" />
+                <polygon class="fold-face" points="20,10 40,10 40,40 20,40" />
+                <polygon class="fold-face" points="40,10 60,10 60,40 40,40" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="60,10 70,40 40,40" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="20,40 40,40 40,70 20,70" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="10,40 20,40 20,70 10,40" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 2: Square twist
+                `<polygon class="fold-shadow" points="15,15 55,15 65,35 55,55 15,55 5,35" transform="translate(1,1)" />
+                <polygon class="fold-face" points="15,15 35,15 35,35 15,35" />
+                <polygon class="fold-face" points="35,15 55,15 55,35 35,35" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="55,15 65,35 35,35" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="15,35 35,35 35,55 15,55" style="fill-opacity: 0.8" />
+                <polygon class="fold-face" points="35,35 55,35 55,55 35,55" style="fill-opacity: 0.95" />
+                <polygon class="fold-face" points="5,35 15,35 15,55 5,35" style="fill-opacity: 0.75" />`,
+                
+                // Pattern 3: Gem
+                `<polygon class="fold-shadow" points="40,10 60,20 60,50 40,70 20,50 20,20" transform="translate(1,1)" />
+                <polygon class="fold-face" points="40,10 50,15 40,30 30,15" />
+                <polygon class="fold-face" points="50,15 60,20 60,50 50,45 40,30" style="fill-opacity: 0.9" />
+                <polygon class="fold-face" points="40,30 50,45 40,70" style="fill-opacity: 0.85" />
+                <polygon class="fold-face" points="30,15 40,30 40,70 30,45 20,50 20,20" style="fill-opacity: 0.8" />`
+            ]
+        };
+
+        // Create randomized origami shape
+        function createOrigamiShape(size) {
+            const patterns = origamiPatterns[size] || origamiPatterns.md;
+            const randomPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            return randomPattern;
+        }
+
+        // Calculate floating animation based on value and transactions
+        function calculateFloatingClass(value, transactions) {
+            const score = (value / 100000) + (transactions / 50);
+            if (score < 2) return 'float-slow';
+            if (score < 4) return 'float-medium';
+            if (score < 6) return 'float-fast';
+            return 'float-intense';
+        }
+
+        // Format currency values
+        function formatValue(value) {
+            if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+            if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+            return `$${value}`;
+        }
+
+        // Create node element
+        function createNode(nodeData) {
+            const node = document.createElement('div');
+            const floatClass = calculateFloatingClass(nodeData.value, nodeData.transactions);
+            node.className = `origami-node size-${nodeData.size} ${floatClass}`;
+            node.id = `node-${nodeData.id}`;
+            node.style.left = `${nodeData.x}px`;
+            node.style.top = `${nodeData.y}px`;
+            node.dataset.expanded = 'false';
+            node.dataset.nodeId = nodeData.id;
+
+            // Random delay for floating animation to make it more organic
+            node.style.animationDelay = `${Math.random() * 2}s`;
+
+            node.innerHTML = `
+                <svg class="origami-shape" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+                    ${createOrigamiShape(nodeData.size)}
+                </svg>
+                <div class="paper-texture"></div>
+                <div class="node-content">
+                    <div class="node-icon">${nodeData.icon}</div>
+                    <div class="node-value">${formatValue(nodeData.value)}</div>
+                    <div class="node-title">${nodeData.title}</div>
+                    <div class="node-transactions">${nodeData.transactions} txns/mo</div>
+                </div>
+            `;
+
+            node.addEventListener('click', () => toggleNode(nodeData.id));
+            node.addEventListener('mouseenter', () => highlightPath(nodeData.id));
+            node.addEventListener('mouseleave', () => clearHighlights());
+            return node;
+        }
+
+        // Highlight path from node to root
+        function highlightPath(nodeId) {
+            clearHighlights();
+            
+            let currentNode = nodes.find(n => n.id === nodeId);
+            const pathNodes = [];
+            const pathConnections = [];
+            
+            // Trace back to root
+            while (currentNode) {
+                pathNodes.push(currentNode.id);
+                if (currentNode.parent) {
+                    pathConnections.push(`${currentNode.parent}-${currentNode.id}`);
+                    currentNode = nodes.find(n => n.id === currentNode.parent);
+                } else {
+                    currentNode = null;
+                }
+            }
+            
+            // Highlight nodes
+            pathNodes.forEach(id => {
+                const element = document.getElementById(`node-${id}`);
+                if (element) {
+                    element.classList.add('path-highlighted');
+                }
+            });
+            
+            // Highlight connections
+            const connections = document.querySelectorAll('.connection-line');
+            connections.forEach(line => {
+                const connectionId = line.dataset.connection;
+                if (pathConnections.includes(connectionId)) {
+                    line.classList.add('highlighted');
+                }
+            });
+        }
+
+        // Clear all highlights
+        function clearHighlights() {
+            document.querySelectorAll('.path-highlighted').forEach(el => {
+                el.classList.remove('path-highlighted');
+            });
+            document.querySelectorAll('.connection-line.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+        }
+
+        // Toggle node expansion
+        function toggleNode(nodeId) {
+            const node = document.getElementById(`node-${nodeId}`);
+            const nodeData = nodes.find(n => n.id === nodeId);
+            const isExpanded = node.dataset.expanded === 'true';
+
+            // Add rustle animation
+            node.classList.add('rustling');
+            setTimeout(() => node.classList.remove('rustling'), 400);
+
+            if (isExpanded) {
+                node.classList.remove('expanded');
+                node.dataset.expanded = 'false';
+                hideChildren(nodeData);
+            } else {
+                node.classList.add('expanded');
+                node.dataset.expanded = 'true';
+                showChildren(nodeData);
+            }
+
+            updateConnections();
+        }
+
+        // Show child nodes
+        function showChildren(parentNode) {
+            if (!parentNode.children) return;
+
+            parentNode.children.forEach((childId, index) => {
+                const childData = nodes.find(n => n.id === childId);
+                if (!childData) return;
+
+                const childNode = document.getElementById(`node-${childId}`);
+                if (childNode) {
+                    childNode.style.display = 'block';
+                    setTimeout(() => {
+                        childNode.style.opacity = '1';
+                        childNode.style.transform = 'scale(1)';
+                    }, index * 80);
+                }
+            });
+        }
+
+        // Hide child nodes
+        function hideChildren(parentNode) {
+            if (!parentNode.children) return;
+
+            parentNode.children.forEach(childId => {
+                const childData = nodes.find(n => n.id === childId);
+                if (!childData) return;
+
+                const childNode = document.getElementById(`node-${childId}`);
+                if (childNode) {
+                    childNode.style.opacity = '0';
+                    childNode.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        childNode.style.display = 'none';
+                        if (childNode.dataset.expanded === 'true') {
+                            toggleNode(childId);
+                        }
+                    }, 300);
+                }
+            });
+        }
+
+        // Update connection lines
+        function updateConnections() {
+            const connectionsGroup = document.getElementById('connections');
+            connectionsGroup.innerHTML = '';
+
+            nodes.forEach(node => {
+                if (node.parent) {
+                    const parentNode = nodes.find(n => n.id === node.parent);
+                    const childElement = document.getElementById(`node-${node.id}`);
+                    
+                    if (parentNode && childElement && childElement.style.display !== 'none') {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        line.classList.add('connection-line');
+                        line.dataset.connection = `${parentNode.id}-${node.id}`;
+                        
+                        const x1 = parentNode.x + 100;
+                        const y1 = parentNode.y + 100;
+                        const x2 = node.x + 50;
+                        const y2 = node.y + 50;
+                        
+                        const cx = (x1 + x2) / 2;
+                        const cy = (y1 + y2) / 2 - 50;
+                        
+                        line.setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+                        connectionsGroup.appendChild(line);
+                    }
+                }
+            });
+        }
+
+        // Expand all nodes
+        function expandAll() {
+            nodes.forEach(node => {
+                const element = document.getElementById(`node-${node.id}`);
+                if (element && element.dataset.expanded === 'false') {
+                    setTimeout(() => toggleNode(node.id), node.level * 200);
+                }
+            });
+        }
+
+        // Collapse all nodes
+        function collapseAll() {
+            nodes.slice().reverse().forEach(node => {
+                const element = document.getElementById(`node-${node.id}`);
+                if (element && element.dataset.expanded === 'true') {
+                    toggleNode(node.id);
+                }
+            });
+        }
+
+        // Randomize activity for demo
+        function randomizeActivity() {
+            nodes.forEach(node => {
+                // Randomize values and transactions
+                node.value = Math.floor(Math.random() * 400000) + 50000;
+                node.transactions = Math.floor(Math.random() * 200) + 20;
+                
+                const element = document.getElementById(`node-${node.id}`);
+                if (element) {
+                    // Update displayed values
+                    element.querySelector('.node-value').textContent = formatValue(node.value);
+                    element.querySelector('.node-transactions').textContent = `${node.transactions} txns/mo`;
+                    
+                    // Update floating animation
+                    const oldClasses = ['float-slow', 'float-medium', 'float-fast', 'float-intense'];
+                    oldClasses.forEach(cls => element.classList.remove(cls));
+                    
+                    const newFloatClass = calculateFloatingClass(node.value, node.transactions);
+                    element.classList.add(newFloatClass);
+                    
+                    // Randomize animation delay again
+                    element.style.animationDelay = `${Math.random() * 2}s`;
+                }
+            });
+        }
+
+        // Initialize the visualization
+        function init() {
+            const container = document.getElementById('nodeContainer');
+            
+            // Create all nodes
+            nodes.forEach(node => {
+                const element = createNode(node);
+                if (node.level > 0) {
+                    element.style.display = 'none';
+                    element.style.opacity = '0';
+                    element.style.transform = 'scale(0.8)';
+                }
+                container.appendChild(element);
+            });
+
+            // Initial connections
+            updateConnections();
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
