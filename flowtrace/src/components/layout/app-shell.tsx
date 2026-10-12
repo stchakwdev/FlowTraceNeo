@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { useAuth } from '@workos/authkit-tanstack-react-start/client'
 import {
   CaretDown,
   CaretLeft,
@@ -10,11 +9,13 @@ import {
 } from '@phosphor-icons/react'
 import { ThemeToggle } from './theme-toggle'
 import { MobileNav, MobileNavTrigger } from './mobile-nav'
+import type {AuthUser} from '@/lib/auth';
+import { useAppAuth } from '@/lib/auth-context'
 import {
-  getUserDisplayName,
-  getUserInitials,
+  
   DEV_MODE,
-  type AuthUser,
+  getUserDisplayName,
+  getUserInitials
 } from '@/lib/auth'
 import { navItems } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
@@ -52,16 +53,10 @@ export function AppShell({
   user: routeUser,
   devMode = DEV_MODE,
 }: AppShellProps) {
-  const { signOut: workosSignOut } = useAuth()
+  const { signOut } = useAppAuth()
   const user = routeUser
 
-  const handleSignOut = async () => {
-    if (devMode) {
-      window.location.href = '/'
-    } else {
-      await workosSignOut()
-    }
-  }
+  const handleSignOut = signOut
 
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)

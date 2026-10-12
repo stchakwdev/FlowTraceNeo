@@ -1,9 +1,9 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useAuth } from '@workos/authkit-tanstack-react-start/client'
-import { supabase, DEV_MODE, DEV_ORG_ID } from './supabase'
-import { mapWorkOSUser, type AuthUser } from './auth'
+import { useAppAuth } from './auth-context'
+import { DEV_MODE, DEV_ORG_ID, supabase } from './supabase'
+import type { AuthUser } from './auth'
 import type { ReactNode } from 'react'
 import type { Organization, Profile } from './supabase'
 
@@ -44,10 +44,10 @@ const DEV_ORGANIZATION: Organization = {
 
 export function OrgProvider({ children }: { children: ReactNode }) {
   const {
-    user: workosUser,
-    organizationId: workosOrgId,
+    user,
+    organizationId: authOrgId,
     loading: authLoading,
-  } = useAuth()
+  } = useAppAuth()
   const [state, setState] = useState<
     Omit<OrgContextValue, 'refetch' | 'user'>
   >({
@@ -57,9 +57,6 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     isLoading: !DEV_MODE,
     error: null,
   })
-
-  // Map WorkOS user to our AuthUser type
-  const user = mapWorkOSUser(workosUser, workosOrgId)
 
   const loadOrgContext = async () => {
     // Dev bypass mode - use mock organization
@@ -78,7 +75,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     if (authLoading) return
 
     // Not authenticated - clear org context
-    if (!workosUser) {
+    if (!user) {
       setState((prev) => ({
         ...prev,
         organizationId: null,
@@ -90,14 +87,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      // Try to load profile from Supabase using WorkOS user ID
+      // Try to load profile from Supabase using the auth user ID
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', workosUser.id)
+        .eq('id', user.id)
         .single()
 
-      let orgId = profile?.organization_id ?? workosOrgId ?? null
+      let orgId = profile?.organization_id ?? authOrgId ?? null
 
       // If no profile or no org, auto-provision: create profile + link to demo org
       if (!profile || !orgId) {
@@ -106,10 +103,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           .from('profiles')
           .upsert(
             {
-              id: workosUser.id,
-              email: workosUser.email,
+              id: user.id,
+              email: user.email,
               full_name:
-                [workosUser.firstName, workosUser.lastName]
+                [user.firstName, user.lastName]
                   .filter(Boolean)
                   .join(' ') || null,
               organization_id: orgId,
@@ -177,7 +174,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadOrgContext()
-  }, [workosUser, authLoading])
+  }, [user?.id, authLoading])
 
   return (
     <OrgContext.Provider value={{ ...state, user, refetch: loadOrgContext }}>
