@@ -1,18 +1,15 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { getAuth, getSignInUrl } from '@workos/authkit-tanstack-react-start'
 import { AppShell } from '@/components/layout/app-shell'
-import { mapWorkOSUser } from '@/lib/auth'
-
-// Dev mode detection - skip auth when WorkOS not configured
-const DEV_MODE = !import.meta.env.VITE_WORKOS_CLIENT_ID
+import { DEV_MODE, DUMMY_USER, mapWorkOSUser } from '@/lib/auth'
 
 export const Route = createFileRoute('/_authenticated')({
   // Use loader for server-side auth checks (not beforeLoad)
   loader: async ({ location }) => {
-    // Skip auth check in dev mode
+    // Dummy auth mode: always signed in as the demo user
     if (DEV_MODE) {
       return {
-        user: null,
+        user: DUMMY_USER,
         organizationId: null,
         devMode: true,
       }

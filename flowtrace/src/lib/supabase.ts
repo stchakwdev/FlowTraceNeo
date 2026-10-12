@@ -21,7 +21,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
 })
 
 // Development mode constants
-export const DEV_MODE = !import.meta.env.VITE_WORKOS_CLIENT_ID
+export { DEV_MODE } from './auth'
 export const DEV_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'
 
 // Database types (matching migration schema)

@@ -1,5 +1,4 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useAuth } from '@workos/authkit-tanstack-react-start/client'
 import {
   ArrowRight,
   ChartLineUp,
@@ -9,9 +8,9 @@ import {
   ShieldCheck,
   UsersThree,
 } from '@phosphor-icons/react'
+import { useAppAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
-import { DEV_MODE } from '@/lib/auth'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -60,8 +59,8 @@ const stats = [
 ]
 
 function LandingPage() {
-  const { user } = useAuth()
-  const isAuthenticated = DEV_MODE || !!user
+  const { user } = useAppAuth()
+  const isAuthenticated = !!user
 
   return (
     <div className="min-h-screen bg-background">

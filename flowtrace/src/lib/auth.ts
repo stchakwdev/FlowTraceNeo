@@ -1,9 +1,10 @@
 import type { User } from '@workos/authkit-tanstack-react-start'
 
-// WorkOS client ID from environment
-export const workosClientId = import.meta.env.VITE_WORKOS_CLIENT_ID || ''
-export const isWorkosConfigured = !!workosClientId
-export const DEV_MODE = !isWorkosConfigured
+// Auth provider. Defaults to a dummy signed-in user so the app builds and runs
+// without WorkOS; set VITE_AUTH_MODE=workos to turn real auth on.
+export const AUTH_MODE: 'dummy' | 'workos' =
+  import.meta.env.VITE_AUTH_MODE === 'workos' ? 'workos' : 'dummy'
+export const DEV_MODE = AUTH_MODE === 'dummy'
 
 // Auth redirect paths
 export const AUTH_ROUTES = {
@@ -22,6 +23,14 @@ export interface AuthUser {
   lastName?: string
   profilePictureUrl?: string
   organizationId?: string
+}
+
+// Signed-in user in dummy auth mode
+export const DUMMY_USER: AuthUser = {
+  id: 'user_dummy',
+  email: 'demo@flowtrace.dev',
+  firstName: 'Demo',
+  lastName: 'User',
 }
 
 // Auth state type
