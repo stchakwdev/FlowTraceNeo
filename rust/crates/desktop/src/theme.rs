@@ -37,9 +37,13 @@ pub const fn oklcha(l: f32, c: f32, h: f32, a: f32) -> Oklch {
 }
 
 impl Oklch {
-    /// This colour in sRGB, each channel clamped to 0..=1 (Björn Ottosson's OKLab matrices,
+    /// This colour in sRGB, each channel clamped to 0..=1 (Björn Ottosson's `OKLab` matrices,
     /// <https://bottosson.github.io/posts/oklab/>, and the sRGB transfer function).
     #[must_use]
+    #[expect(
+        clippy::many_single_char_names,
+        reason = "the OKLab formulas' own names: L, a, b, l, m, s, r, g"
+    )]
     pub fn to_rgba(self) -> Rgba {
         let (sin, cos) = self.h.to_radians().sin_cos();
         let (a, b) = (self.c * cos, self.c * sin);

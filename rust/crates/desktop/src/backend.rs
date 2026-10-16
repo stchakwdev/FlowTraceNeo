@@ -12,10 +12,10 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_channel::{Receiver, Sender};
-use ledger_core::env::fixed::{self, FixedEnv};
-use ledger_core::types::{Actor, ActorId, OrganizationId};
 use ledger_core::demo::{build_demo_ledger, demo_actor};
+use ledger_core::env::fixed::{self, FixedEnv};
 use ledger_core::setup::create_org_ledger;
+use ledger_core::types::{Actor, ActorId, OrganizationId};
 use ledger_core::{
     CommandError, CommandResult, Ledger, LedgerCommand, LedgerEnv, LedgerState, Timestamp,
     apply_command,
@@ -444,7 +444,7 @@ mod tests {
 
         let empty = backend.state(&orgs[1].id).unwrap();
         assert_eq!(empty.settings.organization_id, orgs[1].id);
-        assert!(empty.entries.is_empty());
+        assert_eq!(empty.entries, vec![]);
         assert!(!empty.accounts.is_empty(), "the NGO chart of accounts");
         assert_eq!(backend.status(), ConnectionStatus::Disconnected);
         assert_eq!(
@@ -476,7 +476,11 @@ mod tests {
         let added = after.accounts.iter().find(|a| a.code == "5990").unwrap();
         assert_eq!(added.name, "Field radios");
         assert_eq!(added.id.as_str(), id);
-        assert_eq!(*before, build_demo_ledger().unwrap(), "old snapshot untouched");
+        assert_eq!(
+            *before,
+            build_demo_ledger().unwrap(),
+            "old snapshot untouched"
+        );
 
         let event = rx.try_recv().unwrap();
         assert_eq!(
@@ -492,12 +496,8 @@ mod tests {
     #[test]
     fn ids_keep_counting_across_commands() {
         let mut backend = backend();
-        let first = backend
-            .submit(&demo(), add_account("5991", "One"))
-            .unwrap();
-        let second = backend
-            .submit(&demo(), add_account("5992", "Two"))
-            .unwrap();
+        let first = backend.submit(&demo(), add_account("5991", "One")).unwrap();
+        let second = backend.submit(&demo(), add_account("5992", "Two")).unwrap();
         assert_ne!(first, second);
     }
 

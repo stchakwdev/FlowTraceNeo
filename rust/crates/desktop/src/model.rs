@@ -324,11 +324,12 @@ impl ConnectForm {
         let host = self.host.trim();
         let has_address = ["http://", "https://", "ws://", "wss://"]
             .iter()
-            .any(|scheme| host.strip_prefix(scheme).is_some_and(|rest| !rest.is_empty()));
+            .any(|scheme| {
+                host.strip_prefix(scheme)
+                    .is_some_and(|rest| !rest.is_empty())
+            });
         if !has_address {
-            return Err(
-                "Enter the server as a URL, for example http://127.0.0.1:3100.".to_owned(),
-            );
+            return Err("Enter the server as a URL, for example http://127.0.0.1:3100.".to_owned());
         }
         let database = self.database.trim();
         let valid_name = !database.is_empty()
@@ -391,7 +392,7 @@ mod tests {
             ]
         );
         for entry in NavEntry::ALL {
-            assert!(!entry.summary().is_empty());
+            assert_ne!(entry.summary(), "");
             assert!(entry.summary().is_ascii(), "no emoji: {}", entry.summary());
         }
     }
@@ -448,7 +449,10 @@ mod tests {
         assert_eq!(view.selected().unwrap().name, "Alpha");
         assert!(view.snapshot().is_some());
         assert_eq!(view.revision(), 0);
-        assert_eq!(LedgerView::new(vec![], ConnectionStatus::Disconnected, None).selected(), None);
+        assert_eq!(
+            LedgerView::new(vec![], ConnectionStatus::Disconnected, None).selected(),
+            None
+        );
     }
 
     #[test]
@@ -505,7 +509,10 @@ mod tests {
 
         assert!(view.apply(vec![BackendEvent::Organisations(vec![org("c", "Gamma")])]));
         assert_eq!(view.selected().unwrap().name, "Gamma");
-        assert!(view.snapshot().is_none(), "Gamma's books are not loaded yet");
+        assert!(
+            view.snapshot().is_none(),
+            "Gamma's books are not loaded yet"
+        );
 
         assert!(view.apply(vec![BackendEvent::Organisations(vec![])]));
         assert_eq!(view.selected(), None);
@@ -514,7 +521,10 @@ mod tests {
     #[test]
     fn status_text_names_the_org_currency_and_connection() {
         let mut view = view();
-        assert_eq!(view.status_text(), "Alpha · KES · Not connected, local books");
+        assert_eq!(
+            view.status_text(),
+            "Alpha · KES · Not connected, local books"
+        );
         view.apply(vec![BackendEvent::Status(ConnectionStatus::Connected {
             identity: "c200abcd".to_owned(),
         })]);
