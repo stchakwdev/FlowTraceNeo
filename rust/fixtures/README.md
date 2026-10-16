@@ -172,8 +172,9 @@ reformatted. Where JSON forces a representation, it is listed here.
 
 ## Not covered here
 
-- Property tests in `engine.test.ts` (fast-check, random inputs): ported as Rust property tests
-  (task C7). Their one rejection assertion is excluded from the case-for-case check.
+- Property tests in `engine.test.ts` (fast-check, random inputs): ported as Rust property tests in
+  `crates/ledger-core/tests/properties.rs` (task C7, see `crates/ledger-core/tests/README.md`).
+  Their one rejection assertion is excluded from the case-for-case check.
 - `spacetime-codec.ts`, `spacetime-backend.ts` and `backend.ts` are not exported from the ledger
   index and belong to the SpacetimeDB client work.
 - `defaultEnv` (wall clock, random ids) by design.

@@ -1,8 +1,8 @@
 //! Rules of the C3 methods (grants, budgets, bills, payments, claims) that no fixture rejects,
 //! with the messages written in `flowtrace/src/lib/ledger/engine.ts` (cited per case), and the
-//! TS tests on documents that no fixture replays (`engine.test.ts:217-239`,
-//! `review-regressions.test.ts:95-108`). Each rejection must leave the books and the env as
-//! they were.
+//! TS tests on documents that no fixture replays (`engine.test.ts:217-239`; the regressions of
+//! `review-regressions.test.ts` are in `review_regressions.rs`). Each rejection must leave the
+//! books and the env as they were.
 #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
 mod common;
@@ -700,47 +700,6 @@ fn a_foreign_bill_paid_at_a_new_rate_books_the_fx_difference() {
     assert_eq!(base(&state, "acc-2100", None), 0);
     assert_eq!(base(&state, "acc-4400", None), -20_000);
     assert_eq!(state.bills[0].status, BillStatus::Paid);
-}
-
-/// `review-regressions.test.ts:95-99`: lines convert one by one and the payable as a total; the
-/// cent between them goes to exchange differences.
-#[test]
-fn a_multi_line_foreign_bill_books_its_rounding() {
-    let (mut state, mut env) = books();
-    let input = bill(json!({
-        "currency": "USD", "fx_rate": 1.5,
-        "lines": [coded(json!(1), "fund-unrestricted", None), coded(json!(1), "fund-unrestricted", None)]
-    }));
-    entered_bill(&mut Ledger::new(&mut state, &mut env), input, true);
-    assert_eq!(difference(&state), 0);
-    let rounding: Vec<_> = state
-        .lines
-        .iter()
-        .filter(|l| l.account_id.as_str() == "acc-4400")
-        .map(|l| (l.credit, l.currency.as_str(), l.memo.as_deref()))
-        .collect();
-    assert_eq!(rounding, vec![(1, "KES", Some("Currency rounding"))]);
-}
-
-/// `review-regressions.test.ts:101-108`: 300 payments of one cent against a bill split 100 and
-/// 200 across two funds leave every fund's payable at zero and the bill paid.
-#[test]
-fn partial_payments_clear_every_funds_payable_exactly() {
-    let (mut state, mut env) = books();
-    let mut l = Ledger::new(&mut state, &mut env);
-    let lines = json!([
-        coded(json!(100), "fund-unrestricted", None),
-        coded(json!(200), "f-r", Some("g"))
-    ]);
-    let id = entered_bill(&mut l, bill(json!({ "lines": lines })), true);
-    for _ in 0..300 {
-        l.pay_bill(&admin(), &id, &payment(json!(1))).unwrap();
-    }
-    assert_eq!(l.state().bills[0].status, BillStatus::Paid);
-    assert_eq!(l.state().outstanding(&AppliesTo::Bill(id)).unwrap(), 0);
-    for fund in ["fund-unrestricted", "f-r"] {
-        assert_eq!(base(&state, "acc-2100", Some(fund)), 0, "{fund}");
-    }
 }
 
 /// `engine.test.ts:242-270`, past the rejections the fixture replays: approval posts the claim
