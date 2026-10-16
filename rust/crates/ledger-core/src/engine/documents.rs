@@ -1,7 +1,7 @@
 //! What bills and expense claims share: coded lines, their accrual posting and payment
 //! (`engine.ts:1002-1140`).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::queries::js_number;
 use super::{EntryOptions, Error, Ledger, fail};
@@ -16,13 +16,14 @@ use crate::types::{
 /// amount as the raw JS number the caller sent. The line id is drawn when the document is
 /// stored; an `id` in the input is ignored, as TS overwrites it (`engine.ts:836`,
 /// `engine.ts:927`).
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewCodedLine {
     /// What was bought.
     pub description: String,
     /// The account charged; it must exist.
     pub account_id: AccountId,
     /// Amount in the document's currency: whole minor units, more than zero.
+    #[serde(serialize_with = "crate::js_number::serialize")]
     pub amount: f64,
     /// The fund charged; it must exist.
     pub fund_id: FundId,

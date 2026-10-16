@@ -6,10 +6,11 @@
 //! so the books stay in step with the TS run. Flipping a method from delta to live is one arm in
 //! [`call`]; the replay tests count both kinds.
 
+use ledger_core::commands::{CommandError, apply_command, sanitize_command};
 use ledger_core::engine::{EntryOptions, Error, Ledger};
 use ledger_core::env::LedgerEnv;
 use ledger_core::env::fixed::FixedEnv;
-use ledger_core::types::{AppliesTo, EntryId, EntryInput, LedgerState};
+use ledger_core::types::{AppliesTo, EntryId, LedgerState};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value, json};
@@ -157,98 +158,23 @@ pub fn query(s: &LedgerState, method: &str, a: &Value) -> Option<Result<Value, E
     })
 }
 
-/// Applies a sanitised `LedgerCommand` as `applyCommand` does (`commands.ts:139-221`) for the
-/// commands whose engine methods are ported, returning the `CommandResult`. `None` otherwise.
-pub fn command(l: &mut Ledger<'_>, actor: &Value, cmd: &Value) -> Option<Result<Value, Error>> {
-    let id = |r: Result<Value, Error>| {
-        r.map(|v| match v.get("id") {
-            Some(id) => json!({ "type": "id", "id": id }),
-            None => json!({ "type": "none" }),
-        })
+/// Runs a raw command as the TS module does (`spacetimedb/src/index.ts:671-680`):
+/// `sanitize_command` then `apply_command`, returning the `CommandResult` or the error. `None`
+/// for a bank or statement command, whose engine method is not ported yet (C6): the caller
+/// applies the recorded delta instead.
+pub fn command(l: &mut Ledger<'_>, actor: &Value, raw: &Value) -> Option<Result<Value, Error>> {
+    let cmd = match sanitize_command(raw) {
+        Ok(cmd) => cmd,
+        Err(e) => return Some(Err(e.into())),
     };
-    // A sanitised input that does not fit the typed `EntryInput` (a string `fx_rate`, which TS
-    // answers with FX_RATE_REQUIRED) is the command layer's to map (C4), not the engine's.
-    let typed = |v: &Value| serde_json::from_value::<EntryInput>(v.clone()).is_ok();
-    if !cmd["input"].is_null()
-        && cmd["type"].as_str()?.starts_with("entry.")
-        && !typed(&cmd["input"])
-    {
-        return None;
-    }
-    let (method, args) = match cmd["type"].as_str()? {
-        "entry.post" => ("post", json!([actor, cmd["input"]])),
-        "entry.saveDraft" => ("saveDraft", json!([actor, cmd["input"]])),
-        "entry.updateDraft" => ("updateDraft", json!([actor, cmd["entryId"], cmd["input"]])),
-        "entry.postDraft" => (
-            "postDraft",
-            json!([actor, cmd["entryId"], cmd["overrideReason"]]),
-        ),
-        "entry.deleteDraft" => ("deleteDraft", json!([actor, cmd["entryId"]])),
-        "entry.reverse" => (
-            "reverse",
-            json!([actor, cmd["entryId"], cmd["date"], cmd["reason"]]),
-        ),
-        "account.add" => ("addAccount", json!([actor, cmd["input"]])),
-        "account.update" => (
-            "updateAccount",
-            json!([actor, cmd["accountId"], cmd["patch"]]),
-        ),
-        "period.close" => ("closePeriod", json!([actor, cmd["periodId"]])),
-        "period.reopen" => (
-            "reopenPeriod",
-            json!([actor, cmd["periodId"], cmd["reason"]]),
-        ),
-        "period.lock" => ("lockPeriod", json!([actor, cmd["periodId"]])),
-        "year.close" => ("closeYear", json!([actor, cmd["year"]])),
-        "year.open" => ("openFiscalYear", json!([actor, cmd["year"]])),
-        "grant.add" => ("addGrant", json!([actor, cmd["input"]])),
-        "budgetLine.set" => ("setBudgetLine", json!([actor, cmd["input"]])),
-        "vendor.add" => ("addVendor", json!([actor, cmd["input"]])),
-        "bill.create" => ("createBill", json!([actor, cmd["input"]])),
-        "bill.approve" => ("approveBill", json!([actor, cmd["billId"]])),
-        "bill.post" => (
-            "postBill",
-            json!([actor, cmd["billId"], cmd["overrideReason"]]),
-        ),
-        // `bill.pay` passes no rate (commands.ts:182-189).
-        "bill.pay" => (
-            "payBill",
-            json!([actor, cmd["billId"], {
-                "date": cmd["date"],
-                "cash_account_id": cmd["cashAccountId"],
-                "amount": cmd["amount"],
-                "reference": cmd["reference"],
-            }]),
-        ),
-        "claim.create" => ("createClaim", json!([actor, cmd["input"]])),
-        "claim.submit" => ("submitClaim", json!([actor, cmd["claimId"]])),
-        "claim.approve" => (
-            "approveClaim",
-            json!([actor, cmd["claimId"], cmd["note"], cmd["overrideReason"]]),
-        ),
-        "claim.reject" => ("rejectClaim", json!([actor, cmd["claimId"], cmd["note"]])),
-        "claim.reimburse" => (
-            "reimburseClaim",
-            json!([actor, cmd["claimId"], {
-                "date": cmd["date"],
-                "cash_account_id": cmd["cashAccountId"],
-                "reference": cmd["reference"],
-            }]),
-        ),
-        "entry.import" => {
-            // `{ type: 'ids', ids: inputs.map((i) => saveDraft(actor, i).id) }` (commands.ts:155-156).
-            let mut ids = Vec::new();
-            for input in cmd["inputs"].as_array()? {
-                match call(l, "saveDraft", &json!([actor, input]))? {
-                    Ok(v) => ids.push(v["id"].clone()),
-                    Err(e) => return Some(Err(e)),
-                }
-            }
-            return Some(Ok(json!({ "type": "ids", "ids": ids })));
+    match apply_command(l, &arg(&json!([actor]), 0), cmd) {
+        Ok(result) => Some(Ok(to_json(&result))),
+        Err(CommandError::Engine(e)) => Some(Err(e)),
+        Err(CommandError::NotImplemented(kind)) => {
+            assert!(C6_COMMANDS.contains(&kind), "{kind} is not implemented");
+            None
         }
-        _ => return None,
-    };
-    call(l, method, &args).map(id)
+    }
 }
 
 /// `diffState` (`rust/tools/src/trace.ts:30-62`) over two JSON snapshots of the books.
@@ -453,24 +379,20 @@ pub fn run_method_step(
     )
 }
 
-/// Runs one `op: "command"` step through [`command`] with its sanitised command.
+/// Runs one `op: "command"` step through [`command`] with its raw command.
 pub fn run_command_step(
     state: &mut LedgerState,
     env: &mut FixedEnv,
     step: &Value,
     what: &str,
 ) -> Ran {
-    let kind = step["sanitized"]["type"].as_str().unwrap_or("?");
+    let kind = step["command"]["type"].as_str().unwrap_or("?");
     let before = to_json(state);
-    let outcome = if step["sanitized"].is_null() {
-        None
-    } else {
-        command(
-            &mut Ledger::new(state, env),
-            &step["actor"],
-            &step["sanitized"],
-        )
-    };
+    let outcome = command(
+        &mut Ledger::new(state, env),
+        &step["actor"],
+        &step["command"],
+    );
     check_outcome(state, env, step, before, outcome, &format!("{what} {kind}"))
 }
 
@@ -580,4 +502,15 @@ pub const C2_QUERIES: [&str; 11] = [
     "grantSpend",
     "validateEntry",
     "claim",
+];
+
+/// The commands whose engine methods come with task C6: `apply_command` refuses them as not
+/// implemented, and the replay applies their recorded deltas.
+pub const C6_COMMANDS: [&str; 6] = [
+    "bank.add",
+    "statement.import",
+    "statement.autoMatch",
+    "statement.match",
+    "statement.unmatch",
+    "statement.post",
 ];

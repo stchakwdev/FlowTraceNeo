@@ -3,6 +3,7 @@
 //! Parity with the TS ledger engine in `flowtrace/src/lib/ledger/` is proven against the fixtures
 //! in `rust/fixtures/` (see its README).
 
+pub mod commands;
 pub mod engine;
 pub mod env;
 pub mod errors;
@@ -11,6 +12,7 @@ pub mod js_number;
 pub mod money;
 pub mod types;
 
+pub use commands::{CommandError, CommandResult, LedgerCommand, apply_command, sanitize_command};
 pub use engine::Ledger;
 pub use env::{LedgerEnv, Timestamp};
 pub use errors::{Issue, IssueCode, LedgerError};
