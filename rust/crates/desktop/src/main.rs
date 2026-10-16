@@ -1,3 +1,3 @@
-//! FlowTrace Books desktop app (GPUI); a stub until the UI tasks land.
+//! FlowTrace Books desktop app (GPUI); the shell arrives with U1.
 
 fn main() {}

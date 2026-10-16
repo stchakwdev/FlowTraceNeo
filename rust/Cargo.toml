@@ -6,9 +6,6 @@ members = [
     "crates/ledger-client",
     "crates/desktop",
 ]
-# The F3 spike module builds to wasm through the spacetime CLI and is not part of the
-# workspace checks; see docs/adr/0002-gpui-spacetime.md.
-exclude = ["spikes/stdb-spike"]
 
 [workspace.package]
 version = "0.1.0"
