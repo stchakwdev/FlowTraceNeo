@@ -9,8 +9,7 @@ import {
   entryTotal,
 } from './-shared'
 import type { JournalEntry, LedgerState } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { formatDate, formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -231,7 +230,7 @@ function EntryDetail({
         meta={
           <>
             <EntryStatusMark status={entry.status} />
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
           </>
         }
       >

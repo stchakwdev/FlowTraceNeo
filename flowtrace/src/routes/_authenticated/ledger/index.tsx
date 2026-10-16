@@ -10,8 +10,7 @@ import {
   str,
 } from './-shared'
 import type { EntryStatus, JournalEntry, SourceType } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { formatDate, formatShortDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
@@ -142,7 +141,7 @@ function JournalPage() {
             meta={
               <>
                 <AsOf date={asOf} />
-                {DEV_MODE && <DemoTag />}
+                {DEMO_BOOKS && <DemoTag />}
               </>
             }
           >

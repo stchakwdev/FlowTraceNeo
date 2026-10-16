@@ -10,8 +10,7 @@ import {
   personName,
 } from './-shared'
 import type { ApprovalStep, ExpenseClaim, LedgerState } from '@/lib/ledger'
-import { useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { formatDate, formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -153,7 +152,7 @@ function ClaimDetail({
         meta={
           <>
             <AsOf date={asOf} />
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
           </>
         }
       >

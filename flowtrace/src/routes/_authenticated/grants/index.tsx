@@ -3,8 +3,7 @@ import { useMemo } from 'react'
 import { ArrowRight } from '@phosphor-icons/react'
 import type { GrantSummary } from '@/lib/ledger'
 import { grantSummary } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import {
@@ -84,7 +83,7 @@ function GrantsPage() {
             meta={
               <>
                 <AsOf date={asOf} />
-                {DEV_MODE && <DemoTag />}
+                {DEMO_BOOKS && <DemoTag />}
               </>
             }
           >

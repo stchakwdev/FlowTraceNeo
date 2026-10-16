@@ -3,9 +3,8 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, CloudSlash, Plus } from '@phosphor-icons/react'
 import { DocStatus, OverdueFlag, daysBetween, docTotal } from './-shared'
 import type { Bill, ExpenseClaim, LedgerCommand } from '@/lib/ledger'
-import { useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
+import { DEMO_BOOKS, useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { useOfflineClaimSync } from '@/lib/offline-claims'
-import { DEV_MODE } from '@/lib/auth'
 import { formatShortDate } from '@/lib/format'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
@@ -149,7 +148,7 @@ function SpendOverview() {
             meta={
               <>
                 <AsOf date={asOf} />
-                {DEV_MODE && <DemoTag />}
+                {DEMO_BOOKS && <DemoTag />}
               </>
             }
           >

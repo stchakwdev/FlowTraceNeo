@@ -17,8 +17,7 @@ import {
   candidatesFor,
   parseStatement,
 } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -423,7 +422,7 @@ function Summary({
   const meta = (
     <>
       <AsOf date={asOf} />
-      {DEV_MODE && <DemoTag />}
+      {DEMO_BOOKS && <DemoTag />}
     </>
   )
 

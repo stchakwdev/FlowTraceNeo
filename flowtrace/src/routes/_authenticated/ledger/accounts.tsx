@@ -3,8 +3,7 @@ import { useMemo, useState } from 'react'
 import { Plus } from '@phosphor-icons/react'
 import type { Account, AccountType, ExpenseFunction, LedgerState, Minor } from '@/lib/ledger'
 import { balances, natural } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -118,7 +117,7 @@ function AccountsPage() {
                   {rows.length} accounts{inactive ? ` · ${inactive} inactive` : ''}
                 </span>
                 <AsOf date={asOf} />
-                {DEV_MODE && <DemoTag />}
+                {DEMO_BOOKS && <DemoTag />}
               </>
             }
           >

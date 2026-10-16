@@ -8,6 +8,7 @@ import type { AuthUser } from '@/lib/auth'
 import { useAppAuth } from '@/lib/auth-context'
 import { DEV_MODE, getUserDisplayName, getUserInitials } from '@/lib/auth'
 import { useOrg } from '@/lib/org-context'
+import { DEMO_BOOKS } from '@/lib/ledger-client'
 import { isNavItemActive, navSections } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -91,8 +92,9 @@ export function AppShell({
         </div>
         {devMode && (
           <div className="border-t border-masthead-foreground/15 bg-primary px-4 py-1.5 text-xs leading-4 text-primary-foreground md:truncate md:px-5">
-            Demo: you're viewing Demo NGO Kenya. Changes reset when you
-            reload.{' '}
+            {DEMO_BOOKS
+              ? "Demo: you're viewing Demo NGO Kenya. Changes reset when you reload. "
+              : "Demo: you're viewing Demo NGO Kenya. The books are live in SpacetimeDB; other changes reset when you reload. "}
             <Link to="/" className="font-semibold underline">
               Back to the overview
             </Link>

@@ -9,8 +9,7 @@ import type {
   ReportLine,
 } from '@/lib/ledger'
 import { budgetVsActual, grantSummary, postedLines } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { formatDate, formatShortDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -155,7 +154,7 @@ function GrantDetail({ state, grant }: { state: LedgerState; grant: Grant }) {
         meta={
           <>
             <AsOf date={asOf} />
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
           </>
         }
       >
