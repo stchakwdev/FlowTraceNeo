@@ -37,9 +37,11 @@ use crate::bills::{
     status_label, status_tone, vendor_rows, vendors_meta,
 };
 use crate::claims::{cash_accounts, format_whole, grant_choices};
+use crate::panels::proofs::{self as proof_ui, HasProofs};
 use crate::panels::{
     Pick, PickState, choice, demo_tag, failure_box, field, form_buttons, hint, section_header,
 };
+use crate::proofs::{AttachList, LinkKind};
 use crate::statements::today_utc;
 use crate::store::LedgerStore;
 use crate::theme::{Palette, palette, space, text};
@@ -105,6 +107,10 @@ pub struct BillsPanel {
     due_date: Entity<InputState>,
     fx_rate: Entity<InputState>,
     lines: Vec<LineWidgets>,
+    /// Proof files attached on the new-bill form ([`crate::panels::proofs`]).
+    proofs: AttachList,
+    /// The last proof problem, shown under the proof files.
+    proof_note: Option<String>,
 
     detail: Option<BillDetail>,
     done: Option<String>,
@@ -149,6 +155,20 @@ pub(crate) fn new_pick(
 ) -> PickState {
     let index = value.and_then(|v| items.iter().position(|p| p.value == v));
     cx.new(|cx| SelectState::new(items, index.map(IndexPath::new), window, cx))
+}
+
+impl HasProofs for BillsPanel {
+    fn proofs_store(&self) -> &Entity<LedgerStore> {
+        &self.store
+    }
+
+    fn attachments(&mut self) -> &mut AttachList {
+        &mut self.proofs
+    }
+
+    fn proof_note(&mut self) -> &mut Option<String> {
+        &mut self.proof_note
+    }
 }
 
 impl BillsPanel {
@@ -212,6 +232,8 @@ impl BillsPanel {
             due_date,
             fx_rate,
             lines: Vec::new(),
+            proofs: AttachList::default(),
+            proof_note: None,
             detail: None,
             done: None,
             action_failure: None,
@@ -445,6 +467,8 @@ impl BillsPanel {
         self.form = Some(form);
         self.form_errors = BillErrors::default();
         self.form_failure = None;
+        self.proofs = AttachList::default();
+        self.proof_note = None;
         self.page = Page::New;
         self.number.update(cx, |i, cx| i.focus(window, cx));
         cx.notify();
@@ -626,9 +650,16 @@ impl BillsPanel {
             return;
         };
         self.sync_form(cx);
-        let Some(form) = &self.form else {
+        if self.proofs.busy() {
+            self.proof_note = Some("Wait for the proof files to finish uploading.".to_owned());
+            cx.notify();
+            return;
+        }
+        let names = self.proofs.names();
+        let Some(form) = self.form.as_mut() else {
             return;
         };
+        form.proofs = names;
         match form.command(&books) {
             Err(errors) => {
                 self.form_errors = errors;
@@ -636,8 +667,9 @@ impl BillsPanel {
             }
             Ok(command) => {
                 self.form_errors = BillErrors::default();
-                self.submit(command, cx, |this, result, _| match result {
+                self.submit(command, cx, |this, result, cx| match result {
                     Ok(CommandResult::Id { id }) => {
+                        proof_ui::record(this, LinkKind::Bill, &id, cx);
                         this.form = None;
                         this.lines.clear();
                         this.open_detail(BillId::from(id));
@@ -1205,8 +1237,14 @@ impl BillsPanel {
                             ),
                     ),
             )
-            .child(hint(
-                "Proof files are kept with the web app; the desktop records bills without them.",
+            .child(proof_ui::attach_section(
+                "Proof",
+                "Attach proof",
+                &self.proofs,
+                self.proof_note.as_deref(),
+                |this: &mut Self, window, cx| {
+                    proof_ui::choose(this, LinkKind::Bill, "new".to_owned(), window, cx);
+                },
                 cx,
             ))
             .child(
@@ -1332,6 +1370,12 @@ impl BillsPanel {
             .into_any_element()
     }
 
+    /// The proof files recorded on bill `id` ([`crate::panels::proofs::recorded_section`]).
+    fn proof_files(&self, id: &str, cx: &mut Context<Self>) -> AnyElement {
+        let proofs = self.store.read(cx).proofs_of(LinkKind::Bill, id);
+        proof_ui::recorded_section::<Self>("Proof files", &proofs, self.proof_note.as_deref(), cx)
+    }
+
     fn detail_view(&self, cx: &mut Context<Self>) -> AnyElement {
         let Some(d) = &self.detail else {
             return notice(
@@ -1409,6 +1453,7 @@ impl BillsPanel {
                     .child(section_header("Coding", div(), cx))
                     .child(coded_lines(d, p)),
             )
+            .child(self.proof_files(b.id.as_str(), cx))
             .child(Self::payments(d, cx))
             .child(Self::in_the_books(d, cx))
             .child(

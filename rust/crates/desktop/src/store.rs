@@ -12,8 +12,11 @@ use gpui_kit::{Context, Task};
 use ledger_core::LedgerCommand;
 use ledger_core::types::{Actor, OrganizationId};
 
+use ledger_module::transparency::types::{NewVerification, Verification};
+
 use crate::backend::{BackendError, BackendEvent, ConnectSettings, LedgerBackend, Submission};
 use crate::model::LedgerView;
+use crate::proofs::{LinkKind, ProofsClient, ProofsError};
 
 /// Makes the backend for a connect from the Connect screen: in the app, a
 /// [`crate::backend::SpacetimeBackend`] on those settings.
@@ -27,6 +30,8 @@ pub struct StoreCore {
     view: LedgerView,
     connector: Connector,
     timings: Option<Timings>,
+    /// The proofs Worker from `config.toml` (`proofs_url`).
+    proofs_url: Option<String>,
 }
 
 /// Start-up and round-trip times written to stderr with `--timings on`.
@@ -49,6 +54,7 @@ impl StoreCore {
             view: LedgerView::default(),
             connector,
             timings: None,
+            proofs_url: None,
         };
         let rx = core.open();
         (core, rx)
@@ -135,6 +141,61 @@ impl StoreCore {
                 t.started.elapsed().as_millis()
             );
         }
+    }
+
+    /// Sets the proofs Worker (`config.toml`, `proofs_url`); blank means none.
+    pub fn set_proofs_url(&mut self, url: Option<String>) {
+        self.proofs_url = url.map(|u| u.trim().to_owned()).filter(|u| !u.is_empty());
+    }
+
+    /// A client of the proofs Worker for the selected organisation, as the connection's
+    /// identity ([`LedgerBackend::proofs_token`]), with the organisation id to upload under.
+    ///
+    /// # Errors
+    ///
+    /// [`ProofsError::Unavailable`] with what to do: set `proofs_url`, or connect to a server.
+    pub fn proofs_client(&self) -> Result<(ProofsClient, OrganizationId), ProofsError> {
+        let url = self.proofs_url.as_deref().ok_or_else(|| {
+            ProofsError::Unavailable(
+                "No proof store is set up. Add proofs_url to config.toml (see the README)."
+                    .to_owned(),
+            )
+        })?;
+        let token = self
+            .backend
+            .proofs_token()
+            .ok_or_else(|| ProofsError::Unavailable(crate::backend::NO_PROOFS.to_owned()))?;
+        let org = self
+            .view
+            .selected()
+            .map(|o| o.id.clone())
+            .ok_or_else(|| ProofsError::Unavailable("No organisation is open.".to_owned()))?;
+        Ok((ProofsClient::new(url, token), org))
+    }
+
+    /// Records an uploaded proof on the selected organisation's books
+    /// ([`LedgerBackend::attach_proof`]).
+    pub fn attach_proof(&mut self, proof: NewVerification) -> Submission {
+        let Some(org) = self.view.selected().map(|org| org.id.clone()) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
+        };
+        self.backend.attach_proof(&org, proof)
+    }
+
+    /// The selected organisation's proofs of one claim or bill that the caller may see.
+    #[must_use]
+    pub fn proofs_of(&self, kind: LinkKind, id: &str) -> Vec<Verification> {
+        let Some(org) = self.view.selected() else {
+            return Vec::new();
+        };
+        self.backend
+            .proofs(&org.id)
+            .into_iter()
+            .filter(|v| match kind {
+                LinkKind::Claim => v.claim_id.as_deref() == Some(id),
+                LinkKind::Bill => v.bill_id.as_deref() == Some(id),
+            })
+            .collect()
     }
 
     /// Selects `org` and its books. Returns whether the selection changed.
@@ -247,6 +308,31 @@ impl LedgerStore {
     /// Closes the connection, keeping the last books.
     pub fn disconnect(&mut self) {
         self.core.disconnect();
+    }
+
+    /// [`StoreCore::set_proofs_url`].
+    pub fn set_proofs_url(&mut self, url: Option<String>) {
+        self.core.set_proofs_url(url);
+    }
+
+    /// [`StoreCore::proofs_client`].
+    ///
+    /// # Errors
+    ///
+    /// As [`StoreCore::proofs_client`].
+    pub fn proofs_client(&self) -> Result<(ProofsClient, OrganizationId), ProofsError> {
+        self.core.proofs_client()
+    }
+
+    /// [`StoreCore::attach_proof`].
+    pub fn attach_proof(&mut self, proof: NewVerification) -> Submission {
+        self.core.attach_proof(proof)
+    }
+
+    /// [`StoreCore::proofs_of`].
+    #[must_use]
+    pub fn proofs_of(&self, kind: LinkKind, id: &str) -> Vec<Verification> {
+        self.core.proofs_of(kind, id)
     }
 }
 

@@ -34,7 +34,9 @@ use crate::claims::{
     grant_choices, has_overridable, list_notice,
 };
 use crate::panels::bills::BillsPanel;
+use crate::panels::proofs::{self as proof_ui, HasProofs};
 use crate::panels::{demo_tag, failure_box, field, form_buttons, hint, page_title, section_header};
+use crate::proofs::{AttachList, LinkKind};
 use crate::statements::today_utc;
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
@@ -113,6 +115,10 @@ pub struct SpendPanel {
     purpose: Entity<InputState>,
     lines: Vec<LineWidgets>,
     next_key: u64,
+    /// Receipts attached on the new-claim form ([`crate::panels::proofs`]).
+    receipts: AttachList,
+    /// The last receipt problem, shown under the receipts.
+    proof_note: Option<String>,
 
     detail: Option<ClaimDetail>,
     dialog: Option<Dialog>,
@@ -131,6 +137,20 @@ pub struct SpendPanel {
     bills: Entity<BillsPanel>,
 
     _subscriptions: Vec<Subscription>,
+}
+
+impl HasProofs for SpendPanel {
+    fn proofs_store(&self) -> &Entity<LedgerStore> {
+        &self.store
+    }
+
+    fn attachments(&mut self) -> &mut AttachList {
+        &mut self.receipts
+    }
+
+    fn proof_note(&mut self) -> &mut Option<String> {
+        &mut self.proof_note
+    }
 }
 
 impl SpendPanel {
@@ -212,6 +232,8 @@ impl SpendPanel {
             purpose,
             lines: Vec::new(),
             next_key: 0,
+            receipts: AttachList::default(),
+            proof_note: None,
             detail: None,
             dialog: None,
             dialog_failure: None,
@@ -433,6 +455,8 @@ impl SpendPanel {
         self.form = Some(form);
         self.form_errors = None;
         self.form_failure = None;
+        self.receipts = AttachList::default();
+        self.proof_note = None;
         self.purpose.update(cx, |i, cx| i.focus(window, cx));
     }
 
@@ -649,11 +673,18 @@ impl SpendPanel {
     /// the engine has it.
     fn save(&mut self, submit: bool, _window: &mut Window, cx: &mut Context<Self>) {
         self.sync_form(cx);
+        if self.receipts.busy() {
+            self.proof_note = Some("Wait for the receipts to finish uploading.".to_owned());
+            cx.notify();
+            return;
+        }
+        let receipts = self.receipts.names();
         let (Some(books), Some(as_of), Some(form)) =
-            (self.books.clone(), self.as_of.clone(), self.form.as_ref())
+            (self.books.clone(), self.as_of.clone(), self.form.as_mut())
         else {
             return;
         };
+        form.receipts = receipts;
         match form.command(&books, &as_of, submit) {
             Err(errors) => {
                 self.form_errors = Some(errors);
@@ -661,8 +692,9 @@ impl SpendPanel {
             }
             Ok(command) => {
                 self.form_errors = None;
-                self.submit(command, cx, move |this, result, _| match result {
+                self.submit(command, cx, move |this, result, cx| match result {
                     Ok(CommandResult::Id { id }) => {
+                        proof_ui::record(this, LinkKind::Claim, &id, cx);
                         this.form = None;
                         this.lines.clear();
                         this.open_detail(ClaimId::from(id.as_str()));
@@ -1079,6 +1111,16 @@ impl SpendPanel {
                     .children(lines)
                     .child(Self::totals_row(&base, form.total(), cx)),
             )
+            .child(proof_ui::attach_section(
+                "Receipts",
+                "Attach receipt",
+                &self.receipts,
+                self.proof_note.as_deref(),
+                |this: &mut Self, window, cx| {
+                    proof_ui::choose(this, LinkKind::Claim, "new".to_owned(), window, cx);
+                },
+                cx,
+            ))
             .child(Self::form_footer(cx))
             .into_any_element()
     }
@@ -1248,9 +1290,16 @@ impl SpendPanel {
                 v.child(posting_view(&posting, &c.currency, cx))
             })
             .child(lines_table(d, cx))
+            .child(self.receipt_files(c.id.as_str(), cx))
             .child(trail_view(d, cx))
             .child(books_view(d, cx))
             .into_any_element()
+    }
+
+    /// The receipts recorded on claim `id` ([`crate::panels::proofs::recorded_section`]).
+    fn receipt_files(&self, id: &str, cx: &mut Context<Self>) -> AnyElement {
+        let proofs = self.store.read(cx).proofs_of(LinkKind::Claim, id);
+        proof_ui::recorded_section::<Self>("Receipt files", &proofs, self.proof_note.as_deref(), cx)
     }
 
     fn dialog_box(&self, cx: &mut Context<Self>) -> AnyElement {

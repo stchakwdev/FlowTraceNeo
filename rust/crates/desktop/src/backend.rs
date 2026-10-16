@@ -28,7 +28,12 @@ use ledger_core::{
     CommandError, CommandResult, Ledger, LedgerCommand, LedgerEnv, LedgerState, Timestamp,
     apply_command,
 };
+use ledger_module::tables::Member;
+use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::plan::{self as transparency_plan, Ctx, LedgerLinks};
+use ledger_module::transparency::types::{NewVerification, Verification};
 use serde_json::Value;
+use spacetimedb::Identity;
 use uuid::Uuid;
 
 /// The display name of the demo organisation (`flowtrace/src/lib/demo/dataset.ts:61`).
@@ -238,7 +243,31 @@ pub trait LedgerBackend {
     fn is_remote(&self) -> bool {
         false
     }
+
+    /// Records a proof file on a claim or bill of `org`: the object key and SHA-256 the proofs
+    /// Worker returned, through the module's `create_verification` (ADR 0004; P13). The new
+    /// proof shows in [`LedgerBackend::proofs`] once it is recorded.
+    fn attach_proof(&mut self, org: &OrganizationId, proof: NewVerification) -> Submission {
+        let _ = (org, proof);
+        Submission::ready(Err(BackendError::Connection(NO_PROOFS.to_owned())))
+    }
+
+    /// The proofs of `org` the caller may see (`my_verification`), oldest first.
+    fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {
+        let _ = org;
+        Vec::new()
+    }
+
+    /// The token the proofs Worker checks the caller by: the connection's SpacetimeDB token.
+    /// `None` when the backend has none to give (the in-process books).
+    fn proofs_token(&self) -> Option<String> {
+        None
+    }
 }
+
+/// Why a backend without a server keeps no proof files.
+pub const NO_PROOFS: &str =
+    "Proof files are kept with books on a server. Connect on the Connection screen first.";
 
 /// One organisation's books in the in-process backend.
 struct Books {
@@ -246,6 +275,8 @@ struct Books {
     state: Arc<LedgerState>,
     env: Box<dyn LedgerEnv>,
     actor: Actor,
+    /// Proofs recorded with [`LedgerBackend::attach_proof`], by the module's own rules.
+    proofs: OrgTransparency,
 }
 
 /// The ledger core in the app's own process: the demo books and one empty organisation.
@@ -279,6 +310,7 @@ impl InProcessBackend {
             env: Box::new(demo_env_after(&demo_state)),
             state: Arc::new(demo_state),
             actor: demo_actor(),
+            proofs: OrgTransparency::default(),
         };
 
         let mut env = SystemEnv;
@@ -293,6 +325,7 @@ impl InProcessBackend {
             state: Arc::new(empty_state),
             env: Box::new(env),
             actor: local_actor(),
+            proofs: OrgTransparency::default(),
         };
 
         Ok(Self {
@@ -321,6 +354,7 @@ impl InProcessBackend {
             state: Arc::new(state),
             env: Box::new(SystemEnv),
             actor: local_actor(),
+            proofs: OrgTransparency::default(),
         };
         self.books.insert(0, large);
         Ok(self)
@@ -404,6 +438,67 @@ impl LedgerBackend for InProcessBackend {
         };
         self.broadcast(&BackendEvent::Status(self.status.clone()));
         Ok(())
+    }
+
+    /// Runs the module's own `create_verification` rules (`ledger_module::transparency::plan`)
+    /// as the backend's actor, so the in-process books refuse what the server would. The
+    /// in-process books have no Worker token ([`LedgerBackend::proofs_token`]), so screens only
+    /// get here in tests.
+    fn attach_proof(&mut self, org: &OrganizationId, proof: NewVerification) -> Submission {
+        let Some(books) = self.books.iter_mut().find(|b| &b.org.id == org) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(
+                org.as_str().to_owned(),
+            )));
+        };
+        let member = member_of(org, &books.actor);
+        let links = StateLinks(&books.state);
+        let mut ctx = Ctx {
+            org_id: org.as_str(),
+            identity: Identity::ZERO,
+            member: Some(&member),
+            env: books.env.as_mut(),
+        };
+        let made =
+            transparency_plan::create_verification(&mut books.proofs, &mut ctx, proof, &links);
+        Submission::ready(
+            made.map(|_| CommandResult::None)
+                .map_err(BackendError::Connection),
+        )
+    }
+
+    fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {
+        self.books
+            .iter()
+            .find(|b| &b.org.id == org)
+            .map(|b| b.proofs.verifications.clone())
+            .unwrap_or_default()
+    }
+}
+
+/// The in-process actor as the module's member row (`ledger-module`, `tables::Member`).
+fn member_of(org: &OrganizationId, actor: &Actor) -> Member {
+    Member {
+        key: format!("{}:{}", org.as_str(), actor.id.as_str()),
+        identity: Identity::ZERO,
+        org_id: org.as_str().to_owned(),
+        user_id: actor.id.as_str().to_owned(),
+        name: actor.name.clone(),
+        can_post: actor.can_post,
+        can_approve: actor.can_approve,
+        can_close: actor.can_close,
+    }
+}
+
+/// The claims and bills a proof may link to, from a snapshot of the books.
+struct StateLinks<'a>(&'a LedgerState);
+
+impl LedgerLinks for StateLinks<'_> {
+    fn has_claim(&self, id: &str) -> bool {
+        self.0.claims.iter().any(|c| c.id.as_str() == id)
+    }
+
+    fn has_bill(&self, id: &str) -> bool {
+        self.0.bills.iter().any(|b| b.id.as_str() == id)
     }
 }
 

@@ -234,3 +234,33 @@ can then only be read by signed-in people, services and operators, which the pub
 badge and embed pages would need to account for. Registering WorkOS on production and turning device identities off are
 writes on production, so the user's step.
 
+## 6. Proof files (STO1)
+
+Receipts, invoices and photos are not in the module: they live in a Cloudflare R2 bucket behind
+the proofs Worker (`../../workers/proofs/`, deploy steps in its `README.md`; pre-decision P13).
+The module keeps only each file's R2 object key and SHA-256 on its `verification` row.
+
+- **Who writes what.** The Worker never writes to the module. A client uploads to the Worker
+  (`POST /upload`), gets `{ key, sha256, size, content_type, thumbnail_key }` back, and records
+  that with `create_verification(org_id, verification_json)` (the desktop does this on save;
+  `crates/desktop/README.md`, "Proof files").
+- **How the Worker reads the module.** Over the HTTP SQL endpoint
+  (`POST /v1/database/<name>/sql`, <https://spacetimedb.com/docs/http/database>) with its
+  `MODULE_TOKEN` secret, it reads `member`, `access_group`, `access_group_member` and
+  `verification` to check membership and the caller's proof visibility (the same rules as the
+  `my_verification` view). Those tables are private, so on dev `MODULE_TOKEN` is the token of the
+  identity that owns the database (the operator CLI login; never print `cli.toml`, copy the token
+  into the Worker secret by hand). MOD2 adds a `service` role (pre-decision P17); then the
+  Worker gets that role's token instead and nothing else changes.
+- **Callers.** The Worker accepts a SpacetimeDB token (checked at
+  `GET /v1/identity/:identity/verify`, members matched by identity) and, once AUTH1 sets
+  `WORKOS_ISSUER`, `WORKOS_JWKS_URL` and `WORKOS_AUDIENCE`, a WorkOS access token (members matched
+  by `user_id` = the token's `sub`).
+- **Publishing.** `mark_published(org_id, verification_id, published)` (admins and managers,
+  module addition in STO1) sets `published` on the proof's record; the Worker then serves the
+  file to anyone at `GET /public/<sha256>`. The flag lives in the row's JSON (`data`), so no
+  table changed and rows written before it read as unpublished.
+- **Database.** The Worker's `SPACETIMEDB_DATABASE` is `flowtrace-ledger-dev` until the user
+  points it at production; a module update that adds the reducer is a publish, so on
+  `flowtrace-ledger` it is the user's step (section 4).
+

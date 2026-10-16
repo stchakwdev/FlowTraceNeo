@@ -24,6 +24,7 @@ use ledger_client::{
 use ledger_core::engine;
 use ledger_core::types::{Actor, ActorId, OrganizationId};
 use ledger_core::{CommandError, CommandResult, LedgerCommand, LedgerState};
+use ledger_module::transparency::types::{NewVerification, Verification};
 
 use super::{
     BackendError, BackendEvent, ConnectSettings, ConnectionStatus, LedgerBackend, Organisation,
@@ -54,6 +55,11 @@ pub trait LiveClient: Send + Sync {
     fn submit(&self, org: &str, command: &LedgerCommand) -> Result<CommandResult, ClientError>;
     /// Closes the connection ([`SpacetimeClient::disconnect`]).
     fn disconnect(&self);
+    /// Records a proof without waiting ([`SpacetimeClient::create_verification`]).
+    fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission;
+    /// The organisation's proofs as the caller may see them
+    /// ([`SpacetimeClient::transparency`]); none when the cache has no such organisation.
+    fn verifications(&self, org: &str) -> Vec<Verification>;
 }
 
 impl LiveClient for SpacetimeClient {
@@ -84,6 +90,23 @@ impl LiveClient for SpacetimeClient {
 
     fn disconnect(&self) {
         Self::disconnect(self);
+    }
+
+    fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission {
+        let ticket = Self::create_verification(self, org, proof);
+        Submission::pending(async move {
+            ticket
+                .result()
+                .await
+                .map(|()| CommandResult::None)
+                .map_err(backend_error)
+        })
+    }
+
+    fn verifications(&self, org: &str) -> Vec<Verification> {
+        Self::transparency(self, org)
+            .map(|t| t.verifications)
+            .unwrap_or_default()
     }
 }
 
@@ -315,6 +338,12 @@ impl SpacetimeBackend {
         self.settings.as_ref()
     }
 
+    /// Records `settings` as the connection's without connecting; [`LedgerBackend::connect`]
+    /// does this itself. For a client handed in with [`SpacetimeBackend::attach`].
+    pub fn remember(&mut self, settings: ConnectSettings) {
+        self.settings = Some(settings);
+    }
+
     /// Takes over `client`: from now on its events reach this backend's subscribers through a
     /// new forwarder thread. A client already attached is closed.
     ///
@@ -407,8 +436,32 @@ impl LedgerBackend for SpacetimeBackend {
     fn connect(&mut self, settings: ConnectSettings) -> Result<(), BackendError> {
         let client = SpacetimeClient::connect(Self::client_config(&settings))
             .map_err(|e| BackendError::Connection(e.to_string()))?;
-        self.settings = Some(settings);
+        self.remember(settings);
         self.attach(Arc::new(client))
+    }
+
+    fn attach_proof(&mut self, org: &OrganizationId, proof: NewVerification) -> Submission {
+        match self.writable(org) {
+            Ok(client) => client.create_verification(org.as_str(), &proof),
+            Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
+    fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {
+        self.client
+            .as_ref()
+            .map(|c| c.verifications(org.as_str()))
+            .unwrap_or_default()
+    }
+
+    /// The token in the connection's token file (`ledger_client::TokenFile`), read when asked
+    /// and never kept or printed.
+    fn proofs_token(&self) -> Option<String> {
+        let settings = self.settings.as_ref()?;
+        if settings.token_path.is_empty() {
+            return None;
+        }
+        TokenFile::new(&settings.token_path).load().ok().flatten()
     }
 
     fn disconnect(&mut self) {

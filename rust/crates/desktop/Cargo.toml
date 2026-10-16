@@ -27,10 +27,21 @@ gpui-kit.workspace = true
 ledger-core = { path = "../ledger-core" }
 # The live backend (U10): the ledger module over SpacetimeDB.
 ledger-client = { path = "../ledger-client" }
+# The proof record types (`transparency::types::NewVerification`) the backend sends to
+# `create_verification` (rust/docs/adr/0004-transparency-tables.md).
+ledger-module = { path = "../ledger-module" }
 serde.workspace = true
 serde_json.workspace = true
+# Checks the proofs Worker's hash of an upload against the file's own (`src/proofs.rs`).
+sha2.workspace = true
+# `Identity` for the member row the in-process backend runs the module's proof rules as.
+spacetimedb.workspace = true
 thiserror.workspace = true
 toml = "0.8"
+# HTTPS to the proofs Worker (`src/proofs.rs`). The workspace had no HTTP client: the SpacetimeDB
+# SDK only speaks WebSocket and GPUI's http_client trait has no implementation in gpui-pre. ureq is
+# blocking and small (rustls, no async runtime); calls run on GPUI's background executor.
+ureq = "3.1"
 # Fresh ids for an organisation created in the app, as the TS module's `crypto.randomUUID()`
 # (spacetimedb/src/index.ts, envFor).
 uuid = { version = "1.28", features = ["v4"] }

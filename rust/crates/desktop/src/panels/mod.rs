@@ -7,6 +7,7 @@ pub mod bills;
 pub mod general_ledger;
 pub mod grants;
 pub mod journal;
+pub(crate) mod proofs;
 pub mod reconcile;
 pub mod reports;
 pub mod spend;

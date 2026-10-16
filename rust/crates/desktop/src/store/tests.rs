@@ -191,3 +191,118 @@ fn nothing_selected_refuses_at_once() {
         Err(BackendError::UnknownOrganisation(String::new()))
     );
 }
+
+fn proof_of(kind: crate::proofs::LinkKind, id: &str) -> NewVerification {
+    let sha = "b".repeat(64);
+    crate::proofs::new_verification(
+        kind,
+        id,
+        &crate::proofs::Attachment {
+            name: "fuel.jpg".to_owned(),
+            uploaded: crate::proofs::Uploaded {
+                key: format!("org/o/{sha}"),
+                sha256: sha,
+                size: 10,
+                content_type: "image/jpeg".to_owned(),
+                thumbnail_key: None,
+            },
+        },
+    )
+}
+
+#[test]
+fn the_demo_books_hold_no_worker_token_so_attaching_says_to_connect() {
+    let (mut store, _rx) = demo_store();
+    let missing = store.proofs_client().unwrap_err();
+    assert!(missing.to_string().contains("proofs_url"), "{missing}");
+    store.set_proofs_url(Some("  ".to_owned()));
+    assert!(
+        store
+            .proofs_client()
+            .unwrap_err()
+            .to_string()
+            .contains("proofs_url")
+    );
+    store.set_proofs_url(Some("https://proofs.example.org".to_owned()));
+    assert_eq!(
+        store.proofs_client().unwrap_err(),
+        ProofsError::Unavailable(crate::backend::NO_PROOFS.to_owned())
+    );
+}
+
+#[test]
+fn a_proof_is_recorded_on_a_demo_claim_by_the_modules_rules() {
+    let (mut store, _rx) = demo_store();
+    let claim = store.view().snapshot().unwrap().claims[0].id.clone();
+    let made = store
+        .attach_proof(proof_of(LinkKind::Claim, claim.as_str()))
+        .now()
+        .unwrap();
+    assert_eq!(made, Ok(CommandResult::None));
+    let proofs = store.proofs_of(LinkKind::Claim, claim.as_str());
+    assert_eq!(proofs.len(), 1);
+    assert_eq!(proofs[0].sha256.as_deref(), Some("b".repeat(64).as_str()));
+    assert_eq!(store.proofs_of(LinkKind::Bill, claim.as_str()).len(), 0);
+
+    let refused = store
+        .attach_proof(proof_of(LinkKind::Claim, "EC-9999"))
+        .now()
+        .unwrap();
+    assert_eq!(
+        refused,
+        Err(BackendError::Connection(
+            "Expense claim EC-9999 not found.".to_owned()
+        ))
+    );
+}
+
+#[test]
+fn a_live_store_sends_proofs_to_the_server_and_hands_out_a_worker_client() {
+    let dir = std::env::temp_dir().join(format!("ft-sto1-store-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let token_path = dir.join("token");
+    ledger_client::TokenFile::new(&token_path)
+        .save("tok-live")
+        .unwrap();
+    let fake = Fake::new();
+    fake.add_org("org-live", vec![member(ME, "me", true)]);
+    let connector: Connector = {
+        let fake = Arc::clone(&fake);
+        Box::new(move |s| {
+            let mut backend = SpacetimeBackend::new();
+            backend.remember(s);
+            backend.attach(fake.clone())?;
+            Ok(Box::new(backend) as Box<dyn LedgerBackend>)
+        })
+    };
+    let (mut store, _demo_rx) = StoreCore::new(
+        Box::new(InProcessBackend::with_demo_and_empty().unwrap()),
+        connector,
+    );
+    let mut live = settings();
+    live.token_path = token_path.to_string_lossy().into_owned();
+    let rx = store.connect(live).unwrap();
+    fake.emit(ready());
+    pump_until(&mut store, &rx, |s| s.view().offline_notice().is_none());
+    store.set_proofs_url(Some("https://proofs.example.org/".to_owned()));
+
+    let (client, org) = store.proofs_client().unwrap();
+    assert_eq!(org.as_str(), "org-live");
+    let shown = format!("{client:?}");
+    assert!(shown.contains("https://proofs.example.org") && !shown.contains("tok-live"));
+
+    assert_eq!(
+        store
+            .attach_proof(proof_of(LinkKind::Bill, "bill-1"))
+            .now()
+            .unwrap(),
+        Ok(CommandResult::None)
+    );
+    let sent = fake.proofs_sent.lock().unwrap().clone();
+    assert_eq!(sent.len(), 1);
+    assert_eq!(
+        (sent[0].0.as_str(), sent[0].1.bill_id.as_deref()),
+        ("org-live", Some("bill-1"))
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}

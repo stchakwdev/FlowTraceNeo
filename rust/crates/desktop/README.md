@@ -51,6 +51,7 @@ when the app closes.
 | `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items | yes |
 | `reconcile` | Reconcile view models: `bank_rows`, `overview`, `NewBankForm`, `ImportPreview` (parse, skipped rows, money in and out, `repeats` as the engine dedupes), `LineStatus` and `status_of`, `line_rows`, `candidates`, `position`, `auto_match_summary`, the `bank.add` and `statement.*` command builders, `PostForm`, `post_accounts` | no |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
+| `proofs` | proof files through the proofs Worker (`../../../workers/proofs/README.md`): `sniff`, `check`, `read_file` (25 MB, photos and PDF), `ProofsClient` (`upload`, `signed_url`, over ureq), `AttachList` (the files on a form), `new_verification` (the record for `create_verification`) | no |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
 Everything under "no" is unit-tested (`cargo test -p desktop`); rendering code stays thin and
@@ -109,7 +110,19 @@ books (the default with no flags and no config file). The server comes from, in 
 server = "https://maincloud.spacetimedb.com"   # without it: the demo books
 database = "flowtrace-ledger-dev"               # default flowtrace-ledger-dev
 token_file = "/path/to/token"                   # optional, see below
+proofs_url = "https://proofs.example.org"       # optional: the proofs Worker (STO1)
 ```
+
+**Proof files (STO1).** With `proofs_url` set and the app connected to a server, the claim form
+has **Attach receipt** and the bill form **Attach proof**: each chosen file (photo or PDF, up to
+25 MB) uploads at once to the Worker, which checks the caller by the connection's SpacetimeDB
+token (the token file) and answers with the R2 object key and SHA-256. The app checks that hash
+against the file, sends the names as `receipt_names` or `proof_ids` (as the web does), and once
+the claim or bill is saved records each file with `create_verification` (claim or bill id, key,
+hash). A claim's or bill's page lists its recorded files; **Open** asks the Worker for a
+ten-minute link and opens it in the system browser. The in-process demo books have no token,
+so the buttons say to connect first. Code: `src/proofs.rs` (tested against a local stub server)
+and `src/panels/proofs.rs`.
 
 Unknown keys are refused (the app says so on stderr and starts without the file). A connect on
 the Connection screen writes `server` and `database` back, so the next start reconnects; a

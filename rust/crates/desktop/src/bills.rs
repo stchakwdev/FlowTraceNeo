@@ -679,6 +679,9 @@ pub struct NewBillForm {
     pub lines: Vec<LineDraft>,
     /// The books' own currency.
     pub base: String,
+    /// Names of the proof files attached and in the proof store (`crate::proofs::AttachList`),
+    /// sent as `proof_ids` (`bills.new.tsx:182`: `proofs.map((f) => f.name)`).
+    pub proofs: Vec<String>,
 }
 
 impl NewBillForm {
@@ -695,6 +698,7 @@ impl NewBillForm {
             fx_rate: String::new(),
             lines: vec![LineDraft::new(state)],
             base: state.settings.base_currency.clone(),
+            proofs: Vec::new(),
         }
     }
 
@@ -843,7 +847,7 @@ impl NewBillForm {
                     1.0
                 },
                 lines,
-                proof_ids: Vec::new(),
+                proof_ids: self.proofs.clone(),
             },
         })
     }
@@ -1771,6 +1775,15 @@ mod tests {
         assert_eq!(input.currency, "USD");
         assert!((input.fx_rate - 1129.45).abs() < f64::EPSILON);
         assert_eq!(input.proof_ids, Vec::<String>::new());
+        form.proofs = vec!["kplc-march.pdf".into()];
+        let LedgerCommand::BillCreate { input } = form.command(&state).unwrap() else {
+            panic!("not bill.create");
+        };
+        assert_eq!(
+            input.proof_ids,
+            vec!["kplc-march.pdf"],
+            "attached files go out by name"
+        );
         assert_eq!(input.lines.len(), 1);
         let l = &input.lines[0];
         assert_eq!(l.description, "Electricity");
