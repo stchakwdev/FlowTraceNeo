@@ -73,3 +73,22 @@ cd ../flowtrace && rm -rf src/lib/ledger/spacetime-bindings
   -o src/lib/ledger/spacetime-bindings -y
 bunx prettier --write src/lib/ledger/spacetime-bindings
 ```
+
+## Proof files
+
+Receipts, photos and PDFs attached to transactions are stored by the Cloudflare Worker in
+`workers/proofs`, which keeps them in R2. Point the app at it in `.env.local`:
+
+```sh
+VITE_PROOFS_URL=http://127.0.0.1:8787   # `wrangler dev` in workers/proofs; no trailing slash
+```
+
+The Worker takes images (JPEG, PNG, WebP, GIF, HEIC) and PDFs up to 25 MB. Each request
+carries `Authorization: Bearer <token>`: in dummy auth mode that is this browser's
+SpacetimeDB token (`flowtrace.spacetimedb.token`, so connect to the books first), with WorkOS
+it is the AuthKit access token. A proof record stores `proof:<key>` in `file_url` (and the
+thumbnail's key in `thumbnail_url`); the viewer trades it for a signed URL that lasts 10
+minutes. The client code is `src/lib/proofs.ts`.
+
+With `VITE_PROOFS_URL` unset, chosen files stay in the browser session only (blob URLs), so
+the demo runs with no backend. Proof files are no longer sent to Supabase Storage.

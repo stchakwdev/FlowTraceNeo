@@ -26,11 +26,13 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import { createVerification } from '@/lib/data'
 import {
-  createVerification,
-  deleteVerificationFile,
-  uploadVerificationFile,
-} from '@/lib/data'
+  MAX_PROOF_MB,
+  proofKey,
+  releaseProofFile,
+  storeProofFile,
+} from '@/lib/proofs'
 import { queryKeys } from '@/lib/queries'
 import { useOrg } from '@/lib/org-context'
 import {
@@ -53,7 +55,9 @@ interface UploadedFile {
   name: string
   size: number
   type: string
+  /** `proof:<key>` for a file on the proof store, else a session-local URL. */
   url: string
+  thumbnailUrl?: string | null
   status: 'uploading' | 'success' | 'error'
   progress: number
   error?: string
@@ -141,11 +145,6 @@ export function fileIcon(mimeType: string) {
   if (mimeType.startsWith('image/')) return FileImage
   if (mimeType === 'application/pdf') return FilePdf
   return File
-}
-
-// Storage path inside the verifications bucket, from a public or signed URL.
-function storagePath(url: string) {
-  return url.match(/\/verifications\/([^?]+)/)?.[1] ?? url
 }
 
 /**
@@ -345,7 +344,7 @@ interface FileUploadProps {
   createdBy?: string
 }
 
-/** Uploads proof files to storage as soon as they are chosen. */
+/** Uploads proof files to the proof store as soon as they are chosen. */
 export function FileUpload({
   organizationId,
   transactionId,
@@ -363,6 +362,8 @@ export function FileUpload({
   const allowedTypes = accept
     ? accept.split(',')
     : PROOF_ACCEPT[verificationType]
+  // The proof store takes nothing over 25 MB.
+  const sizeLimitMB = Math.min(maxSizeMB, MAX_PROOF_MB)
 
   const uploadFile = useCallback(
     async (file: File): Promise<UploadedFile> => {
@@ -378,17 +379,23 @@ export function FileUpload({
       setFiles((prev) => [...prev, entry])
 
       let result: UploadedFile
-      const problem = validateProofFile(file, allowedTypes, maxSizeMB)
+      const problem = validateProofFile(file, allowedTypes, sizeLimitMB)
       if (problem) {
         result = { ...entry, status: 'error', error: problem }
       } else {
         try {
-          const url = await uploadVerificationFile(
+          const stored = await storeProofFile(
             organizationId,
             transactionId,
             file,
           )
-          result = { ...entry, url, status: 'success', progress: 100 }
+          result = {
+            ...entry,
+            url: stored.url,
+            thumbnailUrl: stored.thumbnailUrl,
+            status: 'success',
+            progress: 100,
+          }
         } catch (err) {
           result = {
             ...entry,
@@ -402,7 +409,7 @@ export function FileUpload({
       setFiles((prev) => prev.map((f) => (f.id === entry.id ? result : f)))
       return result
     },
-    [organizationId, transactionId, allowedTypes, maxSizeMB],
+    [organizationId, transactionId, allowedTypes, sizeLimitMB],
   )
 
   const handleFiles = useCallback(
@@ -420,10 +427,13 @@ export function FileUpload({
       const file = files.find((f) => f.id === fileId)
       if (!file) return
       if (file.status === 'success' && file.url) {
+        // A session-local file is released. A file on the proof store is only
+        // dropped from this list: objects there are content-addressed (another
+        // proof may share the key) and the Worker has no delete route.
         try {
-          await deleteVerificationFile(storagePath(file.url))
+          await releaseProofFile(file.url)
         } catch {
-          // The file stays in storage; nothing references it.
+          // Nothing references it any more.
         }
       }
       setFiles((prev) => prev.filter((f) => f.id !== fileId))
@@ -438,14 +448,14 @@ export function FileUpload({
     <div className={cn('space-y-2', className)}>
       <ProofDropzone
         accept={allowedTypes}
-        maxSizeMB={maxSizeMB}
+        maxSizeMB={sizeLimitMB}
         multiple={maxFiles > 1}
         disabled={disabled || full}
         onFiles={handleFiles}
         hint={
           full
             ? `That's the limit of ${maxFiles} files at once.`
-            : `${PROOF_TYPE_LABEL[verificationType]}: ${describeAccepted(allowedTypes)}, up to ${maxSizeMB} MB each`
+            : `${PROOF_TYPE_LABEL[verificationType]}: ${describeAccepted(allowedTypes)}, up to ${sizeLimitMB} MB each`
         }
       />
       {files.length > 0 && (
@@ -473,8 +483,10 @@ export interface AttachProofsInput {
   type: VerificationType
   /** Files still on the device; they are uploaded first. */
   files?: Array<File>
-  /** Files already in storage (from FileUpload). */
-  uploaded?: Array<Pick<UploadedFile, 'url' | 'name' | 'type' | 'size'>>
+  /** Files already stored (from FileUpload). */
+  uploaded?: Array<
+    Pick<UploadedFile, 'url' | 'name' | 'type' | 'size' | 'thumbnailUrl'>
+  >
   description?: string
   executorName?: string
   visibilityLevel?: VerificationVisibility
@@ -493,22 +505,33 @@ export function useAttachProofs() {
     mutationFn: async (input: AttachProofsInput) => {
       const record = (file?: {
         url: string
+        thumbnailUrl?: string | null
         name: string
         type: string
         size: number
-      }) =>
-        createVerification({
+      }) => {
+        // A proof-store key is org/<org>/<sha256>.
+        const objectKey = proofKey(file?.url)
+        return createVerification({
           transaction_id: input.transactionId,
           type: input.type,
           file_url: file?.url ?? null,
           ocr_data: null,
           metadata: file
-            ? { file_name: file.name, mime_type: file.type, size: file.size }
+            ? {
+                file_name: file.name,
+                mime_type: file.type,
+                size: file.size,
+                ...(objectKey && {
+                  object_key: objectKey,
+                  sha256: objectKey.split('/').at(-1),
+                }),
+              }
             : {},
           status: 'pending',
           verified_by: null,
           visibility_level: input.visibilityLevel ?? 'full',
-          thumbnail_url: null,
+          thumbnail_url: file?.thumbnailUrl ?? null,
           executor_name: input.executorName || null,
           description: input.description || file?.name || null,
           gps_latitude: input.location?.latitude ?? null,
@@ -517,17 +540,24 @@ export function useAttachProofs() {
           location_name: input.location?.locationName ?? null,
           created_by: null,
         })
+      }
 
       const ready = [...(input.uploaded ?? [])]
       let failed = 0
       for (const file of input.files ?? []) {
         try {
-          const url = await uploadVerificationFile(
+          const stored = await storeProofFile(
             organizationId!,
             input.transactionId,
             file,
           )
-          ready.push({ url, name: file.name, type: file.type, size: file.size })
+          ready.push({
+            url: stored.url,
+            thumbnailUrl: stored.thumbnailUrl,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          })
         } catch {
           failed++
         }
@@ -872,12 +902,8 @@ export function CompactFileUpload({
     setIsUploading(true)
     setError(null)
     try {
-      const url = await uploadVerificationFile(
-        organizationId,
-        transactionId,
-        file,
-      )
-      onUploadComplete?.(url)
+      const stored = await storeProofFile(organizationId, transactionId, file)
+      onUploadComplete?.(stored.url)
     } catch {
       setError('Upload failed. Check your connection and try again.')
     } finally {

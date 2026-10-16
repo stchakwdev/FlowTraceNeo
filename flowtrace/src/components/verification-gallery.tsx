@@ -21,6 +21,7 @@ import type { Icon } from '@phosphor-icons/react'
 import type { Verification, VerificationType } from '@/lib/supabase'
 import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
 import { formatDate } from '@/lib/format'
+import { useProofSrc } from '@/lib/proofs'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ReportNotice, StatusMark } from '@/components/report'
@@ -90,7 +91,10 @@ export function proofMediaKind(
   return null
 }
 
-/** Square preview of a proof: the image itself, or its type drawn as an icon. */
+/**
+ * Square preview of a proof: the image itself, or its type drawn as an icon
+ * (also while a stored file's link is being fetched, or if it cannot be).
+ */
 export function ProofPreview({
   verification,
   className,
@@ -100,7 +104,9 @@ export function ProofPreview({
 }) {
   const TypeIcon = PROOF_TYPE_ICON[verification.type]
   const kind = proofMediaKind(verification)
-  const src = verification.thumbnail_url || verification.file_url
+  const { src } = useProofSrc(
+    verification.thumbnail_url || verification.file_url,
+  )
   const [broken, setBroken] = useState(false)
   return (
     <div
