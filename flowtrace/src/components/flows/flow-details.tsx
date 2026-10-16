@@ -7,6 +7,10 @@ import { StatusMark } from '@/components/report'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatMoney } from '@/lib/format'
 
+// Every flow node and movement traces to its journal lines in the books.
+const ledgerLinkClass =
+  'inline-flex min-h-10 items-center gap-1 text-sm font-medium text-primary hover:underline'
+
 function byDateDesc(a: TransactionWithNodes, b: TransactionWithNodes) {
   return b.transaction_date.localeCompare(a.transaction_date)
 }
@@ -71,10 +75,21 @@ export function FlowDetails({
           </div>
           <StatusMark status={edge.status} />
         </div>
+        {txns.length === 1 && (
+          <Link
+            to="/ledger/general"
+            search={{ source: txns[0].id }}
+            className={ledgerLinkClass}
+          >
+            Ledger lines for this movement
+            <ArrowRight aria-hidden="true" className="size-3.5" />
+          </Link>
+        )}
         <MovementList
           title="Movements"
           transactions={txns}
           counterparty={() => null}
+          ledgerLinks={txns.length > 1}
         />
       </div>
     )
@@ -114,6 +129,16 @@ export function FlowDetails({
           <dd className="figure mt-1 text-2xl">{formatMoney(node.outflow)}</dd>
         </div>
       </dl>
+      {node.id !== UNASSIGNED_ID && (
+        <Link
+          to="/ledger/general"
+          search={{ node: node.id }}
+          className={ledgerLinkClass}
+        >
+          Ledger lines for {node.name}
+          <ArrowRight aria-hidden="true" className="size-3.5" />
+        </Link>
+      )}
       {incoming.length > 0 && (
         <MovementList
           title={`Money in (${incoming.length})`}
@@ -139,11 +164,14 @@ function MovementList({
   transactions,
   counterparty,
   direction,
+  ledgerLinks = false,
 }: {
   title: string
   transactions: Array<TransactionWithNodes>
   counterparty: (t: TransactionWithNodes) => string | null
   direction?: 'from' | 'to'
+  /** Add a link to each movement's journal lines. */
+  ledgerLinks?: boolean
 }) {
   return (
     <section className="mt-6">
@@ -190,6 +218,17 @@ function MovementList({
                   <StatusMark status={t.verification_status} />
                 </span>
               </Link>
+              {ledgerLinks && (
+                <Link
+                  to="/ledger/general"
+                  search={{ source: t.id }}
+                  className="-mt-1 inline-flex min-h-10 items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  Ledger lines
+                  <span className="sr-only"> for {t.description}</span>
+                  <ArrowRight aria-hidden="true" className="size-3" />
+                </Link>
+              )}
             </li>
           )
         })}

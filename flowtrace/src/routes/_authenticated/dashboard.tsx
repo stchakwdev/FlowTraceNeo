@@ -217,7 +217,7 @@ function Dashboard() {
             </KeyFigures>
           </ReportSection>
 
-          <div className="grid gap-10 lg:grid-cols-12">
+          <div className="grid gap-10 lg:grid-cols-12 [&>*]:min-w-0">
             <ReportSection
               title="Funding received, by donor"
               className="lg:col-span-5"

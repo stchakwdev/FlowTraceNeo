@@ -4,6 +4,7 @@
 // state, so the demo reacts for the rest of the session (a reload resets it).
 import { VERIFICATION_TRUST_POINTS, calculateTrustScore } from '../supabase'
 import * as seed from './dataset'
+import { postDemoTransaction } from './ledger'
 import type {
   AccessGroup,
   AccessGroupPermissions,
@@ -230,6 +231,9 @@ export function createTransaction(
     updated_at: now(),
   }
   db.transactions.push(row)
+  // Recording a transaction posts it to the books (the ledger bridge).
+  // A rule that blocks posting leaves the transaction recorded, unposted.
+  void postDemoTransaction(row)
   return settle(row)
 }
 

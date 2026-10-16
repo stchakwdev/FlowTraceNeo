@@ -59,11 +59,22 @@ export const Route = createRootRoute({
         rel: 'stylesheet',
         href: appCss,
       },
+      { rel: 'manifest', href: '/manifest.json' },
     ],
     scripts: [
       {
         children: themeScript,
       },
+      // Offline claim capture. Production only: in dev the worker would
+      // cache Vite's unbundled modules.
+      ...(import.meta.env.PROD
+        ? [
+            {
+              children:
+                "if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}",
+            },
+          ]
+        : []),
     ],
   }),
 
