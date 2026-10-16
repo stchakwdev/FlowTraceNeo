@@ -20,10 +20,18 @@ caller_dir=$PWD
 rust_dir=$(cd "$(dirname "$0")/.." && pwd)
 cd "$rust_dir"
 
-# `cargo pkgid` prints `path+file:///.../crates/desktop#0.1.0` (or `...#desktop@0.1.0`).
-pkgid=$(cargo pkgid -p desktop)
-version=${pkgid##*#}
-version=${version##*@}
+# The desktop crate inherits the workspace version (tools/src/release.test.ts checks both).
+# Read from Cargo.toml, not `cargo pkgid`, so `--name` and `--check` need no Rust toolchain:
+# without one installed, rustup fetches rust-toolchain.toml's channel on the first cargo call.
+if ! grep -qx 'version.workspace = true' crates/desktop/Cargo.toml; then
+  echo "release.sh: crates/desktop/Cargo.toml does not inherit the workspace version" >&2
+  exit 1
+fi
+version=$(awk '/^\[/ { p = ($0 == "[workspace.package]") } p && /^version = "/ { gsub(/^version = "|"$/, ""); print; exit }' Cargo.toml)
+if [ -z "$version" ]; then
+  echo "release.sh: no version in [workspace.package] of Cargo.toml" >&2
+  exit 1
+fi
 
 case "$(uname -s)" in
   Linux) os=linux ;;
