@@ -187,7 +187,8 @@ fn spend(backend: &mut InProcessBackend, grant: &GrantId, minor: i64) {
         lines: vec![line("7100", true), line("1110", false)],
         source_type: None,
         source_id: Nullish::Undefined,
-        override_reason: Nullish::Undefined,
+        // Going over the award is refused without a reason (GRANT_OVER_BUDGET, overridable).
+        override_reason: Nullish::Value("Threshold test".to_owned()),
     };
     backend
         .submit(&demo(), LedgerCommand::EntryPost { input })
@@ -481,9 +482,9 @@ fn the_table_has_a_heading_per_group_a_row_per_line_and_totals() {
 #[test]
 fn zero_budgets_read_zero_or_infinity_as_the_web_shows_them() {
     let mut backend = backend();
-    // A zero line on field travel, where nothing is spent: used 0.
+    // A zero line on communication fees, where nothing is spent: used 0.
     let mut quiet = BudgetLineForm::new(BudgetId::from("budget-2026"));
-    quiet.account = Some(account_id("5700"));
+    quiet.account = Some(account_id("7400"));
     quiet.amount = "0".to_owned();
     backend.submit(&demo(), quiet.command().unwrap()).unwrap();
     // A zero line on vehicle running, where 115,000.00 is spent: used Infinity.
@@ -500,7 +501,7 @@ fn zero_budgets_read_zero_or_infinity_as_the_web_shows_them() {
             .last()
             .unwrap()
     };
-    let quiet = find("5700");
+    let quiet = find("7400");
     assert!(quiet.row.used.abs() < f64::EPSILON);
     assert_eq!(quiet.row.status, WarningLevel::Within);
     assert_eq!(quiet.status_line(), "Within budget \u{b7} 0% used");
