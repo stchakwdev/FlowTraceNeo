@@ -2,8 +2,12 @@
 //! `ledger_core::setup::create_org_ledger` and a run of balanced two-line entries posted through
 //! the engine with the fixed test env, so ids and times are the same on every run.
 
-use ledger_core::LedgerState;
-use ledger_core::engine::Error;
+use ledger_core::coa_template::{UNRESTRICTED_FUND_ID, account_id};
+use ledger_core::engine::{EntryOptions, Error};
+use ledger_core::env::fixed;
+use ledger_core::setup::{create_org_ledger, system_actor};
+use ledger_core::types::{EntryInput, FundId, LineInput, Nullish};
+use ledger_core::{Ledger, LedgerState, Minor};
 
 /// The organisation name the large books show under.
 pub const LARGE_ORG_NAME: &str = "Large test books";
@@ -18,8 +22,63 @@ pub const LARGE_ORG_ID: &str = "org-large-test";
 ///
 /// The engine's [`Error`] when the books or an entry cannot be built.
 pub fn build(lines: usize) -> Result<LedgerState, Error> {
-    let _ = lines;
-    todo!()
+    let mut env = fixed::test();
+    let mut state = create_org_ledger(LARGE_ORG_ID, "KES", YEAR, &mut env)?;
+    let actor = system_actor();
+    let mut ledger = Ledger::new(&mut state, &mut env);
+    for i in 0..lines / 2 {
+        let (debit, credit, memo) = PAIRS[i % PAIRS.len()];
+        // Twelve months, days 1 to 28, so every date is in an open 2026 period.
+        let month = i % 12 + 1;
+        let day = i / 12 % 28 + 1;
+        let amount = 100 * (1 + i64::try_from(i % 997).unwrap_or(0)) + 37;
+        let input = EntryInput {
+            date: format!("{YEAR}-{month:02}-{day:02}"),
+            memo: format!("{memo} {}", i + 1),
+            lines: vec![side(debit, amount, true), side(credit, amount, false)],
+            source_type: None,
+            source_id: Nullish::Undefined,
+            override_reason: Nullish::Undefined,
+        };
+        ledger.post(&actor, &input, EntryOptions::default())?;
+    }
+    Ok(state)
+}
+
+/// The fiscal year of the large books.
+const YEAR: i32 = 2026;
+
+/// Debit account, credit account and memo of each kind of entry, by template code.
+const PAIRS: [(&str, &str, &str); 8] = [
+    ("7100", "1110", "Office supplies"),
+    ("1110", "4200", "Donation"),
+    ("6100", "1110", "Salaries"),
+    ("5100", "1120", "Water point repairs"),
+    ("1120", "1110", "Transfer to operations"),
+    ("7200", "1110", "Rent"),
+    ("1110", "4300", "Other income"),
+    ("7300", "1120", "Utilities"),
+];
+
+/// One line of `amount` minor units on the debit or credit side, unrestricted, base currency.
+fn side(code: &str, amount: Minor, debit: bool) -> LineInput {
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "a JS number input, as TS holds it; amounts stay far below 2^53"
+    )]
+    let amount = Some(amount as f64);
+    LineInput {
+        account_id: account_id(code),
+        debit: if debit { amount } else { None },
+        credit: if debit { None } else { amount },
+        currency: None,
+        fx_rate: None,
+        fund_id: FundId::from(UNRESTRICTED_FUND_ID),
+        grant_id: Nullish::Undefined,
+        dimension_ids: None,
+        flow_node_id: Nullish::Undefined,
+        memo: Nullish::Undefined,
+    }
 }
 
 #[cfg(test)]

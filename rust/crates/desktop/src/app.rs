@@ -10,6 +10,7 @@ use gpui_kit::{
 
 use crate::backend::InProcessBackend;
 use crate::model::Navigation;
+use crate::panels::general_ledger::GlLaunch;
 use crate::shell::Shell;
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
@@ -22,7 +23,7 @@ pub const TITLE: &str = "FlowTrace Books";
 pub const APP_ID: &str = "flowtrace-books";
 
 /// What the window shows first.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Launch {
     /// `Some(true)` for dark, `Some(false)` for light, `None` to follow the system.
     pub dark: Option<bool>,
@@ -30,6 +31,10 @@ pub struct Launch {
     pub nav: Navigation,
     /// A report to open the Reports entry on.
     pub report: Option<ReportKind>,
+    /// Add synthetic books with this many posted lines, listed and selected first.
+    pub large_books: Option<usize>,
+    /// What the General ledger shows first.
+    pub general_ledger: GlLaunch,
 }
 
 /// Opens the window and runs until it closes.
@@ -38,7 +43,15 @@ pub struct Launch {
 ///
 /// When the in-process books cannot be built.
 pub fn run(launch: Launch) -> anyhow::Result<()> {
-    let backend = InProcessBackend::with_demo_and_empty()?;
+    let mut backend = InProcessBackend::with_demo_and_empty()?;
+    if let Some(lines) = launch.large_books {
+        let started = std::time::Instant::now();
+        backend = backend.with_large_books(lines)?;
+        eprintln!(
+            "desktop: large books with {lines} lines built in {:.1} s",
+            started.elapsed().as_secs_f64()
+        );
+    }
     gpui_kit::application()
         .with_assets(gpui_kit::assets::Assets)
         .run(move |cx| {
@@ -75,6 +88,10 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
                 if let Some(kind) = launch.report {
                     shell.update(cx, |shell, cx| shell.show_report(kind, window, cx));
                 }
+                let panel = shell.read(cx).general_ledger().clone();
+                panel.update(cx, |panel, cx| {
+                    panel.launch(&launch.general_ledger, window, cx);
+                });
                 shell
             });
             if let Err(err) = opened {
