@@ -97,7 +97,11 @@ pub fn check_add_operator(sender_is_operator: bool) -> Result<(), String> {
 ///
 /// When the sender is not an operator.
 pub fn check_import_books(sender_is_operator: bool) -> Result<(), String> {
-    unimplemented!("task S4")
+    if sender_is_operator {
+        Ok(())
+    } else {
+        Err("Only an operator can import books.".to_owned())
+    }
 }
 
 /// `remove_operator` has no TS counterpart (`index.ts` only adds operators). It follows

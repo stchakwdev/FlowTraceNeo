@@ -16,13 +16,13 @@ use std::collections::HashMap;
 use ledger_core::env::LedgerEnv;
 use ledger_core::env::fixed::{self, FixedEnv};
 use ledger_core::types::{Actor, LedgerState};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use crate::codec::{OrgRows, assemble_state, counters_json, settings_json, state_to_rows};
 use crate::command::{apply, parse_command, result_json};
 use crate::tables::{
     AccountRow, AuditEventRow, BankAccountRow, BillRow, BudgetLineRow, BudgetRow, DimensionRow,
-    ExpenseClaimRow, FiscalPeriodRow, FundRow, GrantRow, JournalEntryRow, JournalLineRow,
+    DocRow, ExpenseClaimRow, FiscalPeriodRow, FundRow, GrantRow, JournalEntryRow, JournalLineRow,
     PaymentRow, StatementLineRow, VendorRow,
 };
 use crate::write_back::{TableOps, WriteBack, plan};
@@ -235,44 +235,71 @@ fn command_text(step: &Value) -> String {
     serde_json::to_string(&step["command"]).unwrap()
 }
 
+/// What one step did.
+struct Ran {
+    /// The command's result as JSON, or `None` when the step was its recorded delta.
+    result: Option<Value>,
+    /// The books the engine (or the delta) left.
+    after: LedgerState,
+    /// Rows written per collection, as `(inserted, updated, deleted)`.
+    written: HashMap<&'static str, (usize, usize, usize)>,
+}
+
+/// One fixture step the way `run_command` runs it: load the books from the rows, sanitise and
+/// apply the command, plan the write-back and write it to the rows.
+fn run_step(org: &mut Org, env: &mut FixedEnv, i: usize, step: &Value) -> Ran {
+    let kind = step["command"]["type"].as_str().unwrap();
+    let actor: Actor = serde_json::from_value(step["actor"].clone()).unwrap();
+    let before = org.books();
+    let mut after = before.clone();
+    let cmd = parse_command(&command_text(step)).unwrap();
+    let result = match apply(&mut after, env, &actor, cmd) {
+        Ok(result) => Some(serde_json::from_str(&result_json(&result).unwrap()).unwrap()),
+        Err(text) if C6_COMMANDS.contains(&kind) && text.ends_with("not implemented yet.") => {
+            after = apply_delta(&before, &step["delta"]);
+            sync_env(env, &step["delta"]);
+            None
+        }
+        Err(text) => panic!("step {i} {kind}: {text}"),
+    };
+    let wb = plan(ORG, &org.rows, org.next_seq, &before, &after).unwrap();
+    let written = org.write(wb);
+    Ran {
+        result,
+        after,
+        written,
+    }
+}
+
+fn demo_org() -> Org {
+    let demo: LedgerState = serde_json::from_value(fixture("demo-books")["state"].clone()).unwrap();
+    Org::import(&demo)
+}
+
 #[test]
 fn every_accepted_command_writes_exactly_the_fixture_books_back_to_the_rows() {
     let fx = fixture("commands-accepted");
-    let demo: LedgerState = serde_json::from_value(fixture("demo-books")["state"].clone()).unwrap();
-    let mut org = Org::import(&demo);
+    let mut org = demo_org();
     let mut env = fixed::fixture();
     let (mut live, mut delta_steps) = (Vec::new(), Vec::new());
 
     for (i, step) in fx["steps"].as_array().unwrap().iter().enumerate() {
         let kind = step["command"]["type"].as_str().unwrap();
-        let actor: Actor = serde_json::from_value(step["actor"].clone()).unwrap();
-        let before = org.books();
-        let mut after = before.clone();
-        let cmd = parse_command(&command_text(step)).unwrap();
-        match apply(&mut after, &mut env, &actor, cmd) {
-            Ok(result) => {
-                let json: Value = serde_json::from_str(&result_json(&result).unwrap()).unwrap();
-                assert_eq!(json, step["result"], "step {i} {kind}: result");
-                live.push(kind);
-            }
-            Err(text) if C6_COMMANDS.contains(&kind) && text.ends_with("not implemented yet.") => {
-                after = apply_delta(&before, &step["delta"]);
-                sync_env(&mut env, &step["delta"]);
-                delta_steps.push(kind);
-            }
-            Err(text) => panic!("step {i} {kind}: {text}"),
+        let ran = run_step(&mut org, &mut env, i, step);
+        if let Some(result) = &ran.result {
+            assert_eq!(result, &step["result"], "step {i} {kind}: result");
+            live.push(kind);
+        } else {
+            delta_steps.push(kind);
         }
-
-        let wb = plan(ORG, &org.rows, org.next_seq, &before, &after).unwrap();
-        let counts = org.write(wb);
-        for (name, written) in &counts {
+        for (name, written) in &ran.written {
             assert_eq!(
                 *written,
                 delta_counts(&step["delta"], name),
                 "step {i} {kind}: rows written to {name}"
             );
         }
-        assert_eq!(org.books(), after, "step {i} {kind}: books read back");
+        assert_eq!(org.books(), ran.after, "step {i} {kind}: books read back");
     }
 
     let books = serde_json::to_value(org.books()).unwrap();
@@ -282,45 +309,47 @@ fn every_accepted_command_writes_exactly_the_fixture_books_back_to_the_rows() {
 }
 
 #[test]
-fn seq_numbers_never_repeat_and_keep_each_collection_in_state_order() {
+fn every_row_keeps_a_seq_of_its_own_below_next_seq() {
     let fx = fixture("commands-accepted");
-    let demo: LedgerState = serde_json::from_value(fixture("demo-books")["state"].clone()).unwrap();
-    let mut org = Org::import(&demo);
+    let mut org = demo_org();
     let mut env = fixed::fixture();
-    let mut seen: Map<String, Value> = Map::new();
-    for step in fx["steps"].as_array().unwrap() {
-        let kind = step["command"]["type"].as_str().unwrap();
-        let actor: Actor = serde_json::from_value(step["actor"].clone()).unwrap();
-        let before = org.books();
-        let mut after = before.clone();
-        if apply(
-            &mut after,
-            &mut env,
-            &actor,
-            parse_command(&command_text(step)).unwrap(),
-        )
-        .is_err()
-        {
-            assert!(C6_COMMANDS.contains(&kind));
-            after = apply_delta(&before, &step["delta"]);
-            sync_env(&mut env, &step["delta"]);
-        }
-        let wb = plan(ORG, &org.rows, org.next_seq, &before, &after).unwrap();
-        let fresh: Vec<u64> = wb
-            .entries
-            .insert
-            .iter()
-            .map(|r| r.seq)
-            .chain(wb.lines.insert.iter().map(|r| r.seq))
-            .chain(wb.audit.insert.iter().map(|r| r.seq))
-            .collect();
-        for seq in fresh {
-            assert!(
-                seen.insert(seq.to_string(), Value::Null).is_none(),
-                "{kind}: seq {seq} used twice"
-            );
-            assert!(seq >= org.next_seq, "{kind}: seq {seq} below next_seq");
-        }
-        org.write(wb);
+    let first = org.next_seq;
+    let mut inserted = 0;
+    for (i, step) in fx["steps"].as_array().unwrap().iter().enumerate() {
+        inserted += run_step(&mut org, &mut env, i, step)
+            .written
+            .values()
+            .map(|(ins, _, _)| ins)
+            .sum::<usize>();
     }
+    let r = &org.rows;
+    let mut seqs: Vec<u64> = r.entries.iter().map(|x| x.seq).collect();
+    seqs.extend(r.lines.iter().map(|x| x.seq));
+    macro_rules! doc_seqs {
+        ($($table:ident),+) => {$(
+            seqs.extend(r.$table.iter().map(DocRow::seq));
+        )+};
+    }
+    doc_seqs!(
+        accounts,
+        funds,
+        grants,
+        dimensions,
+        periods,
+        budgets,
+        budget_lines,
+        vendors,
+        bills,
+        payments,
+        claims,
+        bank_accounts,
+        statement_lines,
+        audit
+    );
+    let count = seqs.len();
+    seqs.sort_unstable();
+    seqs.dedup();
+    assert_eq!(seqs.len(), count, "a seq is used twice");
+    assert!(seqs.iter().all(|&s| s < org.next_seq));
+    assert_eq!(org.next_seq, first + u64::try_from(inserted).unwrap());
 }

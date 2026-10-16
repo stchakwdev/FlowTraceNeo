@@ -6,7 +6,8 @@
   "scripts": {
     "export": "\"$npm_execpath\" --no-install export-fixtures.ts",
     "coverage": "\"$npm_execpath\" --no-install coverage.ts",
-    "check": "\"$npm_execpath\" --no-install check.ts"
+    "check": "\"$npm_execpath\" --no-install check.ts",
+    "module-replay": "\"$npm_execpath\" --no-install module-replay.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.89.0"

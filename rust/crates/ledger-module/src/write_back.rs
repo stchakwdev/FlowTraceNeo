@@ -355,7 +355,80 @@ pub fn plan(
     before: &LedgerState,
     after: &LedgerState,
 ) -> Result<WriteBack, String> {
-    unimplemented!("task S4")
+    if after.settings.organization_id.as_str() != org_id {
+        return Err("Settings belong to another organisation.".to_owned());
+    }
+    let mut sync = Sync { org_id, next_seq };
+
+    let (entries, lines) = sync.journal(rows, before, after)?;
+    let b = before;
+    let a = after;
+    Ok(WriteBack {
+        entries,
+        lines,
+        accounts: sync.docs(
+            "accounts",
+            (&b.accounts, &a.accounts),
+            &rows.accounts,
+            unguarded,
+        )?,
+        funds: sync.docs("funds", (&b.funds, &a.funds), &rows.funds, unguarded)?,
+        grants: sync.docs("grants", (&b.grants, &a.grants), &rows.grants, unguarded)?,
+        dimensions: sync.docs(
+            "dimensions",
+            (&b.dimensions, &a.dimensions),
+            &rows.dimensions,
+            unguarded,
+        )?,
+        periods: sync.docs(
+            "periods",
+            (&b.periods, &a.periods),
+            &rows.periods,
+            unguarded,
+        )?,
+        budgets: sync.docs(
+            "budgets",
+            (&b.budgets, &a.budgets),
+            &rows.budgets,
+            unguarded,
+        )?,
+        budget_lines: sync.docs(
+            "budgetLines",
+            (&b.budget_lines, &a.budget_lines),
+            &rows.budget_lines,
+            unguarded,
+        )?,
+        vendors: sync.docs(
+            "vendors",
+            (&b.vendors, &a.vendors),
+            &rows.vendors,
+            unguarded,
+        )?,
+        bills: sync.docs("bills", (&b.bills, &a.bills), &rows.bills, unguarded)?,
+        payments: sync.docs(
+            "payments",
+            (&b.payments, &a.payments),
+            &rows.payments,
+            unguarded,
+        )?,
+        claims: sync.docs("claims", (&b.claims, &a.claims), &rows.claims, unguarded)?,
+        bank_accounts: sync.docs(
+            "bankAccounts",
+            (&b.bank_accounts, &a.bank_accounts),
+            &rows.bank_accounts,
+            unguarded,
+        )?,
+        statement_lines: sync.docs(
+            "statementLines",
+            (&b.statement_lines, &a.statement_lines),
+            &rows.statement_lines,
+            unguarded,
+        )?,
+        audit: sync.docs("audit", (&b.audit, &a.audit), &rows.audit, append_only)?,
+        settings_json: settings_json(&a.settings).map_err(text)?,
+        counters_json: counters_json(&a.counters).map_err(text)?,
+        next_seq: sync.next_seq,
+    })
 }
 
 /// The rows `import_books` writes in place of an organisation's books.
@@ -379,7 +452,19 @@ pub struct Import {
 /// `state_json` is not a `LedgerState`; its settings name another organisation (the
 /// `writeBack` check, `index.ts:429`); a record does not convert to its row.
 pub fn import(org_id: &str, state_json: &str, next_seq: u64) -> Result<Import, String> {
-    unimplemented!("task S4")
+    let state: LedgerState = serde_json::from_str(state_json)
+        .map_err(|e| format!("The books are not a valid ledger state: {e}."))?;
+    if state.settings.organization_id.as_str() != org_id {
+        return Err("Settings belong to another organisation.".to_owned());
+    }
+    let mut next_seq = next_seq;
+    let rows = state_to_rows(org_id, &state, &mut next_seq).map_err(text)?;
+    Ok(Import {
+        rows,
+        settings_json: settings_json(&state.settings).map_err(text)?,
+        counters_json: counters_json(&state.counters).map_err(text)?,
+        next_seq,
+    })
 }
 
 #[cfg(test)]

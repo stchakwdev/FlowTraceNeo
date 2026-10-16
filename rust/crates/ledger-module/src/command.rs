@@ -42,17 +42,23 @@ impl<F: FnMut() -> Result<String, String>> ModuleEnv<F> {
     ///
     /// The first error `draw` returned, if any.
     pub fn finish(self) -> Result<(), String> {
-        unimplemented!("task S4")
+        self.failure.map_or(Ok(()), Err)
     }
 }
 
 impl<F: FnMut() -> Result<String, String>> LedgerEnv for ModuleEnv<F> {
     fn now(&self) -> Timestamp {
-        unimplemented!("task S4")
+        self.now.clone()
     }
 
     fn new_id(&mut self) -> String {
-        unimplemented!("task S4")
+        if self.failure.is_some() {
+            return String::new();
+        }
+        (self.draw)().unwrap_or_else(|e| {
+            self.failure = Some(e);
+            String::new()
+        })
     }
 }
 
@@ -60,7 +66,9 @@ impl<F: FnMut() -> Result<String, String>> LedgerEnv for ModuleEnv<F> {
 /// JSON.
 #[must_use]
 pub fn ledger_error_text(error: &LedgerError) -> String {
-    unimplemented!("task S4")
+    // Issues are plain strings, numbers and booleans, so they always serialise.
+    let issues = serde_json::to_string(error.issues()).unwrap_or_default();
+    format!("{LEDGER_ERROR_PREFIX}{issues}")
 }
 
 /// `JSON.parse` then `sanitizeCommand` (`index.ts:665-675`).
@@ -70,7 +78,9 @@ pub fn ledger_error_text(error: &LedgerError) -> String {
 /// `The command is not valid JSON.`, or the sanitiser's ledger error as
 /// [`ledger_error_text`].
 pub fn parse_command(command_json: &str) -> Result<LedgerCommand, String> {
-    unimplemented!("task S4")
+    let raw: serde_json::Value = serde_json::from_str(command_json)
+        .map_err(|_| "The command is not valid JSON.".to_owned())?;
+    ledger_core::sanitize_command(&raw).map_err(|e| ledger_error_text(&e))
 }
 
 /// `applyCommand` on the loaded books with the member as actor (`index.ts:677-684`). The engine
@@ -86,7 +96,11 @@ pub fn apply(
     actor: &Actor,
     cmd: LedgerCommand,
 ) -> Result<CommandResult, String> {
-    unimplemented!("task S4")
+    let mut ledger = Ledger::new(state, env);
+    ledger_core::apply_command(&mut ledger, actor, cmd).map_err(|e| match e {
+        CommandError::Engine(ledger_core::engine::Error::Ledger(e)) => ledger_error_text(&e),
+        other => other.to_string(),
+    })
 }
 
 /// `resultJson`, `JSON.stringify(result)` (`index.ts:687`).
@@ -95,7 +109,7 @@ pub fn apply(
 ///
 /// Never in practice: a result that does not serialise.
 pub fn result_json(result: &CommandResult) -> Result<String, String> {
-    unimplemented!("task S4")
+    serde_json::to_string(result).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
