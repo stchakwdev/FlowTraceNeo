@@ -34,7 +34,7 @@ The crate is a workspace member, so the workspace checks cover it on the host ta
 ```sh
 cd rust
 cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
-cargo test -p ledger-module          # the module's 102 host tests alone
+cargo test -p ledger-module          # the module's 103 host tests alone
 ```
 
 ## Build the wasm module
@@ -57,7 +57,7 @@ Measured on Omarchy (16 threads, Rust 1.99.0), 2026-10-16:
 | Same, after touching `src/lib.rs` | 1.4 s |
 | `spacetime build -p crates/ledger-module` with the build already done | 0.2 s |
 | `ledger_module.wasm`, release, no `wasm-opt`, on main at 4e75c69 (scaffold) | 558,973 bytes (546 KiB) |
-| Same, with ledger-core's engine (S4, on main at 9aaabf9) | 2,091,041 bytes (2.0 MiB) |
+| Same, with ledger-core's engine (S4, on main at 47bac69) | 2,155,943 bytes (2.1 MiB) |
 
 ## Publish, call, inspect and delete (local server only)
 
