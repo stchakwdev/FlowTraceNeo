@@ -297,8 +297,11 @@ impl LedgerBackend for InProcessBackend {
         Ok(result)
     }
 
-    fn actor(&self, _org: &OrganizationId) -> Option<Actor> {
-        None
+    fn actor(&self, org: &OrganizationId) -> Option<Actor> {
+        self.books
+            .iter()
+            .find(|b| &b.org.id == org)
+            .map(|b| b.actor.clone())
     }
 
     fn status(&self) -> ConnectionStatus {

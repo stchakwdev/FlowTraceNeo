@@ -59,7 +59,9 @@ impl LedgerStore {
     /// Who the app acts as in the selected organisation ([`LedgerBackend::actor`]).
     #[must_use]
     pub fn actor(&self) -> Option<ledger_core::types::Actor> {
-        None
+        self.view
+            .selected()
+            .and_then(|org| self.backend.actor(&org.id))
     }
 
     /// Applies a drained batch; when the selected organisation changed under it, loads that

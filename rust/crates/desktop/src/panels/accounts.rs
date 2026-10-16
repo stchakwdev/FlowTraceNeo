@@ -31,7 +31,9 @@ use crate::accounts::{
     type_label,
 };
 use crate::backend::{BackendError, SystemEnv};
-use crate::panels::{demo_tag, page_title, section_header};
+use crate::panels::{
+    choice, demo_tag, failure_box, field, form_buttons, hint, page_title, section_header, tag,
+};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
 
@@ -661,7 +663,7 @@ impl AccountsPanel {
                             cx,
                         ))
                     })
-                    .child(Self::form_buttons(
+                    .child(form_buttons(
                         "add",
                         "Add account",
                         Self::submit_add,
@@ -695,36 +697,6 @@ impl AccountsPanel {
             }))
         });
         (types.collect(), functions.collect())
-    }
-
-    /// A form's primary button and its Cancel: `submit` on the first, `cancel` then a redraw on
-    /// the second.
-    fn form_buttons(
-        id: &'static str,
-        label: &'static str,
-        submit: impl Fn(&mut Self, &mut Window, &mut Context<Self>) + 'static,
-        cancel: impl Fn(&mut Self) + 'static,
-        cx: &mut Context<Self>,
-    ) -> Div {
-        h_flex()
-            .gap(px(8.0))
-            .child(
-                Button::new(SharedString::from(format!("{id}-submit")))
-                    .primary()
-                    .label(label)
-                    .on_click(cx.listener(move |panel, _: &ClickEvent, window, cx| {
-                        submit(panel, window, cx);
-                    })),
-            )
-            .child(
-                Button::new(SharedString::from(format!("{id}-cancel")))
-                    .ghost()
-                    .label("Cancel")
-                    .on_click(cx.listener(move |panel, _: &ClickEvent, _, cx| {
-                        cancel(panel);
-                        cx.notify();
-                    })),
-            )
     }
 
     /// The header and cash checkboxes of the add form (`accounts.tsx:391-406`).
@@ -807,7 +779,7 @@ impl AccountsPanel {
                             cx,
                         ))
                     })
-                    .child(Self::form_buttons(
+                    .child(form_buttons(
                         "edit",
                         "Save changes",
                         |panel, _, cx| panel.save_edit(cx),
@@ -980,7 +952,7 @@ impl AccountsPanel {
                     .max_w(px(560.0)),
                 )
             })
-            .child(Self::form_buttons(
+            .child(form_buttons(
                 "pending",
                 pending.confirm_label(),
                 |panel, _, cx| panel.confirm(cx),
@@ -1037,62 +1009,6 @@ fn col_actions() -> Div {
         .gap(px(4.0))
 }
 
-/// A one-of-many choice as a button: the chosen one filled, the others outlined.
-fn choice(id: String, label: &'static str, chosen: bool) -> Button {
-    let button = Button::new(SharedString::from(id)).small().label(label);
-    if chosen {
-        button.primary()
-    } else {
-        button.outline()
-    }
-}
-
-/// A labelled field: the label, the control, and the error under it in `rejection_red`.
-fn field(label: &str, control: impl IntoElement, error: Option<String>, cx: &App) -> Div {
-    let p = palette(cx.theme().mode);
-    v_flex()
-        .gap(px(6.0))
-        .child(
-            div()
-                .text_size(px(text::BODY))
-                .font_weight(FontWeight::SEMIBOLD)
-                .child(label.to_owned()),
-        )
-        .child(control)
-        .when_some(error, |f, e| {
-            f.child(
-                div()
-                    .text_size(px(12.0))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(p.rejection_red.to_hsla())
-                    .child(e),
-            )
-        })
-}
-
-fn hint(text_: &str, cx: &App) -> impl IntoElement {
-    div()
-        .text_size(px(12.0))
-        .text_color(palette(cx.theme().mode).ink_muted.to_hsla())
-        .child(text_.to_owned())
-}
-
-/// `Tag` (`accounts.tsx:218-224`): a hairline box in small muted capitals.
-fn tag(label: &str, cx: &App) -> impl IntoElement {
-    let p = palette(cx.theme().mode);
-    div()
-        .px(px(6.0))
-        .h(px(20.0))
-        .flex()
-        .items_center()
-        .border_1()
-        .border_color(p.hairline.to_hsla())
-        .text_size(px(text::LABEL))
-        .font_weight(FontWeight::SEMIBOLD)
-        .text_color(p.ink_muted.to_hsla())
-        .child(label.to_uppercase())
-}
-
 /// `PeriodStatusMark` (`-shared.tsx:84-97`): a line mark and the label; open is dashed and
 /// muted, locked heavy.
 fn status_mark(status: ledger_core::types::PeriodStatus, cx: &App) -> impl IntoElement {
@@ -1120,24 +1036,6 @@ fn status_mark(status: ledger_core::types::PeriodStatus, cx: &App) -> impl IntoE
         })
         .child(mark)
         .child(period_status_label(status))
-}
-
-/// `IssueSummary` (`flowtrace/src/components/ledger/page.tsx:156-190`): a red-ruled box with the
-/// title and each engine message as given.
-fn failure_box(f: &Failure, cx: &App) -> impl IntoElement {
-    let p = palette(cx.theme().mode);
-    v_flex()
-        .p(px(16.0))
-        .gap(px(6.0))
-        .border_1()
-        .border_color(p.rejection_red.to_hsla())
-        .child(
-            div()
-                .font_weight(FontWeight::SEMIBOLD)
-                .text_color(p.rejection_red.to_hsla())
-                .child(f.title.clone()),
-        )
-        .children(f.messages.iter().map(|m| div().child(m.clone())))
 }
 
 impl Render for AccountsPanel {

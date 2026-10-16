@@ -7,13 +7,28 @@
 //! `claims.new.tsx`, `claims.$id.tsx` and `-shared.tsx`; the rules themselves stay in
 //! `ledger-core` (`engine/claims.rs`), whose messages are shown as they come.
 
-use ledger_core::types::{
-    AccountId, Actor, ActorId, ClaimId, ClaimStatus, CodedLine, DimensionId, DimensionKind,
-    EntryId, ExpenseClaim, FundId, GrantId, IsoDate, LedgerState, Timestamp,
-};
-use ledger_core::{LedgerCommand, Minor};
+use std::collections::HashSet;
 
+use ledger_core::engine::{NewClaim, NewCodedLine};
+use ledger_core::money::parse_money;
+use ledger_core::types::{
+    AccountId, AccountType, Actor, ActorId, AppliesTo, ApprovalAction, ClaimId, ClaimStatus,
+    CodedLine, DimensionId, DimensionKind, EntryId, ExpenseClaim, FundId, FundRestriction, GrantId,
+    IsoDate, LedgerState, Nullish, Timestamp,
+};
+use ledger_core::{CommandError, LedgerCommand, Minor, engine};
+
+use crate::accounts::{format_date, format_minor};
 use crate::backend::BackendError;
+
+/// The en dash the web app shows for an empty cell (`money.tsx:12`).
+const DASH: &str = "\u{2013}";
+
+/// The middle dot between parts of a line.
+const DOT: &str = "\u{b7}";
+
+/// The unrestricted fund every chart starts with (`ledger_core::coa_template`).
+const UNRESTRICTED: &str = ledger_core::coa_template::UNRESTRICTED_FUND_ID;
 
 /// One choice of the status filter (`claims.index.tsx:16-23`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,8 +70,15 @@ pub const CLAIM_FILTERS: [ClaimFilter; 6] = [
 
 /// `CLAIM_STATUS_LABEL` (`-shared.tsx:41-48`).
 #[must_use]
-pub fn claim_status_label(_status: ClaimStatus) -> &'static str {
-    ""
+pub fn claim_status_label(status: ClaimStatus) -> &'static str {
+    match status {
+        ClaimStatus::Draft => "Draft",
+        ClaimStatus::Submitted => "Submitted",
+        ClaimStatus::Approved => "Approved",
+        ClaimStatus::Posted => "Posted, to reimburse",
+        ClaimStatus::Reimbursed => "Reimbursed",
+        ClaimStatus::Rejected => "Rejected",
+    }
 }
 
 /// How a status tag is drawn (`-shared.tsx:58-65`, `DocStatus`).
@@ -76,14 +98,20 @@ pub enum Tone {
 
 /// `CLAIM_TONE` (`-shared.tsx:58-65`).
 #[must_use]
-pub fn claim_tone(_status: ClaimStatus) -> Tone {
-    Tone::Quiet
+pub fn claim_tone(status: ClaimStatus) -> Tone {
+    match status {
+        ClaimStatus::Draft => Tone::Quiet,
+        ClaimStatus::Submitted | ClaimStatus::Approved => Tone::Open,
+        ClaimStatus::Posted => Tone::Booked,
+        ClaimStatus::Reimbursed => Tone::Done,
+        ClaimStatus::Rejected => Tone::Rejected,
+    }
 }
 
 /// `docTotal` (`-shared.tsx:133`): the sum of the lines.
 #[must_use]
-pub fn doc_total(_lines: &[CodedLine]) -> Minor {
-    0
+pub fn doc_total(lines: &[CodedLine]) -> Minor {
+    lines.iter().map(|l| l.amount).sum()
 }
 
 /// One row of the claims list.
@@ -99,17 +127,89 @@ pub struct ClaimRow {
     pub funds: String,
 }
 
+/// The distinct values of `ids` in first-seen order.
+fn distinct<'a, T: Eq + std::hash::Hash + 'a>(ids: impl IntoIterator<Item = &'a T>) -> Vec<&'a T> {
+    let mut seen = HashSet::new();
+    ids.into_iter().filter(|id| seen.insert(*id)).collect()
+}
+
+/// `grantNames` (`claims.index.tsx:200-204`).
+fn grant_names(state: &LedgerState, claim: &ExpenseClaim) -> String {
+    let ids = distinct(claim.lines.iter().filter_map(|l| l.grant_id.as_ref()));
+    if ids.is_empty() {
+        return "No grant".to_owned();
+    }
+    ids.into_iter()
+        .map(|id| grant_name(state, id).unwrap_or("Grant"))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// The funds of a claim's lines, as `grantNames` lists grants.
+fn fund_names(state: &LedgerState, claim: &ExpenseClaim) -> String {
+    distinct(claim.lines.iter().map(|l| &l.fund_id))
+        .into_iter()
+        .map(|id| fund_name(state, id).unwrap_or("Fund"))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn grant_name<'a>(state: &'a LedgerState, id: &GrantId) -> Option<&'a str> {
+    state
+        .grants
+        .iter()
+        .find(|g| &g.id == id)
+        .map(|g| g.name.as_str())
+}
+
+fn fund_name<'a>(state: &'a LedgerState, id: &FundId) -> Option<&'a str> {
+    state
+        .funds
+        .iter()
+        .find(|f| &f.id == id)
+        .map(|f| f.name.as_str())
+}
+
 /// The claims `filter` shows, latest claim date first, then latest number
-/// (`claims.index.tsx:51-58`).
+/// (`claims.index.tsx:51-58`). Dates and numbers compare by bytes, which is what
+/// `localeCompare` gives for ISO dates and `EC-` numbers.
 #[must_use]
-pub fn claim_rows(_state: &LedgerState, _filter: Option<ClaimStatus>) -> Vec<ClaimRow> {
-    Vec::new()
+pub fn claim_rows(state: &LedgerState, filter: Option<ClaimStatus>) -> Vec<ClaimRow> {
+    let mut claims: Vec<&ExpenseClaim> = state
+        .claims
+        .iter()
+        .filter(|c| filter.is_none_or(|s| c.status == s))
+        .collect();
+    claims.sort_by(|a, b| {
+        b.claim_date
+            .cmp(&a.claim_date)
+            .then_with(|| b.number.cmp(&a.number))
+    });
+    claims
+        .into_iter()
+        .map(|c| ClaimRow {
+            claim: c.clone(),
+            total: doc_total(&c.lines),
+            grants: grant_names(state, c),
+            funds: fund_names(state, c),
+        })
+        .collect()
 }
 
 /// Each filter with the number of claims it shows (`claims.index.tsx:42-49`).
 #[must_use]
-pub fn filter_counts(_state: &LedgerState) -> Vec<(ClaimFilter, usize)> {
-    Vec::new()
+pub fn filter_counts(state: &LedgerState) -> Vec<(ClaimFilter, usize)> {
+    CLAIM_FILTERS
+        .iter()
+        .map(|f| {
+            let n = state
+                .claims
+                .iter()
+                .filter(|c| f.status.is_none_or(|s| c.status == s))
+                .count();
+            (*f, n)
+        })
+        .collect()
 }
 
 /// A notice in place of an empty list: a title and one line (`claims.index.tsx:157-182`).
@@ -123,54 +223,173 @@ pub struct Notice {
 
 /// The notice when the list is empty: no claims at all, or none under `filter`.
 #[must_use]
-pub fn list_notice(_state: &LedgerState, _filter: Option<ClaimStatus>) -> Option<Notice> {
-    None
+pub fn list_notice(state: &LedgerState, filter: Option<ClaimStatus>) -> Option<Notice> {
+    if state.claims.is_empty() {
+        return Some(Notice {
+            title: "No claims yet".to_owned(),
+            body: "When staff pay for work costs themselves, they claim the money back here \
+                   with the receipts."
+                .to_owned(),
+        });
+    }
+    let shown = state
+        .claims
+        .iter()
+        .any(|c| filter.is_none_or(|s| c.status == s));
+    (!shown).then(|| Notice {
+        title: "No claims match".to_owned(),
+        body: format!(
+            "No claims are {}.",
+            filter.map_or("here".to_owned(), |s| claim_status_label(s).to_lowercase())
+        ),
+    })
 }
 
 /// `isoToDayMonthYear` (`flowtrace/src/components/ui/date-field.tsx:36-39`): `04/02/2026`.
 #[must_use]
-pub fn iso_to_day_month_year(_date: &IsoDate) -> String {
-    String::new()
+pub fn iso_to_day_month_year(date: &IsoDate) -> String {
+    let s = date.as_str();
+    match (s.get(0..4), s.get(5..7), s.get(8..10)) {
+        (Some(y), Some(m), Some(d)) => format!("{d}/{m}/{y}"),
+        _ => String::new(),
+    }
+}
+
+/// The month names of the date field's messages (`date-field.tsx:12-25`).
+const MONTHS: [&str; 12] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
+
+/// Days in `month` of `year`, Gregorian.
+fn days_in(year: u32, month: u32) -> u32 {
+    match month {
+        2 if (year.is_multiple_of(4) && !year.is_multiple_of(100)) || year.is_multiple_of(400) => {
+            29
+        }
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    }
 }
 
 /// `parseDayMonthYear` (`date-field.tsx:50-80`): `None` for a blank field, otherwise the date
-/// or the message to show.
+/// or the message to show. Reads `d/m/yyyy` with `/`, `.` or `-` between the parts.
 #[must_use]
-pub fn parse_day_month_year(_text: &str) -> Option<Result<IsoDate, String>> {
-    None
+pub fn parse_day_month_year(text: &str) -> Option<Result<IsoDate, String>> {
+    let t = text.trim();
+    if t.is_empty() {
+        return None;
+    }
+    let parts: Vec<&str> = t.split(['/', '.', '-']).collect();
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    let [d, m, y] = parts.as_slice() else {
+        return Some(Err(format_message()));
+    };
+    if !(digits(d) && d.len() <= 2 && digits(m) && m.len() <= 2 && digits(y)) {
+        return Some(Err(format_message()));
+    }
+    if y.len() != 4 {
+        return Some(Err("Write the year in full, for example 2026.".to_owned()));
+    }
+    let (Ok(day), Ok(month), Ok(year)) = (d.parse::<u32>(), m.parse::<u32>(), y.parse::<u32>())
+    else {
+        return Some(Err(format_message()));
+    };
+    if !(1..=12).contains(&month) {
+        return Some(Err(format!(
+            "There is no month {month}. Put the day first, then the month: dd/mm/yyyy."
+        )));
+    }
+    let days = days_in(year, month);
+    if day < 1 {
+        return Some(Err("There is no day 0. Enter a day from 1.".to_owned()));
+    }
+    if day > days {
+        return Some(Err(format!(
+            "{} {year} has only {days} days.",
+            MONTHS[month as usize - 1]
+        )));
+    }
+    Some(IsoDate::parse(&format!("{year:04}-{month:02}-{day:02}")).map_err(|_| format_message()))
+}
+
+fn format_message() -> String {
+    "Enter the date as day/month/year, for example 18/01/2026.".to_owned()
+}
+
+/// Active, non-header accounts passing `keep`, in code order, as `(id, "code · name")`.
+fn account_choices(
+    state: &LedgerState,
+    keep: impl Fn(&ledger_core::types::Account) -> bool,
+) -> Vec<(AccountId, String)> {
+    let mut accounts: Vec<_> = state
+        .accounts
+        .iter()
+        .filter(|a| a.is_active && !a.is_group && keep(a))
+        .collect();
+    accounts.sort_by(|a, b| a.code.cmp(&b.code));
+    accounts
+        .into_iter()
+        .map(|a| (a.id.clone(), format!("{} {DOT} {}", a.code, a.name)))
+        .collect()
 }
 
 /// `AccountSelect types={['expense']}` (`flowtrace/src/components/ledger/pickers.tsx:25-44`):
 /// active, non-header expense accounts in code order, as `(id, "code · name")`.
 #[must_use]
-pub fn cost_accounts(_state: &LedgerState) -> Vec<(AccountId, String)> {
-    Vec::new()
+pub fn cost_accounts(state: &LedgerState) -> Vec<(AccountId, String)> {
+    account_choices(state, |a| a.account_type == AccountType::Expense)
 }
 
-/// `AccountSelect cashOnly` (`pickers.tsx:25-44`): active, non-header cash accounts in code
-/// order.
+/// `AccountSelect cashOnly` (`pickers.tsx:25-44`): active, non-header cash accounts in type
+/// order, then code order.
 #[must_use]
-pub fn cash_accounts(_state: &LedgerState) -> Vec<(AccountId, String)> {
-    Vec::new()
+pub fn cash_accounts(state: &LedgerState) -> Vec<(AccountId, String)> {
+    account_choices(state, |a| a.is_cash)
 }
 
 /// `FundSelect` (`pickers.tsx:46-54`): every fund in the books' order.
 #[must_use]
-pub fn fund_choices(_state: &LedgerState) -> Vec<(FundId, String)> {
-    Vec::new()
+pub fn fund_choices(state: &LedgerState) -> Vec<(FundId, String)> {
+    state
+        .funds
+        .iter()
+        .map(|f| (f.id.clone(), f.name.clone()))
+        .collect()
 }
 
 /// `GrantSelect fundId` (`pickers.tsx:57-69`) without its `No grant` choice: the grants on
 /// `fund`, or every grant when no fund is chosen.
 #[must_use]
-pub fn grant_choices(_state: &LedgerState, _fund: Option<&FundId>) -> Vec<(GrantId, String)> {
-    Vec::new()
+pub fn grant_choices(state: &LedgerState, fund: Option<&FundId>) -> Vec<(GrantId, String)> {
+    state
+        .grants
+        .iter()
+        .filter(|g| fund.is_none_or(|f| &g.fund_id == f))
+        .map(|g| (g.id.clone(), g.name.clone()))
+        .collect()
 }
 
 /// The dimension values of `kind` (`-shared.tsx:381-388`), for the project and place pickers.
 #[must_use]
-pub fn dimension_choices(_state: &LedgerState, _kind: DimensionKind) -> Vec<(DimensionId, String)> {
-    Vec::new()
+pub fn dimension_choices(state: &LedgerState, kind: DimensionKind) -> Vec<(DimensionId, String)> {
+    state
+        .dimensions
+        .iter()
+        .filter(|d| d.kind == kind)
+        .map(|d| (d.id.clone(), d.name.clone()))
+        .collect()
 }
 
 /// One coded line as typed (`LineDraft`, `-shared.tsx:276-288`).
@@ -196,8 +415,17 @@ impl LineDraft {
     /// `newLine` (`-shared.tsx:291-307`): blank, on the unrestricted fund when the books have
     /// it, else the first fund.
     #[must_use]
-    pub fn new(_state: &LedgerState) -> Self {
-        Self::default()
+    pub fn new(state: &LedgerState) -> Self {
+        let fund = state
+            .funds
+            .iter()
+            .find(|f| f.id.as_str() == UNRESTRICTED)
+            .or_else(|| state.funds.first())
+            .map(|f| f.id.clone());
+        Self {
+            fund,
+            ..Self::default()
+        }
     }
 }
 
@@ -220,7 +448,13 @@ impl LineField {
     /// `LINE_FIELD_LABEL` (`-shared.tsx:313-319`).
     #[must_use]
     pub fn label(self) -> &'static str {
-        ""
+        match self {
+            Self::Description => "description",
+            Self::Amount => "amount",
+            Self::Account => "account",
+            Self::Fund => "fund",
+            Self::Grant => "grant",
+        }
     }
 }
 
@@ -238,21 +472,44 @@ pub struct FormErrors {
 impl FormErrors {
     /// The message under one line field.
     #[must_use]
-    pub fn line(&self, _index: usize, _field: LineField) -> Option<&str> {
-        None
+    pub fn line(&self, index: usize, field: LineField) -> Option<&str> {
+        self.lines
+            .iter()
+            .find(|(i, f, _)| *i == index && *f == field)
+            .map(|(_, _, m)| m.as_str())
+    }
+
+    fn is_empty(&self) -> bool {
+        self.date.is_none() && self.purpose.is_none() && self.lines.is_empty()
     }
 
     /// `ErrorSummary` (`-shared.tsx:552-597`): `Fix this before saving` or `Fix these before
     /// saving`.
     #[must_use]
     pub fn title(&self) -> &'static str {
-        ""
+        if self.summary().len() == 1 {
+            "Fix this before saving"
+        } else {
+            "Fix these before saving"
+        }
     }
 
-    /// The summary lines, `Label: message`, date and purpose first.
+    /// The summary lines, `Label: message`, date and purpose first (`claims.new.tsx:81-86`).
     #[must_use]
     pub fn summary(&self) -> Vec<String> {
-        Vec::new()
+        let mut out = Vec::new();
+        if let Some(m) = &self.date {
+            out.push(format!("Date: {m}"));
+        }
+        if let Some(m) = &self.purpose {
+            out.push(format!("Purpose: {m}"));
+        }
+        out.extend(
+            self.lines
+                .iter()
+                .map(|(i, f, m)| format!("Line {} {}: {m}", i + 1, f.label())),
+        );
+        out
     }
 }
 
@@ -271,35 +528,114 @@ pub struct ClaimForm {
 impl ClaimForm {
     /// The form on `as_of` with one blank line (`claims.new.tsx:50-63`).
     #[must_use]
-    pub fn new(_state: &LedgerState, _as_of: &IsoDate) -> Self {
+    pub fn new(state: &LedgerState, as_of: &IsoDate) -> Self {
         Self {
-            date: String::new(),
+            date: iso_to_day_month_year(as_of),
             purpose: String::new(),
-            lines: Vec::new(),
+            lines: vec![LineDraft::new(state)],
         }
     }
 
     /// `Add another line` (`-shared.tsx:516-534`): a blank line carrying the last line's
     /// account, fund, grant, project and place.
-    pub fn add_line(&mut self, _state: &LedgerState) {}
+    pub fn add_line(&mut self, state: &LedgerState) {
+        let line = match self.lines.last() {
+            Some(last) => LineDraft {
+                description: String::new(),
+                amount: String::new(),
+                ..last.clone()
+            },
+            None => LineDraft::new(state),
+        };
+        self.lines.push(line);
+    }
 
     /// Removes line `index` when more than one is left (`-shared.tsx:404-415`).
-    pub fn remove_line(&mut self, _index: usize) -> bool {
-        false
+    pub fn remove_line(&mut self, index: usize) -> bool {
+        if self.lines.len() > 1 && index < self.lines.len() {
+            self.lines.remove(index);
+            true
+        } else {
+            false
+        }
     }
 
     /// `withFund` (`-shared.tsx:356-361`): a new fund drops a grant from another fund and picks
     /// the only grant when there is one.
-    pub fn set_fund(&mut self, _state: &LedgerState, _index: usize, _fund: Option<FundId>) {}
+    pub fn set_fund(&mut self, state: &LedgerState, index: usize, fund: Option<FundId>) {
+        let Some(line) = self.lines.get_mut(index) else {
+            return;
+        };
+        let grants: Vec<&GrantId> = fund.as_ref().map_or_else(Vec::new, |f| {
+            state
+                .grants
+                .iter()
+                .filter(|g| &g.fund_id == f)
+                .map(|g| &g.id)
+                .collect()
+        });
+        let keep = line.grant.as_ref().is_some_and(|g| grants.contains(&g));
+        if !keep {
+            line.grant = match grants.as_slice() {
+                [only] => Some((*only).clone()),
+                _ => None,
+            };
+        }
+        line.fund = fund;
+    }
 
     /// `linesTotal` (`-shared.tsx:351-353`): the amounts that parse, negatives as zero.
     #[must_use]
     pub fn total(&self) -> Minor {
-        0
+        self.lines
+            .iter()
+            .map(|l| parse_money(&l.amount).unwrap_or(0).max(0))
+            .sum()
+    }
+
+    /// `validateLines` (`-shared.tsx:322-345`).
+    fn line_errors(&self, state: &LedgerState) -> Vec<(usize, LineField, String)> {
+        let mut out = Vec::new();
+        for (n, l) in self.lines.iter().enumerate() {
+            let mut add = |f, m: &str| out.push((n, f, m.to_owned()));
+            if l.description.trim().is_empty() {
+                add(LineField::Description, "Say what this was for.");
+            }
+            if l.amount.trim().is_empty() {
+                add(LineField::Amount, "Enter the amount.");
+            } else {
+                match parse_money(&l.amount) {
+                    None => add(LineField::Amount, "Enter a number, like 1250 or 1,250.50."),
+                    Some(a) if a <= 0 => {
+                        add(LineField::Amount, "The amount must be more than zero.");
+                    }
+                    Some(_) => {}
+                }
+            }
+            if l.account.is_none() {
+                add(LineField::Account, "Choose what kind of cost this is.");
+            }
+            match l
+                .fund
+                .as_ref()
+                .and_then(|id| state.funds.iter().find(|f| &f.id == id))
+            {
+                None => add(LineField::Fund, "Choose the fund that pays for this."),
+                Some(f) if f.restriction != FundRestriction::Unrestricted && l.grant.is_none() => {
+                    add(
+                        LineField::Grant,
+                        "Restricted money needs the grant it comes from.",
+                    );
+                }
+                Some(_) => {}
+            }
+        }
+        out
     }
 
     /// The `claim.create` command, submitting the claim when `submit` is set, or what to fix
-    /// first (`claims.new.tsx:68-113`). The id is left to the engine's env.
+    /// first (`claims.new.tsx:68-113`). The claim is in the base currency at rate 1 with no
+    /// receipts; the id is left to the engine's env (the web draws `crypto.randomUUID()`).
     ///
     /// # Errors
     ///
@@ -307,11 +643,75 @@ impl ClaimForm {
     /// complete (`validateLines`, `-shared.tsx:322-345`).
     pub fn command(
         &self,
-        _state: &LedgerState,
-        _as_of: &IsoDate,
-        _submit: bool,
+        state: &LedgerState,
+        as_of: &IsoDate,
+        submit: bool,
     ) -> Result<LedgerCommand, FormErrors> {
-        Err(FormErrors::default())
+        let mut errors = FormErrors::default();
+        let date = match parse_day_month_year(&self.date) {
+            None => {
+                errors.date = Some("Enter the date you spent the money.".to_owned());
+                None
+            }
+            Some(Err(m)) => {
+                errors.date = Some(m);
+                None
+            }
+            Some(Ok(d)) if d > *as_of => {
+                errors.date = Some("The date cannot be after today.".to_owned());
+                None
+            }
+            Some(Ok(d)) => Some(d),
+        };
+        if self.purpose.trim().is_empty() {
+            errors.purpose = Some(
+                "Say what the trip or task was, e.g. Borehole site inspection, Lodwar.".to_owned(),
+            );
+        }
+        errors.lines = self.line_errors(state);
+        let (Some(date), true) = (date, errors.is_empty()) else {
+            return Err(errors);
+        };
+        let lines = self
+            .lines
+            .iter()
+            .filter_map(|l| {
+                // validateLines above guarantees every field; toCodedLines (-shared.tsx:340-349).
+                let (Some(account_id), Some(fund_id)) = (l.account.clone(), l.fund.clone()) else {
+                    return None;
+                };
+                #[expect(
+                    clippy::cast_precision_loss,
+                    reason = "the engine takes amounts as JS numbers; minor units are safe integers"
+                )]
+                let amount = parse_money(&l.amount).unwrap_or(0) as f64;
+                Some(NewCodedLine {
+                    description: l.description.trim().to_owned(),
+                    account_id,
+                    amount,
+                    fund_id,
+                    grant_id: l.grant.clone(),
+                    dimension_ids: [&l.project, &l.location]
+                        .into_iter()
+                        .flatten()
+                        .cloned()
+                        .collect(),
+                })
+            })
+            .collect();
+        Ok(LedgerCommand::ClaimCreate {
+            input: NewClaim {
+                id: None,
+                claim_date: date,
+                currency: state.settings.base_currency.clone(),
+                fx_rate: 1.0,
+                purpose: self.purpose.trim().to_owned(),
+                lines,
+                receipt_names: Vec::new(),
+                captured_offline: false,
+                submit: Some(submit),
+            },
+        })
     }
 }
 
@@ -329,16 +729,26 @@ pub enum ClaimAction {
 }
 
 impl ClaimAction {
-    /// The button label.
+    /// The button label (`claims.$id.tsx:182-213`).
     #[must_use]
     pub fn label(self) -> &'static str {
-        ""
+        match self {
+            Self::Submit => "Submit for approval",
+            Self::Approve => "Approve and post",
+            Self::Reject => "Reject",
+            Self::Reimburse => "Record the reimbursement",
+        }
     }
 
-    /// The notice once it is done (`claims.$id.tsx:127-133`, 377-397).
+    /// The notice once it is done (`claims.$id.tsx:127-133`, 377-397, 428).
     #[must_use]
     pub fn done_notice(self) -> &'static str {
-        ""
+        match self {
+            Self::Submit => "Submitted. A manager can now approve it.",
+            Self::Approve => "Approved and posted to the books.",
+            Self::Reject => "Rejected. The claimant can see your reason.",
+            Self::Reimburse => "Reimbursement recorded.",
+        }
     }
 }
 
@@ -374,6 +784,17 @@ pub struct TrailStep {
     pub reference: Option<String>,
     /// A rejection is drawn in red.
     pub rejected: bool,
+}
+
+/// `STEP_LABEL` (`claims.$id.tsx:40-46`).
+fn step_label(action: ApprovalAction) -> &'static str {
+    match action {
+        ApprovalAction::Submitted => "Submitted for approval",
+        ApprovalAction::Approved => "Approved",
+        ApprovalAction::Rejected => "Rejected",
+        ApprovalAction::Posted => "Posted to the books",
+        ApprovalAction::Reimbursed => "Paid back",
+    }
 }
 
 /// One row of "In the books" (`claims.$id.tsx:303-330`).
@@ -414,6 +835,41 @@ pub struct Posting {
     pub grants: Vec<GrantHit>,
 }
 
+/// The posted entry `entry_id` and the grants its expense lines charge: debit less credit in
+/// base currency per grant, as `grantSpend` counts it (`engine.ts:447-464`).
+fn posting(state: &LedgerState, entry_id: &EntryId) -> Option<Posting> {
+    let entry = state.entries.iter().find(|e| &e.id == entry_id)?;
+    let mut grants: Vec<GrantHit> = Vec::new();
+    for l in state.lines.iter().filter(|l| &l.entry_id == entry_id) {
+        let (Some(grant_id), true) = (
+            l.grant_id.as_ref(),
+            state
+                .accounts
+                .iter()
+                .any(|a| a.id == l.account_id && a.account_type == AccountType::Expense),
+        ) else {
+            continue;
+        };
+        if let Some(hit) = grants.iter_mut().find(|g| &g.grant_id == grant_id) {
+            hit.charged += l.base_amount;
+        } else {
+            let grant = state.grants.iter().find(|g| &g.id == grant_id);
+            grants.push(GrantHit {
+                grant_id: grant_id.clone(),
+                name: grant.map_or_else(|| "Grant".to_owned(), |g| g.name.clone()),
+                charged: l.base_amount,
+                spend: state.grant_spend(grant_id, None),
+                award: grant.map_or(0, |g| g.award),
+            });
+        }
+    }
+    Some(Posting {
+        entry_id: entry.id.clone(),
+        number: entry.number.clone(),
+        grants,
+    })
+}
+
 /// One claim as its detail screen shows it.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClaimDetail {
@@ -437,33 +893,239 @@ pub struct ClaimDetail {
     pub posting: Option<Posting>,
 }
 
+/// `currency 1,234.56`, as `<Money currency>` writes it.
+fn money(currency: &str, minor: Minor) -> String {
+    format!("{currency} {}", format_minor(minor))
+}
+
+/// The next step and its actions (`claims.$id.tsx:177-232`).
+fn next_step(
+    c: &ExpenseClaim,
+    outstanding: Minor,
+    actor: Option<&Actor>,
+) -> (String, Vec<ClaimAction>) {
+    let is_claimant = actor.is_some_and(|a| a.id == c.claimant);
+    let can_approve = actor.is_some_and(|a| a.can_approve);
+    match c.status {
+        ClaimStatus::Draft if is_claimant => (
+            "This is a draft. Submit it when the lines and receipts are complete.".to_owned(),
+            vec![ClaimAction::Submit],
+        ),
+        ClaimStatus::Draft => (
+            format!(
+                "This is {}\u{2019}s draft. Only they can submit it.",
+                c.claimant_name
+            ),
+            vec![],
+        ),
+        ClaimStatus::Submitted if is_claimant => (
+            "You made this claim, so someone else has to approve it. The books do not let \
+             anyone approve their own spending."
+                .to_owned(),
+            vec![],
+        ),
+        ClaimStatus::Submitted if !can_approve => (
+            "Waiting for a manager with approval rights.".to_owned(),
+            vec![],
+        ),
+        ClaimStatus::Submitted => (
+            format!(
+                "Approving posts the claim to the books straight away: the costs land on their \
+                 grants and budget lines, and the money is owed to {}.",
+                c.claimant_name
+            ),
+            vec![ClaimAction::Approve, ClaimAction::Reject],
+        ),
+        ClaimStatus::Posted => (
+            format!(
+                "Approved and posted. {} is owed to {}.",
+                money(&c.currency, outstanding),
+                c.claimant_name
+            ),
+            vec![ClaimAction::Reimburse],
+        ),
+        ClaimStatus::Reimbursed => ("Paid back in full. Nothing more to do.".to_owned(), vec![]),
+        ClaimStatus::Rejected => (
+            "Rejected. The reason is in the approval trail below; the claimant can make a new \
+             claim."
+                .to_owned(),
+            vec![],
+        ),
+        ClaimStatus::Approved => ("Approved, waiting to be posted.".to_owned(), vec![]),
+    }
+}
+
+/// The lines of `c` as `CodedLines` shows them (`-shared.tsx:175-262`).
+fn line_views(state: &LedgerState, c: &ExpenseClaim) -> Vec<LineView> {
+    c.lines
+        .iter()
+        .map(|l| {
+            let account = state.accounts.iter().find(|a| a.id == l.account_id);
+            let dims: Vec<&str> = l
+                .dimension_ids
+                .iter()
+                .map(|d| {
+                    state
+                        .dimensions
+                        .iter()
+                        .find(|x| &x.id == d)
+                        .map_or(d.as_str(), |x| x.name.as_str())
+                })
+                .collect();
+            LineView {
+                description: if l.description.is_empty() {
+                    "No description".to_owned()
+                } else {
+                    l.description.clone()
+                },
+                account: account.map_or_else(
+                    || "Unknown account".to_owned(),
+                    |a| format!("{} {}", a.code, a.name),
+                ),
+                fund: fund_name(state, &l.fund_id).unwrap_or("Fund").to_owned(),
+                grant: l
+                    .grant_id
+                    .as_ref()
+                    .and_then(|g| grant_name(state, g))
+                    .unwrap_or("No grant")
+                    .to_owned(),
+                dimensions: if dims.is_empty() {
+                    DASH.to_owned()
+                } else {
+                    dims.join(", ")
+                },
+                amount: l.amount,
+            }
+        })
+        .collect()
+}
+
+/// The approval trail of `c` (`claims.$id.tsx:265-300`).
+fn trail_steps(c: &ExpenseClaim, actor: Option<&Actor>) -> Vec<TrailStep> {
+    let claimant = (&c.claimant, c.claimant_name.as_str());
+    c.approvals
+        .iter()
+        .map(|s| {
+            let quoted = !matches!(
+                s.action,
+                ApprovalAction::Posted | ApprovalAction::Reimbursed
+            );
+            TrailStep {
+                label: step_label(s.action),
+                who: person_name(&s.by, actor, claimant),
+                at: format_date_time(&s.at),
+                note: s.note.clone().filter(|_| quoted),
+                reference: s
+                    .note
+                    .clone()
+                    .filter(|_| s.action == ApprovalAction::Reimbursed),
+                rejected: s.action == ApprovalAction::Rejected,
+            }
+        })
+        .collect()
+}
+
+/// "In the books" of `c`: the posted entry, then the payments (`claims.$id.tsx:303-330`).
+fn book_rows(state: &LedgerState, c: &ExpenseClaim) -> Vec<BookRow> {
+    let number_of = |entry: &EntryId| {
+        state
+            .entries
+            .iter()
+            .find(|e| &e.id == entry)
+            .map_or_else(|| "Journal entry".to_owned(), |e| e.number.clone())
+    };
+    let mut books = Vec::new();
+    if let Some(entry) = &c.entry_id {
+        books.push(BookRow {
+            label: "Claim posted: costs and the amount owed".to_owned(),
+            entry_id: entry.clone(),
+            number: number_of(entry),
+        });
+    }
+    books.extend(
+        state
+            .payments
+            .iter()
+            .filter(|p| p.applies_to == AppliesTo::ExpenseClaim(c.id.clone()))
+            .map(|p| {
+                let mut label = format!(
+                    "Paid back {} {DOT} {}",
+                    format_date(&p.date),
+                    money(&p.currency, p.amount)
+                );
+                if let Some(r) = p.reference.as_deref().filter(|r| !r.is_empty()) {
+                    label.push(' ');
+                    label.push_str(r);
+                }
+                BookRow {
+                    label,
+                    entry_id: p.entry_id.clone(),
+                    number: number_of(&p.entry_id),
+                }
+            }),
+    );
+    books
+}
+
 impl ClaimDetail {
     /// The detail of claim `id` as `actor` sees it, or `None` when it is not in the books.
     #[must_use]
-    pub fn new(_state: &LedgerState, _id: &ClaimId, _actor: Option<&Actor>) -> Option<Self> {
-        None
+    pub fn new(state: &LedgerState, id: &ClaimId, actor: Option<&Actor>) -> Option<Self> {
+        let c = state.claims.iter().find(|c| &c.id == id)?;
+        let total = doc_total(&c.lines);
+        let outstanding = if c.status == ClaimStatus::Posted {
+            state
+                .outstanding(&AppliesTo::ExpenseClaim(c.id.clone()))
+                .unwrap_or(0)
+        } else {
+            0
+        };
+        let lines = line_views(state, c);
+        let trail = trail_steps(c, actor);
+        let books = book_rows(state, c);
+        let (next, actions) = next_step(c, outstanding, actor);
+        Some(Self {
+            claim: c.clone(),
+            total,
+            outstanding,
+            lines,
+            trail,
+            next,
+            actions,
+            books,
+            posting: c.entry_id.as_ref().and_then(|e| posting(state, e)),
+        })
     }
 
     /// The lede: `EC-0002 · Achieng Odhiambo · spent 3 Feb 2026` (`claims.$id.tsx:57-63`).
     #[must_use]
     pub fn lede(&self) -> String {
-        String::new()
+        let c = &self.claim;
+        format!(
+            "{} {DOT} {} {DOT} spent {}",
+            c.number,
+            c.claimant_name,
+            format_date(&c.claim_date)
+        )
     }
 
     /// The `claim.submit` command.
     #[must_use]
     pub fn submit_command(&self) -> LedgerCommand {
         LedgerCommand::ClaimSubmit {
-            claim_id: ClaimId::from(""),
+            claim_id: self.claim.id.clone(),
         }
     }
 
     /// The `claim.approve` command with the note trimmed (none when blank) and an override
     /// reason (`claims.$id.tsx:368-375`).
     #[must_use]
-    pub fn approve_command(&self, _note: &str, _override_reason: Option<&str>) -> LedgerCommand {
-        LedgerCommand::ClaimSubmit {
-            claim_id: ClaimId::from(""),
+    pub fn approve_command(&self, note: &str, override_reason: Option<&str>) -> LedgerCommand {
+        let note = note.trim();
+        LedgerCommand::ClaimApprove {
+            claim_id: self.claim.id.clone(),
+            note: (!note.is_empty()).then(|| note.to_owned()),
+            override_reason: override_reason.map(str::to_owned),
         }
     }
 
@@ -472,14 +1134,55 @@ impl ClaimDetail {
     /// # Errors
     ///
     /// The message under the reason when it is blank.
-    pub fn reject_command(&self, _note: &str) -> Result<LedgerCommand, String> {
-        Err(String::new())
+    pub fn reject_command(&self, note: &str) -> Result<LedgerCommand, String> {
+        let note = note.trim();
+        if note.is_empty() {
+            return Err("Tell the claimant why, so they can put it right.".to_owned());
+        }
+        Ok(LedgerCommand::ClaimReject {
+            claim_id: self.claim.id.clone(),
+            note: note.to_owned(),
+        })
     }
 
-    /// The confirmation of `action`, `None` for a submit, which needs none.
+    /// The confirmation of `action`, `None` for a submit, which needs none
+    /// (`claims.$id.tsx:356-445`).
     #[must_use]
-    pub fn dialog(&self, _action: ClaimAction) -> Option<Dialog> {
-        None
+    pub fn dialog(&self, action: ClaimAction) -> Option<Dialog> {
+        let c = &self.claim;
+        let (title, description, confirm) = match action {
+            ClaimAction::Submit => return None,
+            ClaimAction::Approve => (
+                "Approve this claim",
+                format!(
+                    "{} {DOT} {} {DOT} {}",
+                    c.number,
+                    c.claimant_name,
+                    money(&c.currency, self.total)
+                ),
+                "Approve and post",
+            ),
+            ClaimAction::Reject => (
+                "Reject this claim",
+                "The claimant sees your reason. Nothing is posted to the books.".to_owned(),
+                "Reject claim",
+            ),
+            ClaimAction::Reimburse => (
+                "Record the reimbursement",
+                format!(
+                    "Pays {} the full {} still owed.",
+                    c.claimant_name,
+                    money(&c.currency, self.outstanding)
+                ),
+                "Record payment",
+            ),
+        };
+        Some(Dialog {
+            action,
+            title: title.to_owned(),
+            description,
+            confirm,
+        })
     }
 }
 
@@ -501,7 +1204,7 @@ impl Dialog {
     /// and post` (`-shared.tsx:671`).
     #[must_use]
     pub fn override_label(&self) -> String {
-        String::new()
+        format!("Override and {}", self.confirm.to_lowercase())
     }
 }
 
@@ -528,49 +1231,100 @@ pub struct ReimburseForm {
 impl ReimburseForm {
     /// The form on `as_of`.
     #[must_use]
-    pub fn new(_as_of: &IsoDate) -> Self {
+    pub fn new(as_of: &IsoDate) -> Self {
         Self {
-            date: String::new(),
+            date: iso_to_day_month_year(as_of),
             cash_account: None,
             reference: String::new(),
         }
     }
 
-    /// The `claim.reimburse` command (`claims.$id.tsx:419-428`).
+    /// The `claim.reimburse` command (`claims.$id.tsx:410-428`).
     ///
     /// # Errors
     ///
     /// [`ReimburseErrors`] for a missing date or account.
-    pub fn command(&self, _claim: &ClaimId) -> Result<LedgerCommand, ReimburseErrors> {
-        Err(ReimburseErrors::default())
+    pub fn command(&self, claim: &ClaimId) -> Result<LedgerCommand, ReimburseErrors> {
+        let mut errors = ReimburseErrors::default();
+        let date = match parse_day_month_year(&self.date) {
+            None => {
+                errors.date = Some("Enter the date the money was sent.".to_owned());
+                None
+            }
+            Some(Err(m)) => {
+                errors.date = Some(m);
+                None
+            }
+            Some(Ok(d)) => Some(d),
+        };
+        if self.cash_account.is_none() {
+            errors.cash = Some("Choose the account the money left from.".to_owned());
+        }
+        match (date, self.cash_account.clone()) {
+            (Some(date), Some(cash_account_id)) => {
+                let reference = self.reference.trim();
+                Ok(LedgerCommand::ClaimReimburse {
+                    claim_id: claim.clone(),
+                    date: date.as_str().to_owned(),
+                    cash_account_id,
+                    reference: if reference.is_empty() {
+                        Nullish::Null
+                    } else {
+                        Nullish::Value(reference.to_owned())
+                    },
+                })
+            }
+            _ => Err(errors),
+        }
     }
 }
 
 /// `hasOverridable` (`flowtrace/src/components/ledger/issues.ts`): a ledger refusal whose
 /// every issue an override reason lets through.
 #[must_use]
-pub fn has_overridable(_error: &BackendError) -> bool {
-    false
+pub fn has_overridable(error: &BackendError) -> bool {
+    match error {
+        BackendError::Command(CommandError::Engine(engine::Error::Ledger(e))) => {
+            !e.issues().is_empty() && e.issues().iter().all(|i| i.overridable == Some(true))
+        }
+        _ => false,
+    }
 }
 
 /// `personName` (`-shared.tsx:139-147`): the viewer as `Name (you)`, the claimant by name,
 /// `system` as FlowTrace, anyone else by id.
 #[must_use]
-pub fn person_name(_id: &ActorId, _actor: Option<&Actor>, _claimant: (&ActorId, &str)) -> String {
-    String::new()
+pub fn person_name(id: &ActorId, actor: Option<&Actor>, claimant: (&ActorId, &str)) -> String {
+    match actor {
+        Some(a) if &a.id == id => format!("{} (you)", a.name),
+        _ if claimant.0 == id => claimant.1.to_owned(),
+        _ if id.as_str() == "system" => "FlowTrace".to_owned(),
+        _ => id.as_str().to_owned(),
+    }
 }
 
-/// `formatDateTime` (`flowtrace/src/lib/format.ts:31-39`): `4 Feb 2026, 09:00`, in UTC.
+/// `formatDateTime` (`flowtrace/src/lib/format.ts:31-39`): `4 Feb 2026, 09:00`. The web shows
+/// the viewer's local time; the desktop shows UTC so the figures do not move with the machine.
 #[must_use]
-pub fn format_date_time(_at: &Timestamp) -> String {
-    String::new()
+pub fn format_date_time(at: &Timestamp) -> String {
+    let s = at.as_str();
+    let date = IsoDate::parse(s.get(..10).unwrap_or_default())
+        .map(|d| format_date(&d))
+        .unwrap_or_default();
+    format!("{date}, {}", s.get(11..16).unwrap_or_default())
 }
 
 /// `formatMinor(v, { decimals: 0 })` (`money.tsx:8-21`): whole units with separators, half
-/// away from zero, zero as an en dash.
+/// away from zero as `Intl.NumberFormat` rounds, negatives in parentheses, zero as an en dash.
 #[must_use]
-pub fn format_whole(_minor: Minor) -> String {
-    String::new()
+pub fn format_whole(minor: Minor) -> String {
+    if minor == 0 {
+        return DASH.to_owned();
+    }
+    let whole = (minor.unsigned_abs() + 50) / 100 * 100;
+    let text = format_minor(Minor::try_from(whole).unwrap_or(Minor::MAX));
+    let text = text.trim_end_matches(".00").to_owned();
+    if minor < 0 { format!("({text})") } else { text }
 }
 
 #[cfg(test)]
@@ -782,7 +1536,7 @@ mod tests {
             "There is no month 13. Put the day first, then the month: dd/mm/yyyy."
         );
         assert_eq!(err("0/1/2026"), "There is no day 0. Enter a day from 1.");
-        assert_eq!(err("31/02/2026"), "Feb 2026 has only 28 days.");
+        assert_eq!(err("31/02/2026"), "February 2026 has only 28 days.");
     }
 
     #[test]
@@ -938,7 +1692,7 @@ mod tests {
                 .unwrap_err()
                 .date
                 .as_deref(),
-            Some("Feb 2026 has only 28 days.")
+            Some("February 2026 has only 28 days.")
         );
         form.date = "03/02/2026".into();
 
