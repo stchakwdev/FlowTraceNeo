@@ -41,13 +41,37 @@ impl Oklch {
     /// <https://bottosson.github.io/posts/oklab/>, and the sRGB transfer function).
     #[must_use]
     pub fn to_rgba(self) -> Rgba {
-        todo!()
+        let (sin, cos) = self.h.to_radians().sin_cos();
+        let (a, b) = (self.c * cos, self.c * sin);
+        let l_ = self.l + 0.396_337_78 * a + 0.215_803_76 * b;
+        let m_ = self.l - 0.105_561_346 * a - 0.063_854_17 * b;
+        let s_ = self.l - 0.089_484_18 * a - 1.291_485_5 * b;
+        let (l, m, s) = (l_.powi(3), m_.powi(3), s_.powi(3));
+        let r = 4.076_741_7 * l - 3.307_711_6 * m + 0.230_969_94 * s;
+        let g = -1.268_438 * l + 2.609_757_4 * m - 0.341_319_38 * s;
+        let b = -0.004_196_086_3 * l - 0.703_418_6 * m + 1.707_614_7 * s;
+        Rgba {
+            r: encode_srgb(r),
+            g: encode_srgb(g),
+            b: encode_srgb(b),
+            a: self.a.clamp(0.0, 1.0),
+        }
     }
 
     /// This colour as GPUI's [`Hsla`].
     #[must_use]
     pub fn to_hsla(self) -> Hsla {
         self.to_rgba().into()
+    }
+}
+
+/// Linear light to the sRGB transfer curve, clamped into gamut.
+fn encode_srgb(linear: f32) -> f32 {
+    let x = linear.clamp(0.0, 1.0);
+    if x <= 0.003_130_8 {
+        12.92 * x
+    } else {
+        1.055 * x.powf(1.0 / 2.4) - 0.055
     }
 }
 
@@ -209,8 +233,85 @@ pub fn px_of(token: f32) -> Pixels {
 }
 
 /// Switches gpui-kit to `mode` and puts this palette, the radii and the fonts onto its theme.
-pub fn apply(_mode: ThemeMode, _cx: &mut App) {
-    todo!()
+///
+/// Token to gpui-kit field mapping, by the role `DESIGN.md` gives each token: paper is the
+/// background, sheet the popover, table and input surface, ink the foreground, report blue every
+/// primary and focus colour (buttons read their own `button_primary*` fields, ADR 0002), the
+/// rail the sidebar with its active item inverted to ink, signal orange the warning and
+/// rejection red the danger colour. Hover and active shades of report blue are its 88% and 80%
+/// opacity steps (`DESIGN.md`, Buttons).
+pub fn apply(mode: ThemeMode, cx: &mut App) {
+    Theme::change(mode, None, cx);
+    let p = palette(mode);
+    Theme::update(cx, |theme| {
+        let c = |token: Oklch| token.to_hsla();
+        let blue = c(p.report_blue);
+        let blue_hover = blue.opacity(0.88);
+        let blue_active = blue.opacity(0.8);
+        let ink = c(p.report_blue_ink);
+
+        theme.background = c(p.report_paper);
+        theme.foreground = c(p.ink_navy);
+        theme.muted = c(p.wash);
+        theme.muted_foreground = c(p.ink_muted);
+        theme.border = c(p.hairline);
+        theme.input = c(p.field_stroke);
+        theme.ring = blue;
+        theme.caret = blue;
+        theme.selection = c(p.coverage_blue).opacity(0.5);
+        theme.link = blue;
+        theme.link_hover = blue_hover;
+        theme.link_active = blue_active;
+        theme.accent = c(p.wash);
+        theme.accent_foreground = c(p.ink_navy);
+        theme.popover = c(p.sheet);
+        theme.popover_foreground = c(p.ink_navy);
+
+        theme.primary = blue;
+        theme.primary_hover = blue_hover;
+        theme.primary_active = blue_active;
+        theme.primary_foreground = ink;
+        theme.button_primary = blue;
+        theme.button_primary_hover = blue_hover;
+        theme.button_primary_active = blue_active;
+        theme.button_primary_foreground = ink;
+        theme.secondary = c(p.sheet);
+        theme.secondary_hover = c(p.wash);
+        theme.secondary_active = c(p.gap_grey);
+        theme.secondary_foreground = c(p.ink_navy);
+
+        theme.danger = c(p.rejection_red);
+        theme.danger_foreground = c(p.report_blue_ink);
+        theme.warning = c(p.signal_orange);
+        theme.success = blue;
+
+        theme.sidebar = c(p.rail);
+        theme.sidebar_foreground = c(p.ink_navy);
+        theme.sidebar_border = c(p.hairline);
+        theme.sidebar_accent = c(p.rail_hover);
+        theme.sidebar_accent_foreground = c(p.ink_navy);
+        theme.sidebar_primary = c(p.ink_navy);
+        theme.sidebar_primary_foreground = c(p.report_paper);
+
+        theme.title_bar = c(p.masthead_ink);
+        theme.title_bar_border = c(p.masthead_ink);
+        theme.status_bar = c(p.rail);
+        theme.status_bar_border = c(p.hairline);
+
+        theme.table = c(p.sheet);
+        theme.table_head = c(p.wash);
+        theme.table_head_foreground = c(p.ink_muted);
+        theme.table_even = c(p.report_paper);
+        theme.table_hover = c(p.wash);
+        theme.table_row_border = c(p.hairline);
+        theme.colors.list = c(p.sheet);
+        theme.list_hover = c(p.wash);
+
+        theme.radius = px(radius::NONE);
+        theme.radius_lg = px(radius::HAIRLINE);
+        theme.shadow = false;
+        theme.font_size = px(text::BODY);
+    });
 }
 
 #[cfg(test)]

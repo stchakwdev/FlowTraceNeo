@@ -14,7 +14,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use async_channel::{Receiver, Sender};
 use ledger_core::env::fixed::{self, FixedEnv};
 use ledger_core::types::{Actor, ActorId, OrganizationId};
-use ledger_core::{CommandError, CommandResult, LedgerCommand, LedgerEnv, LedgerState, Timestamp};
+use ledger_core::demo::{build_demo_ledger, demo_actor};
+use ledger_core::setup::create_org_ledger;
+use ledger_core::{
+    CommandError, CommandResult, Ledger, LedgerCommand, LedgerEnv, LedgerState, Timestamp,
+    apply_command,
+};
+use serde_json::Value;
+use uuid::Uuid;
 
 /// The display name of the demo organisation (`flowtrace/src/lib/demo/dataset.ts:61`).
 pub const DEMO_ORG_NAME: &str = "Demo NGO Kenya";
@@ -171,7 +178,44 @@ impl InProcessBackend {
     ///
     /// [`BackendError::Setup`] when either set of books cannot be built.
     pub fn with_demo_and_empty() -> Result<Self, BackendError> {
-        todo!()
+        let demo_state = build_demo_ledger()?;
+        let demo = Books {
+            org: Organisation {
+                id: demo_state.settings.organization_id.clone(),
+                name: DEMO_ORG_NAME.to_owned(),
+                base_currency: demo_state.settings.base_currency.clone(),
+            },
+            env: Box::new(demo_env_after(&demo_state)),
+            state: Arc::new(demo_state),
+            actor: demo_actor(),
+        };
+
+        let mut env = SystemEnv;
+        let org_id = env.new_id();
+        let empty_state = create_org_ledger(&org_id, EMPTY_ORG_CURRENCY, current_year(), &mut env)?;
+        let empty = Books {
+            org: Organisation {
+                id: OrganizationId::from(org_id),
+                name: EMPTY_ORG_NAME.to_owned(),
+                base_currency: EMPTY_ORG_CURRENCY.to_owned(),
+            },
+            state: Arc::new(empty_state),
+            env: Box::new(env),
+            actor: local_actor(),
+        };
+
+        Ok(Self {
+            books: vec![demo, empty],
+            status: ConnectionStatus::Disconnected,
+            settings: None,
+            subscribers: Vec::new(),
+        })
+    }
+
+    /// Sends `event` to every live subscriber and forgets the closed ones.
+    fn broadcast(&mut self, event: &BackendEvent) {
+        self.subscribers
+            .retain(|tx| tx.try_send(event.clone()).is_ok());
     }
 
     /// The settings the last [`LedgerBackend::connect`] recorded.
@@ -183,31 +227,62 @@ impl InProcessBackend {
 
 impl LedgerBackend for InProcessBackend {
     fn organisations(&self) -> Vec<Organisation> {
-        todo!()
+        self.books.iter().map(|b| b.org.clone()).collect()
     }
 
-    fn state(&self, _org: &OrganizationId) -> Option<Arc<LedgerState>> {
-        todo!()
+    fn state(&self, org: &OrganizationId) -> Option<Arc<LedgerState>> {
+        self.books
+            .iter()
+            .find(|b| &b.org.id == org)
+            .map(|b| Arc::clone(&b.state))
     }
 
     fn subscribe(&mut self) -> Receiver<BackendEvent> {
-        todo!()
+        let (tx, rx) = async_channel::unbounded();
+        self.subscribers.push(tx);
+        rx
     }
 
+    /// Applies the command to a copy of the books, so a snapshot a screen still holds never
+    /// changes under it. The engine checks every rule before its first write
+    /// (`ledger_core::engine`), so a refusal leaves the copy as it was and it is dropped.
     fn submit(
         &mut self,
-        _org: &OrganizationId,
-        _command: LedgerCommand,
+        org: &OrganizationId,
+        command: LedgerCommand,
     ) -> Result<CommandResult, BackendError> {
-        todo!()
+        let books = self
+            .books
+            .iter_mut()
+            .find(|b| &b.org.id == org)
+            .ok_or_else(|| BackendError::UnknownOrganisation(org.as_str().to_owned()))?;
+        let mut next = LedgerState::clone(&books.state);
+        let result = {
+            let mut ledger = Ledger::new(&mut next, books.env.as_mut());
+            apply_command(&mut ledger, &books.actor, command)?
+        };
+        books.state = Arc::new(next);
+        let event = BackendEvent::Ledger {
+            org: org.clone(),
+            state: Arc::clone(&books.state),
+        };
+        self.broadcast(&event);
+        Ok(result)
     }
 
     fn status(&self) -> ConnectionStatus {
         self.status.clone()
     }
 
-    fn connect(&mut self, _settings: ConnectSettings) -> Result<(), BackendError> {
-        todo!()
+    fn connect(&mut self, settings: ConnectSettings) -> Result<(), BackendError> {
+        self.settings = Some(settings);
+        self.status = ConnectionStatus::Connecting;
+        self.broadcast(&BackendEvent::Status(ConnectionStatus::Connecting));
+        self.status = ConnectionStatus::Connected {
+            identity: IN_PROCESS_IDENTITY.to_owned(),
+        };
+        self.broadcast(&BackendEvent::Status(self.status.clone()));
+        Ok(())
     }
 }
 
@@ -218,31 +293,103 @@ pub struct SystemEnv;
 
 impl LedgerEnv for SystemEnv {
     fn now(&self) -> Timestamp {
-        todo!()
+        // iso_millis always writes the toISOString shape for years 0 to 9999; the fallback
+        // is unreachable before the year 10000.
+        Timestamp::parse(&iso_millis(now_millis())).unwrap_or_else(|_| fixed::demo().now())
     }
 
     fn new_id(&mut self) -> String {
-        todo!()
+        Uuid::new_v4().to_string()
     }
 }
 
 /// `ms` milliseconds after the Unix epoch as `Date.prototype.toISOString` writes it,
 /// `YYYY-MM-DDTHH:MM:SS.mmmZ`.
 #[must_use]
-pub fn iso_millis(_ms: u64) -> String {
-    todo!()
+pub fn iso_millis(ms: u64) -> String {
+    let millis = ms % 1000;
+    let secs = ms / 1000;
+    let (days, secs_of_day) = (secs / 86_400, secs % 86_400);
+    let (year, month, day) = civil_from_days(days);
+    format!(
+        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}.{millis:03}Z",
+        secs_of_day / 3600,
+        secs_of_day / 60 % 60,
+        secs_of_day % 60
+    )
+}
+
+/// The proleptic Gregorian date `days` after 1970-01-01, by Howard Hinnant's
+/// `civil_from_days` (<https://howardhinnant.github.io/date_algorithms.html#civil_from_days>),
+/// for days on or after the epoch.
+fn civil_from_days(days: u64) -> (u64, u64, u64) {
+    let z = days + 719_468;
+    let era = z / 146_097;
+    let doe = z % 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + u64::from(month <= 2);
+    (year, month, day)
+}
+
+/// Milliseconds since the Unix epoch now; 0 if the clock is before it.
+fn now_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX))
 }
 
 /// The UTC calendar year now.
 #[must_use]
 pub fn current_year() -> i32 {
-    todo!()
+    let (year, _, _) = civil_from_days(now_millis() / 1000 / 86_400);
+    i32::try_from(year).unwrap_or(i32::MAX)
 }
 
 /// A demo env that continues after the ids `state` already holds, so the next id is fresh.
 #[must_use]
-pub fn demo_env_after(_state: &LedgerState) -> FixedEnv {
-    todo!()
+pub fn demo_env_after(state: &LedgerState) -> FixedEnv {
+    let mut highest = 0;
+    if let Ok(value) = serde_json::to_value(state) {
+        highest_demo_id(&value, &mut highest);
+    }
+    let mut env = fixed::demo();
+    while env.drawn() < highest {
+        env.new_id();
+    }
+    env
+}
+
+/// The highest `n` of any `demo-<n in base 36>` string in `value`.
+fn highest_demo_id(value: &Value, highest: &mut u64) {
+    match value {
+        Value::String(s) => {
+            if let Some(n) = s
+                .strip_prefix("demo-")
+                .and_then(|digits| u64::from_str_radix(digits, 36).ok())
+            {
+                *highest = (*highest).max(n);
+            }
+        }
+        Value::Array(items) => items.iter().for_each(|v| highest_demo_id(v, highest)),
+        Value::Object(map) => map.values().for_each(|v| highest_demo_id(v, highest)),
+        _ => {}
+    }
+}
+
+/// The actor of the empty organisation: a local user with every permission, as the demo user
+/// (`ledger_core::demo::demo_actor`).
+fn local_actor() -> Actor {
+    Actor {
+        id: ActorId::from("local-user"),
+        name: "Local user".to_owned(),
+        can_post: true,
+        can_approve: true,
+        can_close: true,
+    }
 }
 
 #[cfg(test)]
@@ -250,7 +397,7 @@ mod tests {
     #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
     use super::*;
-    use ledger_core::demo::{DEMO_ORG_ID, build_demo_ledger};
+    use ledger_core::demo::DEMO_ORG_ID;
     use ledger_core::sanitize_command;
     use serde_json::json;
 

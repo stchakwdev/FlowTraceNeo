@@ -44,25 +44,51 @@ impl NavEntry {
     /// The label in the navigation and the panel title.
     #[must_use]
     pub fn label(self) -> &'static str {
-        todo!()
+        match self {
+            Self::Accounts => "Accounts",
+            Self::Journal => "Journal",
+            Self::GeneralLedger => "General ledger",
+            Self::Spend => "Spend",
+            Self::Grants => "Grants",
+            Self::Reconcile => "Reconcile",
+            Self::Reports => "Reports",
+        }
     }
 
     /// One line on what the screen will hold, for its placeholder panel.
     #[must_use]
     pub fn summary(self) -> &'static str {
-        todo!()
+        match self {
+            Self::Accounts => {
+                "The chart of accounts and the fiscal periods, with closing and locking."
+            }
+            Self::Journal => "Journal entries: drafts, posting, reversals and manual entry.",
+            Self::GeneralLedger => "Every posted line by account, with running balances.",
+            Self::Spend => "Expense claims, bills, payments and vendors.",
+            Self::Grants => "Grants and budgets, with budget versus actual.",
+            Self::Reconcile => "Bank and mobile money statements matched to the ledger.",
+            Self::Reports => "Financial statements and trial balance, with CSV export.",
+        }
     }
 
     /// The key that opens this entry: `1` for the first through `7` for the last.
     #[must_use]
     pub fn key(self) -> &'static str {
-        todo!()
+        match self {
+            Self::Accounts => "1",
+            Self::Journal => "2",
+            Self::GeneralLedger => "3",
+            Self::Spend => "4",
+            Self::Grants => "5",
+            Self::Reconcile => "6",
+            Self::Reports => "7",
+        }
     }
 
     /// The entry a key opens, for the keys `1` to `7`.
     #[must_use]
-    pub fn from_key(_key: &str) -> Option<Self> {
-        todo!()
+    pub fn from_key(key: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|entry| entry.key() == key)
     }
 }
 
@@ -96,25 +122,33 @@ impl Default for Navigation {
 
 impl Navigation {
     /// Shows `entry`'s panel, leaving the connect screen if it was open.
-    pub fn select(&mut self, _entry: NavEntry) {
-        todo!()
+    pub fn select(&mut self, entry: NavEntry) {
+        self.entry = entry;
+        self.screen = Screen::Books;
     }
 
     /// Handles a key pressed with no modifier. Keys `1` to `7` select their entry while the
     /// books show; on the connect screen they belong to the form's fields. Returns whether the
     /// key was taken.
-    pub fn press_key(&mut self, _key: &str) -> bool {
-        todo!()
+    pub fn press_key(&mut self, key: &str) -> bool {
+        if self.screen != Screen::Books {
+            return false;
+        }
+        let Some(entry) = NavEntry::from_key(key) else {
+            return false;
+        };
+        self.select(entry);
+        true
     }
 
     /// Opens the connect screen.
     pub fn open_connect(&mut self) {
-        todo!()
+        self.screen = Screen::Connect;
     }
 
     /// Leaves the connect screen for the books.
     pub fn close_connect(&mut self) {
-        todo!()
+        self.screen = Screen::Books;
     }
 }
 
@@ -133,11 +167,18 @@ impl LedgerView {
     /// A view over `orgs` with the first one selected and its books `snapshot`.
     #[must_use]
     pub fn new(
-        _orgs: Vec<Organisation>,
-        _status: ConnectionStatus,
-        _snapshot: Option<Arc<LedgerState>>,
+        orgs: Vec<Organisation>,
+        status: ConnectionStatus,
+        snapshot: Option<Arc<LedgerState>>,
     ) -> Self {
-        todo!()
+        let selected = orgs.first().map(|org| org.id.clone());
+        Self {
+            orgs,
+            selected,
+            status,
+            snapshot,
+            revision: 0,
+        }
     }
 
     /// Every organisation, in the backend's order.
@@ -149,7 +190,8 @@ impl LedgerView {
     /// The selected organisation.
     #[must_use]
     pub fn selected(&self) -> Option<&Organisation> {
-        todo!()
+        let id = self.selected.as_ref()?;
+        self.orgs.iter().find(|org| &org.id == id)
     }
 
     /// The connection status last reported.
@@ -173,29 +215,75 @@ impl LedgerView {
 
     /// Selects `org` with its books `snapshot`. Returns false, changing nothing, when `org` is
     /// not one of the organisations.
-    pub fn select(&mut self, _org: &OrganizationId, _snapshot: Option<Arc<LedgerState>>) -> bool {
-        todo!()
+    pub fn select(&mut self, org: &OrganizationId, snapshot: Option<Arc<LedgerState>>) -> bool {
+        if !self.orgs.iter().any(|o| &o.id == org) {
+            return false;
+        }
+        self.selected = Some(org.clone());
+        self.replace_snapshot(snapshot);
+        true
+    }
+
+    fn replace_snapshot(&mut self, snapshot: Option<Arc<LedgerState>>) {
+        self.snapshot = snapshot;
+        self.revision += 1;
     }
 
     /// Applies one drained batch of backend events in order. Ledger changes of other
     /// organisations are ignored; when the selected organisation leaves the list, the first one
     /// is selected and its snapshot cleared until the caller selects it again. Returns whether
     /// anything shown changed.
-    pub fn apply(&mut self, _batch: Vec<BackendEvent>) -> bool {
-        todo!()
+    pub fn apply(&mut self, batch: Vec<BackendEvent>) -> bool {
+        let mut changed = false;
+        for event in batch {
+            match event {
+                BackendEvent::Ledger { org, state } => {
+                    if self.selected.as_ref() == Some(&org) {
+                        self.replace_snapshot(Some(state));
+                        changed = true;
+                    }
+                }
+                BackendEvent::Organisations(orgs) => {
+                    self.orgs = orgs;
+                    let kept = self
+                        .selected
+                        .as_ref()
+                        .is_some_and(|id| self.orgs.iter().any(|o| &o.id == id));
+                    if !kept {
+                        self.selected = self.orgs.first().map(|org| org.id.clone());
+                        self.replace_snapshot(None);
+                    }
+                    changed = true;
+                }
+                BackendEvent::Status(status) => {
+                    changed |= self.status != status;
+                    self.status = status;
+                }
+            }
+        }
+        changed
     }
 
     /// The status bar text: the organisation, its currency and the connection.
     #[must_use]
     pub fn status_text(&self) -> String {
-        todo!()
+        let connection = status_label(&self.status);
+        match self.selected() {
+            Some(org) => format!("{} · {} · {connection}", org.name, org.base_currency),
+            None => format!("No organisation · {connection}"),
+        }
     }
 }
 
 /// How the status bar names a connection status.
 #[must_use]
-pub fn status_label(_status: &ConnectionStatus) -> String {
-    todo!()
+pub fn status_label(status: &ConnectionStatus) -> String {
+    match status {
+        ConnectionStatus::Disconnected => "Not connected, local books".to_owned(),
+        ConnectionStatus::Connecting => "Connecting".to_owned(),
+        ConnectionStatus::Connected { identity } => format!("Connected as {identity}"),
+        ConnectionStatus::Error { message } => format!("Connection error: {message}"),
+    }
 }
 
 /// The connect screen's fields.
@@ -233,7 +321,30 @@ impl ConnectForm {
     /// A message for the form when the host is not an `http`, `https`, `ws` or `wss` URL, or
     /// the database name is empty or holds anything but lower-case letters, digits and `-`.
     pub fn validate(&self) -> Result<ConnectSettings, String> {
-        todo!()
+        let host = self.host.trim();
+        let has_address = ["http://", "https://", "ws://", "wss://"]
+            .iter()
+            .any(|scheme| host.strip_prefix(scheme).is_some_and(|rest| !rest.is_empty()));
+        if !has_address {
+            return Err(
+                "Enter the server as a URL, for example http://127.0.0.1:3100.".to_owned(),
+            );
+        }
+        let database = self.database.trim();
+        let valid_name = !database.is_empty()
+            && database
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-');
+        if !valid_name {
+            return Err(
+                "Enter the database name in lower-case letters, digits and dashes.".to_owned(),
+            );
+        }
+        Ok(ConnectSettings {
+            host: host.to_owned(),
+            database: database.to_owned(),
+            token_path: self.token_path.trim().to_owned(),
+        })
     }
 }
 
