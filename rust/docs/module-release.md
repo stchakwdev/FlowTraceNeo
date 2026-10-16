@@ -1,14 +1,16 @@
 # Releasing the ledger module
 
 How `crates/ledger-module` (the SpacetimeDB 2.12 server module) is built, how the maincloud dev
-database was published, how people get access to it, and what a production publish will need.
+and production databases were published, how people get access to them, and what a later
+production publish needs.
 Day-to-day commands against the local server are in `../crates/ledger-module/README.md`; this
 page is about maincloud.
 
 Rule for agents and scripts: **nothing here is run against maincloud by an agent.** Publishing,
 deleting or renaming a maincloud database is the user's step, at a terminal logged in to
 SpacetimeDB through the web. Agents publish only to the local server, under a name carrying
-their task id, and delete it afterwards.
+their task id, and delete it afterwards. The one production publish so far was done by the
+coordinator on the user's explicit instruction (section 4); that does not change this rule.
 
 ## 1. Build the wasm
 
@@ -105,27 +107,35 @@ module stores no organisation name: the desktop lists organisations by id.
 These calls write to a shared database, so in the project they are the user's step on
 maincloud, as publishing is. The same calls with `-s local` are how threads test.
 
-## 4. What a production publish will need
+## 4. Production: `flowtrace-ledger`
 
-Not done, and not to be run by an agent. Items 1 and 2 are decided; the user decides the rest:
-
-1. **The name: `flowtrace-ledger`**, named by the user on 2026-10-16. It is not published yet.
-   Only the user publishes, resets or deletes it; an agent never does. The dev database stays
-   `flowtrace-ledger-dev`. The desktop's default database is `flowtrace-ledger-dev`
-   (`DEFAULT_DATABASE` in `crates/desktop/src/model.rs`, used by `crates/desktop/src/config.rs`),
-   so a production build either ships a `config.toml` naming `flowtrace-ledger` or changes that
-   default. Neither is done yet.
+1. **Published.** The user named the production database `flowtrace-ledger` on 2026-10-16. It
+   was published to maincloud on 2026-10-16 at 20:25 UTC from main `d65f3ba`, by the
+   coordinator on the user's explicit instruction, done once (dashboard
+   <https://spacetimedb.com/flowtrace-ledger>, database identity
+   `c200b4b1041fce8318a0027f02f44cf0517c52599a8b10b4b629476899750b4b`). The module is the one
+   published as dev; only `crates/ledger-module/README.md` changed between the two. `init` ran:
+   the operator table holds one row, the publishing identity
+   `c200a773ad0003c4f82fac12ada53ff076d83fec49a6d827149d813527431630` (the CLI login on the
+   machine that published), and `ledger_org` was empty. Publishing, resetting or deleting
+   production remains the user's call. The dev database stays `flowtrace-ledger-dev`.
+   The desktop's built-in default is still `flowtrace-ledger-dev` (`DEFAULT_DATABASE` in
+   `crates/desktop/src/model.rs`); release archives from `tools/release.sh` ship a `config.toml`
+   naming `https://maincloud.spacetimedb.com` and `flowtrace-ledger` (no `token_file`), byte for
+   byte `crates/desktop/release/config.toml`, which `crates/desktop/src/config.rs` tests opens
+   that database. INSTALL.txt in the archive says where to copy it.
 2. **The three decisions** in `handoff.md`, confirmed by the user on 2026-10-16. Two of them
    shape stored data: timestamps in milliseconds (every audit and engine timestamp written), and
    `float_roundtrip` (how stored rates are parsed). Changing either after real books exist means
    a migration.
-3. **Which identity publishes.** The publisher becomes the only operator through `init`. Use an
-   account meant to own production (an organisation account, `--organization`, if the team
-   should share it), not a personal dev login.
+3. **The operator.** The publisher became the only operator through `init`. To hand production
+   to an account meant to own it (an organisation account, if the team should share it), that
+   operator adds the new identity with `add_operator` (section 3); that is a write on
+   production, so the user's step.
 4. **No test data.** Never point `rust/tools` `integration` or `module-replay --existing`, or the
    client live test, at production: each run writes a demo organisation and leaves it there.
-5. **The command**, from a clean checkout of the tagged commit, after the checks above, without
-   `-y` so every prompt is read:
+5. **A module update** is run by the user, not an agent: from a clean checkout of the commit to
+   ship, after the checks in section 1, without `-y` so every prompt is read:
 
    ```sh
    spacetime publish -s maincloud flowtrace-ledger -p rust/crates/ledger-module

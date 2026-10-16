@@ -140,8 +140,11 @@ tools/release.sh
 ```
 
 builds the desktop in release for this machine, strips it and writes
-`dist/flowtrace-books-<version>-<os>-<arch>.tar.gz` (the binary as `flowtrace-books` and an
-`INSTALL.txt`) with a `.sha256` next to it, then checks the archive and that the binary starts.
+`dist/flowtrace-books-<version>-<os>-<arch>.tar.gz` (the binary as `flowtrace-books`, an
+`INSTALL.txt` and `config.toml`) with a `.sha256` next to it, then checks the archive and that
+the binary starts. `config.toml` is `crates/desktop/release/config.toml` unchanged and names the
+production database (`flowtrace-ledger` on maincloud); without it in the config dir the app
+opens the demo. `tools/release.sh --check <archive>` runs the archive check alone.
 The version is the workspace version that `crates/desktop/Cargo.toml` inherits;
 `tools/release.sh --name` prints the archive name without building (`tools/src/release.test.ts`
 checks it; `cd tools && ~/.bun/bin/bun test`). It is a shell script rather than a `cargo xtask`

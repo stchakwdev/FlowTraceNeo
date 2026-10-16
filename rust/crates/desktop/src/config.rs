@@ -294,6 +294,28 @@ mod tests {
         fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// `release/config.toml`, which `tools/release.sh` packs into every release archive, opens
+    /// the production database through this loader, with the token file in its default place.
+    #[test]
+    fn the_release_config_opens_the_production_database() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("release")
+            .join(CONFIG_FILE);
+        assert_eq!(
+            fs::read_to_string(&path).unwrap(),
+            "server = \"https://maincloud.spacetimedb.com\"\ndatabase = \"flowtrace-ledger\"\n"
+        );
+        let config = Config::load(&path).unwrap();
+        assert_eq!(config.token_file, None);
+        let settings = config.settings(None, None, &dir()).unwrap();
+        assert_eq!(settings.host, "https://maincloud.spacetimedb.com");
+        assert_eq!(settings.database, "flowtrace-ledger");
+        assert_eq!(
+            settings.token_path,
+            "/home/me/.config/flowtrace-books/token-maincloud.spacetimedb.com"
+        );
+    }
+
     #[test]
     fn the_config_dir_is_named_for_the_app() {
         if let Some(dir) = config_dir() {
