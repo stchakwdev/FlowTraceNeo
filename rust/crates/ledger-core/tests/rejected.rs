@@ -1,6 +1,5 @@
-//! Tasks C2 and C3 acceptance: every rejection in `rejected-cases.json` raised by a ported engine
-//! method
-//! reproduces the exact code, message and issues, and leaves the books unchanged. Each scenario
+//! Tasks C2 to C4 acceptance: every rejection in `rejected-cases.json`, raised by an engine method
+//! or by the command layer (`sanitize_command` then `apply_command`), reproduces the exact code, message and issues, and leaves the books unchanged. Each scenario
 //! runs its steps in order on fresh `createOrgLedger('org', 'KES', 2026)` books with the test env.
 #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
@@ -49,8 +48,7 @@ fn rejected_cases_match_for_the_ported_methods() {
         "rejected-cases: {checked} rejections matched, {skipped} left to later tasks, {live_ok} accepted steps live"
     );
     assert_eq!(checked + skipped, 37);
-    // The 32 rejections from the TS tests less the two command-layer ones (C4): the unknown
-    // command, and the entry.post whose string `fx_rate` does not fit the typed `EntryInput`.
-    // C3 added the five in claims and bills. The other five are the sanitiser scenario's (C4).
-    assert_eq!((checked, skipped), (30, 7));
+    // All 37: the 32 from the TS tests (C3 added the five in claims and bills; C4 the unknown
+    // command and the entry.post with a string `fx_rate`) and the sanitiser scenario's five (C4).
+    assert_eq!((checked, skipped), (37, 0));
 }

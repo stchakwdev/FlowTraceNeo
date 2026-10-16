@@ -1,5 +1,5 @@
-//! Tasks C2 and C3 acceptance: the demo backfill and the accepted commands replay through the
-//! engine step by step. Steps whose method is ported run live and must reproduce the fixture's return value
+//! Tasks C2 to C4 acceptance: the demo backfill and the accepted commands replay through the
+//! engine step by step, commands through `sanitize_command` and `apply_command`. Steps whose method is ported run live and must reproduce the fixture's return value
 //! and state delta exactly (ids, timestamps, audit events); the rest apply their recorded delta.
 //! See `common/replay.rs`.
 #![expect(clippy::unwrap_used, reason = "tests may unwrap")]

@@ -1,6 +1,6 @@
 //! Expense claims, staff spend paid back (`engine.ts:905-1004`).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::documents::{NewCodedLine, PayInput, Settled};
 use super::queries::js_number;
@@ -15,16 +15,17 @@ use crate::types::{
 /// The input of `createClaim` (`engine.ts:909-916`): an [`ExpenseClaim`] without its number,
 /// status, trail, entry and claimant, with `id` optional, the lines not yet given ids, and
 /// `submit` to submit it at once.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewClaim {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<ClaimId>,
     /// Claim date; the claim posts on it.
     pub claim_date: IsoDate,
     /// Claim currency.
     pub currency: String,
     /// Units of base currency per unit of `currency`.
+    #[serde(serialize_with = "crate::js_number::serialize")]
     pub fx_rate: f64,
     /// What the money was spent on; it cannot be blank, and is stored as given.
     pub purpose: String,
@@ -35,7 +36,7 @@ pub struct NewClaim {
     /// Set when captured offline and synced later.
     pub captured_offline: bool,
     /// Submit the claim as soon as it is created.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub submit: Option<bool>,
 }
 

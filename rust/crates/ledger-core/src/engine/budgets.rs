@@ -1,6 +1,6 @@
 //! Budgets and budget lines (`engine.ts:775-804`). Budget against actual is a report (C5).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::setup::truthy;
 use super::{Error, Ledger, Permission, fail, require};
@@ -31,29 +31,30 @@ pub struct NewBudget {
 /// The filters are [`Nullish`] because an update copies only the fields the input carries
 /// (`Object.assign`, `engine.ts:796-797`): a left-out filter keeps its old value, a `null` one
 /// clears it. A new line reads a left-out filter as `null`.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewBudgetLine {
     /// The line to replace, or the id of the new line; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<BudgetLineId>,
     /// Budget the line belongs to; it must exist.
     pub budget_id: BudgetId,
     /// An expense account, or null for every expense account.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
     pub account_id: Nullish<AccountId>,
     /// Fund filter.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
     pub fund_id: Nullish<FundId>,
     /// Grant filter.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
     pub grant_id: Nullish<GrantId>,
     /// Dimension filter.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
     pub dimension_id: Nullish<DimensionId>,
     /// A period, or null for the whole fiscal year.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
     pub period_id: Nullish<PeriodId>,
     /// Budgeted amount in base currency: whole minor units, not negative.
+    #[serde(serialize_with = "crate::js_number::serialize")]
     pub amount: f64,
 }
 

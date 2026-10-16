@@ -1,7 +1,7 @@
 //! Setup writes: the chart of accounts, funds, grants, dimensions and fiscal years
 //! (`engine.ts:165-289`).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::{
     Error, Ledger, Permission, fail, has_text, js_trim, json_string, normal_balance_of, require,
@@ -16,10 +16,10 @@ use crate::types::{
 
 /// The input of `addAccount` (`engine.ts:169-175`): an [`Account`] without `normal_balance`,
 /// which follows the type, and with `id` and `is_active` optional.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NewAccount {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<AccountId>,
     /// Account code, unique; stored trimmed.
     pub code: String,
@@ -34,7 +34,7 @@ pub struct NewAccount {
     /// Header accounts group others and cannot be posted to.
     pub is_group: bool,
     /// Defaults to active.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub is_active: Option<bool>,
     /// Bank, mobile money or petty cash.
     pub is_cash: bool,
@@ -49,16 +49,16 @@ pub struct NewAccount {
 /// The patch of `updateAccount` (`engine.ts:203-207`). Only these fields may change: type, code
 /// and normal balance would re-state every posted line on the account (`engine.ts:212-213`), so
 /// other fields in a patch are ignored, as TS ignores them.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountPatch {
     /// New name, stored trimmed; it cannot be blank.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     /// Activate or deactivate.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub is_active: Option<bool>,
     /// New function; `null` is refused, as TS refuses it (`engine.ts:219-220`).
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
     pub expense_function: Nullish<ExpenseFunction>,
 }
 
@@ -66,7 +66,7 @@ pub struct AccountPatch {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct NewFund {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<FundId>,
     /// Display name.
     pub name: String,
@@ -76,10 +76,10 @@ pub struct NewFund {
 
 /// The input of `addGrant` (`engine.ts:239`): a [`Grant`] with `id` optional and the award as the
 /// raw JS number the caller sent, checked by `assertMinor` (`engine.ts:243`).
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewGrant {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<GrantId>,
     /// Display name.
     pub name: String,
@@ -90,6 +90,7 @@ pub struct NewGrant {
     /// The restricted fund the grant sits in; it must exist.
     pub fund_id: FundId,
     /// Award in minor units of `currency`; a positive whole number.
+    #[serde(serialize_with = "crate::js_number::serialize")]
     pub award: f64,
     /// Award currency.
     pub currency: String,
@@ -105,7 +106,7 @@ pub struct NewGrant {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct NewDimension {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<DimensionId>,
     /// Which dimension.
     pub kind: DimensionKind,

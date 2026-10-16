@@ -1,6 +1,6 @@
 //! Accounts payable: vendors, bills and bill payments (`engine.ts:806-903`).
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::documents::{NewCodedLine, PayInput, Settled};
 use super::{EntryOptions, Error, Ledger, Permission, fail, has_text, require};
@@ -11,10 +11,10 @@ use crate::types::{
 };
 
 /// The input of `addVendor` (`engine.ts:810`): a [`Vendor`] with `id` optional.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NewVendor {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<VendorId>,
     /// Display name; it cannot be blank, and is stored as given.
     pub name: String,
@@ -26,10 +26,10 @@ pub struct NewVendor {
 
 /// The input of `createBill` (`engine.ts:822-828`): a [`Bill`] without its status, entry,
 /// approver and creator, with `id` optional and the lines not yet given ids.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewBill {
     /// Id; drawn from the env when absent.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<BillId>,
     /// Vendor billed by; it must exist.
     pub vendor_id: VendorId,
@@ -42,6 +42,7 @@ pub struct NewBill {
     /// Bill currency.
     pub currency: String,
     /// Units of base currency per unit of `currency`.
+    #[serde(serialize_with = "crate::js_number::serialize")]
     pub fx_rate: f64,
     /// Coded lines; at least one.
     pub lines: Vec<NewCodedLine>,
