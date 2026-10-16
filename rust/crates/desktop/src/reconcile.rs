@@ -329,7 +329,12 @@ impl ImportPreview {
 
 /// The duplicate key of a statement line (`engine.ts:1166-1167`): date, amount, and the
 /// reference, or the description when there is none.
-fn statement_key(date: &IsoDate, amount: Minor, reference: Option<&str>, description: &str) -> String {
+fn statement_key(
+    date: &IsoDate,
+    amount: Minor,
+    reference: Option<&str>,
+    description: &str,
+) -> String {
     format!("{date}|{amount}|{}", reference.unwrap_or(description))
 }
 
@@ -339,7 +344,11 @@ fn statement_key(date: &IsoDate, amount: Minor, reference: Option<&str>, descrip
 #[must_use]
 pub fn repeats(state: &LedgerState, bank: &BankAccountId, rows: &[ParsedStatementRow]) -> usize {
     let mut earlier: BTreeMap<String, usize> = BTreeMap::new();
-    for s in state.statement_lines.iter().filter(|s| &s.bank_account_id == bank) {
+    for s in state
+        .statement_lines
+        .iter()
+        .filter(|s| &s.bank_account_id == bank)
+    {
         let key = statement_key(&s.date, s.amount, s.reference.as_deref(), &s.description);
         *earlier.entry(key).or_default() += 1;
     }
@@ -832,7 +841,10 @@ impl PostForm {
 pub fn suspense_hint(state: &LedgerState) -> String {
     let held = state
         .account(&state.settings.system_accounts.suspense)
-        .map_or_else(|| "suspense".to_owned(), |a| format!("{} {}", a.code, a.name));
+        .map_or_else(
+            || "suspense".to_owned(),
+            |a| format!("{} {}", a.code, a.name),
+        );
     format!("Leave empty to hold it in {held} until it is explained.")
 }
 
@@ -1127,7 +1139,16 @@ mod tests {
         let c = candidates(&books, &line("demo-0052"), AUTO_WINDOW);
         assert_eq!(c[0].number, "JE-0002");
         assert!(c[0].reference_match);
-        assert_eq!(c[0].gap_text(), "Same day \u{b7} Reference matches");
+        assert_eq!(
+            c[0].day_gap, 1,
+            "JE-0002 is dated a day from the statement line"
+        );
+        assert_eq!(c[0].gap_text(), "1 day apart \u{b7} Reference matches");
+        let same = CandidateRow {
+            day_gap: 0,
+            ..c[0].clone()
+        };
+        assert_eq!(same.gap_text(), "Same day \u{b7} Reference matches");
         let far = CandidateRow {
             day_gap: 1,
             reference_match: false,
