@@ -15,7 +15,10 @@ cargo run -p desktop -- --screen connect           # opens on the connect screen
 ```
 
 Keys `1` to `7` open the nav entries (Accounts, Journal, General ledger, Spend, Grants,
-Reconcile, Reports) while the books show; on the connect screen digits go to the fields. The
+Reconcile, Reports) while the books show and no field has focus (the shell only handles keys
+while its own focus handle is focused, so typing in a field never switches screens). Other
+keys go to the screen showing: on Accounts, `a` opens the chart, `p` the periods and `n` the
+add form with the code field focused (Enter moves to the name, Enter there submits). The
 status bar names the organisation, its currency and the connection, and toggles the theme.
 
 The demo organisation (Demo NGO Kenya) holds the demo books from
@@ -31,10 +34,11 @@ when the app closes.
 |---|---|---|
 | `backend` | `LedgerBackend` trait, `InProcessBackend`, `SystemEnv`, `BackendEvent`, `ConnectionStatus` | no |
 | `model` | `NavEntry`, `Navigation` (entry, screen, keys), `LedgerView` (orgs, selection, status, snapshot, revision), `ConnectForm` | no |
+| `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
 | `store` | `LedgerStore`, the one store entity: owns the backend and the `LedgerView`, drains the change channel in batches | yes |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag` | yes |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`; `panels::accounts::AccountsPanel` (U2) | yes |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
 Everything under "no" is unit-tested (`cargo test -p desktop`); rendering code stays thin and
@@ -131,5 +135,10 @@ kill %1
 `wtype <key>` sends a key to the focused window (U1 checked that `4` opens Spend this way);
 Hyprland 0.56 has no synthetic click. Omarchy gives every window 0.985 opacity, so the wallpaper
 shows faintly through screenshots (ADR 0002). Current shots: `docs/screens/u1-shell.png` (demo
-org, light), `docs/screens/u1-shell-dark.png` (dark, General ledger) and
-`docs/screens/u1-connect.png`.
+org, light), `docs/screens/u1-shell-dark.png` (dark, General ledger),
+`docs/screens/u1-connect.png`, and from U2 `docs/screens/u2-accounts.png`,
+`docs/screens/u2-periods.png` (key `p`) and `docs/screens/u2-accounts-error.png` (keys `n`,
+`1110`, Return, a name, Return: the engine refuses the code in use). Keys reach the window
+after `hyprctl dispatch focuswindow address:<addr>`; `wtype -k Return` sends Enter. Other
+threads may have their own `flowtrace-books` windows open, so pick yours from
+`hyprctl clients -j` by `pid` (the `$!` of the launch), not by class.

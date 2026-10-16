@@ -5,6 +5,7 @@
 //! the GPUI side is [`store`] (the one store entity), [`shell`] (the window's root view),
 //! [`panels`] (one content panel per nav entry) and [`app`] (start-up).
 
+pub mod accounts;
 pub mod app;
 pub mod backend;
 pub mod model;

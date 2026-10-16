@@ -21,6 +21,7 @@ use gpui_kit::{
 
 use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen};
 use crate::panels;
+use crate::panels::accounts::AccountsPanel;
 use crate::store::LedgerStore;
 use crate::theme::{self, palette, space, text};
 
@@ -31,6 +32,7 @@ type OrgItems = Vec<SharedString>;
 pub struct Shell {
     store: Entity<LedgerStore>,
     nav: Navigation,
+    accounts: Entity<AccountsPanel>,
     org_select: Entity<SelectState<OrgItems>>,
     host: Entity<InputState>,
     database: Entity<InputState>,
@@ -67,6 +69,8 @@ impl Shell {
             InputState::new(window, cx).placeholder("~/.config/flowtrace/token (optional)")
         });
 
+        let accounts = cx.new(|cx| AccountsPanel::new(store.clone(), window, cx));
+
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
             cx.subscribe_in(&org_select, window, Self::on_org_selected),
@@ -78,6 +82,7 @@ impl Shell {
         Self {
             store,
             nav,
+            accounts,
             org_select,
             host,
             database,
@@ -112,12 +117,21 @@ impl Shell {
         }
     }
 
-    /// Keys 1 to 7 open their nav entry (`Navigation::press_key`).
-    fn on_key_down(&mut self, event: &KeyDownEvent, _: &mut Window, cx: &mut Context<Self>) {
-        if event.keystroke.modifiers.modified() {
+    /// Keys 1 to 7 open their nav entry (`Navigation::press_key`); other keys go to the
+    /// screen showing. Only while the shell itself has focus, so typing in a field never
+    /// switches screens.
+    fn on_key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
+        if event.keystroke.modifiers.modified() || !self.focus.is_focused(window) {
             return;
         }
-        if self.nav.press_key(&event.keystroke.key) {
+        let key = event.keystroke.key.as_str();
+        let handled = self.nav.press_key(key)
+            || (self.nav.screen == Screen::Books
+                && self.nav.entry == NavEntry::Accounts
+                && self
+                    .accounts
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)));
+        if handled {
             cx.stop_propagation();
             cx.notify();
         }
@@ -180,8 +194,8 @@ impl Shell {
             .selected()
             .is_some_and(|org| org.id.as_str() == ledger_core::demo::DEMO_ORG_ID);
         match entry {
-            NavEntry::Accounts
-            | NavEntry::Journal
+            NavEntry::Accounts => self.accounts.clone().into_any_element(),
+            NavEntry::Journal
             | NavEntry::GeneralLedger
             | NavEntry::Spend
             | NavEntry::Grants
