@@ -1,7 +1,8 @@
 // Asserts that the fixtures cover the TS ledger engine. Everything required
 // is enumerated from the TS sources and their exports, never from a list kept
 // here, so a new command, report or method in flowtrace/src/lib/ledger fails
-// this check until a fixture covers it.
+// this check until a fixture covers it. It also replays the recorded state
+// deltas, so the delta format the Rust replays rely on is proven here.
 //
 // Usage: bun coverage.ts [fixtures-dir]   (default: rust/fixtures)
 import fs from 'node:fs'
@@ -79,6 +80,39 @@ export function testBlocks(): Array<TestBlock> {
 }
 
 type Json = null | boolean | number | string | Array<Json> | { [k: string]: Json }
+
+/** JSON with sorted keys, for comparing parsed values. */
+function stable(v: Json): string {
+  if (v === null || typeof v !== 'object') return JSON.stringify(v)
+  if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`
+  return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stable(v[k])}`).join(',')}}`
+}
+
+type Row = { id: string } & Record<string, Json>
+
+/** Applies the recorded deltas, in order, to a copy of a state (format in rust/fixtures/README.md). */
+function replay(initial: Json, steps: Array<Record<string, Json>>): Json {
+  const state = structuredClone(initial) as Record<string, Json>
+  for (const step of steps) {
+    for (const [key, d] of Object.entries((step.delta ?? {}) as Record<string, Record<string, Json>>)) {
+      if (key === 'settings') state.settings = d
+      else if (key === 'counters') Object.assign(state.counters as Record<string, Json>, d)
+      else if ('replaced' in d) state[key] = d.replaced
+      else {
+        const removed = new Set((d.removed as Array<string> | undefined) ?? [])
+        const changed = new Map(((d.changed as Array<Row> | undefined) ?? []).map((r) => [r.id, r]))
+        let rows = (state[key] as Array<Row>).filter((r) => !removed.has(r.id)).map((r) => changed.get(r.id) ?? r)
+        rows = [...rows, ...((d.added as Array<Row> | undefined) ?? [])]
+        if (d.order) {
+          const byId = new Map(rows.map((r) => [r.id, r]))
+          rows = (d.order as Array<string>).map((id) => byId.get(id) as Row)
+        }
+        state[key] = rows
+      }
+    }
+  }
+  return state
+}
 
 function readFixtures(dir: string) {
   if (!fs.existsSync(dir)) return new Map<string, Record<string, Json>>()
@@ -172,7 +206,20 @@ export async function checkCoverage(dir = FIXTURES_DIR): Promise<{ problems: Arr
     if (n !== b.rejections) problems.push(`${b.file} "${b.title}": ${b.rejections} rejections in the test, ${n} in the fixture`)
   }
 
-  // 6. README: one row per fixture file, and no row for a file that is gone.
+  // 6. Deltas replay: the demo backfill from its initial state gives the demo
+  //    books, and the accepted commands from the demo books give their final state.
+  const demoBooks = fixtures.get('demo-books.json')
+  const backfill = fixtures.get('demo-backfill.json')
+  if (demoBooks && backfill) {
+    const replayed = replay(backfill.initial_state, backfill.steps as Array<Record<string, Json>>)
+    if (stable(replayed) !== stable(demoBooks.state)) problems.push('demo-backfill.json: replaying the deltas does not give demo-books.json#/state')
+    if (accepted) {
+      const after = replay(demoBooks.state, accepted.steps as Array<Record<string, Json>>)
+      if (stable(after) !== stable(accepted.final_state)) problems.push('commands-accepted.json: replaying the deltas does not give final_state')
+    }
+  }
+
+  // 7. README: one row per fixture file, and no row for a file that is gone.
   const readme = path.join(dir, 'README.md')
   if (!fs.existsSync(readme)) problems.push(`${readme} is missing`)
   else {
