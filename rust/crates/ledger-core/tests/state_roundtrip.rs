@@ -20,7 +20,7 @@ const STATES: [(&str, &str); 6] = [
     ("setup", "/emptyLedger/0/result"),
 ];
 
-/// Sorts every object's keys, so printing does not depend on serde_json's `preserve_order`
+/// Sorts every object's keys, so printing does not depend on the `serde_json` `preserve_order`
 /// feature, which another workspace crate may switch on.
 fn sort_keys(value: &mut Value) {
     match value {
@@ -122,7 +122,7 @@ fn every_posted_entry_input_round_trips() {
         &|m| m.get("method").and_then(Value::as_str) == Some("post"),
         &mut steps,
     );
-    assert!(!steps.is_empty());
+    assert!(!steps.is_empty(), "no post steps in rejected-cases");
     for step in steps {
         let input = &step["args"][1];
         let parsed: EntryInput =

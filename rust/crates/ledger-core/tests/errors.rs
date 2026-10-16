@@ -64,8 +64,10 @@ fn every_rejected_code_exists_as_a_variant() {
             seen.insert(code.as_str());
         }
     }
-    // 22 of the 28 codes appear in the fixtures; the other six have no asserting TS test.
-    assert_eq!(seen.len(), 22, "{seen:?}");
+    // 26 of the 28 codes appear in the fixtures; no TS test or validateEntry input raises
+    // INACTIVE_ACCOUNT or GRANT_NOT_STARTED.
+    assert_eq!(seen.len(), 26, "{seen:?}");
+    assert!(!seen.contains("INACTIVE_ACCOUNT") && !seen.contains("GRANT_NOT_STARTED"));
 }
 
 #[test]
@@ -76,7 +78,7 @@ fn every_rejection_renders_its_fixture_message_byte_equal() {
         for err in ledger_errors(&f) {
             let issues: Vec<Issue> = serde_json::from_value(err["issues"].clone()).unwrap();
             assert_eq!(serde_json::to_value(&issues).unwrap(), err["issues"]);
-            let error = LedgerError::new(issues);
+            let error = LedgerError::new(issues).unwrap();
             assert_eq!(error.to_string(), err["message"].as_str().unwrap());
             assert_eq!(serde_json::to_value(error.code()).unwrap(), err["code"]);
             checked += 1;
@@ -96,7 +98,7 @@ fn rejected_cases_hold_37_rejections() {
 fn every_validate_entry_issue_round_trips() {
     let f = fixture("engine-queries");
     let all = issues(&f);
-    assert!(!all.is_empty());
+    assert!(!all.is_empty(), "no issues in engine-queries");
     for issue in all {
         let parsed: Issue = serde_json::from_value(issue.clone()).unwrap();
         assert_eq!(&serde_json::to_value(&parsed).unwrap(), issue);
@@ -129,7 +131,8 @@ fn ledger_error_joins_issue_messages_with_one_space() {
             IssueCode::Unbalanced,
             "Debits and credits differ by KES 0.01.",
         ),
-    ]);
+    ])
+    .unwrap();
     assert_eq!(error.code(), IssueCode::LineZero);
     assert_eq!(
         error.to_string(),
@@ -138,4 +141,5 @@ fn ledger_error_joins_issue_messages_with_one_space() {
     let single = LedgerError::fail(IssueCode::NotFound, "Entry not found.");
     assert_eq!(single.issues().len(), 1);
     assert_eq!(single.to_string(), "Entry not found.");
+    assert!(LedgerError::new(Vec::new()).is_none());
 }

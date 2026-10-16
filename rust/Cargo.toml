@@ -35,7 +35,7 @@ async-channel = "2.5"
 
 # Every crate inherits these with `[lints] workspace = true`.
 # Test modules opt out of unwrap_used / expect_used with a module-level
-# `#![expect(..., reason = "...")]`; see crates/ledger-core/src/lib.rs.
+# `#![expect(..., reason = "...")]`; see crates/ledger-core/tests/money.rs.
 [workspace.lints.rust]
 unsafe_code = "deny"
 missing_docs = "warn"
