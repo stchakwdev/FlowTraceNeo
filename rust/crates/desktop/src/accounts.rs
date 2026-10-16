@@ -7,13 +7,15 @@
 //! and `periods.tsx`; the rules themselves stay in `ledger-core`, whose messages are shown as
 //! they come.
 
-use ledger_core::reports::{LineFilter, balances, natural};
+use std::collections::{BTreeMap, HashMap, HashSet};
+
 use ledger_core::engine::{AccountPatch, NewAccount};
+use ledger_core::reports::{LineFilter, balances, natural};
 use ledger_core::types::{
     Account, AccountId, AccountType, EntryStatus, ExpenseFunction, FiscalPeriod, IsoDate,
     NormalBalance, Nullish, PeriodId, PeriodStatus, SourceType,
 };
-use ledger_core::{LedgerCommand, LedgerState, Minor};
+use ledger_core::{CommandError, LedgerCommand, LedgerState, Minor, engine};
 
 use crate::backend::BackendError;
 
@@ -33,47 +35,90 @@ pub const EXPENSE_FUNCTIONS: [ExpenseFunction; 3] = [
     ExpenseFunction::Fundraising,
 ];
 
+/// The en dash the web app shows for an empty cell (`money.tsx:12`).
+const DASH: &str = "\u{2013}";
+
+/// The middle dot between parts of a meta line.
+const DOT: &str = "\u{b7}";
+
 /// `TYPE_LABEL` (`accounts.tsx:27-33`).
 #[must_use]
 pub fn type_label(t: AccountType) -> &'static str {
-    let _ = t;
-    todo!()
+    match t {
+        AccountType::Asset => "Asset",
+        AccountType::Liability => "Liability",
+        AccountType::Equity => "Net assets",
+        AccountType::Income => "Income",
+        AccountType::Expense => "Expense",
+    }
 }
 
 /// `FUNCTION_LABEL` (`accounts.tsx:35-39`).
 #[must_use]
 pub fn function_label(f: ExpenseFunction) -> &'static str {
-    let _ = f;
-    todo!()
+    match f {
+        ExpenseFunction::Program => "Programme",
+        ExpenseFunction::Management => "Management and general",
+        ExpenseFunction::Fundraising => "Fundraising",
+    }
 }
 
 /// The side that increases an account, for the normal balance column.
 #[must_use]
 pub fn normal_balance_label(n: NormalBalance) -> &'static str {
-    let _ = n;
-    todo!()
+    match n {
+        NormalBalance::Debit => "Debit",
+        NormalBalance::Credit => "Credit",
+    }
 }
 
 /// `formatMinor` (`flowtrace/src/components/ledger/money.tsx:8-21`) with its defaults: two
-/// decimals with thousands separators, negatives in parentheses, zero as an en dash.
+/// decimals with thousands separators (`en-KE` groups by three with commas), negatives in
+/// parentheses, zero as an en dash. Minor units are whole cents, so the digits are exact.
 #[must_use]
 pub fn format_minor(minor: Minor) -> String {
-    let _ = minor;
-    todo!()
+    if minor == 0 {
+        return DASH.to_owned();
+    }
+    let abs = minor.unsigned_abs();
+    let whole = (abs / 100).to_string();
+    let mut grouped = String::with_capacity(whole.len() + whole.len() / 3);
+    for (i, c) in whole.chars().enumerate() {
+        if i > 0 && (whole.len() - i).is_multiple_of(3) {
+            grouped.push(',');
+        }
+        grouped.push(c);
+    }
+    let text = format!("{grouped}.{:02}", abs % 100);
+    if minor < 0 { format!("({text})") } else { text }
+}
+
+/// The short English month names `en-GB` dates use.
+const MONTHS: [&str; 12] = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/// Day and month name of a `YYYY-MM-DD` date, without leading zero on the day.
+fn day_month(date: &IsoDate) -> (String, &'static str, &str) {
+    let s = date.as_str();
+    let (year, rest) = s.split_at(4);
+    let month: usize = rest.get(1..3).and_then(|m| m.parse().ok()).unwrap_or(1);
+    let day = rest.get(4..6).unwrap_or("01").trim_start_matches('0');
+    (day.to_owned(), MONTHS[month.clamp(1, 12) - 1], year)
 }
 
 /// `formatDate` (`flowtrace/src/lib/format.ts:12-19`): `31 Jan 2026`.
 #[must_use]
 pub fn format_date(date: &IsoDate) -> String {
-    let _ = date;
-    todo!()
+    let (day, month, year) = day_month(date);
+    format!("{day} {month} {year}")
 }
 
 /// `formatShortDate` (`flowtrace/src/lib/format.ts:22-28`): `1 Jan`.
 #[must_use]
 pub fn format_short_date(date: &IsoDate) -> String {
-    let _ = date;
-    todo!()
+    let (day, month, _) = day_month(date);
+    format!("{day} {month}")
 }
 
 /// One row of the chart: an account at its depth in the tree with its balance.
@@ -94,48 +139,134 @@ impl AccountRow {
     /// `AccountTags` (`accounts.tsx:226-235`): Header, Cash, System, Inactive.
     #[must_use]
     pub fn tags(&self) -> Vec<&'static str> {
-        todo!()
+        let a = &self.account;
+        [
+            (a.is_group, "Header"),
+            (a.is_cash, "Cash"),
+            (self.is_system, "System"),
+            (!a.is_active, "Inactive"),
+        ]
+        .into_iter()
+        .filter_map(|(on, tag)| on.then_some(tag))
+        .collect()
     }
 
     /// `ActiveToggle` (`accounts.tsx:237-264`): none for a system account.
     #[must_use]
     pub fn toggle_label(&self) -> Option<&'static str> {
-        todo!()
+        (!self.is_system).then_some(if self.account.is_active {
+            "Deactivate"
+        } else {
+            "Reactivate"
+        })
     }
 
     /// The function column: the label, or an en dash.
     #[must_use]
     pub fn function_text(&self) -> &'static str {
-        todo!()
+        self.account.expense_function.map_or(DASH, function_label)
     }
 
     /// The balance column.
     #[must_use]
     pub fn balance_text(&self) -> String {
-        todo!()
+        format_minor(self.balance)
     }
 
     /// The command of the row's Deactivate or Reactivate button (`accounts.tsx:80-90`).
     #[must_use]
     pub fn toggle_command(&self) -> LedgerCommand {
-        todo!()
+        LedgerCommand::AccountUpdate {
+            account_id: self.account.id.clone(),
+            patch: AccountPatch {
+                is_active: Some(!self.account.is_active),
+                ..AccountPatch::default()
+            },
+        }
     }
 }
 
 /// `buildTree` (`accounts.tsx:43-68`): accounts under their parent in code order, depth first;
 /// an account whose parent is missing sits at the top level. Balances are posted lines up to
-/// `as_of` (all of them when `None`).
+/// `as_of` (all of them when `None`). Codes compare by bytes, which is what `localeCompare`
+/// gives for the digit codes of a chart (project memory, fixtures and TS engine facts).
 #[must_use]
 pub fn account_rows(state: &LedgerState, as_of: Option<&IsoDate>) -> Vec<AccountRow> {
-    let _ = (state, as_of, balances, natural, LineFilter::default());
-    todo!()
+    let posted = balances(
+        state,
+        &LineFilter {
+            to: as_of.cloned(),
+            ..LineFilter::default()
+        },
+    );
+    let ids: HashSet<&AccountId> = state.accounts.iter().map(|a| &a.id).collect();
+    let mut children: HashMap<Option<&AccountId>, Vec<&Account>> = HashMap::new();
+    for a in &state.accounts {
+        let key = a.parent_id.as_ref().filter(|p| ids.contains(p));
+        children.entry(key).or_default().push(a);
+    }
+    for list in children.values_mut() {
+        list.sort_by(|x, y| x.code.cmp(&y.code));
+    }
+    let system = system_ids(state);
+
+    let mut out = Vec::with_capacity(state.accounts.len());
+    walk(None, 0, &children, &posted, &system, &mut out);
+    out
+}
+
+/// One level of `buildTree`'s walk: pushes the children of `parent` and everything below them,
+/// and returns their summed balance.
+fn walk<'a>(
+    parent: Option<&'a AccountId>,
+    depth: usize,
+    children: &HashMap<Option<&'a AccountId>, Vec<&'a Account>>,
+    posted: &BTreeMap<AccountId, Minor>,
+    system: &HashSet<&AccountId>,
+    out: &mut Vec<AccountRow>,
+) -> Minor {
+    let mut total = 0;
+    for a in children.get(&parent).map_or(&[][..], Vec::as_slice) {
+        let index = out.len();
+        out.push(AccountRow {
+            account: (*a).clone(),
+            depth,
+            balance: 0,
+            is_system: system.contains(&a.id),
+        });
+        let own = posted.get(&a.id).copied().unwrap_or(0);
+        let below = walk(Some(&a.id), depth + 1, children, posted, system, out);
+        let balance = natural(a.normal_balance, own) + below;
+        out[index].balance = balance;
+        total += balance;
+    }
+    total
+}
+
+/// The settings' system accounts (`accounts.tsx:72-75`).
+fn system_ids(state: &LedgerState) -> HashSet<&AccountId> {
+    let s = &state.settings.system_accounts;
+    [
+        &s.accounts_payable,
+        &s.claims_payable,
+        &s.suspense,
+        &s.net_assets_unrestricted,
+        &s.net_assets_restricted,
+        &s.fx_gain_loss,
+    ]
+    .into_iter()
+    .collect()
 }
 
 /// The section meta: `54 accounts`, or `54 accounts · 2 inactive` (`accounts.tsx:117-119`).
 #[must_use]
 pub fn accounts_meta(rows: &[AccountRow]) -> String {
-    let _ = rows;
-    todo!()
+    let inactive = rows.iter().filter(|r| !r.account.is_active).count();
+    if inactive == 0 {
+        format!("{} accounts", rows.len())
+    } else {
+        format!("{} accounts {DOT} {inactive} inactive", rows.len())
+    }
 }
 
 /// What the add form found wrong before sending (`accounts.tsx:312-318`).
@@ -184,39 +315,73 @@ impl NewAccountForm {
     /// Changes the type; the parent resets, as a parent must have the same type
     /// (`accounts.tsx:298-303`).
     pub fn set_type(&mut self, t: AccountType) {
-        let _ = t;
-        todo!()
+        self.account_type = t;
+        self.parent = None;
     }
 
     /// The parent choices: header accounts of the form's type in code order, as
     /// `(id, "code · name")` (`accounts.tsx:294-296`).
     #[must_use]
     pub fn parents(&self, state: &LedgerState) -> Vec<(AccountId, String)> {
-        let _ = state;
-        todo!()
+        let mut headers: Vec<&Account> = state
+            .accounts
+            .iter()
+            .filter(|a| a.is_group && a.account_type == self.account_type)
+            .collect();
+        headers.sort_by(|x, y| x.code.cmp(&y.code));
+        headers
+            .into_iter()
+            .map(|a| (a.id.clone(), format!("{} {DOT} {}", a.code, a.name)))
+            .collect()
     }
 
     /// The cash checkbox shows for a non-header asset (`accounts.tsx:398`).
     #[must_use]
     pub fn shows_cash(&self) -> bool {
-        todo!()
+        self.account_type == AccountType::Asset && !self.is_group
     }
 
     /// The function choice shows for a non-header expense (`accounts.tsx:408`).
     #[must_use]
     pub fn shows_function(&self) -> bool {
-        todo!()
+        self.account_type == AccountType::Expense && !self.is_group
     }
 
     /// The `account.add` command, or what to fix first (`accounts.tsx:312-336`). A code
-    /// already in use is left to the engine, so its message is the one shown.
+    /// already in use is left to the engine (`engine.ts` `addAccount`), so its message is the
+    /// one shown; the web form checks it itself with its own wording.
     ///
     /// # Errors
     ///
     /// [`FieldErrors`] when the code or the name is blank.
     pub fn command(&self) -> Result<LedgerCommand, FieldErrors> {
-        let _ = NewAccount::clone;
-        todo!()
+        let code = self.code.trim();
+        let name = self.name.trim();
+        let errors = FieldErrors {
+            code: code
+                .is_empty()
+                .then(|| "Enter a code, such as 5150.".to_owned()),
+            name: name
+                .is_empty()
+                .then(|| "Enter the account name.".to_owned()),
+        };
+        if errors != FieldErrors::default() {
+            return Err(errors);
+        }
+        Ok(LedgerCommand::AccountAdd {
+            input: NewAccount {
+                id: None,
+                code: code.to_owned(),
+                name: name.to_owned(),
+                account_type: self.account_type,
+                parent_id: self.parent.clone(),
+                is_group: self.is_group,
+                is_active: None,
+                is_cash: self.shows_cash() && self.is_cash,
+                expense_function: self.shows_function().then_some(self.expense_function),
+                cash_flow_class: None,
+            },
+        })
     }
 }
 
@@ -238,22 +403,39 @@ impl EditAccountForm {
     /// The form filled from `account`.
     #[must_use]
     pub fn new(account: &Account) -> Self {
-        let _ = account;
-        todo!()
+        Self {
+            account: account.clone(),
+            name: account.name.clone(),
+            is_active: account.is_active,
+            expense_function: account.expense_function,
+        }
     }
 
     /// Only expense accounts have a function (`engine.ts:216-218`).
     #[must_use]
     pub fn shows_function(&self) -> bool {
-        todo!()
+        self.account.account_type == AccountType::Expense
     }
 
     /// The `account.update` command with the changed fields, or `None` when nothing changed.
     /// A blank name is sent as typed so the engine's message shows.
     #[must_use]
     pub fn command(&self) -> Option<LedgerCommand> {
-        let _ = (AccountPatch::default(), Nullish::<ExpenseFunction>::Undefined);
-        todo!()
+        let a = &self.account;
+        let patch = AccountPatch {
+            name: (self.name != a.name).then(|| self.name.clone()),
+            is_active: (self.is_active != a.is_active).then_some(self.is_active),
+            expense_function: match self.expense_function {
+                Some(f) if self.shows_function() && a.expense_function != Some(f) => {
+                    Nullish::Value(f)
+                }
+                _ => Nullish::Undefined,
+            },
+        };
+        (patch != AccountPatch::default()).then(|| LedgerCommand::AccountUpdate {
+            account_id: a.id.clone(),
+            patch,
+        })
     }
 }
 
@@ -272,16 +454,27 @@ impl Failure {
     /// error's own text.
     #[must_use]
     pub fn new(title: &str, error: &BackendError) -> Self {
-        let _ = (title, error);
-        todo!()
+        let messages = match error {
+            BackendError::Command(CommandError::Engine(engine::Error::Ledger(e))) => {
+                e.issues().iter().map(|i| i.message.clone()).collect()
+            }
+            other => vec![other.to_string()],
+        };
+        Self {
+            title: title.to_owned(),
+            messages,
+        }
     }
 }
 
 /// `PERIOD_STATUS_LABEL` (`-shared.tsx:35-39`).
 #[must_use]
 pub fn period_status_label(s: PeriodStatus) -> &'static str {
-    let _ = s;
-    todo!()
+    match s {
+        PeriodStatus::Open => "Open",
+        PeriodStatus::Closed => "Closed",
+        PeriodStatus::Locked => "Locked",
+    }
 }
 
 /// What a period row offers (`periods.tsx:243-256`).
@@ -299,7 +492,11 @@ impl PeriodAction {
     /// The button label.
     #[must_use]
     pub fn label(self) -> &'static str {
-        todo!()
+        match self {
+            Self::Close => "Close",
+            Self::Reopen => "Reopen",
+            Self::Lock => "Lock",
+        }
     }
 }
 
@@ -314,35 +511,58 @@ pub struct PeriodRow {
     pub drafts: usize,
 }
 
+/// `1 entry`, `2 entries` and the like.
+fn count(n: usize, one: &str, many: &str) -> String {
+    format!("{n} {}", if n == 1 { one } else { many })
+}
+
 impl PeriodRow {
     /// `1 Jan to 31 Jan 2026` (`periods.tsx:226-228`).
     #[must_use]
     pub fn dates_text(&self) -> String {
-        todo!()
+        format!(
+            "{} to {}",
+            format_short_date(&self.period.start_date),
+            format_date(&self.period.end_date)
+        )
     }
 
     /// `16 entries`, `1 entry · 2 drafts` (`periods.tsx:233-251`).
     #[must_use]
     pub fn counts_text(&self) -> String {
-        todo!()
+        let posted = count(self.posted, "entry", "entries");
+        if self.drafts == 0 {
+            posted
+        } else {
+            format!("{posted} {DOT} {}", count(self.drafts, "draft", "drafts"))
+        }
     }
 
     /// The actions of its status: open closes, closed reopens or locks, locked has none.
     #[must_use]
     pub fn actions(&self) -> &'static [PeriodAction] {
-        todo!()
+        match self.period.status {
+            PeriodStatus::Open => &[PeriodAction::Close],
+            PeriodStatus::Closed => &[PeriodAction::Reopen, PeriodAction::Lock],
+            PeriodStatus::Locked => &[],
+        }
     }
 
     /// The `period.close` command (`periods.tsx:81-89`).
     #[must_use]
     pub fn close_command(&self) -> LedgerCommand {
-        todo!()
+        LedgerCommand::PeriodClose {
+            period_id: self.period.id.clone(),
+        }
     }
 
     /// The notice after a close (`periods.tsx:85`).
     #[must_use]
     pub fn closed_notice(&self) -> String {
-        todo!()
+        format!(
+            "{} is closed. Entries can no longer be dated in it unless it is reopened.",
+            self.period.name
+        )
     }
 }
 
@@ -365,42 +585,97 @@ impl YearView {
     /// `Fiscal year 2026`.
     #[must_use]
     pub fn title(&self) -> String {
-        todo!()
+        format!("Fiscal year {}", self.year)
     }
 
     /// Why the year cannot close yet, when it cannot (`periods.tsx:208-212`).
     #[must_use]
     pub fn note(&self) -> Option<String> {
-        todo!()
+        (!self.closed && !self.can_close).then(|| {
+            format!(
+                "The last period of {} must be open to post the year-end close.",
+                self.year
+            )
+        })
     }
 
     /// The confirmation of its year-end close.
     #[must_use]
     pub fn close_pending(&self) -> Option<Pending> {
-        todo!()
+        let last = self.periods.last()?;
+        self.can_close.then(|| Pending::CloseYear {
+            year: self.year,
+            last_end: last.period.end_date.clone(),
+            drafts: self.drafts,
+        })
     }
 }
 
-/// `buildYears` (`periods.tsx:28-49`): latest year first, periods by start date, with the
-/// close state and the draft count of each year.
+/// `buildYears` (`periods.tsx:28-49`) with the per-period counts (`periods.tsx:69-78`):
+/// latest year first, periods by start date, with the close state and the draft count of each
+/// year. A year is closed when a year-end close entry is dated on its last day.
 #[must_use]
 pub fn fiscal_years(state: &LedgerState) -> Vec<YearView> {
-    let _ = (state, EntryStatus::Draft, SourceType::YearEndClose);
-    todo!()
+    let mut counts: HashMap<&PeriodId, (usize, usize)> = HashMap::new();
+    for e in &state.entries {
+        let c = counts.entry(&e.period_id).or_default();
+        if e.status == EntryStatus::Draft {
+            c.1 += 1;
+        } else {
+            c.0 += 1;
+        }
+    }
+    let mut by_year: Vec<(i32, Vec<PeriodRow>)> = Vec::new();
+    for p in &state.periods {
+        let (posted, drafts) = counts.get(&p.id).copied().unwrap_or_default();
+        let row = PeriodRow {
+            period: p.clone(),
+            posted,
+            drafts,
+        };
+        match by_year.iter_mut().find(|(y, _)| *y == p.fiscal_year) {
+            Some((_, rows)) => rows.push(row),
+            None => by_year.push((p.fiscal_year, vec![row])),
+        }
+    }
+    by_year.sort_by_key(|(year, _)| std::cmp::Reverse(*year));
+    by_year
+        .into_iter()
+        .map(|(year, mut periods)| {
+            periods.sort_by(|a, b| a.period.start_date.cmp(&b.period.start_date));
+            let last = periods.last().map(|p| &p.period);
+            let closed = last.is_some_and(|last| {
+                state
+                    .entries
+                    .iter()
+                    .any(|e| e.source_type == SourceType::YearEndClose && e.date == last.end_date)
+            });
+            let can_close = !closed && last.is_some_and(|l| l.status == PeriodStatus::Open);
+            let drafts = periods.iter().map(|p| p.drafts).sum();
+            YearView {
+                year,
+                periods,
+                closed,
+                can_close,
+                drafts,
+            }
+        })
+        .collect()
 }
 
 /// The year the "Open fiscal year" button adds, one after the latest (`periods.tsx:92`).
 #[must_use]
 pub fn next_year(years: &[YearView]) -> Option<i32> {
-    let _ = years;
-    todo!()
+    years.iter().map(|y| y.year).max().map(|y| y + 1)
 }
 
 /// The `year.open` command and its notice (`periods.tsx:93-104`).
 #[must_use]
 pub fn open_year(year: i32) -> (LedgerCommand, String) {
-    let _ = year;
-    todo!()
+    (
+        LedgerCommand::YearOpen { year },
+        format!("Fiscal year {year} is open: twelve monthly periods were added."),
+    )
 }
 
 /// An action waiting for confirmation (`periods.tsx:51-55`, the dialog at 266-347).
@@ -436,42 +711,122 @@ impl Pending {
     /// confirmation.
     #[must_use]
     pub fn of(action: PeriodAction, row: &PeriodRow) -> Option<Self> {
-        let _ = (action, row);
-        todo!()
+        let period = row.period.id.clone();
+        let name = row.period.name.clone();
+        match action {
+            PeriodAction::Close => None,
+            PeriodAction::Reopen => Some(Self::Reopen { period, name }),
+            PeriodAction::Lock => Some(Self::Lock { period, name }),
+        }
     }
 
-    /// The dialog title.
+    /// The dialog title (`periods.tsx:269-277`).
     #[must_use]
     pub fn title(&self) -> String {
-        todo!()
+        match self {
+            Self::Reopen { name, .. } => format!("Reopen {name}"),
+            Self::Lock { name, .. } => format!("Lock {name}?"),
+            Self::CloseYear { year, .. } => format!("Close fiscal year {year}?"),
+        }
     }
 
-    /// The confirm button.
+    /// The confirm button (`periods.tsx:283-291`).
     #[must_use]
     pub fn confirm_label(&self) -> &'static str {
-        todo!()
+        match self {
+            Self::Reopen { .. } => "Reopen period",
+            Self::Lock { .. } => "Lock period",
+            Self::CloseYear { .. } => "Close the year",
+        }
     }
 
-    /// The explanation, one paragraph or list item per line.
+    /// The explanation, one paragraph or list item per line (`periods.tsx:296-344`).
     #[must_use]
     pub fn body(&self) -> Vec<String> {
-        todo!()
+        match self {
+            Self::Reopen { name, .. } => vec![format!(
+                "Reopening lets entries be dated in {name} again, which can change figures \
+                 already reported. Periods reopen latest first."
+            )],
+            Self::Lock { name, .. } => vec![format!(
+                "A locked period can never be reopened or take entries. Lock {name} only once \
+                 its accounts are signed off."
+            )],
+            Self::CloseYear {
+                year,
+                last_end,
+                drafts,
+            } => {
+                let mut lines = vec![
+                    "The year-end close does three things:".to_owned(),
+                    format!(
+                        "1. Posts one closing entry dated {} that brings every income and \
+                         expense account for {year} to zero.",
+                        format_date(last_end)
+                    ),
+                    "2. Moves the result into net assets fund by fund: unrestricted funds to \
+                     unrestricted net assets, restricted funds to restricted net assets."
+                        .to_owned(),
+                    format!("3. Closes every period of {year} that is still open."),
+                ];
+                if *drafts > 0 {
+                    let verb = if *drafts == 1 {
+                        "entry is"
+                    } else {
+                        "entries are"
+                    };
+                    lines.push(format!(
+                        "{drafts} draft {verb} still in {year}. Drafts are not included in the \
+                         close; post or delete them first."
+                    ));
+                }
+                lines.push(format!(
+                    "A year can be closed only once. Check the trial balance for {year} before \
+                     you continue."
+                ));
+                lines
+            }
+        }
     }
 
     /// Reopening asks for a reason.
     #[must_use]
     pub fn needs_reason(&self) -> bool {
-        todo!()
+        matches!(self, Self::Reopen { .. })
     }
 
-    /// The command to send, with `reason` for a reopen, and the notice shown once it is done.
+    /// The command to send, with `reason` for a reopen, and the notice shown once it is done
+    /// (`periods.tsx:114-136`).
     ///
     /// # Errors
     ///
     /// The message under the reason field when a reopen has a blank reason.
     pub fn command(&self, reason: &str) -> Result<(LedgerCommand, String), String> {
-        let _ = reason;
-        todo!()
+        match self {
+            Self::Reopen { period, name } => {
+                let reason = reason.trim();
+                if reason.is_empty() {
+                    return Err("Say why the period needs to take entries again.".to_owned());
+                }
+                Ok((
+                    LedgerCommand::PeriodReopen {
+                        period_id: period.clone(),
+                        reason: reason.to_owned(),
+                    },
+                    format!("{name} is open again. The reason is in the audit trail."),
+                ))
+            }
+            Self::Lock { period, name } => Ok((
+                LedgerCommand::PeriodLock {
+                    period_id: period.clone(),
+                },
+                format!("{name} is locked."),
+            )),
+            Self::CloseYear { year, .. } => Ok((
+                LedgerCommand::YearClose { year: *year },
+                format!("{year} is closed. Income and expense have moved to net assets."),
+            )),
+        }
     }
 }
 
@@ -550,7 +905,9 @@ mod tests {
             .collect();
         assert_eq!(
             top,
-            ["1000", "2000", "3000", "4000", "5000", "6000", "7000", "8000"]
+            [
+                "1000", "2000", "3000", "4000", "5000", "6000", "7000", "8000"
+            ]
         );
         let first: Vec<_> = rows
             .iter()
@@ -622,10 +979,7 @@ mod tests {
                 .sum();
             // Children of a header share its type, so the natural sign is the same.
             let own = posted.get(&r.account.id).copied().unwrap_or(0);
-            assert_eq!(
-                r.balance,
-                children + natural(r.account.normal_balance, own)
-            );
+            assert_eq!(r.balance, children + natural(r.account.normal_balance, own));
         }
         // The demo holds money in the bank, and income shows positive.
         assert!(row(&rows, "1000").balance > 0);
@@ -677,7 +1031,7 @@ mod tests {
         );
 
         let parents = form.parents(&state);
-        assert!(!parents.is_empty());
+        assert!(parents.len() >= 2);
         assert!(parents.windows(2).all(|w| w[0].1 < w[1].1));
         let (parent, label) = parents[0].clone();
         let header = state.accounts.iter().find(|a| a.id == parent).unwrap();
@@ -927,8 +1281,10 @@ mod tests {
         assert!(pending.needs_reason());
         assert_eq!(
             pending.body(),
-            ["Reopening lets entries be dated in Dec 2025 again, which can change figures \
-              already reported. Periods reopen latest first."]
+            [
+                "Reopening lets entries be dated in Dec 2025 again, which can change figures \
+              already reported. Periods reopen latest first."
+            ]
         );
         assert_eq!(
             pending.command("  "),
@@ -963,8 +1319,10 @@ mod tests {
         assert!(!pending.needs_reason());
         assert_eq!(
             pending.body(),
-            ["A locked period can never be reopened or take entries. Lock Dec 2025 only once \
-              its accounts are signed off."]
+            [
+                "A locked period can never be reopened or take entries. Lock Dec 2025 only once \
+              its accounts are signed off."
+            ]
         );
         let (command, notice) = pending.command("").unwrap();
         assert_eq!(
@@ -1005,21 +1363,25 @@ mod tests {
             last_end: IsoDate::parse("2026-12-31").unwrap(),
             drafts: 2,
         };
-        assert!(with_drafts.body().contains(
-            &"2 draft entries are still in 2026. Drafts are not included in the close; post \
+        assert!(
+            with_drafts.body().contains(
+                &"2 draft entries are still in 2026. Drafts are not included in the close; post \
               or delete them first."
-                .to_owned()
-        ));
+                    .to_owned()
+            )
+        );
         let one = Pending::CloseYear {
             year: 2026,
             last_end: IsoDate::parse("2026-12-31").unwrap(),
             drafts: 1,
         };
-        assert!(one.body().contains(
-            &"1 draft entry is still in 2026. Drafts are not included in the close; post or \
+        assert!(
+            one.body().contains(
+                &"1 draft entry is still in 2026. Drafts are not included in the close; post or \
               delete them first."
-                .to_owned()
-        ));
+                    .to_owned()
+            )
+        );
 
         let (command, notice) = pending.command("").unwrap();
         assert_eq!(command, LedgerCommand::YearClose { year: 2026 });
@@ -1042,7 +1404,6 @@ mod tests {
 
     #[test]
     fn opening_the_next_year_adds_its_periods() {
-        let state = demo();
         let (command, notice) = open_year(2027);
         assert_eq!(command, LedgerCommand::YearOpen { year: 2027 });
         assert_eq!(

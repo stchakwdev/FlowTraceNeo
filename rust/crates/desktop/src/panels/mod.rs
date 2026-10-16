@@ -2,6 +2,8 @@
 //! to U9) replaces one arm of [`crate::shell::Shell::panel`] with its own view (README.md, "How
 //! a screen replaces its placeholder").
 
+pub mod accounts;
+
 use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{App, FontWeight, IntoElement, ParentElement as _, Styled as _, div, px};
