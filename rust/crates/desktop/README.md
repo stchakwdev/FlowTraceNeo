@@ -45,6 +45,7 @@ when the app closes.
 | `entry_form` | Manual entry form and CSV import view models: `EntryForm` (lines, `set_debit`/`set_credit`, `set_fund`, `balance`, `field_errors`, `issues`, `summary`, `save_command`, `post_commands`, `from_draft`), `Balance`, `account_choices`, `tag_choices`, `ImportPreview`, `read_import_file` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
 | `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items | yes |
+| `reconcile` | Reconcile view models: `bank_rows`, `overview`, `NewBankForm`, `ImportPreview` (parse, skipped rows, money in and out, `repeats` as the engine dedupes), `LineStatus` and `status_of`, `line_rows`, `candidates`, `position`, `auto_match_summary`, the `bank.add` and `statement.*` command builders, `PostForm`, `post_accounts` | no |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
@@ -146,10 +147,16 @@ org, light), `docs/screens/u1-shell-dark.png` (dark, General ledger),
 `docs/screens/u1-connect.png`, and from U2 `docs/screens/u2-accounts.png`,
 `docs/screens/u2-periods.png` (key `p`) and `docs/screens/u2-accounts-error.png` (keys `n`,
 `1110`, Return, a name, Return: the engine refuses the code in use). Keys reach the window
-after `hyprctl dispatch focuswindow address:<addr>`; `wtype -k Return` sends Enter. Other
-threads may have their own `flowtrace-books` windows open, so pick yours from
-`hyprctl clients -j` by `pid` (the `$!` of the launch), not by class.
-`wtype -k End` (or `Page_Down`) scrolls the content before the shot.
+because a newly opened window takes focus: send them with `wtype` after the launch sleep, and
+do not move focus elsewhere in between. Do not call `hyprctl dispatch focuswindow
+address:<addr>`: Hyprland 0.56.2 reads `dispatch` arguments as Lua, so that call fails with
+exit code 7, which stops a script running under `set -e`. `wtype -k Return` sends Enter.
+Other threads may have their own `flowtrace-books` windows open, so pick yours from
+`hyprctl clients -j` by `pid` (the `$!` of the launch), not by class, and wait for the
+previous instance to exit before launching the next.
+`wtype -k End` (or `Page_Down`) scrolls the content before the shot. Typed text can be cut
+short: in U8, `wtype` stopped an absolute path under `~/.herdr/...` at `/home/tim0/`, so type
+a relative path from `rust/` (or a dot-free symlink to the file) into a path field.
 
 ## Reports (U9)
 
@@ -288,3 +295,35 @@ Shots: `docs/screens/u3-journal.png`, `u3-entry-detail.png` (Enter on JE-0016, `
 Enter: the reversing entry), `u3-entry-new.png` (`n`, a memo, Enter, 2,500, Tab to line 2's
 credit, 2,000: the difference shows 500.00 in red) and `u3-import.png` (`i`, the path of
 `docs/screens/u3-import-sample.csv`, Enter).
+
+## Reconcile (U8)
+
+`panels::reconcile::ReconcilePanel` replaces the Reconcile placeholder, over the view models in
+`reconcile` (web: `reconcile/index.tsx` and `reconcile/$bankId.tsx`). The accounts list shows
+each bank and mobile-money account with its book balance (`reports::balances` to the as-of date),
+the net of its statement lines, matched and unmatched counts and the last statement date, under
+the web's key figures. `n` opens the add-account form (`bank.add`; the web has no such form, the
+fields are the engine's `NewBankAccount`). `j`/`k` and Enter open an account.
+
+On an account: `i` opens the import box. Type a path and press Enter (or use `Choose...`, the
+platform open dialog through `App::prompt_for_paths`); the preview is `reconcile::parse_statement`
+with the detected format, the rows, the skipped rows with their reasons, money in and out, and
+how many rows are already on the statement (`reconcile::repeats`, the engine's dedupe rule).
+Enter again imports (`statement.import`) and reports the engine's count. `a` runs Auto-match
+(`statement.autoMatch`) and shows its three counts. `j`/`k` move through the statement lines;
+the highlighted open line lists its candidates from `ledger_core::reconcile::candidates_for` at
+the web's 7-day manual window, in the engine's order; `c` moves to the next candidate and `m`
+matches (`statement.match`); `u` unmatches; `p` opens Post as a new entry (`statement.post`,
+account, fund, grant and memo as the web's dialog; an empty account posts to suspense). `f`
+cycles the status filter; Escape steps back.
+
+Statuses are the web's four plus Posted: a line matched to the entry posted from it (source
+type statement) shows "Posted from the statement" rather than "Matched by hand". The engine
+always posts a statement entry (no draft option), so the screen does too.
+`tests/reconcile_parity.rs` runs every demo-books case of `rust/fixtures/reconcile-auto-match.json`
+through the in-process backend: the candidates the view model lists equal the fixture's, and
+Auto-match gives the fixture's result and statement lines. Shots: `docs/screens/u8-bank-accounts.png`,
+`u8-reconcile.png` (keys `j j j` Enter, End), `u8-import.png` (then `i`, a path, Enter;
+the sample statement is `docs/screens/u8-mpesa-statement.csv`, synthetic) and
+`u8-reconcile-matched.png` (`a`, Page Down). Typing the absolute path of the sample (under `~/.herdr/...`) with `wtype` was cut at
+`/home/tim0/`, so the shot typed a relative, dot-free symlink to it (`out/u8-statement`).

@@ -121,7 +121,7 @@ pub struct BillsPanel {
 }
 
 /// `(id, label)` choices as select items, with a leading empty choice when `none` is given.
-fn picks<T: AsRef<str>>(choices: &[(T, String)], none: Option<&str>) -> Vec<Pick> {
+pub(crate) fn picks<T: AsRef<str>>(choices: &[(T, String)], none: Option<&str>) -> Vec<Pick> {
     none.map(|label| Pick::new("", label.to_owned()))
         .into_iter()
         .chain(
@@ -133,7 +133,7 @@ fn picks<T: AsRef<str>>(choices: &[(T, String)], none: Option<&str>) -> Vec<Pick
 }
 
 /// The chosen value of a select, `None` for nothing or the empty choice.
-fn picked(select: &PickState, cx: &App) -> Option<String> {
+pub(crate) fn picked(select: &PickState, cx: &App) -> Option<String> {
     select
         .read(cx)
         .selected_value()
@@ -141,7 +141,12 @@ fn picked(select: &PickState, cx: &App) -> Option<String> {
         .cloned()
 }
 
-fn new_pick(window: &mut Window, cx: &mut App, items: Vec<Pick>, value: Option<&str>) -> PickState {
+pub(crate) fn new_pick(
+    window: &mut Window,
+    cx: &mut App,
+    items: Vec<Pick>,
+    value: Option<&str>,
+) -> PickState {
     let index = value.and_then(|v| items.iter().position(|p| p.value == v));
     cx.new(|cx| SelectState::new(items, index.map(IndexPath::new), window, cx))
 }
