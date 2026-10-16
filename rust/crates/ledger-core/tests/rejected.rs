@@ -1,4 +1,5 @@
-//! Task C2 acceptance: every rejection in `rejected-cases.json` raised by a ported engine method
+//! Tasks C2 and C3 acceptance: every rejection in `rejected-cases.json` raised by a ported engine
+//! method
 //! reproduces the exact code, message and issues, and leaves the books unchanged. Each scenario
 //! runs its steps in order on fresh `createOrgLedger('org', 'KES', 2026)` books with the test env.
 #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
@@ -6,7 +7,7 @@
 mod common;
 
 use common::fixture;
-use common::replay::{C2_METHODS, Ran, run_command_step, run_method_step};
+use common::replay::{C2_METHODS, C3_METHODS, Ran, run_command_step, run_method_step};
 use ledger_core::env::fixed;
 use ledger_core::types::LedgerState;
 
@@ -34,7 +35,7 @@ fn rejected_cases_match_for_the_ported_methods() {
                 Ran::Delta => {
                     let method = step["method"].as_str().unwrap_or("");
                     assert!(
-                        !C2_METHODS.contains(&method),
+                        !C2_METHODS.contains(&method) && !C3_METHODS.contains(&method),
                         "{what}: {method} is ported but did not run"
                     );
                     if rejected {
@@ -48,8 +49,8 @@ fn rejected_cases_match_for_the_ported_methods() {
         "rejected-cases: {checked} rejections matched, {skipped} left to later tasks, {live_ok} accepted steps live"
     );
     assert_eq!(checked + skipped, 37);
-    // The 32 rejections from the TS tests less the five in claims and bills (C3) and the two
-    // command-layer ones (C4): the unknown command, and the entry.post whose string `fx_rate` does
-    // not fit the typed `EntryInput`.
-    assert_eq!(checked, 25);
+    // The 32 rejections from the TS tests less the two command-layer ones (C4): the unknown
+    // command, and the entry.post whose string `fx_rate` does not fit the typed `EntryInput`.
+    // C3 added the five in claims and bills. The other five are the sanitiser scenario's (C4).
+    assert_eq!((checked, skipped), (30, 7));
 }

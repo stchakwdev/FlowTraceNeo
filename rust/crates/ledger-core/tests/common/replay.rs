@@ -9,7 +9,7 @@
 use ledger_core::engine::{EntryOptions, Error, Ledger};
 use ledger_core::env::LedgerEnv;
 use ledger_core::env::fixed::FixedEnv;
-use ledger_core::types::{EntryId, EntryInput, LedgerState};
+use ledger_core::types::{AppliesTo, EntryId, EntryInput, LedgerState};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value, json};
@@ -102,6 +102,28 @@ pub fn call(l: &mut Ledger<'_>, method: &str, a: &Value) -> Option<Result<Value,
         "reopenPeriod" => out(l.reopen_period(&arg(a, 0), &arg(a, 1), &arg::<String>(a, 2))),
         "lockPeriod" => out(l.lock_period(&arg(a, 0), &arg(a, 1))),
         "closeYear" => out(l.close_year(&arg(a, 0), arg(a, 1))),
+        "addGrant" => out(l.add_grant(&arg(a, 0), arg(a, 1))),
+        "addBudget" => out(l.add_budget(&arg(a, 0), arg(a, 1))),
+        "setBudgetLine" => out(l.set_budget_line(&arg(a, 0), arg(a, 1))),
+        "addVendor" => out(l.add_vendor(&arg(a, 0), arg(a, 1))),
+        "createBill" => out(l.create_bill(&arg(a, 0), arg(a, 1))),
+        "approveBill" => out(l.approve_bill(&arg(a, 0), &arg(a, 1))),
+        "postBill" => out(l.post_bill(
+            &arg(a, 0),
+            &arg(a, 1),
+            opt::<Option<String>>(a, 2).as_deref(),
+        )),
+        "payBill" => out(l.pay_bill(&arg(a, 0), &arg(a, 1), &arg(a, 2))),
+        "createClaim" => out(l.create_claim(&arg(a, 0), arg(a, 1))),
+        "submitClaim" => out(l.submit_claim(&arg(a, 0), &arg(a, 1))),
+        "approveClaim" => out(l.approve_claim(
+            &arg(a, 0),
+            &arg(a, 1),
+            opt::<Option<String>>(a, 2).as_deref(),
+            opt::<Option<String>>(a, 3).as_deref(),
+        )),
+        "rejectClaim" => out(l.reject_claim(&arg(a, 0), &arg(a, 1), &arg::<String>(a, 2))),
+        "reimburseClaim" => out(l.reimburse_claim(&arg(a, 0), &arg(a, 1), &arg(a, 2))),
         _ => return None,
     })
 }
@@ -126,6 +148,11 @@ pub fn query(s: &LedgerState, method: &str, a: &Value) -> Option<Result<Value, E
             opt::<EntryOptions>(a, 2),
         )),
         "claim" => out(s.claim(&arg(a, 0)).cloned().map_err(Error::from)),
+        "outstanding" => {
+            // `outstanding(kind, id)`; Rust takes the pair as the `AppliesTo` it is.
+            let doc: AppliesTo = arg(&json!([{ "kind": a[0], "id": a[1] }]), 0);
+            out(s.outstanding(&doc).map_err(Error::from))
+        }
         _ => return None,
     })
 }
@@ -174,6 +201,40 @@ pub fn command(l: &mut Ledger<'_>, actor: &Value, cmd: &Value) -> Option<Result<
         "period.lock" => ("lockPeriod", json!([actor, cmd["periodId"]])),
         "year.close" => ("closeYear", json!([actor, cmd["year"]])),
         "year.open" => ("openFiscalYear", json!([actor, cmd["year"]])),
+        "grant.add" => ("addGrant", json!([actor, cmd["input"]])),
+        "budgetLine.set" => ("setBudgetLine", json!([actor, cmd["input"]])),
+        "vendor.add" => ("addVendor", json!([actor, cmd["input"]])),
+        "bill.create" => ("createBill", json!([actor, cmd["input"]])),
+        "bill.approve" => ("approveBill", json!([actor, cmd["billId"]])),
+        "bill.post" => (
+            "postBill",
+            json!([actor, cmd["billId"], cmd["overrideReason"]]),
+        ),
+        // `bill.pay` passes no rate (commands.ts:182-189).
+        "bill.pay" => (
+            "payBill",
+            json!([actor, cmd["billId"], {
+                "date": cmd["date"],
+                "cash_account_id": cmd["cashAccountId"],
+                "amount": cmd["amount"],
+                "reference": cmd["reference"],
+            }]),
+        ),
+        "claim.create" => ("createClaim", json!([actor, cmd["input"]])),
+        "claim.submit" => ("submitClaim", json!([actor, cmd["claimId"]])),
+        "claim.approve" => (
+            "approveClaim",
+            json!([actor, cmd["claimId"], cmd["note"], cmd["overrideReason"]]),
+        ),
+        "claim.reject" => ("rejectClaim", json!([actor, cmd["claimId"], cmd["note"]])),
+        "claim.reimburse" => (
+            "reimburseClaim",
+            json!([actor, cmd["claimId"], {
+                "date": cmd["date"],
+                "cash_account_id": cmd["cashAccountId"],
+                "reference": cmd["reference"],
+            }]),
+        ),
         "entry.import" => {
             // `{ type: 'ids', ids: inputs.map((i) => saveDraft(actor, i).id) }` (commands.ts:155-156).
             let mut ids = Vec::new();
@@ -485,7 +546,28 @@ pub const C2_METHODS: [&str; 16] = [
     "closeYear",
 ];
 
-/// The `Ledger` read methods ported in task C2 (`outstanding` belongs to C3).
+/// The `Ledger` write methods ported in task C3: grants, budgets, accounts payable and expense
+/// claims. With C2's, every engine method but the bank and statement ones (C6).
+pub const C3_METHODS: [&str; 13] = [
+    "addGrant",
+    "addBudget",
+    "setBudgetLine",
+    "addVendor",
+    "createBill",
+    "approveBill",
+    "postBill",
+    "payBill",
+    "createClaim",
+    "submitClaim",
+    "approveClaim",
+    "rejectClaim",
+    "reimburseClaim",
+];
+
+/// The `Ledger` read method ported in task C3.
+pub const C3_QUERIES: [&str; 1] = ["outstanding"];
+
+/// The `Ledger` read methods ported in task C2.
 pub const C2_QUERIES: [&str; 11] = [
     "account",
     "accountByCode",

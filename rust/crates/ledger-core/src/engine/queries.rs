@@ -6,9 +6,9 @@ use std::collections::HashSet;
 use crate::errors::{IssueCode, LedgerError};
 use crate::money::Minor;
 use crate::types::{
-    Account, AccountId, AccountType, Bill, BillId, ClaimId, EntryId, EntryInput, EntryStatus,
-    ExpenseClaim, FiscalPeriod, Fund, FundId, Grant, GrantId, JournalEntry, JournalLine,
-    LedgerState, LineInput, Nullish,
+    Account, AccountId, AccountType, AppliesTo, Bill, BillId, ClaimId, EntryId, EntryInput,
+    EntryStatus, ExpenseClaim, FiscalPeriod, Fund, FundId, Grant, GrantId, JournalEntry,
+    JournalLine, LedgerState, LineInput, Nullish,
 };
 
 /// A whole number of minor units as the JS number TS holds; exact, as amounts are safe integers.
@@ -79,6 +79,17 @@ impl LedgerState {
             .iter()
             .find(|c| &c.id == id)
             .ok_or_else(|| LedgerError::fail(IssueCode::NotFound, "Claim not found."))
+    }
+
+    /// `outstanding(kind, id)` (`engine.ts:877-886`): what is still owed on a bill or claim, in
+    /// its currency: the sum of its lines less its payments whose entries are posted.
+    ///
+    /// # Errors
+    ///
+    /// `NOT_FOUND` "Bill not found." or "Claim not found." when there is no such document.
+    pub fn outstanding(&self, doc: &AppliesTo) -> Result<Minor, LedgerError> {
+        let _ = doc;
+        todo!()
     }
 
     /// The private `bill(id)` (`engine.ts:818-820`), for reversals of bill entries.

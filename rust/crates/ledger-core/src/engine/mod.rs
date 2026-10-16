@@ -17,13 +17,21 @@
 //! were. TS mutates in place and has its callers discard the books on a throw
 //! (`commands.ts:85-89`); the outcome is the same, and Rust checks every rule first.
 
+mod budgets;
+mod claims;
+mod documents;
 mod entries;
+mod payables;
 mod periods;
 mod queries;
 mod setup;
 mod validate;
 
-pub use setup::{AccountPatch, NewAccount, NewDimension, NewFund};
+pub use budgets::{NewBudget, NewBudgetLine};
+pub use claims::{NewClaim, ReimburseInput};
+pub use documents::NewCodedLine;
+pub use payables::{NewBill, NewVendor, PaymentInput};
+pub use setup::{AccountPatch, NewAccount, NewDimension, NewFund, NewGrant};
 pub use validate::EntryOptions;
 
 use std::collections::BTreeMap;

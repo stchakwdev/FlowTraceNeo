@@ -1,5 +1,5 @@
-//! Setup writes: the chart of accounts, funds, dimensions and fiscal years
-//! (`engine.ts:165-289`). Grants are task C3.
+//! Setup writes: the chart of accounts, funds, grants, dimensions and fiscal years
+//! (`engine.ts:165-289`).
 
 use serde::Deserialize;
 
@@ -10,7 +10,7 @@ use crate::errors::IssueCode;
 use crate::types::{
     Account, AccountId, AccountType, Actor, CashFlowClass, DimensionId, DimensionKind,
     DimensionValue, ExpenseFunction, FiscalPeriod, FlowNodeId, Fund, FundId, FundRestriction,
-    IsoDate, Nullish, PeriodId, PeriodStatus, SystemAccounts,
+    Grant, GrantId, IsoDate, Nullish, PeriodId, PeriodStatus, SystemAccounts,
 };
 
 /// The input of `addAccount` (`engine.ts:169-175`): an [`Account`] without `normal_balance`,
@@ -71,6 +71,33 @@ pub struct NewFund {
     pub name: String,
     /// Donor restriction.
     pub restriction: FundRestriction,
+}
+
+/// The input of `addGrant` (`engine.ts:239`): a [`Grant`] with `id` optional and the award as the
+/// raw JS number the caller sent, checked by `assertMinor` (`engine.ts:243`).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct NewGrant {
+    /// Id; drawn from the env when absent.
+    #[serde(default)]
+    pub id: Option<GrantId>,
+    /// Display name.
+    pub name: String,
+    /// The donor flow node, so the flow map and the ledger meet.
+    pub donor_node_id: Option<FlowNodeId>,
+    /// Donor display name.
+    pub donor_name: String,
+    /// The restricted fund the grant sits in; it must exist.
+    pub fund_id: FundId,
+    /// Award in minor units of `currency`; a positive whole number.
+    pub award: f64,
+    /// Award currency.
+    pub currency: String,
+    /// First day spend may be charged.
+    pub start_date: IsoDate,
+    /// Last day spend may be charged; not before `start_date`.
+    pub end_date: IsoDate,
+    /// Free-text terms.
+    pub terms: String,
 }
 
 /// The input of `addDimension` (`engine.ts:253-256`): a [`DimensionValue`] with `id` optional.
@@ -317,6 +344,20 @@ impl Ledger<'_> {
         self.state.funds.push(fund.clone());
         self.audit(actor, "fund.create", fund.id.as_str(), &fund.name);
         Ok(fund)
+    }
+
+    /// `addGrant` (`engine.ts:239-251`): adds a grant to a fund. Needs `can_post`. The fund must
+    /// exist (`UNKNOWN_FUND`); a given id must be unused (`DUPLICATE`); the award must be whole
+    /// minor units ([`Error::Money`]) and positive, and the grant cannot end before it starts
+    /// (`INVALID_INPUT`, dates compared as strings). Fields are stored as given. Draws the grant
+    /// id (when none is given), then one audit id (`grant.create`, detail the name).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Ledger`] with the codes above, [`Error::Money`] for a fractional award.
+    pub fn add_grant(&mut self, actor: &Actor, input: NewGrant) -> Result<Grant, Error> {
+        let _ = (actor, input);
+        todo!()
     }
 
     /// `addDimension` (`engine.ts:253-261`): adds a dimension value. Needs `can_post`. No
