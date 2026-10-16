@@ -34,6 +34,33 @@ pub fn serialize<S: Serializer>(x: &f64, serializer: S) -> Result<S::Ok, S::Erro
     }
 }
 
+/// `String(x)` for a JS number (ECMA-262 `Number::toString`): `NaN`, `Infinity`, an integer
+/// without a fraction, decimal notation from 1e-6 up to 1e21, and exponent notation (`1e-7`,
+/// `1.5e+21`) outside it, always with the shortest digits that round-trip.
+#[must_use]
+pub fn to_js_string(x: f64) -> String {
+    if x.is_nan() {
+        return "NaN".to_owned();
+    }
+    if x.is_infinite() {
+        return if x > 0.0 { "Infinity" } else { "-Infinity" }.to_owned();
+    }
+    if x == 0.0 {
+        return "0".to_owned();
+    }
+    let abs = x.abs();
+    if (1e-6..1e21).contains(&abs) {
+        // Rust's `Display` writes the shortest round-trip digits in decimal notation.
+        return format!("{x}");
+    }
+    // `{:e}` writes `1.5e-7` and `1e21`; JS signs a positive exponent (`1e+21`).
+    let e = format!("{x:e}");
+    match e.split_once('e') {
+        Some((mantissa, exp)) if !exp.starts_with('-') => format!("{mantissa}e+{exp}"),
+        _ => e,
+    }
+}
+
 /// Reads a JSON number or one of the non-finite strings.
 ///
 /// # Errors

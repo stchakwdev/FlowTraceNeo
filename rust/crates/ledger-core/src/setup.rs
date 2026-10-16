@@ -3,11 +3,16 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::engine::Error;
+use crate::coa_template::{UNRESTRICTED_FUND_ID, default_settings, ngo_chart_of_accounts};
+use crate::engine::{Error, Ledger, empty_ledger};
 use crate::env::LedgerEnv;
-use crate::types::{Actor, ActorId, LedgerState};
+use crate::types::{Actor, ActorId, Fund, FundId, FundRestriction, LedgerState};
 
-/// `createOrgLedger(organizationId, baseCurrency, fiscalYear, env)` (`setup.ts:6-25`).
+/// `createOrgLedger(organizationId, baseCurrency, fiscalYear, env)` (`setup.ts:6-25`): a new
+/// organisation's books, with the NGO chart of accounts, an unrestricted fund and the twelve
+/// periods of the fiscal year; accrual basis, IFRS for SMEs presentation, one base currency.
+/// TS returns the `Ledger`; Rust returns the books, for `Ledger::new(&mut books, env)`.
+/// Draws no ids.
 ///
 /// # Errors
 ///
@@ -18,11 +23,15 @@ pub fn create_org_ledger(
     fiscal_year: i32,
     env: &mut dyn LedgerEnv,
 ) -> Result<LedgerState, Error> {
-    let _ = (organization_id, base_currency, fiscal_year, env);
-    Err(
-        crate::errors::LedgerError::fail(crate::errors::IssueCode::InvalidInput, "not ported")
-            .into(),
-    )
+    let mut state = empty_ledger(default_settings(organization_id, base_currency));
+    state.accounts = ngo_chart_of_accounts();
+    state.funds = vec![Fund {
+        id: FundId::from(UNRESTRICTED_FUND_ID),
+        name: "Unrestricted".to_owned(),
+        restriction: FundRestriction::Unrestricted,
+    }];
+    Ledger::new(&mut state, env).ensure_fiscal_year(fiscal_year)?;
+    Ok(state)
 }
 
 /// The user half of `actorFromPermissions` (`setup.ts:29`).
@@ -46,27 +55,27 @@ pub struct MemberPermissions {
     pub can_manage_members: Option<bool>,
 }
 
-/// `actorFromPermissions(user, perms)` (`setup.ts:27-43`).
+/// `actorFromPermissions(user, perms)` (`setup.ts:27-43`): editing transactions grants posting
+/// and approving; managing groups grants closing periods.
 #[must_use]
 pub fn actor_from_permissions(user: &ActorUser, perms: &MemberPermissions) -> Actor {
-    let _ = perms;
     Actor {
         id: user.id.clone(),
         name: user.name.clone(),
-        can_post: false,
-        can_approve: false,
-        can_close: false,
+        can_post: perms.can_edit_transactions,
+        can_approve: perms.can_edit_transactions,
+        can_close: perms.can_manage_groups,
     }
 }
 
-/// `SYSTEM_ACTOR` (`setup.ts:45-51`).
+/// `SYSTEM_ACTOR` (`setup.ts:45-51`): `system`, named FlowTrace, with every permission.
 #[must_use]
 pub fn system_actor() -> Actor {
     Actor {
-        id: ActorId::from(""),
-        name: String::new(),
-        can_post: false,
-        can_approve: false,
-        can_close: false,
+        id: ActorId::from("system"),
+        name: "FlowTrace".to_owned(),
+        can_post: true,
+        can_approve: true,
+        can_close: true,
     }
 }

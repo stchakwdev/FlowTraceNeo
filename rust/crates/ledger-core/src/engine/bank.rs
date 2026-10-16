@@ -91,8 +91,32 @@ impl Ledger<'_> {
         actor: &Actor,
         input: NewBankAccount,
     ) -> Result<BankAccount, Error> {
-        let _ = (&self, actor);
-        fail(IssueCode::InvalidState, "not ported")
+        require(actor, Permission::Post)?;
+        if !self
+            .state
+            .account(&input.account_id)
+            .is_some_and(|a| a.is_cash)
+        {
+            return fail(
+                IssueCode::InvalidInput,
+                "Link the bank account to a cash account in the chart.",
+            );
+        }
+        let id = match input.id {
+            Some(id) => id,
+            None => BankAccountId::from(self.env.new_id()),
+        };
+        let b = BankAccount {
+            id,
+            name: input.name,
+            kind: input.kind,
+            provider: input.provider,
+            account_id: input.account_id,
+            currency: input.currency,
+            number_masked: input.number_masked,
+        };
+        self.state.bank_accounts.push(b.clone());
+        Ok(b)
     }
 
     /// `importStatement` (`engine.ts:1153-1197`): adds statement lines to a bank account,
@@ -116,8 +140,58 @@ impl Ledger<'_> {
         bank_account_id: &BankAccountId,
         rows: &[StatementRow],
     ) -> Result<Vec<StatementLine>, Error> {
-        let _ = (&self, actor);
-        fail(IssueCode::InvalidState, "not ported")
+        require(actor, Permission::Post)?;
+        if !self
+            .state
+            .bank_accounts
+            .iter()
+            .any(|b| &b.id == bank_account_id)
+        {
+            return fail(IssueCode::NotFound, "Bank account not found.");
+        }
+        let amounts = rows
+            .iter()
+            .map(|r| assert_minor(r.amount, "Statement amount"))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut earlier: Vec<(String, usize)> = Vec::new();
+        for s in &self.state.statement_lines {
+            if &s.bank_account_id == bank_account_id {
+                let k = statement_key(&s.date, s.amount, s.reference.as_deref(), &s.description);
+                match earlier.iter_mut().find(|(key, _)| *key == k) {
+                    Some((_, n)) => *n += 1,
+                    None => earlier.push((k, 1)),
+                }
+            }
+        }
+        let batch = ImportBatchId::from(self.env.new_id());
+        let mut added = Vec::new();
+        for (r, amount) in rows.iter().zip(amounts) {
+            let k = statement_key(&r.date, amount, r.reference.as_deref(), &r.description);
+            if let Some((_, left)) = earlier.iter_mut().find(|(key, n)| *key == k && *n > 0) {
+                *left -= 1;
+                continue;
+            }
+            let line = StatementLine {
+                id: StatementLineId::from(self.env.new_id()),
+                bank_account_id: bank_account_id.clone(),
+                date: r.date.clone(),
+                description: r.description.clone(),
+                reference: r.reference.clone(),
+                amount,
+                import_batch: batch.clone(),
+                matched_line_id: None,
+                match_kind: None,
+            };
+            self.state.statement_lines.push(line.clone());
+            added.push(line);
+        }
+        self.audit(
+            actor,
+            "statement.import",
+            bank_account_id.as_str(),
+            &format!("{} lines", added.len()),
+        );
+        Ok(added)
     }
 
     /// `matchStatementLine` (`engine.ts:1199-1215`): links a statement line to a posted journal
@@ -137,8 +211,60 @@ impl Ledger<'_> {
         journal_line_id: &LineId,
         kind: MatchKind,
     ) -> Result<StatementLine, Error> {
-        let _ = (&self, actor);
-        fail(IssueCode::InvalidState, "not ported")
+        require(actor, Permission::Post)?;
+        let Some(si) = self.statement_line_index(statement_line_id) else {
+            return fail(IssueCode::NotFound, "Statement line not found.");
+        };
+        let Some(j) = self.state.lines.iter().find(|x| &x.id == journal_line_id) else {
+            return fail(IssueCode::NotFound, "Journal line not found.");
+        };
+        let s = &self.state.statement_lines[si];
+        let bank = self.bank_of(s)?;
+        if j.account_id != bank.account_id {
+            return fail(
+                IssueCode::InvalidInput,
+                "That journal line is on a different account.",
+            );
+        }
+        if self
+            .state
+            .entry(&j.entry_id)
+            .is_some_and(|e| e.status == crate::types::EntryStatus::Draft)
+        {
+            return fail(
+                IssueCode::InvalidState,
+                "Post the entry before matching it.",
+            );
+        }
+        if j.debit - j.credit != s.amount {
+            return fail(IssueCode::InvalidInput, "The amounts differ.");
+        }
+        if self
+            .state
+            .statement_lines
+            .iter()
+            .any(|x| x.matched_line_id.as_ref() == Some(journal_line_id) && x.id != s.id)
+        {
+            return fail(
+                IssueCode::Duplicate,
+                "That journal line is already matched.",
+            );
+        }
+        let s = &mut self.state.statement_lines[si];
+        s.matched_line_id = Some(journal_line_id.clone());
+        s.match_kind = Some(kind);
+        let s = s.clone();
+        let kind = match kind {
+            MatchKind::Auto => "auto",
+            MatchKind::Manual => "manual",
+        };
+        self.audit(
+            actor,
+            "statement.match",
+            s.id.as_str(),
+            &format!("{kind} {journal_line_id}"),
+        );
+        Ok(s)
     }
 
     /// `unmatchStatementLine` (`engine.ts:1217-1224`): clears a statement line's match, matched
@@ -153,8 +279,16 @@ impl Ledger<'_> {
         actor: &Actor,
         statement_line_id: &StatementLineId,
     ) -> Result<StatementLine, Error> {
-        let _ = (&self, actor);
-        fail(IssueCode::InvalidState, "not ported")
+        require(actor, Permission::Post)?;
+        let Some(si) = self.statement_line_index(statement_line_id) else {
+            return fail(IssueCode::NotFound, "Statement line not found.");
+        };
+        let s = &mut self.state.statement_lines[si];
+        s.matched_line_id = None;
+        s.match_kind = None;
+        let s = s.clone();
+        self.audit(actor, "statement.unmatch", s.id.as_str(), "");
+        Ok(s)
     }
 
     /// `postFromStatementLine` (`engine.ts:1226-1252`): posts an entry for an unmatched
@@ -175,8 +309,70 @@ impl Ledger<'_> {
         statement_line_id: &StatementLineId,
         counter: &StatementCounter,
     ) -> Result<JournalEntry, Error> {
-        let _ = (&self, actor);
-        fail(IssueCode::InvalidState, "not ported")
+        let Some(si) = self.statement_line_index(statement_line_id) else {
+            return fail(IssueCode::NotFound, "Statement line not found.");
+        };
+        let s = &self.state.statement_lines[si];
+        if s.matched_line_id.is_some() {
+            return fail(IssueCode::InvalidState, "This line is already matched.");
+        }
+        let cash_account = self.bank_of(s)?.account_id.clone();
+        let counter_id = counter
+            .account_id
+            .clone()
+            .unwrap_or_else(|| self.state.settings.system_accounts.suspense.clone());
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "a safe integer, as the TS number"
+        )]
+        let amt = s.amount.unsigned_abs() as f64;
+        let (inflow, outflow) = (s.amount > 0, s.amount < 0);
+        let side = |yes: bool| Some(if yes { amt } else { 0.0 });
+        let line = |account_id: AccountId, debit: bool, credit: bool| LineInput {
+            account_id,
+            debit: side(debit),
+            credit: side(credit),
+            currency: None,
+            fx_rate: None,
+            fund_id: counter.fund_id.clone(),
+            grant_id: Nullish::Undefined,
+            dimension_ids: None,
+            flow_node_id: Nullish::Undefined,
+            memo: Nullish::Undefined,
+        };
+        let cash_side = line(cash_account.clone(), inflow, outflow);
+        let other = LineInput {
+            grant_id: Nullish::from(counter.grant_id.value().cloned()),
+            ..line(counter_id, outflow, inflow)
+        };
+        let memo = counter
+            .memo
+            .as_deref()
+            .map(js_trim)
+            .filter(|m| !m.is_empty())
+            .unwrap_or(&s.description)
+            .to_owned();
+        let input = EntryInput {
+            date: s.date.as_str().to_owned(),
+            memo,
+            lines: vec![cash_side, other],
+            source_type: Some(SourceType::Statement),
+            source_id: Nullish::Value(s.id.as_str().to_owned()),
+            override_reason: Nullish::Undefined,
+        };
+        let statement_line_id = s.id.clone();
+        let entry = self.post(actor, &input, EntryOptions::default())?;
+        let Some(cash_line) = self
+            .state
+            .lines_of(&entry.id)
+            .into_iter()
+            .find(|l| l.account_id == cash_account)
+            .map(|l| l.id.clone())
+        else {
+            return fail(IssueCode::NotFound, "Journal line not found.");
+        };
+        self.match_statement_line(actor, &statement_line_id, &cash_line, MatchKind::Manual)?;
+        Ok(entry)
     }
 
     fn statement_line_index(&self, id: &StatementLineId) -> Option<usize> {

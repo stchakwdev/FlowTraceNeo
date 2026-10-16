@@ -174,18 +174,12 @@ pub fn query(s: &LedgerState, method: &str, a: &Value) -> Option<Result<Value, E
 
 /// Runs a raw command as the TS module does (`spacetimedb/src/index.ts:671-680`):
 /// `sanitize_command` then `apply_command`, returning the `CommandResult` or the error. Every
-/// command type is ported, so this is always `Some`; the `Option` keeps the delta path of
-/// [`check_outcome`] for a command type added later.
-pub fn command(l: &mut Ledger<'_>, actor: &Value, raw: &Value) -> Option<Result<Value, Error>> {
-    let cmd = match sanitize_command(raw) {
-        Ok(cmd) => cmd,
-        Err(e) => return Some(Err(e.into())),
-    };
-    Some(
-        apply_command(l, &arg(&json!([actor]), 0), cmd)
-            .map(|result| to_json(&result))
-            .map_err(|CommandError::Engine(e)| e),
-    )
+/// command type is ported (C6), so a command step always runs live.
+pub fn command(l: &mut Ledger<'_>, actor: &Value, raw: &Value) -> Result<Value, Error> {
+    let cmd = sanitize_command(raw)?;
+    apply_command(l, &arg(&json!([actor]), 0), cmd)
+        .map(|result| to_json(&result))
+        .map_err(|CommandError::Engine(e)| e)
 }
 
 /// `diffState` (`rust/tools/src/trace.ts:30-62`) over two JSON snapshots of the books.
@@ -399,11 +393,11 @@ pub fn run_command_step(
 ) -> Ran {
     let kind = step["command"]["type"].as_str().unwrap_or("?");
     let before = to_json(state);
-    let outcome = command(
+    let outcome = Some(command(
         &mut Ledger::new(state, env),
         &step["actor"],
         &step["command"],
-    );
+    ));
     check_outcome(state, env, step, before, outcome, &format!("{what} {kind}"))
 }
 

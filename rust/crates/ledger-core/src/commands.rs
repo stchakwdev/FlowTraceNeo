@@ -21,8 +21,8 @@ use crate::errors::{IssueCode, LedgerError};
 pub use crate::reconcile::{AmbiguousMatch, AutoMatchResult, AutoMatched, MatchCandidate};
 use crate::reconcile::{DEFAULT_WINDOW_DAYS, auto_match};
 use crate::types::{
-    AccountId, Actor, BankAccountId, BillId, ClaimId, EntryId, EntryInput, FundId, GrantId, LineId,
-    MatchKind, Nullish, PeriodId, StatementLineId,
+    AccountId, Actor, BankAccountId, BillId, ClaimId, EntryId, EntryInput, LineId, MatchKind,
+    Nullish, PeriodId, StatementLineId,
 };
 
 /// A ledger write (`LedgerCommand`, `commands.ts:25-79`), tagged by `type` as in TS.
