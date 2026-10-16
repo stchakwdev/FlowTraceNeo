@@ -158,3 +158,11 @@ Components use Base UI React (`@base-ui/react`), Phosphor icons, and `class-vari
 - PWA with offline-first capability
 - Support for 2G/3G networks
 - Works on low-end Android devices
+
+## Rust workspace (`rust/`)
+
+The desktop ERP, the ledger core, the SpacetimeDB module and its client live in the Cargo
+workspace under `rust/`. For anything there, `PRIMER.md` and
+`.claude/skills/rust-best-practices/SKILL.md` win over this file. The checks are
+`cd rust && cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked`.
+The web app in `flowtrace/` is the parity reference and is not edited from Rust work.
