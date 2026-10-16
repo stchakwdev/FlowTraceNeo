@@ -24,6 +24,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
+use crate::dates::{checked_day_number, civil_from_days};
 use crate::money::{Minor, MoneyError, js_round, sum};
 use crate::types::{
     Account, AccountId, CodedLine, DimensionId, EntryId, EntryStatus, FundId, FundRestriction,
@@ -164,13 +165,13 @@ pub fn natural(normal_balance: NormalBalance, signed: Minor) -> Minor {
 /// [`ReportError::InvalidDate`]) and for `0000-01-01`, whose day before TS cannot print as a date.
 pub fn day_before(d: &IsoDate) -> Result<IsoDate, ReportError> {
     let invalid = || ReportError::InvalidDate(d.clone());
-    let (year, month, day) = civil_from_days(utc_days(d).ok_or_else(invalid)? - 1);
+    let (year, month, day) = civil_from_days(checked_day_number(d).ok_or_else(invalid)? - 1);
     // `toISOString` writes years outside 0000-9999 with a sign and six digits, which the
     // `slice(0, 10)` then cuts to something that is not a date.
     if !(0..=9999).contains(&year) {
         return Err(invalid());
     }
-    IsoDate::parse(&format!("{year:04}-{month:02}-{day:02}")).map_err(|_| invalid())
+    Ok(IsoDate::from_parts(year, month, day))
 }
 
 /// A posted line borrowed from the books, or owned when the cash basis re-coded it.
@@ -433,64 +434,11 @@ fn minor_of(rounded: f64) -> Minor {
     rounded as Minor
 }
 
-/// Days since 1970-01-01 of `new Date(`${d}T00:00:00Z`)` (`reports.ts:202`, `reports.ts:550`),
-/// or `None` where JS makes an `Invalid Date`. The JS engine that wrote the fixtures (Bun's)
-/// takes a month of 1-12 and a day of 1-31, and carries a day past the month's end into the next
-/// month: `2026-02-30` is 2 March.
-fn utc_days(d: &IsoDate) -> Option<i64> {
-    let s = d.as_str();
-    let part = |range: std::ops::Range<usize>| s.get(range)?.parse::<i64>().ok();
-    let (year, month, day) = (part(0..4)?, part(5..7)?, part(8..10)?);
-    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
-        return None;
-    }
-    Some(days_from_civil(year, month, 1) + day - 1)
-}
-
-/// Days since 1970-01-01 of a proleptic Gregorian date (H. Hinnant, "chrono-Compatible Low-Level
-/// Date Algorithms", `days_from_civil`).
-fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
-    let y = if month <= 2 { year - 1 } else { year };
-    let (era, yoe) = (y.div_euclid(400), y.rem_euclid(400));
-    let mp = (month + 9) % 12; // March is 0
-    let doy = (153 * mp + 2) / 5 + day - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    era * 146_097 + doe - 719_468
-}
-
-/// The inverse of [`days_from_civil`]: `(year, month, day)`.
-fn civil_from_days(days: i64) -> (i64, i64, i64) {
-    let z = days + 719_468;
-    let (era, doe) = (z.div_euclid(146_097), z.rem_euclid(146_097));
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    (yoe + era * 400 + i64::from(month <= 2), month, day)
-}
-
 /// `monthsBetween(a, b)` (`reports.ts:549-553`): UTC milliseconds from `a` to `b` over an average
 /// month of 30.4375 days.
 fn months_between(a: &IsoDate, b: &IsoDate) -> Result<f64, ReportError> {
-    let days = |d: &IsoDate| utc_days(d).ok_or_else(|| ReportError::InvalidDate(d.clone()));
+    let days =
+        |d: &IsoDate| checked_day_number(d).ok_or_else(|| ReportError::InvalidDate(d.clone()));
     let ms = (days(b)? - days(a)?) * 86_400_000;
     Ok(js(ms) / (1000.0 * 60.0 * 60.0 * 24.0 * 30.4375))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{civil_from_days, days_from_civil};
-
-    #[test]
-    fn civil_days_round_trip_across_eras() {
-        assert_eq!(days_from_civil(1970, 1, 1), 0);
-        assert_eq!(days_from_civil(2000, 3, 1), 11_017);
-        assert_eq!(days_from_civil(0, 1, 1), -719_528);
-        for days in [-719_528, -1, 0, 11_016, 11_017, 20_454, 2_932_896] {
-            let (y, m, d) = civil_from_days(days);
-            assert_eq!(days_from_civil(y, m, d), days, "{y}-{m}-{d}");
-        }
-        assert_eq!(civil_from_days(2_932_896), (9999, 12, 31));
-    }
 }

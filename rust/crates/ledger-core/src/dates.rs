@@ -30,7 +30,7 @@ pub(crate) fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
 }
 
 /// The date `days` days after 1970-01-01 (the inverse of [`days_from_civil`]).
-fn civil_from_days(days: i64) -> (i64, i64, i64) {
+pub(crate) fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let z = days + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z - era * 146_097;
@@ -56,6 +56,16 @@ pub(crate) fn day_number(date: &IsoDate) -> i64 {
     let (y, m, d) = parts(date);
     let (y, m) = (y + (m - 1).div_euclid(12), (m - 1).rem_euclid(12) + 1);
     days_from_civil(y, m, 1) + d - 1
+}
+
+/// The day number of `new Date(`${d}T00:00:00Z`)`, or `None` where it is an `Invalid Date`, as
+/// Bun (which wrote the fixtures) parses it: a month of 1 to 12 and a day of 1 to 31, with a day
+/// past the month's end carried into the next month (`2026-02-30` is 2 March); month 0 or 13
+/// and day 0 or 32 are invalid. Used where TS would throw or return `NaN` on an invalid date
+/// (`reports.ts:202-204`, `reports.ts:550-552`).
+pub(crate) fn checked_day_number(date: &IsoDate) -> Option<i64> {
+    let (y, m, d) = parts(date);
+    ((1..=12).contains(&m) && (1..=31).contains(&d)).then(|| days_from_civil(y, m, 1) + d - 1)
 }
 
 /// `YYYY-MM-DD` of a day number; years outside 0 to 9999 are clamped into the shape.
@@ -87,5 +97,18 @@ mod tests {
         assert_eq!(add_days(&d("2028-02-28"), 1), d("2028-02-29"));
         assert_eq!(add_days(&d("2026-12-31"), 1), d("2027-01-01"));
         assert_eq!(day_number(&d("2026-02-30")), day_number(&d("2026-03-02")));
+    }
+
+    #[test]
+    fn checked_day_numbers_refuse_what_js_dates_refuse() {
+        assert_eq!(
+            checked_day_number(&d("2026-02-30")),
+            Some(day_number(&d("2026-03-02")))
+        );
+        for bad in ["2026-13-01", "2026-00-10", "2026-01-00", "2026-02-32"] {
+            assert_eq!(checked_day_number(&d(bad)), None, "{bad}");
+        }
+        assert_eq!(checked_day_number(&d("0000-01-01")), Some(-719_528));
+        assert_eq!(civil_from_days(2_932_896), (9999, 12, 31));
     }
 }

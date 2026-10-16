@@ -9,6 +9,7 @@
 mod common;
 
 use common::fixture;
+use ledger_core::demo::build_demo_ledger;
 use ledger_core::reports::{
     Basis, activities, cash_flow, day_before, financial_position, functional_expenses,
     grant_summary, trial_balance,
@@ -40,8 +41,10 @@ fn date(s: &str) -> IsoDate {
     IsoDate::parse(s).unwrap()
 }
 
+/// The demo books built by the Rust engine (`tests/demo.rs` proves them equal to
+/// `demo-books.json#/state`), so these tests run engine and reports end to end.
 fn demo() -> LedgerState {
-    serde_json::from_value(fixture("demo-books")["state"].clone()).unwrap()
+    build_demo_ledger().unwrap()
 }
 
 fn commands_final() -> LedgerState {
