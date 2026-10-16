@@ -31,6 +31,47 @@ pub struct Operator {
     pub added_at: Timestamp,
 }
 
+/// An OpenID Connect issuer whose tokens may connect, for one audience; no TS counterpart. Rules
+/// in [`crate::auth`]; operators manage the rows with `add_trusted_issuer` and
+/// `remove_trusted_issuer`. One issuer may have a row per audience (a web and a desktop client).
+#[spacetimedb::table(accessor = trusted_issuer)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct TrustedIssuer {
+    /// Row id.
+    #[primary_key]
+    #[auto_inc]
+    pub id: u64,
+    /// The issuer URL, byte for byte the tokens' `iss` claim.
+    #[index(btree)]
+    pub issuer: String,
+    /// The audience the tokens must carry: their `aud` claim, or `client_id` when they have no
+    /// `aud` (WorkOS AuthKit, [`crate::auth::TokenClaims::client_id`]).
+    pub audience: String,
+    /// A name for people, such as "WorkOS staging".
+    pub label: String,
+    /// The operator who added or last relabelled the row.
+    pub added_by: Identity,
+    /// When.
+    pub added_at: Timestamp,
+}
+
+/// The database's connection settings, at most one row (id 0); no TS counterpart. No row means
+/// the defaults ([`crate::auth::device_identities_allowed`]).
+#[spacetimedb::table(accessor = auth_setting)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct AuthSetting {
+    /// Always 0.
+    #[primary_key]
+    pub id: u8,
+    /// Whether host-issued device identities may connect (the desktop's token file, the web's
+    /// dummy mode).
+    pub allow_device_identities: bool,
+    /// The operator who last changed it.
+    pub changed_by: Identity,
+    /// When.
+    pub changed_at: Timestamp,
+}
+
 /// One organisation's books (`index.ts:42-52`): settings, counters and the next row `seq`.
 #[spacetimedb::table(accessor = ledger_org)]
 #[derive(Debug, Clone, PartialEq)]

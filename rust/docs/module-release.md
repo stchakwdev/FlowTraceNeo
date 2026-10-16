@@ -72,7 +72,10 @@ Two levels of access, both kept in the module's private tables (`src/rules.rs`):
 | Who | Can | Granted by |
 |---|---|---|
 | Operator | open books for a new organisation (`create_org_ledger`), load books (`import_books`), add and remove operators | `init` (the publisher), then `add_operator` by an existing operator |
-| Member of an organisation | read that organisation's rows through the `my_*` views, `run_command` as that member; with `can_post`, `can_approve`, `can_close` as given | `create_org_ledger` makes the caller the owner (all three); then `add_member` by a member who can close |
+| Member of an organisation | read that organisation's rows through the `my_*` views, `run_command` as that member; with `can_post`, `can_approve`, `can_close` as given | `create_org_ledger` makes the caller the owner (all three); then `add_member` (by identity) or `add_member_by_subject` (by a WorkOS user id, section 5) by a member who can close |
+
+Before either, the connection itself must be let in: operators always are, device identities
+while the database allows them, and signed-in people when their issuer is trusted (section 5).
 
 A new identity (a desktop that just connected with a fresh token file) is a member of nothing
 and sees no organisations. The Connection screen shows the first eight hex digits of its
@@ -147,3 +150,87 @@ maincloud, as publishing is. The same calls with `-s local` are how threads test
    `--delete-data` on production; a breaking change needs a migration plan first.
 7. **Backups and retention** of the maincloud database are not covered by anything in this
    repository yet.
+
+## 5. Who may connect: trusted issuers and device identities
+
+Since AUTH1 the module's `client_connected` reducer decides who connects
+(`../crates/ledger-module/src/auth.rs`, `check_connection`). It runs for every WebSocket and every
+HTTP reducer call or SQL query; a refusal closes the WebSocket, and over HTTP (the CLI) the caller
+gets 403 with the reason.
+
+| Connection | Let in when |
+|---|---|
+| An operator | always, whatever the token; an operator cannot lock themselves out |
+| A registered service (MOD2, `register_service`) | always, whatever the token: the operator registered that identity, so a service keeps working whatever its issuer and whether device identities are on; `remove_service` ends that |
+| A device identity: a token the host signed itself (issuer `localhost`), as the desktop's token file and the web's dummy mode use, or no token | device identities are allowed: yes until an operator runs `set_device_identities false` |
+| Any other OpenID Connect token, such as a WorkOS sign-in | a `trusted_issuer` row has its issuer, byte for byte, and its audience: the token's `aud` claim, or its `client_id` claim when it has no `aud` (WorkOS AuthKit tokens) |
+
+**How maincloud learns to trust an issuer: it does not need to.** There is no per-database or
+per-server setting. The SpacetimeDB 2.12 host verifies any token by fetching
+`{iss}/.well-known/openid-configuration` and the keys at its `jwks_uri`, for any http(s) issuer,
+and checks neither issuer nor audience
+(`crates/core/src/auth/token_validation.rs` at v2.12.0: `validate_aud = false`, "We should
+require a specific audience at some point"). The docs name no configuration step either
+(<https://spacetimedb.com/docs/core-concepts/authentication>, `/authentication/usage`, which asks
+the module to check `iss` and `aud` itself). The module's `trusted_issuer` table is therefore the
+whole of the trust decision. Proven on the local server by `../tools/auth-proof.ts`
+(`cd rust/tools && ~/.bun/bin/bun run auth-proof`): the host fetched the discovery document and
+keys of a test issuer on 127.0.0.1 by itself, a validly signed token from an issuer nobody
+registered was refused by the module, not the host, and the same token connected once its issuer
+was registered. Maincloud runs the same host code; the device tokens it issued on 2026-10-16 had
+the same issuer (`localhost`) and audience (`spacetimedb`) as the local server's.
+
+**The identity** is `Identity::from_claims(iss, sub)`: a blake3 hash of `"{iss}|{sub}"`, shown
+as 64 hex digits starting `c200`. One person at one issuer is one identity on every client and
+every database; another issuer (or the same issuer with a trailing slash) is another identity.
+
+### Registering WorkOS for a database
+
+1. The WorkOS client id of the environment (`WORKOS_CLIENT_ID`, `client_...`). AuthKit access
+   tokens carry it as `client_id` and have no `aud` unless a JWT template adds one
+   (<https://workos.com/blog/verify-workos-access-tokens-in-your-own-api>).
+2. The issuer, exactly as the tokens' `iss`. Without a custom auth domain it is
+   `https://api.workos.com/user_management/<client id>`, whose discovery document WorkOS serves
+   per client; with a custom auth domain it is that domain. The safest source is a real token:
+   sign in on the web app in workos mode against the database, and while the issuer is not
+   trusted the Books screens say "SpacetimeDB refused this sign-in: an operator must trust issuer
+   ... for audience ... on this database", naming both values.
+3. As an operator (the user on maincloud; a thread only with `-s local`):
+
+```sh
+S=~/.local/bin/spacetime
+DB=flowtrace-ledger-dev
+ISS=https://api.workos.com/user_management/client_XXXXXXXX   # exactly the tokens' iss
+AUD=client_XXXXXXXX                                          # the client id, or the aud a JWT template sets
+
+# Trust it (again with a new label to relabel; one row per issuer and audience).
+$S call -s maincloud $DB add_trusted_issuer "\"$ISS\"" "\"$AUD\"" '"WorkOS staging"'
+
+# Add a person by WorkOS user id before they ever connect (a member who can close):
+# org, issuer, subject (the WorkOS user id), name, can_post, can_approve, can_close.
+$S call -s maincloud $DB add_member_by_subject '"org-example"' "\"$ISS\"" '"user_01XXXXXXXX"' '"Ama Owner"' true true false
+
+# What is trusted (private table: the database owner reads it).
+$S sql -s maincloud $DB "SELECT * FROM trusted_issuer"
+
+# Stop trusting it; open connections stay open, the next one is refused.
+$S call -s maincloud $DB remove_trusted_issuer "\"$ISS\"" "\"$AUD\""
+
+# Device identities off (on again with true). Operators still connect.
+$S call -s maincloud $DB set_device_identities false
+```
+
+`add_member_by_subject` refuses an issuer that is not trusted, so a mistyped issuer is caught.
+The member's user id is the subject, as `create_org_ledger` makes a signed-in owner's user id
+their subject. A person who already connected can also be added by identity with `add_member`;
+the Books screens show it.
+
+**Production.** Device identities are on in every database until an operator turns them off,
+including `flowtrace-ledger`: the desktop (and its release archives) connect with a device
+identity until AUTH2 adds the browser sign-in, so turning them off on production before that
+locks the desktop out. It also refuses anonymous readers: a client with no token gets a device
+identity, so the MOD2 public tables (`public_organization`, `public_campaign`, `public_badge`)
+can then only be read by signed-in people, services and operators, which the public donate,
+badge and embed pages would need to account for. Registering WorkOS on production and turning device identities off are
+writes on production, so the user's step.
+

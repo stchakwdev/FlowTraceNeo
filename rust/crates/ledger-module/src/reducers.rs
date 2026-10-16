@@ -1,4 +1,5 @@
-//! Reducers (`index.ts:529-691`): look the rows up, let [`crate::rules`] decide, write the result.
+//! Reducers (`index.ts:529-691`): look the rows up, let [`crate::rules`] (and [`crate::auth`] for
+//! who may connect) decide, write the result.
 //!
 //! A reducer that returns `Err` rolls its whole transaction back and the caller gets the message
 //! (<https://docs.rs/spacetimedb/2.12.0/spacetimedb/attr.reducer.html>), as a `SenderError` does in
@@ -9,18 +10,20 @@ use std::fmt::Display;
 use ledger_core::types::{AuditEvent, AuditEventId};
 use spacetimedb::{Identity, ReducerContext, Table};
 
+use crate::auth::{self, SubjectArgs, TokenClaims};
 use crate::clock::reducer_time;
 use crate::codec::{OrgRows, assemble_state, doc_to_row};
 use crate::command::{self, ModuleEnv};
 use crate::rules::{self, AuditNote, MemberArgs};
 use crate::seed::seed_books;
+use crate::transparency::tables::service;
 use crate::write_back::{self, NewRows, TableOps, WriteBack};
 // The table handle traits the table macro generates.
 use crate::tables::{
-    AuditEventRow, CommandResult, LedgerOrg, Member, Operator, account, audit_event, bank_account,
-    bill, budget, budget_line, command_result, dimension, expense_claim, fiscal_period, fund,
-    grant, journal_entry, journal_line, ledger_org, member, operator, payment, statement_line,
-    vendor,
+    AuditEventRow, AuthSetting, CommandResult, LedgerOrg, Member, Operator, TrustedIssuer, account,
+    audit_event, auth_setting, bank_account, bill, budget, budget_line, command_result, dimension,
+    expense_claim, fiscal_period, fund, grant, journal_entry, journal_line, ledger_org, member,
+    operator, payment, statement_line, trusted_issuer, vendor,
 };
 
 /// An error as the text a reducer returns.
@@ -117,6 +120,124 @@ pub fn remove_operator(ctx: &ReducerContext, identity: Identity) -> Result<(), S
     Ok(())
 }
 
+fn trusted_issuers(ctx: &ReducerContext) -> Vec<TrustedIssuer> {
+    ctx.db.trusted_issuer().iter().collect()
+}
+
+/// Runs for every new connection, WebSocket or HTTP reducer call, before anything else the
+/// caller does; an `Err` refuses the connection
+/// (<https://docs.rs/spacetimedb/2.12.0/spacetimedb/attr.reducer.html>, lifecycle reducers). The
+/// rules, and what the host has checked before this runs, are in [`auth::check_connection`].
+///
+/// # Errors
+///
+/// A device identity while device identities are off, or a token whose issuer and audience no
+/// trusted issuer row has.
+#[spacetimedb::reducer(client_connected)]
+pub fn client_connected(ctx: &ReducerContext) -> Result<(), String> {
+    let claims = ctx.sender_auth().jwt().map(TokenClaims::of);
+    let devices = auth::device_identities_allowed(ctx.db.auth_setting().id().find(0).as_ref());
+    auth::check_connection(
+        is_operator(ctx, ctx.sender()),
+        ctx.db.service().identity().find(ctx.sender()).is_some(),
+        claims.as_ref(),
+        devices,
+        &trusted_issuers(ctx),
+    )?;
+    Ok(())
+}
+
+/// Trusts tokens from `issuer` that carry `audience`, or relabels that pair; operator only.
+/// Rules in [`auth::plan_add_trusted_issuer`].
+///
+/// # Errors
+///
+/// The messages of [`auth::plan_add_trusted_issuer`].
+#[spacetimedb::reducer]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "reducer arguments arrive by value from the SpacetimeDB host"
+)]
+pub fn add_trusted_issuer(
+    ctx: &ReducerContext,
+    issuer: String,
+    audience: String,
+    label: String,
+) -> Result<(), String> {
+    let change = auth::plan_add_trusted_issuer(
+        is_operator(ctx, ctx.sender()),
+        &trusted_issuers(ctx),
+        &issuer,
+        &audience,
+        &label,
+    )?;
+    let row = TrustedIssuer {
+        // 0 asks the auto_inc column for a fresh id on insert.
+        id: change.replaces.unwrap_or(0),
+        issuer: change.issuer,
+        audience: change.audience,
+        label: change.label,
+        added_by: ctx.sender(),
+        added_at: ctx.timestamp,
+    };
+    if change.replaces.is_some() {
+        ctx.db.trusted_issuer().id().update(row);
+    } else {
+        ctx.db.trusted_issuer().try_insert(row).map_err(text)?;
+    }
+    Ok(())
+}
+
+/// Stops trusting tokens from `issuer` that carry `audience`; operator only. Open connections
+/// stay open; the next one with such a token is refused.
+///
+/// # Errors
+///
+/// The messages of [`auth::plan_remove_trusted_issuer`].
+#[spacetimedb::reducer]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "reducer arguments arrive by value from the SpacetimeDB host"
+)]
+pub fn remove_trusted_issuer(
+    ctx: &ReducerContext,
+    issuer: String,
+    audience: String,
+) -> Result<(), String> {
+    let id = auth::plan_remove_trusted_issuer(
+        is_operator(ctx, ctx.sender()),
+        &trusted_issuers(ctx),
+        &issuer,
+        &audience,
+    )?;
+    ctx.db.trusted_issuer().id().delete(id);
+    Ok(())
+}
+
+/// Turns host-issued device identities on or off for this database; operator only. They are on
+/// until an operator turns them off ([`auth::device_identities_allowed`]); operators connect
+/// either way.
+///
+/// # Errors
+///
+/// When the caller is not an operator.
+#[spacetimedb::reducer]
+pub fn set_device_identities(ctx: &ReducerContext, allowed: bool) -> Result<(), String> {
+    auth::check_set_device_identities(is_operator(ctx, ctx.sender()))?;
+    let row = AuthSetting {
+        id: 0,
+        allow_device_identities: allowed,
+        changed_by: ctx.sender(),
+        changed_at: ctx.timestamp,
+    };
+    if ctx.db.auth_setting().id().find(0).is_some() {
+        ctx.db.auth_setting().id().update(row);
+    } else {
+        ctx.db.auth_setting().try_insert(row).map_err(text)?;
+    }
+    Ok(())
+}
+
 /// Opens books for a new organisation and makes the caller its owner (`index.ts:554-595`):
 /// ledger-core's `createOrgLedger` with the reducer env ([`seed_books`]), written as new rows
 /// numbered from 0, then the owner and the `ledger.create` audit event.
@@ -205,6 +326,54 @@ pub fn add_member(
         can_close,
     };
     let change = rules::plan_add_member(&org_id, ctx.sender(), &org_members, &args)?;
+    if change.replaces {
+        ctx.db.member().key().update(change.row);
+    } else {
+        ctx.db.member().try_insert(change.row).map_err(text)?;
+    }
+    append_audit(ctx, &org_id, change.audit)
+}
+
+/// Adds a person as a member by the issuer and subject of their tokens, before they ever
+/// connect, or changes their permissions; needs `can_close`. The member's identity is the one
+/// the host derives from those claims and their user id is the subject. Rules in
+/// [`auth::plan_add_member_by_subject`].
+///
+/// # Errors
+///
+/// The messages of [`auth::plan_add_member_by_subject`].
+#[spacetimedb::reducer]
+#[expect(
+    clippy::needless_pass_by_value,
+    clippy::too_many_arguments,
+    reason = "reducer arguments arrive by value from the host, one per add_member argument"
+)]
+pub fn add_member_by_subject(
+    ctx: &ReducerContext,
+    org_id: String,
+    issuer: String,
+    subject: String,
+    name: String,
+    can_post: bool,
+    can_approve: bool,
+    can_close: bool,
+) -> Result<(), String> {
+    let org_members: Vec<Member> = ctx.db.member().org_id().filter(&org_id).collect();
+    let args = SubjectArgs {
+        issuer: &issuer,
+        subject: &subject,
+        name: &name,
+        can_post,
+        can_approve,
+        can_close,
+    };
+    let change = auth::plan_add_member_by_subject(
+        &org_id,
+        ctx.sender(),
+        &org_members,
+        &trusted_issuers(ctx),
+        &args,
+    )?;
     if change.replaces {
         ctx.db.member().key().update(change.row);
     } else {

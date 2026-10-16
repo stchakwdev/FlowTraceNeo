@@ -10,10 +10,13 @@ pub mod access_group_member_row_type;
 pub mod access_group_row_type;
 pub mod account_row_type;
 pub mod add_access_group_member_reducer;
+pub mod add_member_by_subject_reducer;
 pub mod add_member_reducer;
 pub mod add_operator_reducer;
+pub mod add_trusted_issuer_reducer;
 pub mod approve_chain_reducer;
 pub mod audit_event_row_type;
+pub mod auth_setting_type;
 pub mod bank_account_row_type;
 pub mod bill_row_type;
 pub mod budget_line_row_type;
@@ -118,11 +121,13 @@ pub mod remove_node_visibility_reducer;
 pub mod remove_operator_reducer;
 pub mod remove_service_reducer;
 pub mod remove_transaction_visibility_reducer;
+pub mod remove_trusted_issuer_reducer;
 pub mod request_chain_reducer;
 pub mod resolve_flag_reducer;
 pub mod revoke_chain_reducer;
 pub mod run_command_reducer;
 pub mod service_row_type;
+pub mod set_device_identities_reducer;
 pub mod set_node_visibility_reducer;
 pub mod set_profile_reducer;
 pub mod set_transaction_visibility_reducer;
@@ -131,6 +136,7 @@ pub mod transaction_row_type;
 pub mod transaction_visibility_row_type;
 pub mod trust_history_row_type;
 pub mod trust_score_row_type;
+pub mod trusted_issuer_type;
 pub mod update_access_group_reducer;
 pub mod update_campaign_reducer;
 pub mod update_chain_permissions_reducer;
@@ -147,10 +153,13 @@ pub use access_group_member_row_type::AccessGroupMemberRow;
 pub use access_group_row_type::AccessGroupRow;
 pub use account_row_type::AccountRow;
 pub use add_access_group_member_reducer::add_access_group_member;
+pub use add_member_by_subject_reducer::add_member_by_subject;
 pub use add_member_reducer::add_member;
 pub use add_operator_reducer::add_operator;
+pub use add_trusted_issuer_reducer::add_trusted_issuer;
 pub use approve_chain_reducer::approve_chain;
 pub use audit_event_row_type::AuditEventRow;
+pub use auth_setting_type::AuthSetting;
 pub use bank_account_row_type::BankAccountRow;
 pub use bill_row_type::BillRow;
 pub use budget_line_row_type::BudgetLineRow;
@@ -255,11 +264,13 @@ pub use remove_node_visibility_reducer::remove_node_visibility;
 pub use remove_operator_reducer::remove_operator;
 pub use remove_service_reducer::remove_service;
 pub use remove_transaction_visibility_reducer::remove_transaction_visibility;
+pub use remove_trusted_issuer_reducer::remove_trusted_issuer;
 pub use request_chain_reducer::request_chain;
 pub use resolve_flag_reducer::resolve_flag;
 pub use revoke_chain_reducer::revoke_chain;
 pub use run_command_reducer::run_command;
 pub use service_row_type::ServiceRow;
+pub use set_device_identities_reducer::set_device_identities;
 pub use set_node_visibility_reducer::set_node_visibility;
 pub use set_profile_reducer::set_profile;
 pub use set_transaction_visibility_reducer::set_transaction_visibility;
@@ -268,6 +279,7 @@ pub use transaction_row_type::TransactionRow;
 pub use transaction_visibility_row_type::TransactionVisibilityRow;
 pub use trust_history_row_type::TrustHistoryRow;
 pub use trust_score_row_type::TrustScoreRow;
+pub use trusted_issuer_type::TrustedIssuer;
 pub use update_access_group_reducer::update_access_group;
 pub use update_campaign_reducer::update_campaign;
 pub use update_chain_permissions_reducer::update_chain_permissions;
@@ -301,8 +313,22 @@ pub enum Reducer {
         can_approve: bool,
         can_close: bool,
     },
+    AddMemberBySubject {
+        org_id: String,
+        issuer: String,
+        subject: String,
+        name: String,
+        can_post: bool,
+        can_approve: bool,
+        can_close: bool,
+    },
     AddOperator {
         identity: __sdk::Identity,
+    },
+    AddTrustedIssuer {
+        issuer: String,
+        audience: String,
+        label: String,
     },
     ApproveChain {
         chain_id: String,
@@ -432,6 +458,10 @@ pub enum Reducer {
         transaction_id: String,
         group_id: String,
     },
+    RemoveTrustedIssuer {
+        issuer: String,
+        audience: String,
+    },
     RequestChain {
         source_org_id: String,
         target_org_id: String,
@@ -450,6 +480,9 @@ pub enum Reducer {
         org_id: String,
         request_id: String,
         command_json: String,
+    },
+    SetDeviceIdentities {
+        allowed: bool,
     },
     SetNodeVisibility {
         org_id: String,
@@ -517,7 +550,9 @@ impl __sdk::Reducer for Reducer {
         match self {
             Reducer::AddAccessGroupMember { .. } => "add_access_group_member",
             Reducer::AddMember { .. } => "add_member",
+            Reducer::AddMemberBySubject { .. } => "add_member_by_subject",
             Reducer::AddOperator { .. } => "add_operator",
+            Reducer::AddTrustedIssuer { .. } => "add_trusted_issuer",
             Reducer::ApproveChain { .. } => "approve_chain",
             Reducer::CancelChainRequest { .. } => "cancel_chain_request",
             Reducer::CreateAccessGroup { .. } => "create_access_group",
@@ -549,10 +584,12 @@ impl __sdk::Reducer for Reducer {
             Reducer::RemoveOperator { .. } => "remove_operator",
             Reducer::RemoveService { .. } => "remove_service",
             Reducer::RemoveTransactionVisibility { .. } => "remove_transaction_visibility",
+            Reducer::RemoveTrustedIssuer { .. } => "remove_trusted_issuer",
             Reducer::RequestChain { .. } => "request_chain",
             Reducer::ResolveFlag { .. } => "resolve_flag",
             Reducer::RevokeChain { .. } => "revoke_chain",
             Reducer::RunCommand { .. } => "run_command",
+            Reducer::SetDeviceIdentities { .. } => "set_device_identities",
             Reducer::SetNodeVisibility { .. } => "set_node_visibility",
             Reducer::SetProfile { .. } => "set_profile",
             Reducer::SetTransactionVisibility { .. } => "set_transaction_visibility",
@@ -596,11 +633,37 @@ impl __sdk::Reducer for Reducer {
                 can_approve: can_approve.clone(),
                 can_close: can_close.clone(),
             }),
+            Reducer::AddMemberBySubject {
+                org_id,
+                issuer,
+                subject,
+                name,
+                can_post,
+                can_approve,
+                can_close,
+            } => __sats::bsatn::to_vec(&add_member_by_subject_reducer::AddMemberBySubjectArgs {
+                org_id: org_id.clone(),
+                issuer: issuer.clone(),
+                subject: subject.clone(),
+                name: name.clone(),
+                can_post: can_post.clone(),
+                can_approve: can_approve.clone(),
+                can_close: can_close.clone(),
+            }),
             Reducer::AddOperator { identity } => {
                 __sats::bsatn::to_vec(&add_operator_reducer::AddOperatorArgs {
                     identity: identity.clone(),
                 })
             }
+            Reducer::AddTrustedIssuer {
+                issuer,
+                audience,
+                label,
+            } => __sats::bsatn::to_vec(&add_trusted_issuer_reducer::AddTrustedIssuerArgs {
+                issuer: issuer.clone(),
+                audience: audience.clone(),
+                label: label.clone(),
+            }),
             Reducer::ApproveChain {
                 chain_id,
                 granted_group_id,
@@ -824,6 +887,12 @@ impl __sdk::Reducer for Reducer {
                     group_id: group_id.clone(),
                 },
             ),
+            Reducer::RemoveTrustedIssuer { issuer, audience } => {
+                __sats::bsatn::to_vec(&remove_trusted_issuer_reducer::RemoveTrustedIssuerArgs {
+                    issuer: issuer.clone(),
+                    audience: audience.clone(),
+                })
+            }
             Reducer::RequestChain {
                 source_org_id,
                 target_org_id,
@@ -858,6 +927,11 @@ impl __sdk::Reducer for Reducer {
                 request_id: request_id.clone(),
                 command_json: command_json.clone(),
             }),
+            Reducer::SetDeviceIdentities { allowed } => {
+                __sats::bsatn::to_vec(&set_device_identities_reducer::SetDeviceIdentitiesArgs {
+                    allowed: allowed.clone(),
+                })
+            }
             Reducer::SetNodeVisibility {
                 org_id,
                 node_id,

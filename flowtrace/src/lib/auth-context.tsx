@@ -1,9 +1,11 @@
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, useContext, useEffect, useMemo } from 'react'
 import {
   AuthKitProvider,
+  useAccessToken,
   useAuth,
 } from '@workos/authkit-tanstack-react-start/client'
 import { DEV_MODE, DUMMY_USER, mapWorkOSUser } from './auth'
+import { setAccessTokenSource } from './ledger/spacetime-auth'
 import type { ComponentProps, ReactNode } from 'react'
 import type { AuthUser } from './auth'
 
@@ -54,6 +56,14 @@ export function AppAuthProvider({
 
 function WorkOSAuthBridge({ children }: { children: ReactNode }) {
   const { user, organizationId, loading, signOut } = useAuth()
+  const { getAccessToken } = useAccessToken()
+
+  // The SpacetimeDB connection signs in with this person's access token;
+  // getAccessToken refreshes it when it is about to expire.
+  useEffect(() => {
+    setAccessTokenSource(getAccessToken)
+    return () => setAccessTokenSource(null)
+  }, [getAccessToken])
 
   const value = useMemo<AppAuth>(
     () => ({

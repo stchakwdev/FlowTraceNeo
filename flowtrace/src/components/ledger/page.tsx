@@ -1,5 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { DEV_MODE } from '@/lib/auth'
 import { LedgerError } from '@/lib/ledger'
 import { BooksNotConnectedError } from '@/lib/ledger-client'
 import { cn } from '@/lib/utils'
@@ -134,7 +135,9 @@ export function BooksState({
         {error.identity && (
           <>
             {' '}
-            To add this device as a member, give them its identity:{' '}
+            {DEV_MODE
+              ? 'To add this device as a member, give them its identity:'
+              : 'To add you as a member, give them your identity:'}{' '}
             <code className="font-mono text-xs break-all">0x{error.identity}</code>
           </>
         )}

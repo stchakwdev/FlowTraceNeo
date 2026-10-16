@@ -39,7 +39,7 @@ fn is_currency_code(s: &str) -> bool {
 }
 
 /// The `can_close` check of `addMember` and `removeMember` (`index.ts:610`, `index.ts:645`).
-fn require_close(actor: &Actor) -> Result<(), String> {
+pub(crate) fn require_close(actor: &Actor) -> Result<(), String> {
     if actor.can_close {
         Ok(())
     } else {

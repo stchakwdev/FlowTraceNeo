@@ -34,41 +34,208 @@ import {
 } from 'spacetimedb'
 
 // Import all reducer arg schemas
+import AddAccessGroupMemberReducer from './add_access_group_member_reducer'
 import AddMemberReducer from './add_member_reducer'
+import AddMemberBySubjectReducer from './add_member_by_subject_reducer'
 import AddOperatorReducer from './add_operator_reducer'
+import AddTrustedIssuerReducer from './add_trusted_issuer_reducer'
+import ApproveChainReducer from './approve_chain_reducer'
+import CancelChainRequestReducer from './cancel_chain_request_reducer'
+import CreateAccessGroupReducer from './create_access_group_reducer'
+import CreateCampaignReducer from './create_campaign_reducer'
+import CreateDefaultAccessGroupsReducer from './create_default_access_groups_reducer'
+import CreateFlowNodeReducer from './create_flow_node_reducer'
 import CreateOrgLedgerReducer from './create_org_ledger_reducer'
+import CreateTransactionReducer from './create_transaction_reducer'
+import CreateVerificationReducer from './create_verification_reducer'
+import DeleteAccessGroupReducer from './delete_access_group_reducer'
+import DeleteCampaignReducer from './delete_campaign_reducer'
 import ImportBooksReducer from './import_books_reducer'
+import ImportTransparencyReducer from './import_transparency_reducer'
+import InviteAccessGroupMemberReducer from './invite_access_group_member_reducer'
+import LinkTransactionEntriesReducer from './link_transaction_entries_reducer'
+import LogVerificationAccessReducer from './log_verification_access_reducer'
+import MarkDonorUpdateSentReducer from './mark_donor_update_sent_reducer'
+import PostDonorUpdateReducer from './post_donor_update_reducer'
+import RecomputeTrustReducer from './recompute_trust_reducer'
+import RecordDonationReducer from './record_donation_reducer'
+import RecordFlagsReducer from './record_flags_reducer'
+import RecordRubricReducer from './record_rubric_reducer'
+import RegenerateEmbedTokenReducer from './regenerate_embed_token_reducer'
+import RegisterServiceReducer from './register_service_reducer'
+import RejectChainReducer from './reject_chain_reducer'
+import RemoveAccessGroupMemberReducer from './remove_access_group_member_reducer'
 import RemoveMemberReducer from './remove_member_reducer'
+import RemoveNodeVisibilityReducer from './remove_node_visibility_reducer'
 import RemoveOperatorReducer from './remove_operator_reducer'
+import RemoveServiceReducer from './remove_service_reducer'
+import RemoveTransactionVisibilityReducer from './remove_transaction_visibility_reducer'
+import RemoveTrustedIssuerReducer from './remove_trusted_issuer_reducer'
+import RequestChainReducer from './request_chain_reducer'
+import ResolveFlagReducer from './resolve_flag_reducer'
+import RevokeChainReducer from './revoke_chain_reducer'
 import RunCommandReducer from './run_command_reducer'
+import SetDeviceIdentitiesReducer from './set_device_identities_reducer'
+import SetNodeVisibilityReducer from './set_node_visibility_reducer'
+import SetProfileReducer from './set_profile_reducer'
+import SetTransactionVisibilityReducer from './set_transaction_visibility_reducer'
+import UpdateAccessGroupReducer from './update_access_group_reducer'
+import UpdateCampaignReducer from './update_campaign_reducer'
+import UpdateChainPermissionsReducer from './update_chain_permissions_reducer'
+import UpdateDonationStatusReducer from './update_donation_status_reducer'
+import UpdateFlowNodeReducer from './update_flow_node_reducer'
+import UpdateOrganizationProfileReducer from './update_organization_profile_reducer'
+import UpdatePublicEmbedConfigReducer from './update_public_embed_config_reducer'
+import UpdateTransactionReducer from './update_transaction_reducer'
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
+import MyAccessGroupRow from './my_access_group_table'
+import MyAccessGroupMemberRow from './my_access_group_member_table'
 import MyAccountRow from './my_account_table'
 import MyAuditEventRow from './my_audit_event_table'
 import MyBankAccountRow from './my_bank_account_table'
 import MyBillRow from './my_bill_table'
 import MyBudgetRow from './my_budget_table'
 import MyBudgetLineRow from './my_budget_line_table'
+import MyCampaignRow from './my_campaign_table'
+import MyCampaignStatRow from './my_campaign_stat_table'
+import MyChainActivityLogRow from './my_chain_activity_log_table'
 import MyCommandResultRow from './my_command_result_table'
 import MyDimensionRow from './my_dimension_table'
+import MyDonationRow from './my_donation_table'
+import MyDonorUpdateRow from './my_donor_update_table'
 import MyExpenseClaimRow from './my_expense_claim_table'
 import MyFiscalPeriodRow from './my_fiscal_period_table'
+import MyFlagRow from './my_flag_table'
+import MyFlowNodeRow from './my_flow_node_table'
 import MyFundRow from './my_fund_table'
 import MyGrantRow from './my_grant_table'
 import MyJournalEntryRow from './my_journal_entry_table'
 import MyJournalLineRow from './my_journal_line_table'
 import MyLedgerOrgRow from './my_ledger_org_table'
 import MyMemberRow from './my_member_table'
+import MyNodeVisibilityRow from './my_node_visibility_table'
+import MyOrganizationChainRow from './my_organization_chain_table'
+import MyOrganizationProfileRow from './my_organization_profile_table'
 import MyPaymentRow from './my_payment_table'
+import MyProfileRow from './my_profile_table'
+import MyPublicEmbedConfigRow from './my_public_embed_config_table'
+import MyServiceRow from './my_service_table'
 import MyStatementLineRow from './my_statement_line_table'
+import MyTransactionRow from './my_transaction_table'
+import MyTransactionVisibilityRow from './my_transaction_visibility_table'
+import MyTrustScoreRow from './my_trust_score_table'
+import MyTrustScoreHistoryRow from './my_trust_score_history_table'
 import MyVendorRow from './my_vendor_table'
+import MyVerificationRow from './my_verification_table'
+import MyVerificationAccessLogRow from './my_verification_access_log_table'
+import PublicBadgeRow from './public_badge_table'
+import PublicCampaignRow from './public_campaign_table'
+import PublicOrganizationRow from './public_organization_table'
 
 /** Type-only namespace exports for generated type groups. */
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema({
+  publicBadge: __table(
+    {
+      name: 'public_badge',
+      indexes: [
+        {
+          accessor: 'org_id',
+          name: 'public_badge_org_id_idx_btree',
+          algorithm: 'btree',
+          columns: ['orgId'],
+        },
+      ],
+      constraints: [
+        {
+          name: 'public_badge_org_id_key',
+          constraint: 'unique',
+          columns: ['orgId'],
+        },
+      ],
+    },
+    PublicBadgeRow,
+  ),
+  publicCampaign: __table(
+    {
+      name: 'public_campaign',
+      indexes: [
+        {
+          accessor: 'campaign_id',
+          name: 'public_campaign_campaign_id_idx_btree',
+          algorithm: 'btree',
+          columns: ['campaignId'],
+        },
+        {
+          accessor: 'org_id',
+          name: 'public_campaign_org_id_idx_btree',
+          algorithm: 'btree',
+          columns: ['orgId'],
+        },
+        {
+          accessor: 'slug',
+          name: 'public_campaign_slug_idx_btree',
+          algorithm: 'btree',
+          columns: ['slug'],
+        },
+      ],
+      constraints: [
+        {
+          name: 'public_campaign_campaign_id_key',
+          constraint: 'unique',
+          columns: ['campaignId'],
+        },
+      ],
+    },
+    PublicCampaignRow,
+  ),
+  publicOrganization: __table(
+    {
+      name: 'public_organization',
+      indexes: [
+        {
+          accessor: 'org_id',
+          name: 'public_organization_org_id_idx_btree',
+          algorithm: 'btree',
+          columns: ['orgId'],
+        },
+        {
+          accessor: 'slug',
+          name: 'public_organization_slug_idx_btree',
+          algorithm: 'btree',
+          columns: ['slug'],
+        },
+      ],
+      constraints: [
+        {
+          name: 'public_organization_org_id_key',
+          constraint: 'unique',
+          columns: ['orgId'],
+        },
+      ],
+    },
+    PublicOrganizationRow,
+  ),
+  myAccessGroup: __table(
+    {
+      name: 'my_access_group',
+      indexes: [],
+      constraints: [],
+    },
+    MyAccessGroupRow,
+  ),
+  myAccessGroupMember: __table(
+    {
+      name: 'my_access_group_member',
+      indexes: [],
+      constraints: [],
+    },
+    MyAccessGroupMemberRow,
+  ),
   myAccount: __table(
     {
       name: 'my_account',
@@ -117,6 +284,30 @@ const tablesSchema = __schema({
     },
     MyBudgetLineRow,
   ),
+  myCampaign: __table(
+    {
+      name: 'my_campaign',
+      indexes: [],
+      constraints: [],
+    },
+    MyCampaignRow,
+  ),
+  myCampaignStat: __table(
+    {
+      name: 'my_campaign_stat',
+      indexes: [],
+      constraints: [],
+    },
+    MyCampaignStatRow,
+  ),
+  myChainActivityLog: __table(
+    {
+      name: 'my_chain_activity_log',
+      indexes: [],
+      constraints: [],
+    },
+    MyChainActivityLogRow,
+  ),
   myCommandResult: __table(
     {
       name: 'my_command_result',
@@ -133,6 +324,22 @@ const tablesSchema = __schema({
     },
     MyDimensionRow,
   ),
+  myDonation: __table(
+    {
+      name: 'my_donation',
+      indexes: [],
+      constraints: [],
+    },
+    MyDonationRow,
+  ),
+  myDonorUpdate: __table(
+    {
+      name: 'my_donor_update',
+      indexes: [],
+      constraints: [],
+    },
+    MyDonorUpdateRow,
+  ),
   myExpenseClaim: __table(
     {
       name: 'my_expense_claim',
@@ -148,6 +355,22 @@ const tablesSchema = __schema({
       constraints: [],
     },
     MyFiscalPeriodRow,
+  ),
+  myFlag: __table(
+    {
+      name: 'my_flag',
+      indexes: [],
+      constraints: [],
+    },
+    MyFlagRow,
+  ),
+  myFlowNode: __table(
+    {
+      name: 'my_flow_node',
+      indexes: [],
+      constraints: [],
+    },
+    MyFlowNodeRow,
   ),
   myFund: __table(
     {
@@ -197,6 +420,30 @@ const tablesSchema = __schema({
     },
     MyMemberRow,
   ),
+  myNodeVisibility: __table(
+    {
+      name: 'my_node_visibility',
+      indexes: [],
+      constraints: [],
+    },
+    MyNodeVisibilityRow,
+  ),
+  myOrganizationChain: __table(
+    {
+      name: 'my_organization_chain',
+      indexes: [],
+      constraints: [],
+    },
+    MyOrganizationChainRow,
+  ),
+  myOrganizationProfile: __table(
+    {
+      name: 'my_organization_profile',
+      indexes: [],
+      constraints: [],
+    },
+    MyOrganizationProfileRow,
+  ),
   myPayment: __table(
     {
       name: 'my_payment',
@@ -204,6 +451,30 @@ const tablesSchema = __schema({
       constraints: [],
     },
     MyPaymentRow,
+  ),
+  myProfile: __table(
+    {
+      name: 'my_profile',
+      indexes: [],
+      constraints: [],
+    },
+    MyProfileRow,
+  ),
+  myPublicEmbedConfig: __table(
+    {
+      name: 'my_public_embed_config',
+      indexes: [],
+      constraints: [],
+    },
+    MyPublicEmbedConfigRow,
+  ),
+  myService: __table(
+    {
+      name: 'my_service',
+      indexes: [],
+      constraints: [],
+    },
+    MyServiceRow,
   ),
   myStatementLine: __table(
     {
@@ -213,6 +484,38 @@ const tablesSchema = __schema({
     },
     MyStatementLineRow,
   ),
+  myTransaction: __table(
+    {
+      name: 'my_transaction',
+      indexes: [],
+      constraints: [],
+    },
+    MyTransactionRow,
+  ),
+  myTransactionVisibility: __table(
+    {
+      name: 'my_transaction_visibility',
+      indexes: [],
+      constraints: [],
+    },
+    MyTransactionVisibilityRow,
+  ),
+  myTrustScore: __table(
+    {
+      name: 'my_trust_score',
+      indexes: [],
+      constraints: [],
+    },
+    MyTrustScoreRow,
+  ),
+  myTrustScoreHistory: __table(
+    {
+      name: 'my_trust_score_history',
+      indexes: [],
+      constraints: [],
+    },
+    MyTrustScoreHistoryRow,
+  ),
   myVendor: __table(
     {
       name: 'my_vendor',
@@ -221,17 +524,91 @@ const tablesSchema = __schema({
     },
     MyVendorRow,
   ),
+  myVerification: __table(
+    {
+      name: 'my_verification',
+      indexes: [],
+      constraints: [],
+    },
+    MyVerificationRow,
+  ),
+  myVerificationAccessLog: __table(
+    {
+      name: 'my_verification_access_log',
+      indexes: [],
+      constraints: [],
+    },
+    MyVerificationAccessLogRow,
+  ),
 })
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema('add_access_group_member', AddAccessGroupMemberReducer),
   __reducerSchema('add_member', AddMemberReducer),
+  __reducerSchema('add_member_by_subject', AddMemberBySubjectReducer),
   __reducerSchema('add_operator', AddOperatorReducer),
+  __reducerSchema('add_trusted_issuer', AddTrustedIssuerReducer),
+  __reducerSchema('approve_chain', ApproveChainReducer),
+  __reducerSchema('cancel_chain_request', CancelChainRequestReducer),
+  __reducerSchema('create_access_group', CreateAccessGroupReducer),
+  __reducerSchema('create_campaign', CreateCampaignReducer),
+  __reducerSchema(
+    'create_default_access_groups',
+    CreateDefaultAccessGroupsReducer,
+  ),
+  __reducerSchema('create_flow_node', CreateFlowNodeReducer),
   __reducerSchema('create_org_ledger', CreateOrgLedgerReducer),
+  __reducerSchema('create_transaction', CreateTransactionReducer),
+  __reducerSchema('create_verification', CreateVerificationReducer),
+  __reducerSchema('delete_access_group', DeleteAccessGroupReducer),
+  __reducerSchema('delete_campaign', DeleteCampaignReducer),
   __reducerSchema('import_books', ImportBooksReducer),
+  __reducerSchema('import_transparency', ImportTransparencyReducer),
+  __reducerSchema('invite_access_group_member', InviteAccessGroupMemberReducer),
+  __reducerSchema('link_transaction_entries', LinkTransactionEntriesReducer),
+  __reducerSchema('log_verification_access', LogVerificationAccessReducer),
+  __reducerSchema('mark_donor_update_sent', MarkDonorUpdateSentReducer),
+  __reducerSchema('post_donor_update', PostDonorUpdateReducer),
+  __reducerSchema('recompute_trust', RecomputeTrustReducer),
+  __reducerSchema('record_donation', RecordDonationReducer),
+  __reducerSchema('record_flags', RecordFlagsReducer),
+  __reducerSchema('record_rubric', RecordRubricReducer),
+  __reducerSchema('regenerate_embed_token', RegenerateEmbedTokenReducer),
+  __reducerSchema('register_service', RegisterServiceReducer),
+  __reducerSchema('reject_chain', RejectChainReducer),
+  __reducerSchema('remove_access_group_member', RemoveAccessGroupMemberReducer),
   __reducerSchema('remove_member', RemoveMemberReducer),
+  __reducerSchema('remove_node_visibility', RemoveNodeVisibilityReducer),
   __reducerSchema('remove_operator', RemoveOperatorReducer),
+  __reducerSchema('remove_service', RemoveServiceReducer),
+  __reducerSchema(
+    'remove_transaction_visibility',
+    RemoveTransactionVisibilityReducer,
+  ),
+  __reducerSchema('remove_trusted_issuer', RemoveTrustedIssuerReducer),
+  __reducerSchema('request_chain', RequestChainReducer),
+  __reducerSchema('resolve_flag', ResolveFlagReducer),
+  __reducerSchema('revoke_chain', RevokeChainReducer),
   __reducerSchema('run_command', RunCommandReducer),
+  __reducerSchema('set_device_identities', SetDeviceIdentitiesReducer),
+  __reducerSchema('set_node_visibility', SetNodeVisibilityReducer),
+  __reducerSchema('set_profile', SetProfileReducer),
+  __reducerSchema(
+    'set_transaction_visibility',
+    SetTransactionVisibilityReducer,
+  ),
+  __reducerSchema('update_access_group', UpdateAccessGroupReducer),
+  __reducerSchema('update_campaign', UpdateCampaignReducer),
+  __reducerSchema('update_chain_permissions', UpdateChainPermissionsReducer),
+  __reducerSchema('update_donation_status', UpdateDonationStatusReducer),
+  __reducerSchema('update_flow_node', UpdateFlowNodeReducer),
+  __reducerSchema(
+    'update_organization_profile',
+    UpdateOrganizationProfileReducer,
+  ),
+  __reducerSchema('update_public_embed_config', UpdatePublicEmbedConfigReducer),
+  __reducerSchema('update_transaction', UpdateTransactionReducer),
 )
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
@@ -242,6 +619,31 @@ type __SchemaWithTableAccessorAliases = Omit<
   'tables'
 > & {
   tables: typeof tablesSchema.schemaType.tables & {
+    /** @deprecated Use `publicBadge` instead. This alias will be removed in the next major version. */
+    readonly public_badge: Omit<
+      (typeof tablesSchema.schemaType.tables)['publicBadge'],
+      'accessorName'
+    > & { readonly accessorName: 'public_badge' }
+    /** @deprecated Use `publicCampaign` instead. This alias will be removed in the next major version. */
+    readonly public_campaign: Omit<
+      (typeof tablesSchema.schemaType.tables)['publicCampaign'],
+      'accessorName'
+    > & { readonly accessorName: 'public_campaign' }
+    /** @deprecated Use `publicOrganization` instead. This alias will be removed in the next major version. */
+    readonly public_organization: Omit<
+      (typeof tablesSchema.schemaType.tables)['publicOrganization'],
+      'accessorName'
+    > & { readonly accessorName: 'public_organization' }
+    /** @deprecated Use `myAccessGroup` instead. This alias will be removed in the next major version. */
+    readonly my_access_group: Omit<
+      (typeof tablesSchema.schemaType.tables)['myAccessGroup'],
+      'accessorName'
+    > & { readonly accessorName: 'my_access_group' }
+    /** @deprecated Use `myAccessGroupMember` instead. This alias will be removed in the next major version. */
+    readonly my_access_group_member: Omit<
+      (typeof tablesSchema.schemaType.tables)['myAccessGroupMember'],
+      'accessorName'
+    > & { readonly accessorName: 'my_access_group_member' }
     /** @deprecated Use `myAccount` instead. This alias will be removed in the next major version. */
     readonly my_account: Omit<
       (typeof tablesSchema.schemaType.tables)['myAccount'],
@@ -272,6 +674,21 @@ type __SchemaWithTableAccessorAliases = Omit<
       (typeof tablesSchema.schemaType.tables)['myBudgetLine'],
       'accessorName'
     > & { readonly accessorName: 'my_budget_line' }
+    /** @deprecated Use `myCampaign` instead. This alias will be removed in the next major version. */
+    readonly my_campaign: Omit<
+      (typeof tablesSchema.schemaType.tables)['myCampaign'],
+      'accessorName'
+    > & { readonly accessorName: 'my_campaign' }
+    /** @deprecated Use `myCampaignStat` instead. This alias will be removed in the next major version. */
+    readonly my_campaign_stat: Omit<
+      (typeof tablesSchema.schemaType.tables)['myCampaignStat'],
+      'accessorName'
+    > & { readonly accessorName: 'my_campaign_stat' }
+    /** @deprecated Use `myChainActivityLog` instead. This alias will be removed in the next major version. */
+    readonly my_chain_activity_log: Omit<
+      (typeof tablesSchema.schemaType.tables)['myChainActivityLog'],
+      'accessorName'
+    > & { readonly accessorName: 'my_chain_activity_log' }
     /** @deprecated Use `myCommandResult` instead. This alias will be removed in the next major version. */
     readonly my_command_result: Omit<
       (typeof tablesSchema.schemaType.tables)['myCommandResult'],
@@ -282,6 +699,16 @@ type __SchemaWithTableAccessorAliases = Omit<
       (typeof tablesSchema.schemaType.tables)['myDimension'],
       'accessorName'
     > & { readonly accessorName: 'my_dimension' }
+    /** @deprecated Use `myDonation` instead. This alias will be removed in the next major version. */
+    readonly my_donation: Omit<
+      (typeof tablesSchema.schemaType.tables)['myDonation'],
+      'accessorName'
+    > & { readonly accessorName: 'my_donation' }
+    /** @deprecated Use `myDonorUpdate` instead. This alias will be removed in the next major version. */
+    readonly my_donor_update: Omit<
+      (typeof tablesSchema.schemaType.tables)['myDonorUpdate'],
+      'accessorName'
+    > & { readonly accessorName: 'my_donor_update' }
     /** @deprecated Use `myExpenseClaim` instead. This alias will be removed in the next major version. */
     readonly my_expense_claim: Omit<
       (typeof tablesSchema.schemaType.tables)['myExpenseClaim'],
@@ -292,6 +719,16 @@ type __SchemaWithTableAccessorAliases = Omit<
       (typeof tablesSchema.schemaType.tables)['myFiscalPeriod'],
       'accessorName'
     > & { readonly accessorName: 'my_fiscal_period' }
+    /** @deprecated Use `myFlag` instead. This alias will be removed in the next major version. */
+    readonly my_flag: Omit<
+      (typeof tablesSchema.schemaType.tables)['myFlag'],
+      'accessorName'
+    > & { readonly accessorName: 'my_flag' }
+    /** @deprecated Use `myFlowNode` instead. This alias will be removed in the next major version. */
+    readonly my_flow_node: Omit<
+      (typeof tablesSchema.schemaType.tables)['myFlowNode'],
+      'accessorName'
+    > & { readonly accessorName: 'my_flow_node' }
     /** @deprecated Use `myFund` instead. This alias will be removed in the next major version. */
     readonly my_fund: Omit<
       (typeof tablesSchema.schemaType.tables)['myFund'],
@@ -322,21 +759,81 @@ type __SchemaWithTableAccessorAliases = Omit<
       (typeof tablesSchema.schemaType.tables)['myMember'],
       'accessorName'
     > & { readonly accessorName: 'my_member' }
+    /** @deprecated Use `myNodeVisibility` instead. This alias will be removed in the next major version. */
+    readonly my_node_visibility: Omit<
+      (typeof tablesSchema.schemaType.tables)['myNodeVisibility'],
+      'accessorName'
+    > & { readonly accessorName: 'my_node_visibility' }
+    /** @deprecated Use `myOrganizationChain` instead. This alias will be removed in the next major version. */
+    readonly my_organization_chain: Omit<
+      (typeof tablesSchema.schemaType.tables)['myOrganizationChain'],
+      'accessorName'
+    > & { readonly accessorName: 'my_organization_chain' }
+    /** @deprecated Use `myOrganizationProfile` instead. This alias will be removed in the next major version. */
+    readonly my_organization_profile: Omit<
+      (typeof tablesSchema.schemaType.tables)['myOrganizationProfile'],
+      'accessorName'
+    > & { readonly accessorName: 'my_organization_profile' }
     /** @deprecated Use `myPayment` instead. This alias will be removed in the next major version. */
     readonly my_payment: Omit<
       (typeof tablesSchema.schemaType.tables)['myPayment'],
       'accessorName'
     > & { readonly accessorName: 'my_payment' }
+    /** @deprecated Use `myProfile` instead. This alias will be removed in the next major version. */
+    readonly my_profile: Omit<
+      (typeof tablesSchema.schemaType.tables)['myProfile'],
+      'accessorName'
+    > & { readonly accessorName: 'my_profile' }
+    /** @deprecated Use `myPublicEmbedConfig` instead. This alias will be removed in the next major version. */
+    readonly my_public_embed_config: Omit<
+      (typeof tablesSchema.schemaType.tables)['myPublicEmbedConfig'],
+      'accessorName'
+    > & { readonly accessorName: 'my_public_embed_config' }
+    /** @deprecated Use `myService` instead. This alias will be removed in the next major version. */
+    readonly my_service: Omit<
+      (typeof tablesSchema.schemaType.tables)['myService'],
+      'accessorName'
+    > & { readonly accessorName: 'my_service' }
     /** @deprecated Use `myStatementLine` instead. This alias will be removed in the next major version. */
     readonly my_statement_line: Omit<
       (typeof tablesSchema.schemaType.tables)['myStatementLine'],
       'accessorName'
     > & { readonly accessorName: 'my_statement_line' }
+    /** @deprecated Use `myTransaction` instead. This alias will be removed in the next major version. */
+    readonly my_transaction: Omit<
+      (typeof tablesSchema.schemaType.tables)['myTransaction'],
+      'accessorName'
+    > & { readonly accessorName: 'my_transaction' }
+    /** @deprecated Use `myTransactionVisibility` instead. This alias will be removed in the next major version. */
+    readonly my_transaction_visibility: Omit<
+      (typeof tablesSchema.schemaType.tables)['myTransactionVisibility'],
+      'accessorName'
+    > & { readonly accessorName: 'my_transaction_visibility' }
+    /** @deprecated Use `myTrustScore` instead. This alias will be removed in the next major version. */
+    readonly my_trust_score: Omit<
+      (typeof tablesSchema.schemaType.tables)['myTrustScore'],
+      'accessorName'
+    > & { readonly accessorName: 'my_trust_score' }
+    /** @deprecated Use `myTrustScoreHistory` instead. This alias will be removed in the next major version. */
+    readonly my_trust_score_history: Omit<
+      (typeof tablesSchema.schemaType.tables)['myTrustScoreHistory'],
+      'accessorName'
+    > & { readonly accessorName: 'my_trust_score_history' }
     /** @deprecated Use `myVendor` instead. This alias will be removed in the next major version. */
     readonly my_vendor: Omit<
       (typeof tablesSchema.schemaType.tables)['myVendor'],
       'accessorName'
     > & { readonly accessorName: 'my_vendor' }
+    /** @deprecated Use `myVerification` instead. This alias will be removed in the next major version. */
+    readonly my_verification: Omit<
+      (typeof tablesSchema.schemaType.tables)['myVerification'],
+      'accessorName'
+    > & { readonly accessorName: 'my_verification' }
+    /** @deprecated Use `myVerificationAccessLog` instead. This alias will be removed in the next major version. */
+    readonly my_verification_access_log: Omit<
+      (typeof tablesSchema.schemaType.tables)['myVerificationAccessLog'],
+      'accessorName'
+    > & { readonly accessorName: 'my_verification_access_log' }
   }
 }
 
@@ -356,25 +853,49 @@ const REMOTE_MODULE = {
 >
 
 const tableAccessorAliases = {
+  public_badge: 'publicBadge',
+  public_campaign: 'publicCampaign',
+  public_organization: 'publicOrganization',
+  my_access_group: 'myAccessGroup',
+  my_access_group_member: 'myAccessGroupMember',
   my_account: 'myAccount',
   my_audit_event: 'myAuditEvent',
   my_bank_account: 'myBankAccount',
   my_bill: 'myBill',
   my_budget: 'myBudget',
   my_budget_line: 'myBudgetLine',
+  my_campaign: 'myCampaign',
+  my_campaign_stat: 'myCampaignStat',
+  my_chain_activity_log: 'myChainActivityLog',
   my_command_result: 'myCommandResult',
   my_dimension: 'myDimension',
+  my_donation: 'myDonation',
+  my_donor_update: 'myDonorUpdate',
   my_expense_claim: 'myExpenseClaim',
   my_fiscal_period: 'myFiscalPeriod',
+  my_flag: 'myFlag',
+  my_flow_node: 'myFlowNode',
   my_fund: 'myFund',
   my_grant: 'myGrant',
   my_journal_entry: 'myJournalEntry',
   my_journal_line: 'myJournalLine',
   my_ledger_org: 'myLedgerOrg',
   my_member: 'myMember',
+  my_node_visibility: 'myNodeVisibility',
+  my_organization_chain: 'myOrganizationChain',
+  my_organization_profile: 'myOrganizationProfile',
   my_payment: 'myPayment',
+  my_profile: 'myProfile',
+  my_public_embed_config: 'myPublicEmbedConfig',
+  my_service: 'myService',
   my_statement_line: 'myStatementLine',
+  my_transaction: 'myTransaction',
+  my_transaction_visibility: 'myTransactionVisibility',
+  my_trust_score: 'myTrustScore',
+  my_trust_score_history: 'myTrustScoreHistory',
   my_vendor: 'myVendor',
+  my_verification: 'myVerification',
+  my_verification_access_log: 'myVerificationAccessLog',
 } as const
 
 function __withTableAccessorAliases<T extends object>(
@@ -401,6 +922,16 @@ function __withTableAccessorAliases<T extends object>(
 
 type __DbViewBase = __DbConnectionImpl<typeof REMOTE_MODULE>['db']
 export type DbView = __DbViewBase & {
+  /** @deprecated Use `publicBadge` instead. This alias will be removed in the next major version. */
+  readonly public_badge: __DbViewBase['publicBadge']
+  /** @deprecated Use `publicCampaign` instead. This alias will be removed in the next major version. */
+  readonly public_campaign: __DbViewBase['publicCampaign']
+  /** @deprecated Use `publicOrganization` instead. This alias will be removed in the next major version. */
+  readonly public_organization: __DbViewBase['publicOrganization']
+  /** @deprecated Use `myAccessGroup` instead. This alias will be removed in the next major version. */
+  readonly my_access_group: __DbViewBase['myAccessGroup']
+  /** @deprecated Use `myAccessGroupMember` instead. This alias will be removed in the next major version. */
+  readonly my_access_group_member: __DbViewBase['myAccessGroupMember']
   /** @deprecated Use `myAccount` instead. This alias will be removed in the next major version. */
   readonly my_account: __DbViewBase['myAccount']
   /** @deprecated Use `myAuditEvent` instead. This alias will be removed in the next major version. */
@@ -413,14 +944,28 @@ export type DbView = __DbViewBase & {
   readonly my_budget: __DbViewBase['myBudget']
   /** @deprecated Use `myBudgetLine` instead. This alias will be removed in the next major version. */
   readonly my_budget_line: __DbViewBase['myBudgetLine']
+  /** @deprecated Use `myCampaign` instead. This alias will be removed in the next major version. */
+  readonly my_campaign: __DbViewBase['myCampaign']
+  /** @deprecated Use `myCampaignStat` instead. This alias will be removed in the next major version. */
+  readonly my_campaign_stat: __DbViewBase['myCampaignStat']
+  /** @deprecated Use `myChainActivityLog` instead. This alias will be removed in the next major version. */
+  readonly my_chain_activity_log: __DbViewBase['myChainActivityLog']
   /** @deprecated Use `myCommandResult` instead. This alias will be removed in the next major version. */
   readonly my_command_result: __DbViewBase['myCommandResult']
   /** @deprecated Use `myDimension` instead. This alias will be removed in the next major version. */
   readonly my_dimension: __DbViewBase['myDimension']
+  /** @deprecated Use `myDonation` instead. This alias will be removed in the next major version. */
+  readonly my_donation: __DbViewBase['myDonation']
+  /** @deprecated Use `myDonorUpdate` instead. This alias will be removed in the next major version. */
+  readonly my_donor_update: __DbViewBase['myDonorUpdate']
   /** @deprecated Use `myExpenseClaim` instead. This alias will be removed in the next major version. */
   readonly my_expense_claim: __DbViewBase['myExpenseClaim']
   /** @deprecated Use `myFiscalPeriod` instead. This alias will be removed in the next major version. */
   readonly my_fiscal_period: __DbViewBase['myFiscalPeriod']
+  /** @deprecated Use `myFlag` instead. This alias will be removed in the next major version. */
+  readonly my_flag: __DbViewBase['myFlag']
+  /** @deprecated Use `myFlowNode` instead. This alias will be removed in the next major version. */
+  readonly my_flow_node: __DbViewBase['myFlowNode']
   /** @deprecated Use `myFund` instead. This alias will be removed in the next major version. */
   readonly my_fund: __DbViewBase['myFund']
   /** @deprecated Use `myGrant` instead. This alias will be removed in the next major version. */
@@ -433,16 +978,50 @@ export type DbView = __DbViewBase & {
   readonly my_ledger_org: __DbViewBase['myLedgerOrg']
   /** @deprecated Use `myMember` instead. This alias will be removed in the next major version. */
   readonly my_member: __DbViewBase['myMember']
+  /** @deprecated Use `myNodeVisibility` instead. This alias will be removed in the next major version. */
+  readonly my_node_visibility: __DbViewBase['myNodeVisibility']
+  /** @deprecated Use `myOrganizationChain` instead. This alias will be removed in the next major version. */
+  readonly my_organization_chain: __DbViewBase['myOrganizationChain']
+  /** @deprecated Use `myOrganizationProfile` instead. This alias will be removed in the next major version. */
+  readonly my_organization_profile: __DbViewBase['myOrganizationProfile']
   /** @deprecated Use `myPayment` instead. This alias will be removed in the next major version. */
   readonly my_payment: __DbViewBase['myPayment']
+  /** @deprecated Use `myProfile` instead. This alias will be removed in the next major version. */
+  readonly my_profile: __DbViewBase['myProfile']
+  /** @deprecated Use `myPublicEmbedConfig` instead. This alias will be removed in the next major version. */
+  readonly my_public_embed_config: __DbViewBase['myPublicEmbedConfig']
+  /** @deprecated Use `myService` instead. This alias will be removed in the next major version. */
+  readonly my_service: __DbViewBase['myService']
   /** @deprecated Use `myStatementLine` instead. This alias will be removed in the next major version. */
   readonly my_statement_line: __DbViewBase['myStatementLine']
+  /** @deprecated Use `myTransaction` instead. This alias will be removed in the next major version. */
+  readonly my_transaction: __DbViewBase['myTransaction']
+  /** @deprecated Use `myTransactionVisibility` instead. This alias will be removed in the next major version. */
+  readonly my_transaction_visibility: __DbViewBase['myTransactionVisibility']
+  /** @deprecated Use `myTrustScore` instead. This alias will be removed in the next major version. */
+  readonly my_trust_score: __DbViewBase['myTrustScore']
+  /** @deprecated Use `myTrustScoreHistory` instead. This alias will be removed in the next major version. */
+  readonly my_trust_score_history: __DbViewBase['myTrustScoreHistory']
   /** @deprecated Use `myVendor` instead. This alias will be removed in the next major version. */
   readonly my_vendor: __DbViewBase['myVendor']
+  /** @deprecated Use `myVerification` instead. This alias will be removed in the next major version. */
+  readonly my_verification: __DbViewBase['myVerification']
+  /** @deprecated Use `myVerificationAccessLog` instead. This alias will be removed in the next major version. */
+  readonly my_verification_access_log: __DbViewBase['myVerificationAccessLog']
 }
 
 type __TablesBase = __QueryBuilder<typeof tablesSchema.schemaType>
 export type Tables = __TablesBase & {
+  /** @deprecated Use `publicBadge` instead. This alias will be removed in the next major version. */
+  readonly public_badge: __TablesBase['publicBadge']
+  /** @deprecated Use `publicCampaign` instead. This alias will be removed in the next major version. */
+  readonly public_campaign: __TablesBase['publicCampaign']
+  /** @deprecated Use `publicOrganization` instead. This alias will be removed in the next major version. */
+  readonly public_organization: __TablesBase['publicOrganization']
+  /** @deprecated Use `myAccessGroup` instead. This alias will be removed in the next major version. */
+  readonly my_access_group: __TablesBase['myAccessGroup']
+  /** @deprecated Use `myAccessGroupMember` instead. This alias will be removed in the next major version. */
+  readonly my_access_group_member: __TablesBase['myAccessGroupMember']
   /** @deprecated Use `myAccount` instead. This alias will be removed in the next major version. */
   readonly my_account: __TablesBase['myAccount']
   /** @deprecated Use `myAuditEvent` instead. This alias will be removed in the next major version. */
@@ -455,14 +1034,28 @@ export type Tables = __TablesBase & {
   readonly my_budget: __TablesBase['myBudget']
   /** @deprecated Use `myBudgetLine` instead. This alias will be removed in the next major version. */
   readonly my_budget_line: __TablesBase['myBudgetLine']
+  /** @deprecated Use `myCampaign` instead. This alias will be removed in the next major version. */
+  readonly my_campaign: __TablesBase['myCampaign']
+  /** @deprecated Use `myCampaignStat` instead. This alias will be removed in the next major version. */
+  readonly my_campaign_stat: __TablesBase['myCampaignStat']
+  /** @deprecated Use `myChainActivityLog` instead. This alias will be removed in the next major version. */
+  readonly my_chain_activity_log: __TablesBase['myChainActivityLog']
   /** @deprecated Use `myCommandResult` instead. This alias will be removed in the next major version. */
   readonly my_command_result: __TablesBase['myCommandResult']
   /** @deprecated Use `myDimension` instead. This alias will be removed in the next major version. */
   readonly my_dimension: __TablesBase['myDimension']
+  /** @deprecated Use `myDonation` instead. This alias will be removed in the next major version. */
+  readonly my_donation: __TablesBase['myDonation']
+  /** @deprecated Use `myDonorUpdate` instead. This alias will be removed in the next major version. */
+  readonly my_donor_update: __TablesBase['myDonorUpdate']
   /** @deprecated Use `myExpenseClaim` instead. This alias will be removed in the next major version. */
   readonly my_expense_claim: __TablesBase['myExpenseClaim']
   /** @deprecated Use `myFiscalPeriod` instead. This alias will be removed in the next major version. */
   readonly my_fiscal_period: __TablesBase['myFiscalPeriod']
+  /** @deprecated Use `myFlag` instead. This alias will be removed in the next major version. */
+  readonly my_flag: __TablesBase['myFlag']
+  /** @deprecated Use `myFlowNode` instead. This alias will be removed in the next major version. */
+  readonly my_flow_node: __TablesBase['myFlowNode']
   /** @deprecated Use `myFund` instead. This alias will be removed in the next major version. */
   readonly my_fund: __TablesBase['myFund']
   /** @deprecated Use `myGrant` instead. This alias will be removed in the next major version. */
@@ -475,12 +1068,36 @@ export type Tables = __TablesBase & {
   readonly my_ledger_org: __TablesBase['myLedgerOrg']
   /** @deprecated Use `myMember` instead. This alias will be removed in the next major version. */
   readonly my_member: __TablesBase['myMember']
+  /** @deprecated Use `myNodeVisibility` instead. This alias will be removed in the next major version. */
+  readonly my_node_visibility: __TablesBase['myNodeVisibility']
+  /** @deprecated Use `myOrganizationChain` instead. This alias will be removed in the next major version. */
+  readonly my_organization_chain: __TablesBase['myOrganizationChain']
+  /** @deprecated Use `myOrganizationProfile` instead. This alias will be removed in the next major version. */
+  readonly my_organization_profile: __TablesBase['myOrganizationProfile']
   /** @deprecated Use `myPayment` instead. This alias will be removed in the next major version. */
   readonly my_payment: __TablesBase['myPayment']
+  /** @deprecated Use `myProfile` instead. This alias will be removed in the next major version. */
+  readonly my_profile: __TablesBase['myProfile']
+  /** @deprecated Use `myPublicEmbedConfig` instead. This alias will be removed in the next major version. */
+  readonly my_public_embed_config: __TablesBase['myPublicEmbedConfig']
+  /** @deprecated Use `myService` instead. This alias will be removed in the next major version. */
+  readonly my_service: __TablesBase['myService']
   /** @deprecated Use `myStatementLine` instead. This alias will be removed in the next major version. */
   readonly my_statement_line: __TablesBase['myStatementLine']
+  /** @deprecated Use `myTransaction` instead. This alias will be removed in the next major version. */
+  readonly my_transaction: __TablesBase['myTransaction']
+  /** @deprecated Use `myTransactionVisibility` instead. This alias will be removed in the next major version. */
+  readonly my_transaction_visibility: __TablesBase['myTransactionVisibility']
+  /** @deprecated Use `myTrustScore` instead. This alias will be removed in the next major version. */
+  readonly my_trust_score: __TablesBase['myTrustScore']
+  /** @deprecated Use `myTrustScoreHistory` instead. This alias will be removed in the next major version. */
+  readonly my_trust_score_history: __TablesBase['myTrustScoreHistory']
   /** @deprecated Use `myVendor` instead. This alias will be removed in the next major version. */
   readonly my_vendor: __TablesBase['myVendor']
+  /** @deprecated Use `myVerification` instead. This alias will be removed in the next major version. */
+  readonly my_verification: __TablesBase['myVerification']
+  /** @deprecated Use `myVerificationAccessLog` instead. This alias will be removed in the next major version. */
+  readonly my_verification_access_log: __TablesBase['myVerificationAccessLog']
 }
 
 /** The tables available in this remote SpacetimeDB module. Each table reference doubles as a query builder. */

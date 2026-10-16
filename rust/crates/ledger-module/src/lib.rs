@@ -18,6 +18,7 @@
     reason = "the spacetimedb 2.12 table, view and reducer macros emit undocumented public items"
 )]
 
+pub mod auth;
 pub mod clock;
 pub mod codec;
 pub mod command;

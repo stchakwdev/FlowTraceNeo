@@ -4,9 +4,11 @@
 // commands with the signed-in member as the actor.
 //
 // On SpacetimeDB the member row of this browser's identity is the actor, as
-// the module derives it. In dummy auth mode there is no signed-in
-// organisation, so the books are VITE_SPACETIMEDB_ORG when set, else the
-// first organisation the identity (from the saved token) is a member of.
+// the module derives it: a device identity in dummy auth mode, the signed-in
+// WorkOS user in workos mode (ledger/spacetime-auth.ts). The books are
+// VITE_SPACETIMEDB_ORG when set, else the signed-in organisation when the
+// identity is a member of it, else the first organisation it is a member of
+// (ledger organisations are not WorkOS organisations).
 import { useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DEV_MODE } from './auth'
@@ -34,17 +36,35 @@ export function ledgerBackendKind(
   return 'none'
 }
 
-/** Whose books the screens show; null when this device belongs to none yet. */
+/** Whose books the screens show; null when this identity belongs to none yet. */
 export function ledgerOrgId(input: {
   kind: LedgerBackendKind
-  devMode: boolean
   contextOrgId: string | null
   configured: string | undefined
   memberOrgs: Array<string>
 }): string | null {
-  if (input.kind !== 'spacetimedb' || !input.devMode) return input.contextOrgId
+  if (input.kind !== 'spacetimedb') return input.contextOrgId
   if (input.configured) return input.configured
+  if (input.contextOrgId && input.memberOrgs.includes(input.contextOrgId))
+    return input.contextOrgId
   return [...input.memberOrgs].sort().at(0) ?? null
+}
+
+/**
+ * The organisation the masthead names. With WorkOS sign-in on SpacetimeDB it
+ * is the books' organisation: its profile name in the module (MOD1), else its
+ * id; otherwise the organisation's name.
+ */
+export function mastheadOrgName(input: {
+  kind: LedgerBackendKind
+  devMode: boolean
+  ledgerOrgId: string | null
+  ledgerOrgName: string | null
+  organizationName: string | undefined
+}): string {
+  if (input.kind === 'spacetimedb' && !input.devMode)
+    return input.ledgerOrgName ?? input.ledgerOrgId ?? 'Your organisation'
+  return input.organizationName ?? 'Your organisation'
 }
 
 const BACKEND = ledgerBackendKind(
@@ -134,15 +154,14 @@ function useLedgerTarget() {
   const memberships = membership.data?.memberships ?? []
   const orgId = ledgerOrgId({
     kind: BACKEND,
-    devMode: DEV_MODE,
     contextOrgId: organizationId,
     configured: CONFIGURED_ORG,
     memberOrgs: memberships.map((m) => m.orgId),
   })
-  const waitsForMembership =
-    BACKEND === 'spacetimedb' && DEV_MODE && !CONFIGURED_ORG
+  const waitsForMembership = BACKEND === 'spacetimedb' && !CONFIGURED_ORG
   return {
     orgId,
+    orgName: memberships.find((m) => m.orgId === orgId)?.orgName ?? null,
     ready: waitsForMembership ? membership.isSuccess : !!orgId,
     identity: membership.data?.identity ?? null,
     actor:
@@ -151,6 +170,18 @@ function useLedgerTarget() {
         : undefined,
     membershipError: membership.error,
   }
+}
+
+/** The masthead's organisation label ({@link mastheadOrgName}). */
+export function useMastheadOrgName(organizationName: string | undefined) {
+  const { orgId, orgName } = useLedgerTarget()
+  return mastheadOrgName({
+    kind: BACKEND,
+    devMode: DEV_MODE,
+    ledgerOrgId: orgId,
+    ledgerOrgName: orgName,
+    organizationName,
+  })
 }
 
 /** The organisation's ledger state, kept fresh by the backend's subscription. */

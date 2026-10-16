@@ -6,18 +6,144 @@
 import { type Infer as __Infer } from 'spacetimedb'
 
 // Import all reducer arg schemas
+import AddAccessGroupMemberReducer from '../add_access_group_member_reducer'
 import AddMemberReducer from '../add_member_reducer'
+import AddMemberBySubjectReducer from '../add_member_by_subject_reducer'
 import AddOperatorReducer from '../add_operator_reducer'
+import AddTrustedIssuerReducer from '../add_trusted_issuer_reducer'
+import ApproveChainReducer from '../approve_chain_reducer'
+import CancelChainRequestReducer from '../cancel_chain_request_reducer'
+import CreateAccessGroupReducer from '../create_access_group_reducer'
+import CreateCampaignReducer from '../create_campaign_reducer'
+import CreateDefaultAccessGroupsReducer from '../create_default_access_groups_reducer'
+import CreateFlowNodeReducer from '../create_flow_node_reducer'
 import CreateOrgLedgerReducer from '../create_org_ledger_reducer'
+import CreateTransactionReducer from '../create_transaction_reducer'
+import CreateVerificationReducer from '../create_verification_reducer'
+import DeleteAccessGroupReducer from '../delete_access_group_reducer'
+import DeleteCampaignReducer from '../delete_campaign_reducer'
 import ImportBooksReducer from '../import_books_reducer'
+import ImportTransparencyReducer from '../import_transparency_reducer'
+import InviteAccessGroupMemberReducer from '../invite_access_group_member_reducer'
+import LinkTransactionEntriesReducer from '../link_transaction_entries_reducer'
+import LogVerificationAccessReducer from '../log_verification_access_reducer'
+import MarkDonorUpdateSentReducer from '../mark_donor_update_sent_reducer'
+import PostDonorUpdateReducer from '../post_donor_update_reducer'
+import RecomputeTrustReducer from '../recompute_trust_reducer'
+import RecordDonationReducer from '../record_donation_reducer'
+import RecordFlagsReducer from '../record_flags_reducer'
+import RecordRubricReducer from '../record_rubric_reducer'
+import RegenerateEmbedTokenReducer from '../regenerate_embed_token_reducer'
+import RegisterServiceReducer from '../register_service_reducer'
+import RejectChainReducer from '../reject_chain_reducer'
+import RemoveAccessGroupMemberReducer from '../remove_access_group_member_reducer'
 import RemoveMemberReducer from '../remove_member_reducer'
+import RemoveNodeVisibilityReducer from '../remove_node_visibility_reducer'
 import RemoveOperatorReducer from '../remove_operator_reducer'
+import RemoveServiceReducer from '../remove_service_reducer'
+import RemoveTransactionVisibilityReducer from '../remove_transaction_visibility_reducer'
+import RemoveTrustedIssuerReducer from '../remove_trusted_issuer_reducer'
+import RequestChainReducer from '../request_chain_reducer'
+import ResolveFlagReducer from '../resolve_flag_reducer'
+import RevokeChainReducer from '../revoke_chain_reducer'
 import RunCommandReducer from '../run_command_reducer'
+import SetDeviceIdentitiesReducer from '../set_device_identities_reducer'
+import SetNodeVisibilityReducer from '../set_node_visibility_reducer'
+import SetProfileReducer from '../set_profile_reducer'
+import SetTransactionVisibilityReducer from '../set_transaction_visibility_reducer'
+import UpdateAccessGroupReducer from '../update_access_group_reducer'
+import UpdateCampaignReducer from '../update_campaign_reducer'
+import UpdateChainPermissionsReducer from '../update_chain_permissions_reducer'
+import UpdateDonationStatusReducer from '../update_donation_status_reducer'
+import UpdateFlowNodeReducer from '../update_flow_node_reducer'
+import UpdateOrganizationProfileReducer from '../update_organization_profile_reducer'
+import UpdatePublicEmbedConfigReducer from '../update_public_embed_config_reducer'
+import UpdateTransactionReducer from '../update_transaction_reducer'
 
+export type AddAccessGroupMemberParams = __Infer<
+  typeof AddAccessGroupMemberReducer
+>
 export type AddMemberParams = __Infer<typeof AddMemberReducer>
+export type AddMemberBySubjectParams = __Infer<typeof AddMemberBySubjectReducer>
 export type AddOperatorParams = __Infer<typeof AddOperatorReducer>
+export type AddTrustedIssuerParams = __Infer<typeof AddTrustedIssuerReducer>
+export type ApproveChainParams = __Infer<typeof ApproveChainReducer>
+export type CancelChainRequestParams = __Infer<typeof CancelChainRequestReducer>
+export type CreateAccessGroupParams = __Infer<typeof CreateAccessGroupReducer>
+export type CreateCampaignParams = __Infer<typeof CreateCampaignReducer>
+export type CreateDefaultAccessGroupsParams = __Infer<
+  typeof CreateDefaultAccessGroupsReducer
+>
+export type CreateFlowNodeParams = __Infer<typeof CreateFlowNodeReducer>
 export type CreateOrgLedgerParams = __Infer<typeof CreateOrgLedgerReducer>
+export type CreateTransactionParams = __Infer<typeof CreateTransactionReducer>
+export type CreateVerificationParams = __Infer<typeof CreateVerificationReducer>
+export type DeleteAccessGroupParams = __Infer<typeof DeleteAccessGroupReducer>
+export type DeleteCampaignParams = __Infer<typeof DeleteCampaignReducer>
 export type ImportBooksParams = __Infer<typeof ImportBooksReducer>
+export type ImportTransparencyParams = __Infer<typeof ImportTransparencyReducer>
+export type InviteAccessGroupMemberParams = __Infer<
+  typeof InviteAccessGroupMemberReducer
+>
+export type LinkTransactionEntriesParams = __Infer<
+  typeof LinkTransactionEntriesReducer
+>
+export type LogVerificationAccessParams = __Infer<
+  typeof LogVerificationAccessReducer
+>
+export type MarkDonorUpdateSentParams = __Infer<
+  typeof MarkDonorUpdateSentReducer
+>
+export type PostDonorUpdateParams = __Infer<typeof PostDonorUpdateReducer>
+export type RecomputeTrustParams = __Infer<typeof RecomputeTrustReducer>
+export type RecordDonationParams = __Infer<typeof RecordDonationReducer>
+export type RecordFlagsParams = __Infer<typeof RecordFlagsReducer>
+export type RecordRubricParams = __Infer<typeof RecordRubricReducer>
+export type RegenerateEmbedTokenParams = __Infer<
+  typeof RegenerateEmbedTokenReducer
+>
+export type RegisterServiceParams = __Infer<typeof RegisterServiceReducer>
+export type RejectChainParams = __Infer<typeof RejectChainReducer>
+export type RemoveAccessGroupMemberParams = __Infer<
+  typeof RemoveAccessGroupMemberReducer
+>
 export type RemoveMemberParams = __Infer<typeof RemoveMemberReducer>
+export type RemoveNodeVisibilityParams = __Infer<
+  typeof RemoveNodeVisibilityReducer
+>
 export type RemoveOperatorParams = __Infer<typeof RemoveOperatorReducer>
+export type RemoveServiceParams = __Infer<typeof RemoveServiceReducer>
+export type RemoveTransactionVisibilityParams = __Infer<
+  typeof RemoveTransactionVisibilityReducer
+>
+export type RemoveTrustedIssuerParams = __Infer<
+  typeof RemoveTrustedIssuerReducer
+>
+export type RequestChainParams = __Infer<typeof RequestChainReducer>
+export type ResolveFlagParams = __Infer<typeof ResolveFlagReducer>
+export type RevokeChainParams = __Infer<typeof RevokeChainReducer>
 export type RunCommandParams = __Infer<typeof RunCommandReducer>
+export type SetDeviceIdentitiesParams = __Infer<
+  typeof SetDeviceIdentitiesReducer
+>
+export type SetNodeVisibilityParams = __Infer<typeof SetNodeVisibilityReducer>
+export type SetProfileParams = __Infer<typeof SetProfileReducer>
+export type SetTransactionVisibilityParams = __Infer<
+  typeof SetTransactionVisibilityReducer
+>
+export type UpdateAccessGroupParams = __Infer<typeof UpdateAccessGroupReducer>
+export type UpdateCampaignParams = __Infer<typeof UpdateCampaignReducer>
+export type UpdateChainPermissionsParams = __Infer<
+  typeof UpdateChainPermissionsReducer
+>
+export type UpdateDonationStatusParams = __Infer<
+  typeof UpdateDonationStatusReducer
+>
+export type UpdateFlowNodeParams = __Infer<typeof UpdateFlowNodeReducer>
+export type UpdateOrganizationProfileParams = __Infer<
+  typeof UpdateOrganizationProfileReducer
+>
+export type UpdatePublicEmbedConfigParams = __Infer<
+  typeof UpdatePublicEmbedConfigReducer
+>
+export type UpdateTransactionParams = __Infer<typeof UpdateTransactionReducer>
