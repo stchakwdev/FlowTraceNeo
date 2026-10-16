@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use gpui_kit::component::input::{Input, InputEvent, InputState};
-use gpui_kit::component::select::{Select, SelectEvent, SelectItem, SelectState};
+use gpui_kit::component::select::{Select, SelectEvent, SelectState};
 use gpui_kit::component::table::{Column, DataTable, TableDelegate, TableEvent, TableState};
 use gpui_kit::component::{ActiveTheme as _, IndexPath, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
@@ -31,7 +31,7 @@ use crate::general_ledger::{
     COLUMNS, Choice, EntryDetail, FilterChoices, GlCache, GlColumn, GlFilter, GlTable, balance,
     count,
 };
-use crate::panels::{demo_tag, page_title, section_header};
+use crate::panels::{Pick, PickState, demo_tag, page_title, section_header};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
 
@@ -39,24 +39,7 @@ use crate::theme::{palette, space, text};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpenEntry(pub EntryId);
 
-/// A select option: the id as a string (empty for "All ...") and its label.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Pick {
-    value: String,
-    label: SharedString,
-}
 
-impl SelectItem for Pick {
-    type Value = String;
-
-    fn title(&self) -> SharedString {
-        self.label.clone()
-    }
-
-    fn value(&self) -> &Self::Value {
-        &self.value
-    }
-}
 
 fn picks<T: AsRef<str>>(choices: &[Choice<T>]) -> Vec<Pick> {
     choices
@@ -75,8 +58,6 @@ fn picks<T: AsRef<str>>(choices: &[Choice<T>]) -> Vec<Pick> {
 fn id_of<T: AsRef<str>>(id: Option<&T>) -> String {
     id.map_or_else(String::new, |v| v.as_ref().to_owned())
 }
-
-type PickState = Entity<SelectState<Vec<Pick>>>;
 
 /// Which select changed.
 #[derive(Debug, Clone, Copy)]

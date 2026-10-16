@@ -125,7 +125,7 @@ fn post_and_pay_the_approved_demo_bill() {
     let (paid, d) = detail(&backend, "SK-INV-30418");
     assert_eq!(d.bill.status, BillStatus::Paid);
     assert_eq!(d.outstanding, Some(0));
-    assert!(d.actions.is_empty());
+    assert_eq!(d.actions, vec![]);
     assert_eq!(d.payments.len(), 2);
     let cleared: i64 = d
         .payments
@@ -160,7 +160,7 @@ fn a_bill_entered_here_waits_for_another_approver() {
     assert_eq!(d.total, 4_120_000);
     assert_eq!(d.outstanding, None);
     // The demo user entered it, so the demo user cannot approve it.
-    assert!(d.actions.is_empty());
+    assert_eq!(d.actions, vec![]);
     assert!(d.next.starts_with("You entered this bill"), "{}", d.next);
     // The engine agrees, with its own message.
     let refused = backend

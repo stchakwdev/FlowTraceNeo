@@ -1224,6 +1224,10 @@ fn when(at: &str) -> String {
 /// The detail of bill `id` as `actor` sees it at `as_of`, or `None` when the books do not hold
 /// it.
 #[must_use]
+#[expect(
+    clippy::too_many_lines,
+    reason = "one pass over the bill, its entries and its payments"
+)]
 pub fn bill_detail(
     state: &LedgerState,
     id: &BillId,
@@ -1572,7 +1576,7 @@ mod tests {
         let to_pay = filtered(&rows, BillFilter::Status(BillStatus::Posted));
         assert_eq!(to_pay.len(), 1);
         assert_eq!(to_pay[0].number, "KPLC-0226-77140");
-        assert!(filtered(&rows, BillFilter::Status(BillStatus::Draft)).is_empty());
+        assert_eq!(filtered(&rows, BillFilter::Status(BillStatus::Draft)), vec![]);
         assert_eq!(
             no_match_text(BillFilter::Status(BillStatus::Posted)),
             "No bills are posted, to pay."
@@ -1736,7 +1740,7 @@ mod tests {
     fn line_and_cash_pickers_offer_posting_accounts() {
         let state = books();
         let lines = line_accounts(&state);
-        assert!(!lines.is_empty());
+        assert_ne!(lines, vec![]);
         for (id, label) in &lines {
             let a = state.account(id).unwrap();
             assert!(!a.is_group && a.is_active);
@@ -1850,7 +1854,7 @@ mod tests {
         assert_eq!(input.due_date, d("2026-03-06"));
         assert_eq!(input.currency, "USD");
         assert!((input.fx_rate - 1129.45).abs() < f64::EPSILON);
-        assert!(input.proof_ids.is_empty());
+        assert_eq!(input.proof_ids, Vec::<String>::new());
         assert_eq!(input.lines.len(), 1);
         let l = &input.lines[0];
         assert_eq!(l.description, "Electricity");
@@ -1875,7 +1879,7 @@ mod tests {
 
         let autox = bill_by_number(&state, "AX-2026-0112");
         let (text, actions) = next_step(autox, Some(&me), Some(0));
-        assert!(actions.is_empty());
+        assert_eq!(actions, vec![]);
         assert_eq!(text, "Paid in full. Nothing more to do.");
 
         // A draft: its creator cannot approve it, an approver can, others wait.
@@ -1886,7 +1890,7 @@ mod tests {
         assert_eq!(actions, [BillAction::Approve]);
         draft.created_by = me.id.clone();
         let (text, actions) = next_step(&draft, Some(&me), None);
-        assert!(actions.is_empty());
+        assert_eq!(actions, vec![]);
         assert!(text.starts_with("You entered this bill"), "{text}");
         let clerk = Actor {
             id: ActorId::from("clerk"),
@@ -1896,7 +1900,7 @@ mod tests {
             can_close: false,
         };
         let (text, actions) = next_step(&draft, Some(&clerk), None);
-        assert!(actions.is_empty());
+        assert_eq!(actions, vec![]);
         assert_eq!(text, "Waiting for a manager with approval rights.");
 
         let mut void = staples.clone();
@@ -1961,7 +1965,7 @@ mod tests {
         assert!(steps[3].starts_with("Paid 48,000.00 as JE-"), "{}", steps[3]);
         assert_eq!(detail.trail[0].who, "FlowTrace");
         assert_eq!(detail.trail[1].who, "Demo User (you)");
-        assert!(detail.actions.is_empty());
+        assert_eq!(detail.actions, vec![]);
         assert!(bill_detail(&state, &BillId::from("nope"), None, &as_of()).is_none());
     }
 
