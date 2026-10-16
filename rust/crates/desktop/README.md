@@ -147,10 +147,16 @@ org, light), `docs/screens/u1-shell-dark.png` (dark, General ledger),
 `docs/screens/u1-connect.png`, and from U2 `docs/screens/u2-accounts.png`,
 `docs/screens/u2-periods.png` (key `p`) and `docs/screens/u2-accounts-error.png` (keys `n`,
 `1110`, Return, a name, Return: the engine refuses the code in use). Keys reach the window
-after `hyprctl dispatch focuswindow address:<addr>`; `wtype -k Return` sends Enter. Other
-threads may have their own `flowtrace-books` windows open, so pick yours from
-`hyprctl clients -j` by `pid` (the `$!` of the launch), not by class.
-`wtype -k End` (or `Page_Down`) scrolls the content before the shot.
+because a newly opened window takes focus: send them with `wtype` after the launch sleep, and
+do not move focus elsewhere in between. Do not call `hyprctl dispatch focuswindow
+address:<addr>`: Hyprland 0.56.2 reads `dispatch` arguments as Lua, so that call fails with
+exit code 7, which stops a script running under `set -e`. `wtype -k Return` sends Enter.
+Other threads may have their own `flowtrace-books` windows open, so pick yours from
+`hyprctl clients -j` by `pid` (the `$!` of the launch), not by class, and wait for the
+previous instance to exit before launching the next.
+`wtype -k End` (or `Page_Down`) scrolls the content before the shot. Typed text can be cut
+short: in U8, `wtype` stopped an absolute path under `~/.herdr/...` at `/home/tim0/`, so type
+a relative path from `rust/` (or a dot-free symlink to the file) into a path field.
 
 ## Reports (U9)
 
