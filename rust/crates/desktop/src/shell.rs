@@ -23,9 +23,8 @@ use gpui_kit::{
 use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen, scroll_target};
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
-use crate::panels::general_ledger::GeneralLedgerPanel;
-use crate::panels::grants::GrantsPanel;
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
+use crate::panels::grants::GrantsPanel;
 use crate::panels::journal::JournalPanel;
 use crate::panels::reports::ReportsPanel;
 use crate::panels::spend::SpendPanel;
@@ -280,11 +279,8 @@ impl Shell {
         match entry {
             NavEntry::Accounts => self.accounts.clone().into_any_element(),
             NavEntry::GeneralLedger => self.general_ledger.clone().into_any_element(),
-            NavEntry::Journal | NavEntry::Reconcile => {
             NavEntry::Journal => self.journal.clone().into_any_element(),
-            NavEntry::Grants | NavEntry::Reconcile => {
-                panels::placeholder(entry, view, demo, cx).into_any_element()
-            }
+            NavEntry::Reconcile => panels::placeholder(entry, view, demo, cx).into_any_element(),
             NavEntry::Spend => self.spend.clone().into_any_element(),
             NavEntry::Grants => self.grants.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),
