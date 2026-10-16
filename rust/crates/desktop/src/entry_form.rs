@@ -8,12 +8,18 @@
 
 use std::path::Path;
 
+use ledger_core::coa_template::UNRESTRICTED_FUND_ID;
+use ledger_core::engine::EntryOptions;
+use ledger_core::importers::{JournalSource, parse_journal_csv};
+use ledger_core::money::{assert_minor, format_major, js_round, parse_money};
 use ledger_core::types::{
-    AccountId, DimensionId, EntryId, EntryInput, FlowNodeId, FundId, GrantId, IsoDate, LedgerState,
-    Nullish,
+    AccountId, DimensionId, EntryId, EntryInput, EntryStatus, FlowNodeId, FundId, GrantId, IsoDate,
+    LedgerState, LineInput, Nullish,
 };
-use ledger_core::{Issue, LedgerCommand, Minor};
+use ledger_core::{Issue, IssueCode, LedgerCommand, Minor};
 
+use crate::accounts::{format_date, format_minor};
+use crate::claims::{iso_to_day_month_year, parse_day_month_year};
 use crate::journal::Notice;
 
 /// The largest file the import reads (`import.tsx`, `readFile`).
@@ -56,6 +62,18 @@ pub struct EntryLineDraft {
     pub keep: Kept,
 }
 
+impl EntryLineDraft {
+    /// The typed amount of `side` as the engine takes it: `Math.max(0, parseMoney(raw) ?? 0)`
+    /// (`new.tsx`, `input`).
+    fn amount(&self, side: Side) -> Minor {
+        let raw = match side {
+            Side::Debit => &self.debit,
+            Side::Credit => &self.credit,
+        };
+        parse_money(raw).unwrap_or(0).max(0)
+    }
+}
+
 /// A side of a line.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Side {
@@ -63,6 +81,15 @@ pub enum Side {
     Debit,
     /// Credit.
     Credit,
+}
+
+impl Side {
+    fn word(self) -> &'static str {
+        match self {
+            Self::Debit => "debit",
+            Self::Credit => "credit",
+        }
+    }
 }
 
 /// The control an engine issue belongs to (`new.tsx`, `ISSUE_FIELD`).
@@ -80,6 +107,48 @@ pub enum LineField {
     Credit,
 }
 
+/// `ISSUE_FIELD` (`new.tsx`): which control an engine issue sits beside.
+fn issue_field(code: IssueCode) -> Option<LineField> {
+    use IssueCode as C;
+    match code {
+        C::UnknownAccount | C::GroupAccount | C::InactiveAccount => Some(LineField::Account),
+        C::UnknownFund => Some(LineField::Fund),
+        C::UnknownGrant
+        | C::GrantFundMismatch
+        | C::GrantNotStarted
+        | C::GrantEnded
+        | C::RestrictedNeedsGrant => Some(LineField::Grant),
+        C::LineZero
+        | C::LineBothSides
+        | C::NegativeAmount
+        | C::NotMinorUnits
+        | C::FxRateRequired => Some(LineField::Debit),
+        _ => None,
+    }
+}
+
+/// `strip` (`new.tsx`): an engine line message without its `Line n: ` prefix.
+fn strip(message: &str) -> &str {
+    message
+        .strip_prefix("Line ")
+        .and_then(|rest| {
+            let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+            (digits > 0)
+                .then(|| rest[digits..].strip_prefix(": "))
+                .flatten()
+        })
+        .unwrap_or(message)
+}
+
+/// An engine issue as the summary lists it: the overridable ones marked.
+fn issue_text(issue: &Issue) -> String {
+    if issue.overridable == Some(true) {
+        format!("{} (can be overridden with a reason)", issue.message)
+    } else {
+        issue.message.clone()
+    }
+}
+
 /// The problems the form finds itself, before the engine sees the entry (`new.tsx`,
 /// `fieldErrors`).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -95,8 +164,15 @@ pub struct FieldErrors {
 impl FieldErrors {
     /// The message under line `index`'s `side`.
     #[must_use]
-    pub fn line(&self, _index: usize, _side: Side) -> Option<&str> {
-        None
+    pub fn line(&self, index: usize, side: Side) -> Option<&str> {
+        self.lines
+            .iter()
+            .find(|(i, s, _)| *i == index && *s == side)
+            .map(|(_, _, m)| m.as_str())
+    }
+
+    fn is_empty(&self) -> bool {
+        *self == Self::default()
     }
 }
 
@@ -111,29 +187,42 @@ pub struct Balance {
     pub difference: Minor,
 }
 
+/// `formatMinor(v, { zero: '0.00' })`.
+fn zero_as_digits(minor: Minor) -> String {
+    if minor == 0 {
+        "0.00".to_owned()
+    } else {
+        format_minor(minor)
+    }
+}
+
 impl Balance {
     /// True when debits equal credits.
     #[must_use]
     pub fn is_balanced(&self) -> bool {
-        false
+        self.difference == 0
     }
 
     /// Debits, `0.00` for none.
     #[must_use]
     pub fn debits_text(&self) -> String {
-        String::new()
+        zero_as_digits(self.debits)
     }
 
     /// Credits, `0.00` for none.
     #[must_use]
     pub fn credits_text(&self) -> String {
-        String::new()
+        zero_as_digits(self.credits)
     }
 
     /// `Balanced`, or the size of the gap.
     #[must_use]
     pub fn difference_text(&self) -> String {
-        String::new()
+        if self.is_balanced() {
+            "Balanced".to_owned()
+        } else {
+            format_minor(self.difference.abs())
+        }
     }
 }
 
@@ -148,7 +237,10 @@ impl Summary {
     /// `This stops the entry posting` or `3 things stop the entry posting`.
     #[must_use]
     pub fn title(&self) -> String {
-        String::new()
+        match self.items.len() {
+            1 => "This stops the entry posting".to_owned(),
+            n => format!("{n} things stop the entry posting"),
+        }
     }
 }
 
@@ -177,18 +269,44 @@ pub struct EntryForm {
     next_key: u64,
 }
 
+/// `defaultFund` (`new.tsx`): the unrestricted fund when the books have it, else the first.
+fn default_fund(state: &LedgerState) -> Option<FundId> {
+    state
+        .funds
+        .iter()
+        .find(|f| f.id.as_str() == UNRESTRICTED_FUND_ID)
+        .or_else(|| state.funds.first())
+        .map(|f| f.id.clone())
+}
+
+/// `minorToText` (`new.tsx`): `2500.00`, or empty for zero.
+fn minor_to_text(minor: Option<f64>) -> String {
+    match minor.and_then(|m| assert_minor(m, "amount").ok()) {
+        Some(m) if m != 0 => format_major(m),
+        _ => String::new(),
+    }
+}
+
+/// A rounded f64 of minor units as `Minor`, saturating where no `Minor` holds it.
+fn to_minor(x: f64) -> Minor {
+    assert_minor(js_round(x), "amount").unwrap_or(if x < 0.0 { Minor::MIN } else { Minor::MAX })
+}
+
 impl EntryForm {
     /// A new entry dated `as_of` with two blank lines on the default fund.
     #[must_use]
-    pub fn new(_state: &LedgerState, _as_of: &IsoDate) -> Self {
-        Self {
+    pub fn new(state: &LedgerState, as_of: &IsoDate) -> Self {
+        let mut form = Self {
             draft: None,
-            date: String::new(),
+            date: iso_to_day_month_year(as_of),
             memo: String::new(),
             override_reason: String::new(),
             lines: Vec::new(),
             next_key: 0,
-        }
+        };
+        form.add_line(state);
+        form.add_line(state);
+        form
     }
 
     /// The draft `id` loaded into the form (`new.tsx`, the load effect).
@@ -196,105 +314,397 @@ impl EntryForm {
     /// # Errors
     ///
     /// The notice to show when `id` is not a draft in the books.
-    pub fn from_draft(_state: &LedgerState, _id: &EntryId) -> Result<Self, Notice> {
-        Err(Notice {
-            title: String::new(),
-            body: String::new(),
-        })
+    pub fn from_draft(state: &LedgerState, id: &EntryId) -> Result<Self, Notice> {
+        let entry = state.entry(id).ok_or_else(|| Notice {
+            title: "This draft is not in the books".to_owned(),
+            body: "It may have been deleted or posted from another screen.".to_owned(),
+        })?;
+        if entry.status != EntryStatus::Draft {
+            let status = match entry.status {
+                EntryStatus::Posted => "posted",
+                EntryStatus::Reversed => "reversed",
+                EntryStatus::Draft => "a draft",
+            };
+            return Err(Notice {
+                title: format!("{} is {status}", entry.number),
+                body: "Posted entries cannot be edited. Reverse it and post a correcting entry \
+                       instead."
+                    .to_owned(),
+            });
+        }
+        let input = state.input_of(id).map_err(|e| Notice {
+            title: "This draft is not in the books".to_owned(),
+            body: e.to_string(),
+        })?;
+        let mut form = Self {
+            draft: Some(id.clone()),
+            date: IsoDate::parse(&input.date)
+                .map(|d| iso_to_day_month_year(&d))
+                .unwrap_or_default(),
+            memo: input.memo,
+            override_reason: input.override_reason.value().cloned().unwrap_or_default(),
+            lines: Vec::new(),
+            next_key: 0,
+        };
+        for l in input.lines {
+            let mut dims = l.dimension_ids.unwrap_or_default().into_iter();
+            let dimension = dims.next();
+            form.next_key += 1;
+            form.lines.push(EntryLineDraft {
+                key: form.next_key,
+                account: Some(l.account_id),
+                fund: Some(l.fund_id),
+                grant: l.grant_id.value().cloned(),
+                dimension,
+                debit: minor_to_text(l.debit),
+                credit: minor_to_text(l.credit),
+                memo: l.memo.value().cloned().unwrap_or_default(),
+                keep: Kept {
+                    currency: l.currency,
+                    fx_rate: l.fx_rate,
+                    flow_node_id: l.flow_node_id,
+                    extra_dims: dims.collect(),
+                },
+            });
+        }
+        while form.lines.len() < 2 {
+            form.add_line(state);
+        }
+        Ok(form)
     }
 
     /// `New journal entry` or `Edit draft entry`.
     #[must_use]
     pub fn title(&self) -> &'static str {
-        ""
-    }
-
-    /// Adds a blank line on the default fund.
-    pub fn add_line(&mut self, _state: &LedgerState) {}
-
-    /// Removes line `index` while more than two remain.
-    pub fn remove_line(&mut self, _index: usize) -> bool {
-        false
-    }
-
-    /// Sets line `index`'s fund, dropping a grant of another fund.
-    pub fn set_fund(&mut self, _state: &LedgerState, _index: usize, _fund: Option<FundId>) {}
-
-    /// Sets a debit; a non-empty one clears the credit.
-    pub fn set_debit(&mut self, _index: usize, _text: &str) {}
-
-    /// Sets a credit; a non-empty one clears the debit.
-    pub fn set_credit(&mut self, _index: usize, _text: &str) {}
-
-    /// The form's own problems.
-    #[must_use]
-    pub fn field_errors(&self) -> FieldErrors {
-        FieldErrors::default()
-    }
-
-    /// The entry as the engine takes it (`new.tsx`, `input`).
-    #[must_use]
-    pub fn input(&self) -> EntryInput {
-        EntryInput {
-            date: String::new(),
-            memo: String::new(),
-            lines: Vec::new(),
-            source_type: None,
-            source_id: Nullish::Undefined,
-            override_reason: Nullish::Undefined,
+        if self.draft.is_some() {
+            "Edit draft entry"
+        } else {
+            "New journal entry"
         }
     }
 
-    /// The live balance check.
-    #[must_use]
-    pub fn balance(&self, _state: &LedgerState) -> Balance {
-        Balance::default()
+    /// Adds a blank line on the default fund (`blankLine`).
+    pub fn add_line(&mut self, state: &LedgerState) {
+        self.next_key += 1;
+        self.lines.push(EntryLineDraft {
+            key: self.next_key,
+            fund: default_fund(state),
+            ..EntryLineDraft::default()
+        });
     }
 
-    /// The engine's issues with the entry (`ledger.validateEntry`).
-    #[must_use]
-    pub fn issues(&self, _state: &LedgerState) -> Vec<Issue> {
-        Vec::new()
+    /// Removes line `index` while more than two remain.
+    pub fn remove_line(&mut self, index: usize) -> bool {
+        if self.lines.len() <= 2 || index >= self.lines.len() {
+            return false;
+        }
+        self.lines.remove(index);
+        true
     }
 
-    /// The engine's message for line `index`'s `field`, without its `Line n:` prefix.
-    #[must_use]
-    pub fn line_issue(
-        &self,
-        _issues: &[Issue],
-        _index: usize,
-        _field: LineField,
-    ) -> Option<String> {
-        None
+    /// Sets line `index`'s fund, dropping a grant of another fund (`updateLine`).
+    pub fn set_fund(&mut self, state: &LedgerState, index: usize, fund: Option<FundId>) {
+        let Some(line) = self.lines.get_mut(index) else {
+            return;
+        };
+        let other = line.grant.as_ref().is_some_and(|id| {
+            state
+                .grants
+                .iter()
+                .any(|g| &g.id == id && Some(&g.fund_id) != fund.as_ref())
+        });
+        if other {
+            line.grant = None;
+        }
+        line.fund = fund;
     }
 
-    /// The summary box.
-    #[must_use]
-    pub fn summary(&self, _state: &LedgerState) -> Summary {
-        Summary::default()
+    /// Sets a debit; a non-empty one clears the credit.
+    pub fn set_debit(&mut self, index: usize, text: &str) {
+        if let Some(line) = self.lines.get_mut(index) {
+            text.clone_into(&mut line.debit);
+            if !text.is_empty() {
+                line.credit.clear();
+            }
+        }
     }
 
-    /// Save draft: `entry.saveDraft`, or `entry.updateDraft` for a loaded draft.
+    /// Sets a credit; a non-empty one clears the debit.
+    pub fn set_credit(&mut self, index: usize, text: &str) {
+        if let Some(line) = self.lines.get_mut(index) {
+            text.clone_into(&mut line.credit);
+            if !text.is_empty() {
+                line.debit.clear();
+            }
+        }
+    }
+
+    /// The form's own problems (`new.tsx`, `fieldErrors`).
+    #[must_use]
+    pub fn field_errors(&self) -> FieldErrors {
+        let mut e = FieldErrors {
+            date: match parse_day_month_year(&self.date) {
+                None => Some("Enter the entry date.".to_owned()),
+                Some(Err(message)) => Some(message),
+                Some(Ok(_)) => None,
+            },
+            memo: self
+                .memo
+                .trim()
+                .is_empty()
+                .then(|| "Describe the entry, as it should read in the journal.".to_owned()),
+            lines: Vec::new(),
+        };
+        for (i, l) in self.lines.iter().enumerate() {
+            for side in [Side::Debit, Side::Credit] {
+                let raw = match side {
+                    Side::Debit => l.debit.trim(),
+                    Side::Credit => l.credit.trim(),
+                };
+                if raw.is_empty() {
+                    continue;
+                }
+                match parse_money(raw) {
+                    None => {
+                        e.lines.push((
+                            i,
+                            side,
+                            "Enter a number, like 1250 or 1,250.50.".to_owned(),
+                        ));
+                    }
+                    Some(m) if m < 0 => e.lines.push((
+                        i,
+                        side,
+                        "Enter a positive amount; use the other column for the opposite side."
+                            .to_owned(),
+                    )),
+                    Some(_) => {}
+                }
+            }
+        }
+        e
+    }
+
+    /// The entry as the engine takes it (`new.tsx`, `input`). Amounts are minor units.
+    #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "typed amounts are safe integers, exact in f64, as the TS numbers are"
+    )]
+    pub fn input(&self) -> EntryInput {
+        let date = match parse_day_month_year(&self.date) {
+            Some(Ok(d)) => d.as_str().to_owned(),
+            _ => String::new(),
+        };
+        let reason = self.override_reason.trim();
+        EntryInput {
+            date,
+            memo: self.memo.clone(),
+            override_reason: if reason.is_empty() {
+                Nullish::Null
+            } else {
+                Nullish::Value(reason.to_owned())
+            },
+            source_type: None,
+            source_id: Nullish::Undefined,
+            lines: self
+                .lines
+                .iter()
+                .map(|l| {
+                    let mut dims: Vec<DimensionId> = l.dimension.iter().cloned().collect();
+                    dims.extend(
+                        l.keep
+                            .extra_dims
+                            .iter()
+                            .filter(|d| Some(*d) != l.dimension.as_ref())
+                            .cloned(),
+                    );
+                    let memo = l.memo.trim();
+                    LineInput {
+                        account_id: l.account.clone().unwrap_or_else(|| AccountId::from("")),
+                        debit: Some(l.amount(Side::Debit) as f64),
+                        credit: Some(l.amount(Side::Credit) as f64),
+                        currency: l.keep.currency.clone(),
+                        fx_rate: l.keep.fx_rate,
+                        fund_id: l.fund.clone().unwrap_or_else(|| FundId::from("")),
+                        grant_id: l.grant.clone().map_or(Nullish::Null, Nullish::Value),
+                        dimension_ids: Some(dims),
+                        flow_node_id: match &l.keep.flow_node_id {
+                            Nullish::Value(v) => Nullish::Value(v.clone()),
+                            _ => Nullish::Null,
+                        },
+                        memo: if memo.is_empty() {
+                            Nullish::Null
+                        } else {
+                            Nullish::Value(memo.to_owned())
+                        },
+                    }
+                })
+                .collect(),
+        }
+    }
+
+    /// The live balance check: each side at its line's rate when the line is not in base
+    /// currency, rounded as `Math.round` (`new.tsx`, `totals`).
+    #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "typed amounts are safe integers, exact in f64, as the TS numbers are"
+    )]
+    pub fn balance(&self, state: &LedgerState) -> Balance {
+        let base = &state.settings.base_currency;
+        let (mut debits, mut credits) = (0.0, 0.0);
+        for l in &self.lines {
+            let rate = match &l.keep.currency {
+                Some(c) if c != base => l.keep.fx_rate.unwrap_or(1.0),
+                _ => 1.0,
+            };
+            debits += js_round(l.amount(Side::Debit) as f64 * rate);
+            credits += js_round(l.amount(Side::Credit) as f64 * rate);
+        }
+        let (debits, credits) = (to_minor(debits), to_minor(credits));
+        Balance {
+            debits,
+            credits,
+            difference: debits.saturating_sub(credits),
+        }
+    }
+
+    /// The engine's issues with the entry (`ledger.validateEntry(input, draftId)`).
+    #[must_use]
+    pub fn issues(&self, state: &LedgerState) -> Vec<Issue> {
+        validate(state, &self.input(), self.draft.as_ref())
+    }
+
+    /// The engine's message for line `index`'s `field`, without its `Line n:` prefix; several
+    /// joined by spaces (`new.tsx`, `fieldIssue`).
+    #[must_use]
+    pub fn line_issue(&self, issues: &[Issue], index: usize, field: LineField) -> Option<String> {
+        let found: Vec<&str> = issues
+            .iter()
+            .filter(|x| x.line == Some(index) && issue_field(x.code) == Some(field))
+            .map(|x| strip(&x.message))
+            .collect();
+        (!found.is_empty()).then(|| found.join(" "))
+    }
+
+    /// The engine's messages on line `index` that sit beside no field (`new.tsx`, `loose`).
+    #[must_use]
+    pub fn loose_issues(&self, issues: &[Issue], index: usize) -> Vec<String> {
+        issues
+            .iter()
+            .filter(|x| x.line == Some(index) && issue_field(x.code).is_none())
+            .map(|x| strip(&x.message).to_owned())
+            .collect()
+    }
+
+    /// The summary box (`new.tsx`, `summaryItems`): the form's own problems, then the engine's,
+    /// leaving out its date and memo messages when the fields already say so.
+    #[must_use]
+    pub fn summary(&self, state: &LedgerState) -> Summary {
+        let e = self.field_errors();
+        let mut items = Vec::new();
+        if let Some(d) = &e.date {
+            items.push(format!("Date: {d}"));
+        }
+        if let Some(m) = &e.memo {
+            items.push(format!("Memo: {m}"));
+        }
+        for i in 0..self.lines.len() {
+            for side in [Side::Debit, Side::Credit] {
+                if let Some(m) = e.line(i, side) {
+                    items.push(format!("Line {} {}: {m}", i + 1, side.word()));
+                }
+            }
+        }
+        let skip_input = e.date.is_some() || e.memo.is_some();
+        items.extend(
+            self.issues(state)
+                .iter()
+                .filter(|x| !(x.code == IssueCode::InvalidInput && skip_input))
+                .map(issue_text),
+        );
+        Summary { items }
+    }
+
+    /// Save draft: `entry.saveDraft`, or `entry.updateDraft` for a loaded draft
+    /// (`new.tsx`, `saveDraft`).
     ///
     /// # Errors
     ///
     /// The form's own problems.
     pub fn save_command(&self) -> Result<LedgerCommand, FieldErrors> {
-        Err(FieldErrors::default())
+        let errors = self.field_errors();
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        let input = self.input();
+        Ok(match &self.draft {
+            Some(id) => LedgerCommand::EntryUpdateDraft {
+                entry_id: id.clone(),
+                input,
+            },
+            None => LedgerCommand::EntrySaveDraft { input },
+        })
     }
 
-    /// Post: `entry.post`, or for a loaded draft `entry.updateDraft` then `entry.postDraft`.
+    /// Post: `entry.post`, or for a loaded draft `entry.updateDraft` then `entry.postDraft`
+    /// (`new.tsx`, `post`). With `with_override`, the override reason is required and lets the
+    /// overridable issues through.
     ///
     /// # Errors
     ///
-    /// Why nothing is sent.
+    /// Why nothing is sent: the form's or the engine's problems, and whether only an override
+    /// stands in the way.
     pub fn post_commands(
         &self,
-        _state: &LedgerState,
-        _with_override: bool,
+        state: &LedgerState,
+        with_override: bool,
     ) -> Result<Vec<LedgerCommand>, Blocked> {
-        Err(Blocked::default())
+        let reason = self.override_reason.trim();
+        if with_override && reason.is_empty() {
+            return Err(Blocked {
+                needs_override: true,
+                override_error: Some("Say why this entry should post despite the rule.".to_owned()),
+            });
+        }
+        let reason = with_override.then(|| reason.to_owned());
+        let mut input = self.input();
+        input.override_reason = reason.clone().map_or(Nullish::Null, Nullish::Value);
+        let found = validate(state, &input, self.draft.as_ref());
+        let blocking: Vec<&Issue> = found
+            .iter()
+            .filter(|x| !(x.overridable == Some(true) && reason.is_some()))
+            .collect();
+        let fields_ok = self.field_errors().is_empty();
+        if !fields_ok || !blocking.is_empty() {
+            return Err(Blocked {
+                needs_override: fields_ok && blocking.iter().all(|x| x.overridable == Some(true)),
+                override_error: None,
+            });
+        }
+        Ok(match &self.draft {
+            Some(id) => vec![
+                LedgerCommand::EntryUpdateDraft {
+                    entry_id: id.clone(),
+                    input,
+                },
+                LedgerCommand::EntryPostDraft {
+                    entry_id: id.clone(),
+                    override_reason: reason,
+                },
+            ],
+            None => vec![LedgerCommand::EntryPost { input }],
+        })
     }
+}
+
+/// `ledger.validateEntry(input, ignore)`; an amount past the safe range, which TS throws on,
+/// shows as one issue with that error's text.
+fn validate(state: &LedgerState, input: &EntryInput, ignore: Option<&EntryId>) -> Vec<Issue> {
+    state
+        .validate_entry(input, ignore, EntryOptions::default())
+        .unwrap_or_else(|err| vec![Issue::new(IssueCode::InvalidInput, err.to_string())])
 }
 
 /// One draft of the import preview.
@@ -332,39 +742,100 @@ pub struct ImportPreview {
 impl ImportPreview {
     /// The preview of `text` with every line on `fund`; `None` with no text or no fund.
     #[must_use]
-    pub fn new(_text: &str, _state: &LedgerState, _fund: Option<&FundId>) -> Option<Self> {
-        None
+    pub fn new(text: &str, state: &LedgerState, fund: Option<&FundId>) -> Option<Self> {
+        let fund = fund?;
+        if text.trim().is_empty() {
+            return None;
+        }
+        let parsed = parse_journal_csv(text, state, fund);
+        let entries: Vec<PreviewEntry> = parsed
+            .entries
+            .into_iter()
+            .filter(|e| !e.lines.is_empty())
+            .map(|input| {
+                let issues = validate(state, &input, None)
+                    .iter()
+                    .map(issue_text)
+                    .collect();
+                let total = to_minor(input.lines.iter().filter_map(|l| l.debit).sum());
+                PreviewEntry {
+                    memo: input.memo.clone(),
+                    date: IsoDate::parse(&input.date)
+                        .map_or_else(|_| input.date.clone(), |d| format_date(&d)),
+                    line_count: input.lines.len(),
+                    total,
+                    issues,
+                    input,
+                }
+            })
+            .collect();
+        let ready = entries.iter().filter(|e| e.issues.is_empty()).count();
+        Some(Self {
+            source: match parsed.source {
+                JournalSource::Quickbooks => "QuickBooks journal export",
+                JournalSource::Xero => "Xero manual journal",
+            },
+            entries,
+            problems: parsed.problems,
+            unmapped: parsed.unmapped_accounts,
+            ready,
+        })
     }
 
     /// `QuickBooks journal export · 2 entries · 1 ready to post`.
     #[must_use]
     pub fn meta(&self) -> String {
-        String::new()
+        format!(
+            "{} \u{b7} {} entries \u{b7} {} ready to post",
+            self.source,
+            self.entries.len(),
+            self.ready
+        )
     }
 
     /// `Create 2 drafts`.
     #[must_use]
     pub fn button_label(&self) -> String {
-        String::new()
+        let n = self.entries.len();
+        format!("Create {n} {}", if n == 1 { "draft" } else { "drafts" })
     }
 
     /// `No entries found` when nothing was read.
     #[must_use]
     pub fn notice(&self) -> Option<(String, String)> {
-        None
+        self.entries.is_empty().then(|| {
+            (
+                "No entries found".to_owned(),
+                "Check that the file is a QuickBooks Journal report or a Xero manual journal \
+                 export with its header row."
+                    .to_owned(),
+            )
+        })
     }
 
-    /// `entry.import` of every draft, or `None` when there are none.
+    /// `entry.import` of every draft, or `None` when there are none (`import.tsx`, `create`).
     #[must_use]
     pub fn command(&self) -> Option<LedgerCommand> {
-        None
+        (!self.entries.is_empty()).then(|| LedgerCommand::EntryImport {
+            inputs: self.entries.iter().map(|e| e.input.clone()).collect(),
+        })
     }
 }
 
 /// The notice after an import (`import.tsx`, `created`).
 #[must_use]
-pub fn import_done(_count: usize) -> (String, String) {
-    (String::new(), String::new())
+pub fn import_done(count: usize) -> (String, String) {
+    (
+        format!(
+            "{count} draft {} created",
+            if count == 1 {
+                "entry was"
+            } else {
+                "entries were"
+            }
+        ),
+        "Review each draft, fix anything the ledger flags, then post it.".to_owned(),
+    )
 }
 
 /// Reads a CSV file for the import, up to [`MAX_IMPORT_BYTES`] (`import.tsx`, `readFile`).
@@ -372,8 +843,13 @@ pub fn import_done(_count: usize) -> (String, String) {
 /// # Errors
 ///
 /// The message to show when the file is too large or cannot be read.
-pub fn read_import_file(_path: &Path) -> Result<String, String> {
-    Err(String::new())
+pub fn read_import_file(path: &Path) -> Result<String, String> {
+    let unreadable = || "The file could not be read. Try exporting it again as CSV.".to_owned();
+    let size = std::fs::metadata(path).map_err(|_| unreadable())?.len();
+    if usize::try_from(size).map_or(true, |s| s > MAX_IMPORT_BYTES) {
+        return Err("This file is larger than 5 MB. Export a shorter date range.".to_owned());
+    }
+    std::fs::read_to_string(path).map_err(|_| unreadable())
 }
 
 #[cfg(test)]
@@ -608,13 +1084,13 @@ mod tests {
         form.lines[1].account = None;
         form.lines[0].grant = Some(GrantId::from("grant-paef-education"));
         let issues = form.issues(&state);
-        assert!(!issues.is_empty());
+        assert_ne!(issues, []);
         let grant = form.line_issue(&issues, 0, LineField::Grant).unwrap();
         assert!(!grant.starts_with("Line "), "{grant}");
         assert!(form.line_issue(&issues, 1, LineField::Account).is_some());
         let summary = form.summary(&state);
         assert_eq!(summary.items.len(), issues.len());
-        assert_eq!(summary.title().ends_with("stop the entry posting"), true);
+        assert!(summary.title().ends_with("stop the entry posting"));
     }
 
     #[test]
@@ -672,7 +1148,10 @@ mod tests {
         );
         let summary = form.summary(&state);
         assert_eq!(summary.items.len(), 1);
-        assert!(summary.items[0].contains("balance"), "{summary:?}");
+        assert!(
+            summary.items[0].contains("Debits and credits differ"),
+            "{summary:?}"
+        );
         assert_eq!(summary.title(), "This stops the entry posting");
         // A draft can still be saved; it is checked again when posted.
         assert!(form.save_command().is_ok());
@@ -881,7 +1360,7 @@ mod tests {
         assert_eq!(p.ready, 0);
         assert_eq!(p.entries[0].issues.len(), 1);
         assert!(
-            p.entries[0].issues[0].contains("balance"),
+            p.entries[0].issues[0].contains("Debits and credits differ"),
             "{:?}",
             p.entries[0].issues
         );
