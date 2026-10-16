@@ -1,0 +1,41 @@
+# Checks for the Cargo workspace under rust/. The web app has its own CI in ci.yml.
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'rust/**'
+      - '.github/workflows/rust.yml'
+  pull_request:
+    paths:
+      - 'rust/**'
+      - '.github/workflows/rust.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v5
+
+      # Reads rust/rust-toolchain.toml. Caching is left to rust-cache below.
+      - uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
+        with:
+          rust-src-dir: rust
+          cache: false
+
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: rust
+
+      - name: Format, lint and test
+        run: cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
