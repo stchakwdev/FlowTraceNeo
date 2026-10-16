@@ -721,7 +721,7 @@ impl JournalPanel {
         let balance = form.balance(&books);
         v_flex()
             .gap(px(space::SECTION))
-            .max_w(px(880.0))
+            .max_w(px(1040.0))
             .when_some(self.form_failure.clone(), |v, f| {
                 v.child(failure_box(&f, cx))
             })
@@ -744,7 +744,7 @@ impl JournalPanel {
                     ))
                     .children(lines)
                     .child(
-                        div().py(px(12.0)).child(
+                        h_flex().py(px(12.0)).child(
                             Button::new("add-line")
                                 .outline()
                                 .label("Add a line")
@@ -864,7 +864,7 @@ impl JournalPanel {
         let p = palette(cx.theme().mode);
         v_flex()
             .gap(px(space::SECTION))
-            .max_w(px(960.0))
+            .max_w(px(1200.0))
             .when_some(self.import_created, |v, n| {
                 let (title, body) = import_done(n);
                 v.child(
@@ -1114,12 +1114,20 @@ fn line_editor(
                     )
                 }),
         )
-        .child(field(
-            "Account",
-            Select::new(&w.account).placeholder("Choose an account"),
-            account,
-            cx,
-        ))
+        .child(
+            row()
+                .child(
+                    field(
+                        "Account",
+                        Select::new(&w.account).placeholder("Choose an account"),
+                        account,
+                        cx,
+                    )
+                    .flex_1(),
+                )
+                .child(field("Debit", Input::new(&w.debit), debit, cx).w(px(180.0)))
+                .child(field("Credit", Input::new(&w.credit), credit, cx).w(px(180.0))),
+        )
         .child(
             row()
                 .child(
@@ -1131,17 +1139,9 @@ fn line_editor(
                     )
                     .flex_1(),
                 )
-                .child(field("Grant", Select::new(&w.grant), grant, cx).flex_1()),
-        )
-        .child(
-            row()
+                .child(field("Grant", Select::new(&w.grant), grant, cx).flex_1())
                 .child(field("Tag", Select::new(&w.tag), None, cx).flex_1())
                 .child(field("Line memo", Input::new(&w.memo), None, cx).flex_1()),
-        )
-        .child(
-            row()
-                .child(field("Debit", Input::new(&w.debit), debit, cx).flex_1())
-                .child(field("Credit", Input::new(&w.credit), credit, cx).flex_1()),
         )
         .children(loose.into_iter().map(|m| {
             div()

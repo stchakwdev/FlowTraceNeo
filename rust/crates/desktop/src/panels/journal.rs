@@ -599,6 +599,7 @@ impl JournalPanel {
         h_flex()
             .py(px(space::CELL))
             .gap(px(40.0))
+            .items_start()
             .child(figure(&c.posted.to_string(), "Posted", true, cx))
             .child(
                 figure(&c.draft.to_string(), "Drafts", false, cx)
@@ -852,6 +853,7 @@ impl JournalPanel {
         let figures = h_flex()
             .py(px(space::CELL))
             .gap(px(40.0))
+            .items_start()
             .child(figure(
                 &format_whole(d.total),
                 &format!("Total, {base}"),
@@ -950,7 +952,8 @@ impl JournalPanel {
                     .id(SharedString::from(format!("link-{}", link.id.as_str())))
                     .cursor_pointer()
                     .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(p.report_blue_ink.to_hsla())
+                    .text_color(p.report_blue.to_hsla())
+                    .underline()
                     .hover(gpui_kit::Styled::underline)
                     .child(link.text)
                     .on_click(cx.listener(move |panel, _: &ClickEvent, _, cx| {

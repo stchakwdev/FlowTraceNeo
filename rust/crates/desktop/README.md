@@ -41,6 +41,8 @@ when the app closes.
 | `store` | `LedgerStore`, the one store entity: owns the backend and the `LedgerView`, drains the change channel in batches | yes |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
 | `bills` | Bills, payments and vendors view models: `bill_rows`, `filtered`, `filter_count`, `vendor_rows`, `NewVendorForm`, `NewBillForm` (lines, `total`, `command`), `next_step` (status to actions), `bill_detail` (coded lines, accrual and payment entries, fund split, status trail), `PayForm` | no |
+| `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
+| `entry_form` | Manual entry form and CSV import view models: `EntryForm` (lines, `set_debit`/`set_credit`, `set_fund`, `balance`, `field_errors`, `issues`, `summary`, `save_command`, `post_commands`, `from_draft`), `Balance`, `account_choices`, `tag_choices`, `ImportPreview`, `read_import_file` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
 | `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items | yes |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
@@ -177,7 +179,7 @@ select's options in the web screen's order; `GlTable::derive` turns
 the running balance natural side positive) plus a totals row; `GlCache` derives again only when
 the store revision or the filter changes; `EntryDetail` is the clicked line's entry.
 `panels::general_ledger` draws it with a gpui-kit `DataTable`, which renders only the rows in
-view (`uniform_list`), and emits `OpenEntry(EntryId)` on a click for the Journal screen (U3).
+view (`uniform_list`), and emits `OpenEntry(EntryId)` on a click; the shell opens that entry on the Journal screen (U3).
 
 Flags: `--large-books 50000` adds synthetic books (`large_books::build`, two-line entries posted
 through the engine with the fixed test env) listed and selected first; `--gl-account 1110`
@@ -251,3 +253,37 @@ labels. `--grants list|budgets|<grant id>` opens the entry on a view for screens
 (`--entry 5 --grants grant-kisima-wash`). Tests: `tests/grants.rs`. Shots:
 `docs/screens/u7-grants.png`, `u7-grant-detail.png`, `u7-budgets.png` (figures and chart) and
 `u7-budgets-table.png` (Page Down: the over-budget line, the axis and the table).
+
+## Journal (U3)
+
+Key `2` opens the Journal: key figures, the status choices with counts (`f` steps through them),
+a search over number, memo and override reason, and the source and period pickers, then the
+entries latest first (number, date, memo with its line count, source, funds, status, total) and
+the debits shown. `j`/`k` or the arrows move the highlighted row, Enter opens it; a click on a
+line in the General ledger opens its entry here too (`Shell::on_open_entry`). The list draws
+the latest 500 rows and asks to filter past that (only the synthetic large books reach it).
+
+An entry shows its key figures, created and posted by whom, the override reason, links to the
+entry it reverses or that reversed it, the lines (account and memo, fund and grant, tags, debit
+and credit in the line's currency, the signed base amount, the rate of a foreign line) with
+totals, and the audit trail. A draft offers Edit (`e`), Delete (`d`, with a confirmation) and
+Post (`p`); a refusal every issue of which an override lets through opens the Post with an
+override box. A posted entry offers Reverse (`r`: date and reason; Enter confirms) and then
+opens the reversing entry. Engine messages show as the engine words them.
+
+`n` (or New journal entry) opens the form: date, memo, and two or more lines (account, debit,
+credit, fund, grant, tag, line memo) as the web's `new.tsx`. Typing a debit clears that line's
+credit and the other way round, and the debits, credits and difference under the lines follow
+every keystroke (`EntryForm::balance`, at each kept line's rate when a loaded draft carries a
+foreign currency). Save draft sends `entry.saveDraft` (`entry.updateDraft` on a draft); Post
+checks the entry with the engine's `validate_entry` first and lists what stops it, then sends
+`entry.post` (or `entry.updateDraft` and `entry.postDraft`). `i` (or Import journals) opens the
+CSV import: a path (Enter or Load reads it; `Choose...` opens the platform file dialog) and the
+fund for every line, then a preview of each draft with its issues, the unreadable rows and the
+accounts not in the chart, and Create N drafts sends one `entry.import`. The web's paste box is
+left out: gpui-kit 0.7.3 has no multi-line text input in the API this app uses.
+
+Shots: `docs/screens/u3-journal.png`, `u3-entry-detail.png` (Enter on JE-0016, `r`, a reason,
+Enter: the reversing entry), `u3-entry-new.png` (`n`, a memo, Enter, 2,500, Tab to line 2's
+credit, 2,000: the difference shows 500.00 in red) and `u3-import.png` (`i`, the path of
+`docs/screens/u3-import-sample.csv`, Enter).
