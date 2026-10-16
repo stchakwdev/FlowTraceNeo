@@ -17,6 +17,7 @@ pub mod importers;
 pub mod js_number;
 pub mod money;
 pub mod reconcile;
+pub mod reports;
 pub mod setup;
 pub mod types;
 
