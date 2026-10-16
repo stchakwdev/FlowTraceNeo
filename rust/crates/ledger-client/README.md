@@ -4,30 +4,33 @@ The desktop's way to the books: the Rust counterpart of
 `flowtrace/src/lib/ledger/spacetime-backend.ts` and `spacetime-codec.ts`. It connects to the
 ledger module (`../ledger-module`) on SpacetimeDB 2.12, subscribes to every `my_*` view, keeps
 its own row cache, rebuilds a `ledger_core::LedgerState` per organisation and submits commands.
-The desktop builds against the `LedgerBackend` trait, which two types implement:
-
-| Type | What it is |
-|---|---|
-| `SpacetimeClient` | The module over a SpacetimeDB connection (`ClientConfig { uri, database, token_file, result_timeout }`). |
-| `InMemoryBackend` | One set of books in memory (`InMemoryBackend::demo()`: the demo books as the demo user), for screens before U10. |
+The desktop's `LedgerBackend` trait belongs to the desktop crate (U1); U10 adapts this client
+to it. The client's API:
 
 ```rust
-pub trait LedgerBackend: Send + Sync {
-    fn status(&self) -> ConnectionStatus;                 // Connecting, Connected, Ready, Disconnected
-    fn organisations(&self) -> Vec<Organisation>;         // org id, settings, members
-    fn state(&self, org_id: &str) -> Result<LedgerState, ClientError>;
-    fn subscribe(&self) -> async_channel::Receiver<BackendEvent>; // first event: current status
-    fn submit(&self, org_id: &str, command: LedgerCommand) -> CommandTicket;
-}
+let client = SpacetimeClient::connect(
+    ClientConfig::new("http://127.0.0.1:3100", "flowtrace-ledger-dev")
+        .with_token_file(TokenFile::new(path)),
+)?;                                                    // returns at once; one thread connects
+client.status();                                       // Connecting, Connected, Ready, Disconnected
+client.identity();                                     // Option<String>, 64 hex digits
+client.organisations();                                // Vec<Organisation { org_id, settings, members }>
+client.state(org_id)?;                                 // the rebuilt LedgerState
+let rx = client.subscribe();                           // ClientEvent: Status, Changed { orgs }, Error
+client.submit(org_id, &command)?;                      // blocking: Result<CommandResult, ClientError>
+client.send(org_id, &command);                         // CommandTicket: .result().await or .wait()
+client.create_org_ledger(org_id, "KES", 2026, name);   // Ticket<()>, operator only
+client.import_books(org_id, &state);                   // Ticket<()>, operator only
+client.disconnect();
 ```
 
-`CommandTicket` (a `Ticket<CommandResult>`) is awaited with `.result().await` from a GPUI
-`cx.spawn` task, or `.wait()` on a worker thread. It resolves after the rows the command changed
-are in the cache, so `state` read after it shows the change. A broken ledger rule comes back as
-`ClientError::Ledger(LedgerError)` with the engine's issues (decoded from the reducer's
-`LEDGER_ERROR <issues JSON>`), any other reducer refusal as `ClientError::Rejected(text)`, no
-answer within 15 s as `ClientError::Timeout`. `SpacetimeClient` adds the operator calls
-`create_org_ledger` and `import_books`, which return `Ticket<()>`.
+A subscriber's first event is the current `ClientEvent::Status`. After that it gets one
+`ClientEvent::Changed { orgs }` per applied message (initial subscription or transaction).
+`send` resolves after the rows the command changed are in the cache, so `state` read after it
+shows the change; `submit` is `send(..).wait()`, so call it off the UI thread. A broken ledger
+rule comes back as `ClientError::Ledger(LedgerError)` with the engine's issues (decoded from the
+reducer's `LEDGER_ERROR <issues JSON>`), any other reducer refusal as
+`ClientError::Rejected(text)`, no answer within 15 s as `ClientError::Timeout`.
 
 ## How it runs
 
@@ -37,7 +40,7 @@ the SDK's `run_threaded`, which panics its thread on a disconnect that is not cl
 connection becomes `ConnectionStatus::Disconnected { error: Some(..) }` and every pending ticket
 fails with `ClientError::Disconnected`. SDK row and reducer callbacks run on that thread and only
 send on an internal channel. After each message the loop applies the row changes as one batch,
-sends one `BackendEvent::Changed { orgs }` per batch to every subscriber, then resolves the
+sends one `ClientEvent::Changed { orgs }` per batch to every subscriber, then resolves the
 tickets whose `command_result` row (matched by request id, `{connection id}-{n}`) or reducer
 error arrived. The desktop's store entity follows ADR 0002: own a receiver, drain it in batches
 in a `cx.spawn` task, call `state(org)` for the organisations named, `cx.notify()` once.
@@ -75,7 +78,7 @@ regenerate stops tripping one of them).
 
 ```sh
 cd rust
-cargo test -p ledger-client     # unit tests, the in-memory contract and the 37-command log; offline
+cargo test -p ledger-client     # unit tests: rebuild, decoding, cache, token, tickets; offline
 ```
 
 The live test (`tests/live.rs`) is `#[ignore]`d and also needs `LEDGER_CLIENT_LIVE=1`. It
@@ -91,7 +94,7 @@ LEDGER_CLIENT_LIVE=1 cargo test -p ledger-client --test live -- --ignored --noca
 It connects a client with a fresh token file, has the CLI identity that published the module
 make it an operator, opens the demo organisation and imports `fixtures/demo-books.json#/state`
 through the client, checks the rebuilt books equal the fixture and the trial balance and
-financial position equal every demo-books case of their report fixtures, runs the contract of
+financial position equal every demo-books case of their report fixtures, runs the checks of
 `tests/common/mod.rs` (one accepted `vendor.add` with its `Changed` event, one refused unbalanced
 entry), reconnects with the saved token as the same identity, and checks a stranger sees nothing
 and is refused. A run takes about 1.2 s.

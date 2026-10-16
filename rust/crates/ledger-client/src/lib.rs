@@ -1,19 +1,19 @@
 //! SpacetimeDB Rust client for the ledger: connect, subscribe, rebuild state and submit commands.
 //!
-//! - [`LedgerBackend`]: what the desktop's screens build against, with [`SpacetimeClient`] (the
-//!   ledger module over SpacetimeDB) and [`InMemoryBackend`] (one set of books in memory).
+//! - [`SpacetimeClient`]: the ledger module over SpacetimeDB: connection status and identity,
+//!   organisations, rebuilt books per organisation, batched change events, commands, and the
+//!   operator calls. The desktop's `LedgerBackend` trait (U1) wraps it in U10.
 //! - [`cache`]: the client's row cache and the `LedgerState` rebuild through the module's own
 //!   `ledger_module::codec`.
 //! - [`TokenFile`]: the connection token in a file the caller names.
 //! - [`module_bindings`]: `spacetime generate` output for `crates/ledger-module`; regenerate with
 //!   the command in `README.md`, never edit.
 
-mod backend;
 pub mod cache;
 mod client;
 mod error;
-mod memory;
 mod rows;
+mod status;
 mod token;
 
 #[allow(
@@ -26,11 +26,9 @@ pub mod module_bindings;
 #[cfg(test)]
 mod testing;
 
-pub use backend::{
-    BackendEvent, CommandTicket, ConnectionStatus, LedgerBackend, MemberInfo, Organisation,
-    RESULT_TIMEOUT, Ticket,
-};
 pub use client::{ClientConfig, SpacetimeClient, VIEWS};
 pub use error::{ClientError, decode_reducer_error, is_valid_org_id};
-pub use memory::{IN_MEMORY_IDENTITY, InMemoryBackend};
+pub use status::{
+    ClientEvent, CommandTicket, ConnectionStatus, MemberInfo, Organisation, RESULT_TIMEOUT, Ticket,
+};
 pub use token::TokenFile;

@@ -1,12 +1,12 @@
-//! [`SpacetimeClient`]: the ledger module over SpacetimeDB behind [`LedgerBackend`], the Rust
-//! form of `spacetimeLedgerBackend` (`flowtrace/src/lib/ledger/spacetime-backend.ts`).
+//! [`SpacetimeClient`]: the ledger module over SpacetimeDB, the Rust form of
+//! `spacetimeLedgerBackend` (`flowtrace/src/lib/ledger/spacetime-backend.ts`).
 //!
 //! One thread per client owns the connection. It drives the SDK with its own loop over
 //! `advance_one_message_blocking` instead of `run_threaded`, which panics its thread on a
 //! disconnect that is not clean (SDK 2.12 `db_connection.rs`, `run_threaded`; ADR 0002). The
 //! SDK runs every callback inside that call on this thread; callbacks only send on an internal
 //! channel. After each message the loop drains that channel: it applies the row changes to the
-//! [`RowCache`] as one batch, sends one [`BackendEvent::Changed`] naming the organisations they
+//! [`RowCache`] as one batch, sends one [`ClientEvent::Changed`] naming the organisations they
 //! touched, then resolves the tickets whose result arrived, so a ticket never resolves before
 //! the books it changed are readable. Status changes and errors go out on the same receivers.
 //!
@@ -25,10 +25,6 @@ use ledger_core::{CommandResult, LedgerCommand};
 use spacetimedb_sdk::__codegen::InternalError;
 use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
 
-use crate::backend::{
-    BackendEvent, CommandTicket, ConnectionStatus, LedgerBackend, Organisation, RESULT_TIMEOUT,
-    Ticket, TicketSender,
-};
 use crate::cache::{Row, RowCache, RowChange};
 use crate::error::{ClientError, decode_reducer_error, is_valid_org_id};
 use crate::module_bindings::{
@@ -40,6 +36,10 @@ use crate::module_bindings::{
     MyLedgerOrgTableAccess as _, MyMemberTableAccess as _, MyPaymentTableAccess as _,
     MyStatementLineTableAccess as _, MyVendorTableAccess as _, create_org_ledger as _,
     import_books as _, run_command as _,
+};
+use crate::status::{
+    ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
+    TicketSender,
 };
 use crate::token::TokenFile;
 
@@ -129,11 +129,11 @@ type InternalTx = mpsc::Sender<Internal>;
 /// Status and receivers under one lock, so a new receiver's first status is never stale.
 struct Hub {
     status: ConnectionStatus,
-    subscribers: Vec<async_channel::Sender<BackendEvent>>,
+    subscribers: Vec<async_channel::Sender<ClientEvent>>,
 }
 
 impl Hub {
-    fn broadcast(&mut self, event: &BackendEvent) {
+    fn broadcast(&mut self, event: &ClientEvent) {
         self.subscribers
             .retain(|tx| tx.try_send(event.clone()).is_ok());
     }
@@ -141,7 +141,7 @@ impl Hub {
     fn set_status(&mut self, status: ConnectionStatus) {
         if self.status != status {
             self.status = status.clone();
-            self.broadcast(&BackendEvent::Status(status));
+            self.broadcast(&ClientEvent::Status(status));
         }
     }
 }
@@ -171,7 +171,7 @@ pub struct SpacetimeClient {
 
 impl SpacetimeClient {
     /// Starts connecting on a new thread and returns at once; the status starts at
-    /// [`ConnectionStatus::Connecting`] and moves on as [`BackendEvent::Status`] events.
+    /// [`ConnectionStatus::Connecting`] and moves on as [`ClientEvent::Status`] events.
     ///
     /// # Errors
     ///
@@ -324,39 +324,71 @@ fn expire(after: Duration, fire: impl FnOnce() + Send + 'static) {
         });
 }
 
-impl LedgerBackend for SpacetimeClient {
-    fn status(&self) -> ConnectionStatus {
+/// Reads and writes.
+impl SpacetimeClient {
+    /// The connection's current status.
+    #[must_use]
+    pub fn status(&self) -> ConnectionStatus {
         lock(&self.shared.hub).status.clone()
     }
 
-    fn organisations(&self) -> Vec<Organisation> {
+    /// The organisations whose books the caller can read, in id order.
+    #[must_use]
+    pub fn organisations(&self) -> Vec<Organisation> {
         lock(&self.shared.cache).organisations()
     }
 
-    fn state(&self, org_id: &str) -> Result<LedgerState, ClientError> {
+    /// One organisation's books as the cache holds them now (`load`,
+    /// `spacetime-backend.ts:193-197`), rebuilt from its rows.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::InvalidOrgId`], [`ClientError::NoLedger`] when the caller cannot read the
+    /// books (yet), or [`ClientError::Codec`] when the rows do not rebuild.
+    pub fn state(&self, org_id: &str) -> Result<LedgerState, ClientError> {
         if !is_valid_org_id(org_id) {
             return Err(ClientError::InvalidOrgId(org_id.to_owned()));
         }
         lock(&self.shared.cache).state(org_id)
     }
 
-    fn subscribe(&self) -> async_channel::Receiver<BackendEvent> {
+    /// A new receiver of change notifications. Its first event is the current
+    /// [`ClientEvent::Status`]; after that it gets every event, one [`ClientEvent::Changed`] per
+    /// applied message. Drop it to stop.
+    #[must_use]
+    pub fn subscribe(&self) -> async_channel::Receiver<ClientEvent> {
         let (tx, rx) = async_channel::unbounded();
         let mut hub = lock(&self.shared.hub);
         // An unbounded channel whose receiver is in hand takes the first event.
-        let _ = tx.try_send(BackendEvent::Status(hub.status.clone()));
+        let _ = tx.try_send(ClientEvent::Status(hub.status.clone()));
         hub.subscribers.push(tx);
         rx
     }
 
-    /// `run` (`spacetime-backend.ts:199-217`): the command as JSON through `run_command` under a
-    /// fresh request id; resolves with the `command_result` row of that id, or the reducer's
-    /// error decoded, or [`ClientError::Timeout`].
-    fn submit(&self, org_id: &str, command: LedgerCommand) -> CommandTicket {
+    /// Runs one command as the caller and blocks until its result: [`SpacetimeClient::send`],
+    /// then [`Ticket::wait`]. Never call it on the UI thread.
+    ///
+    /// # Errors
+    ///
+    /// As [`SpacetimeClient::send`].
+    pub fn submit(
+        &self,
+        org_id: &str,
+        command: &LedgerCommand,
+    ) -> Result<CommandResult, ClientError> {
+        self.send(org_id, command).wait()
+    }
+
+    /// `run` (`spacetime-backend.ts:199-217`) without blocking: the command as JSON through
+    /// `run_command` under a fresh request id. The ticket resolves with the `command_result` row
+    /// of that id once the changed rows are in the cache, or with the reducer's error decoded
+    /// ([`ClientError::Ledger`] for a broken rule), or [`ClientError::Timeout`]. The actor is
+    /// the member the module finds for the caller's identity (`spacetime-backend.ts:6-8`).
+    pub fn send(&self, org_id: &str, command: &LedgerCommand) -> CommandTicket {
         if !is_valid_org_id(org_id) {
             return Ticket::ready(Err(ClientError::InvalidOrgId(org_id.to_owned())));
         }
-        let json = match serde_json::to_string(&command) {
+        let json = match serde_json::to_string(command) {
             Ok(json) => json,
             Err(e) => return Ticket::ready(Err(e.into())),
         };
@@ -561,7 +593,7 @@ fn drain(
             .collect()
     };
     if !touched.is_empty() {
-        lock(&shared.hub).broadcast(&BackendEvent::Changed { orgs: touched });
+        lock(&shared.hub).broadcast(&ClientEvent::Changed { orgs: touched });
     }
     for r in results {
         if let Some(tx) = lock(&shared.pending).remove(&r.request_id) {
@@ -582,7 +614,7 @@ fn drain(
                 if let Some(file) = &config.token_file
                     && let Err(e) = file.save(&token)
                 {
-                    lock(&shared.hub).broadcast(&BackendEvent::Error(e.to_string()));
+                    lock(&shared.hub).broadcast(&ClientEvent::Error(e.to_string()));
                 }
                 lock(&shared.hub).set_status(ConnectionStatus::Connected { identity });
             }
@@ -593,7 +625,7 @@ fn drain(
                 }
             }
             Internal::SubscriptionError(e) => {
-                lock(&shared.hub).broadcast(&BackendEvent::Error(e));
+                lock(&shared.hub).broadcast(&ClientEvent::Error(e));
             }
             Internal::CommandFailed { request_id, error } => {
                 if let Some(tx) = lock(&shared.pending).remove(&request_id) {
@@ -617,7 +649,7 @@ fn end(shared: &Shared, error: Option<String>) {
     }
     let mut hub = lock(&shared.hub);
     if let Some(e) = &error {
-        hub.broadcast(&BackendEvent::Error(e.clone()));
+        hub.broadcast(&ClientEvent::Error(e.clone()));
     }
     hub.set_status(ConnectionStatus::Disconnected { error });
 }

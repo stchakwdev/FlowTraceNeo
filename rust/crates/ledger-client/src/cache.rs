@@ -16,8 +16,8 @@ use ledger_module::tables::{
     PaymentRow, StatementLineRow, VendorRow,
 };
 
-use crate::backend::{MemberInfo, Organisation};
 use crate::error::ClientError;
+use crate::status::{MemberInfo, Organisation};
 
 /// The fourteen doc tables (`DOC_COLLECTIONS`, `flowtrace/src/lib/ledger/spacetime-codec.ts:21-36`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -303,7 +303,7 @@ impl RowCache {
 }
 
 /// Every row of `rows` and the organisation header, as upserts: what a fresh subscription to an
-/// organisation's books delivers. Used by the tests and the in-memory backend's checks.
+/// organisation's books delivers. Used by the tests.
 #[must_use]
 pub fn org_rows_as_changes(header: OrgHeader, rows: OrgRows) -> Vec<RowChange> {
     fn docs<R: DocRow>(table: DocTable, rows: Vec<R>, org_id: &str) -> Vec<RowChange> {

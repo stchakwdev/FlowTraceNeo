@@ -240,14 +240,14 @@ let refresh = cx.observe(&store, |screen: &mut Journal, store, cx| {
 work" asked for: it does not use `run_threaded`. Its thread runs its own loop over
 `advance_one_message_blocking`; callbacks send on an internal channel; after each message the
 loop applies that message's row changes to its own cache as one batch and sends one
-`BackendEvent::Changed { orgs }`. So the desktop's store receives `BackendEvent`s, not row
-changes, and reads books with `LedgerBackend::state(org)` instead of applying rows itself:
+`ClientEvent::Changed { orgs }`. So the desktop's store receives `ClientEvent`s, not row
+changes, and reads books with `SpacetimeClient::state(org)` instead of applying rows itself:
 
 ```rust
-// desktop: the store entity owns a receiver from whichever backend the app started with.
-let rx = backend.subscribe(); // first event: the current ConnectionStatus
+// desktop (U10, behind the desktop's own LedgerBackend trait from U1):
+let rx = client.subscribe(); // first event: the current ConnectionStatus
 // in the cx.spawn pump: drain a batch, then for each org in Changed { orgs }:
-store.books.insert(org.clone(), backend.state(&org)?);
+store.books.insert(org.clone(), client.state(&org)?);
 cx.notify();
 ```
 

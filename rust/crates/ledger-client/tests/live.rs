@@ -1,7 +1,7 @@
 //! [`SpacetimeClient`] against the ledger module on the local SpacetimeDB server: publish, open
 //! and import the demo books through the client, rebuild them from the subscription, check the
-//! trial balance and financial position against the fixtures, keep the backend contract
-//! (`tests/common`), reconnect with the saved token, and see a stranger refused.
+//! trial balance and financial position against the fixtures, run the client checks of
+//! `tests/common`, reconnect with the saved token, and see a stranger refused.
 //!
 //! Ignored by default so the workspace checks stay offline. To run it (local server only, never
 //! maincloud; the database is deleted at the end):
@@ -22,10 +22,9 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::{Duration, Instant};
 
-use common::{backend_contract, demo_org_id, demo_state, new_vendor, wait_for};
+use common::{client_contract, demo_org_id, demo_state, new_vendor, wait_for};
 use ledger_client::{
-    BackendEvent, ClientConfig, ClientError, ConnectionStatus, LedgerBackend, SpacetimeClient,
-    TokenFile,
+    ClientConfig, ClientError, ClientEvent, ConnectionStatus, SpacetimeClient, TokenFile,
 };
 
 /// The local server, the only one this test talks to (`crates/ledger-module/README.md`).
@@ -71,8 +70,8 @@ impl Drop for Database {
 fn wait_ready(client: &SpacetimeClient) -> String {
     let rx = client.subscribe();
     wait_for(&rx, Duration::from_secs(15), |e| match e {
-        BackendEvent::Status(ConnectionStatus::Ready { identity }) => Some(identity.clone()),
-        BackendEvent::Status(ConnectionStatus::Disconnected { error }) => {
+        ClientEvent::Status(ConnectionStatus::Ready { identity }) => Some(identity.clone()),
+        ClientEvent::Status(ConnectionStatus::Disconnected { error }) => {
             panic!("disconnected: {error:?}")
         }
         _ => None,
@@ -160,7 +159,7 @@ fn the_client_rebuilds_the_demo_books_from_the_module_and_runs_a_command() {
     //    a refusal come back through the subscription.
     let (tb, fp) = common::reports_match_the_demo_fixtures(&client.state(&org).unwrap());
     let started = Instant::now();
-    let run = backend_contract(&client, &org);
+    let run = client_contract(&client, &org);
     eprintln!(
         "rebuilt books equal demo-books.json#/state; trial balance {tb} and financial position {fp} \
          demo-books cases equal; contract kept in {:?}: vendor.add -> {}, events {:?}, unbalanced \
@@ -177,7 +176,7 @@ fn the_client_rebuilds_the_demo_books_from_the_module_and_runs_a_command() {
         ConnectionStatus::Disconnected { error: None }
     ));
     assert!(matches!(
-        client.submit(&org, new_vendor()).wait(),
+        client.submit(&org, &new_vendor()),
         Err(ClientError::Disconnected)
     ));
 
@@ -221,7 +220,7 @@ fn stranger_is_refused(db: &str, org: &str, identity: &str) {
     assert_ne!(other, identity);
     assert_eq!(stranger.organisations(), []);
     assert!(matches!(stranger.state(org), Err(ClientError::NoLedger(_))));
-    let refused = stranger.submit(org, new_vendor()).wait();
+    let refused = stranger.submit(org, &new_vendor());
     let Err(ClientError::Rejected(text)) = refused else {
         panic!("stranger came back {refused:?}");
     };

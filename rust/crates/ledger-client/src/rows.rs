@@ -8,9 +8,9 @@
 
 use ledger_module::tables;
 
-use crate::backend::MemberInfo;
 use crate::cache::{DocColumns, DocTable, MemberRow, OrgHeader, ResultRow, Row};
 use crate::module_bindings as b;
+use crate::status::MemberInfo;
 
 /// Moves every listed field of `$from` into a `$to` of the same field names.
 macro_rules! same_fields {

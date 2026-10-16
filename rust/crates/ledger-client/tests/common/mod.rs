@@ -1,15 +1,10 @@
-//! Fixtures and the backend contract both backends are held to: the in-memory one in
-//! `tests/in_memory.rs`, the live SpacetimeDB one in `tests/live.rs`.
-#![allow(
-    dead_code,
-    reason = "each test binary uses its own part of the shared helpers"
-)]
+//! Fixtures and the checks `tests/live.rs` runs against the client.
 #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
-use ledger_client::{BackendEvent, ClientError, ConnectionStatus, LedgerBackend};
+use ledger_client::{ClientError, ClientEvent, ConnectionStatus, SpacetimeClient};
 use ledger_core::reports::{Basis, financial_position, trial_balance};
 use ledger_core::types::{IsoDate, LedgerState};
 use ledger_core::{CommandResult, IssueCode, LedgerCommand, sanitize_command};
@@ -74,9 +69,9 @@ pub fn reports_match_the_demo_fixtures(state: &LedgerState) -> (usize, usize) {
 
 /// Waits on `rx` until `pick` accepts an event, failing after `within`.
 pub fn wait_for<T>(
-    rx: &async_channel::Receiver<BackendEvent>,
+    rx: &async_channel::Receiver<ClientEvent>,
     within: Duration,
-    mut pick: impl FnMut(&BackendEvent) -> Option<T>,
+    mut pick: impl FnMut(&ClientEvent) -> Option<T>,
 ) -> T {
     let deadline = Instant::now() + within;
     loop {
@@ -96,7 +91,7 @@ pub fn wait_for<T>(
 }
 
 /// Every event already queued on `rx`.
-pub fn queued(rx: &async_channel::Receiver<BackendEvent>) -> Vec<BackendEvent> {
+pub fn queued(rx: &async_channel::Receiver<ClientEvent>) -> Vec<ClientEvent> {
     std::iter::from_fn(|| rx.try_recv().ok()).collect()
 }
 
@@ -129,12 +124,12 @@ pub struct ContractRun {
     /// The vendor id the accepted command returned.
     pub vendor_id: String,
     /// The events a subscriber saw for the accepted command.
-    pub events: Vec<BackendEvent>,
+    pub events: Vec<ClientEvent>,
     /// The refusal's issue codes.
     pub refused: Vec<IssueCode>,
 }
 
-/// The contract every [`LedgerBackend`] keeps, on books equal to the demo books:
+/// What the client must do on books equal to the demo books:
 ///
 /// 1. the subscriber's first event is the current status, which is `Ready`;
 /// 2. the organisation is listed and its books equal the demo books, and the reports over them
@@ -143,11 +138,11 @@ pub struct ContractRun {
 ///    subscriber gets one `Changed` naming the organisation;
 /// 4. a refused command is a [`ClientError::Ledger`] with the engine's issues and changes
 ///    nothing.
-pub fn backend_contract(backend: &dyn LedgerBackend, org_id: &str) -> ContractRun {
+pub fn client_contract(backend: &SpacetimeClient, org_id: &str) -> ContractRun {
     let rx = backend.subscribe();
     let first = wait_for(&rx, Duration::from_secs(5), |e| Some(e.clone()));
     assert!(
-        matches!(first, BackendEvent::Status(ConnectionStatus::Ready { .. })),
+        matches!(first, ClientEvent::Status(ConnectionStatus::Ready { .. })),
         "first event {first:?}"
     );
 
@@ -160,7 +155,7 @@ pub fn backend_contract(backend: &dyn LedgerBackend, org_id: &str) -> ContractRu
     assert_eq!(before, demo, "the books equal demo-books.json#/state");
     reports_match_the_demo_fixtures(&before);
 
-    let result = backend.submit(org_id, new_vendor()).wait().unwrap();
+    let result = backend.submit(org_id, &new_vendor()).unwrap();
     let CommandResult::Id { id: vendor_id } = result else {
         panic!("vendor.add returned {result:?}");
     };
@@ -176,7 +171,7 @@ pub fn backend_contract(backend: &dyn LedgerBackend, org_id: &str) -> ContractRu
     let changed: Vec<&BTreeSet<String>> = events
         .iter()
         .filter_map(|e| match e {
-            BackendEvent::Changed { orgs } => Some(orgs),
+            ClientEvent::Changed { orgs } => Some(orgs),
             _ => None,
         })
         .collect();
@@ -186,7 +181,7 @@ pub fn backend_contract(backend: &dyn LedgerBackend, org_id: &str) -> ContractRu
         "events {events:?}"
     );
 
-    let refused = backend.submit(org_id, unbalanced_entry()).wait();
+    let refused = backend.submit(org_id, &unbalanced_entry());
     let Err(ClientError::Ledger(e)) = refused else {
         panic!("the unbalanced entry came back {refused:?}");
     };

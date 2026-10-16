@@ -1,19 +1,16 @@
-//! The [`LedgerBackend`] trait the desktop builds against (`PRIMER.md` section 1, the
-//! `LedgerBackend` of `flowtrace/src/lib/ledger/backend.ts:7-25`), and the values it hands out.
+//! What [`crate::SpacetimeClient`] hands out: its connection status, change events,
+//! organisations and members, and the [`Ticket`] a call resolves through.
 //!
-//! Two implementations: [`crate::SpacetimeClient`] (the module over SpacetimeDB) and
-//! [`crate::InMemoryBackend`] (one set of books in memory, for screens before U10). The desktop
-//! drives either the same way, per `docs/adr/0002-gpui-spacetime.md` ("Pattern for U1 to U10"):
-//! one store entity takes [`LedgerBackend::subscribe`]'s receiver, drains it in batches from a
-//! `cx.spawn` task, re-reads [`LedgerBackend::state`] for the organisations a batch names, and
-//! notifies once. Nothing here blocks on the network: [`LedgerBackend::submit`] returns a
-//! [`Ticket`] to await.
+//! The desktop's own `LedgerBackend` trait (U1) is built on these; ADR 0002 ("Pattern for U1 to
+//! U10") gives the shape: one store entity owns a receiver from
+//! [`crate::SpacetimeClient::subscribe`], drains it in batches from a `cx.spawn` task, re-reads
+//! [`crate::SpacetimeClient::state`] for the organisations a batch names, and notifies once.
 
 use std::collections::BTreeSet;
 use std::time::Duration;
 
-use ledger_core::types::{LedgerState, OrgLedgerSettings};
-use ledger_core::{CommandResult, LedgerCommand};
+use ledger_core::CommandResult;
+use ledger_core::types::OrgLedgerSettings;
 
 use crate::error::ClientError;
 
@@ -54,13 +51,13 @@ impl ConnectionStatus {
     }
 }
 
-/// One change notification. Row changes are batched: one [`BackendEvent::Changed`] per applied
+/// One change notification. Row changes are batched: one [`ClientEvent::Changed`] per applied
 /// transaction or subscription update, naming every organisation it touched.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BackendEvent {
+pub enum ClientEvent {
     /// The connection moved to a new status.
     Status(ConnectionStatus),
-    /// Rows of these organisations changed; re-read their [`LedgerBackend::state`].
+    /// Rows of these organisations changed; re-read their [`crate::SpacetimeClient::state`].
     Changed {
         /// The organisation ids.
         orgs: BTreeSet<String>,
@@ -100,14 +97,14 @@ pub struct Organisation {
 
 /// The pending result of a call: await [`Ticket::result`] from an async task (a GPUI
 /// `cx.spawn`), or block a worker thread on [`Ticket::wait`]. It resolves once, after the rows
-/// the call changed are in the backend's cache, so a [`LedgerBackend::state`] read after it sees
-/// the change.
+/// the call changed are in the client's cache, so a [`crate::SpacetimeClient::state`] read after
+/// it sees the change.
 #[derive(Debug)]
 pub struct Ticket<T> {
     rx: async_channel::Receiver<Result<T, ClientError>>,
 }
 
-/// What [`LedgerBackend::submit`] returns.
+/// What [`crate::SpacetimeClient::send`] returns.
 pub type CommandTicket = Ticket<CommandResult>;
 
 /// The sending half of a [`Ticket`]; the first send wins, later ones are dropped.
@@ -153,31 +150,38 @@ impl<T> Ticket<T> {
     }
 }
 
-/// What every screen reads and writes through. Object safe and `Send + Sync`, so the desktop
-/// holds an `Arc<dyn LedgerBackend>` chosen at start-up.
-pub trait LedgerBackend: Send + Sync {
-    /// The connection's current status.
-    fn status(&self) -> ConnectionStatus;
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
-    /// The organisations whose books the caller can read, in id order.
-    fn organisations(&self) -> Vec<Organisation>;
+    use super::*;
 
-    /// One organisation's books as the backend holds them now (`load`,
-    /// `spacetime-backend.ts:193-197`).
-    ///
-    /// # Errors
-    ///
-    /// [`ClientError::NoLedger`] when the caller cannot read the books (yet), or
-    /// [`ClientError::Codec`] when the rows do not rebuild.
-    fn state(&self, org_id: &str) -> Result<LedgerState, ClientError>;
+    #[test]
+    fn the_first_send_wins_and_a_dropped_sender_reads_as_disconnected() {
+        let (tx, ticket) = Ticket::<u8>::pending();
+        tx.try_send(Ok(1)).unwrap();
+        assert!(tx.try_send(Err(ClientError::Timeout)).is_err());
+        assert_eq!(ticket.wait().unwrap(), 1);
 
-    /// A new receiver of change notifications. Its first event is the current
-    /// [`BackendEvent::Status`], so a subscriber never misses the status it starts in; after
-    /// that every receiver gets every event. Drop it to stop.
-    fn subscribe(&self) -> async_channel::Receiver<BackendEvent>;
+        let (tx, ticket) = Ticket::<u8>::pending();
+        drop(tx);
+        assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
+    }
 
-    /// Runs one command on an organisation's books as the caller (`run`,
-    /// `spacetime-backend.ts:199-217`). The actor is whoever the backend says the caller is,
-    /// never a parameter (`spacetime-backend.ts:6-8`).
-    fn submit(&self, org_id: &str, command: LedgerCommand) -> CommandTicket;
+    #[test]
+    fn only_a_live_status_has_an_identity() {
+        let id = "ab".repeat(32);
+        assert_eq!(
+            ConnectionStatus::Ready {
+                identity: id.clone()
+            }
+            .identity(),
+            Some(id.as_str())
+        );
+        assert_eq!(ConnectionStatus::Connecting.identity(), None);
+        assert_eq!(
+            ConnectionStatus::Disconnected { error: None }.identity(),
+            None
+        );
+    }
 }
