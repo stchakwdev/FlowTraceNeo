@@ -358,3 +358,21 @@ fn an_export_written_twice_is_byte_equal() {
     assert!(a_bytes.starts_with(b"Trial balance\r\n"));
     assert_eq!(a_bytes, b_bytes);
 }
+
+/// `rust/docs/screens/u9-trial-balance.csv` is the trial balance as at the demo date exported
+/// from the app; run with `U9_WRITE_SAMPLE=1` to write it again.
+#[test]
+fn the_committed_sample_csv_is_a_current_export() {
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../docs/screens/u9-trial-balance.csv");
+    let params = point(
+        ReportKind::TrialBalance,
+        IsoDate::parse(ledger_core::demo::DEMO_AS_OF).unwrap(),
+        Basis::Accrual,
+    );
+    if std::env::var_os("U9_WRITE_SAMPLE").is_some() {
+        desktop::statements::write_export(&demo_books(), &params, &path).unwrap();
+    }
+    let sample = std::fs::read_to_string(&path).unwrap();
+    assert_eq!(sample, export_csv(&demo_books(), &params).unwrap());
+}

@@ -3,6 +3,7 @@
 //! a screen replaces its placeholder").
 
 pub mod accounts;
+pub mod reports;
 
 use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;

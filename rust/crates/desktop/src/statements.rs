@@ -325,6 +325,19 @@ pub fn presets(state: &LedgerState, as_of: &IsoDate) -> Vec<Preset> {
     out
 }
 
+/// The key of the preset the form's dates match, the first that does (`activePreset` in
+/// `reports/index.tsx`): a report as at a date matches on the end date only.
+#[must_use]
+pub fn active_preset(presets: &[Preset], form: &ReportForm) -> Option<&'static str> {
+    presets
+        .iter()
+        .find(|p| match form.kind.span() {
+            Span::Point => form.to == p.to.as_str(),
+            Span::Range => form.from == p.from.as_str() && form.to == p.to.as_str(),
+        })
+        .map(|p| p.key)
+}
+
 /// One cell of a statement row.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Cell {
@@ -1425,6 +1438,23 @@ pub fn default_export_path(home: Option<&Path>, params: &ReportParams) -> PathBu
     )
 }
 
+/// The path typed in the export field: trimmed, with a leading `~/` (or a bare `~`) taken as
+/// `home`; `None` when the field is empty.
+#[must_use]
+pub fn resolve_export_path(text: &str, home: Option<&Path>) -> Option<PathBuf> {
+    let text = text.trim();
+    if text.is_empty() {
+        return None;
+    }
+    match (text.strip_prefix('~'), home) {
+        (Some(""), Some(home)) => Some(home.to_owned()),
+        (Some(rest), Some(home)) if rest.starts_with('/') => {
+            Some(home.join(rest.trim_start_matches('/')))
+        }
+        _ => Some(PathBuf::from(text)),
+    }
+}
+
 /// An amount for display (`formatMinor` in `flowtrace/src/components/ledger/money.tsx`): two
 /// decimals with `en-KE` thousands separators, negatives in parentheses, zero as an en dash.
 /// Worked in integers, so no amount rounds.
@@ -1699,6 +1729,22 @@ mod tests {
         let keys: Vec<_> = empty.iter().map(|p| p.key).collect();
         assert_eq!(keys, ["month", "ytd"]);
         assert_eq!(empty[0].to.as_str(), "2026-06-15");
+    }
+
+    #[test]
+    fn one_preset_is_active_at_most() {
+        let books = demo();
+        let ranges = presets(&books, &d(DEMO_AS_OF));
+        let mut form = ReportForm::new(&books, &d(DEMO_AS_OF));
+        // As at 4 Feb, "this month" and "year to date" both end there; the first wins.
+        assert_eq!(active_preset(&ranges, &form), Some("month"));
+        form.kind = ReportKind::Activities;
+        assert_eq!(active_preset(&ranges, &form), Some("ytd"));
+        form.from = "2025-01-01".to_owned();
+        form.to = "2025-12-31".to_owned();
+        assert_eq!(active_preset(&ranges, &form), Some("last"));
+        form.to = "2025-12-30".to_owned();
+        assert_eq!(active_preset(&ranges, &form), None);
     }
 
     #[test]
@@ -2057,6 +2103,28 @@ mod tests {
         );
         let csv = export_csv(&books, &p).unwrap();
         assert!(csv.starts_with("Trial balance\r\nAs at 4 Feb 2026\r\nAmounts in KES,Accrual basis\r\n\r\nCode,Account,Debit,Credit\r\n"));
+    }
+
+    #[test]
+    fn the_export_path_expands_the_home_folder() {
+        let home = Some(Path::new("/home/someone"));
+        assert_eq!(
+            resolve_export_path("  ~/Downloads/tb.csv ", home),
+            Some(PathBuf::from("/home/someone/Downloads/tb.csv"))
+        );
+        assert_eq!(
+            resolve_export_path("/tmp/tb.csv", home),
+            Some(PathBuf::from("/tmp/tb.csv"))
+        );
+        assert_eq!(
+            resolve_export_path("~other/tb.csv", home),
+            Some(PathBuf::from("~other/tb.csv"))
+        );
+        assert_eq!(
+            resolve_export_path("~/tb.csv", None),
+            Some(PathBuf::from("~/tb.csv"))
+        );
+        assert_eq!(resolve_export_path("   ", home), None);
     }
 
     #[test]

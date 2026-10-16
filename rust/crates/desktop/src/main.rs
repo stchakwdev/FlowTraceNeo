@@ -1,15 +1,17 @@
 //! FlowTrace Books desktop app: opens the shell over the in-process backend.
 //!
 //! ```text
-//! desktop [--theme light|dark] [--screen books|connect] [--entry 1-7]
+//! desktop [--theme light|dark] [--screen books|connect] [--entry 1-7] [--report <id>]
 //! ```
 //!
 //! Without `--theme` the app follows the system appearance. `--screen` and `--entry` choose
-//! what shows first, for screenshots (README.md).
+//! what shows first, for screenshots (README.md); `--report` opens Reports on one report:
+//! `trial-balance`, `position`, `activities`, `functional`, `cash-flow` or `grant`.
 
 use anyhow::{Context as _, bail};
 use desktop::app::{Launch, run};
 use desktop::model::{NavEntry, Screen};
+use desktop::statements::ReportKind;
 
 fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
     let mut launch = Launch::default();
@@ -35,6 +37,12 @@ fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
             "--entry" => {
                 launch.nav.entry = NavEntry::from_key(&value)
                     .with_context(|| format!("--entry is 1 to 7, not {value}"))?;
+            }
+            "--report" => {
+                launch.report = Some(
+                    ReportKind::from_id(&value)
+                        .with_context(|| format!("--report is a report id, not {value}"))?,
+                );
             }
             other => bail!("unknown option {other}"),
         }

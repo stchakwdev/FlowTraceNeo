@@ -349,6 +349,23 @@ impl ConnectForm {
     }
 }
 
+/// Where a scrolling key takes the content area: `scrolled` is how far it is scrolled down,
+/// `page` its visible height and `max` the furthest it scrolls, all in pixels. `pagedown` and
+/// `pageup` move by a page less one 40px row of overlap, `home` and `end` go to the ends; any
+/// other key is not a scrolling key.
+#[must_use]
+pub fn scroll_target(key: &str, scrolled: f32, page: f32, max: f32) -> Option<f32> {
+    let step = (page - 40.0).max(40.0);
+    let target = match key {
+        "pagedown" => scrolled + step,
+        "pageup" => scrolled - step,
+        "home" => 0.0,
+        "end" => max,
+        _ => return None,
+    };
+    Some(target.clamp(0.0, max.max(0.0)))
+}
+
 #[cfg(test)]
 mod tests {
     #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
@@ -593,5 +610,20 @@ mod tests {
                 "{database:?}"
             );
         }
+    }
+
+    #[test]
+    fn scrolling_keys_move_by_a_page_and_stop_at_the_ends() {
+        assert_eq!(scroll_target("pagedown", 0.0, 1000.0, 2500.0), Some(960.0));
+        assert_eq!(
+            scroll_target("pagedown", 2000.0, 1000.0, 2500.0),
+            Some(2500.0)
+        );
+        assert_eq!(scroll_target("pageup", 500.0, 1000.0, 2500.0), Some(0.0));
+        assert_eq!(scroll_target("end", 0.0, 1000.0, 2500.0), Some(2500.0));
+        assert_eq!(scroll_target("home", 900.0, 1000.0, 2500.0), Some(0.0));
+        assert_eq!(scroll_target("end", 0.0, 1000.0, -5.0), Some(0.0));
+        assert_eq!(scroll_target("pagedown", 0.0, 10.0, 100.0), Some(40.0));
+        assert_eq!(scroll_target("a", 0.0, 1000.0, 2500.0), None);
     }
 }

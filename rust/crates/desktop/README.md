@@ -12,12 +12,14 @@ cd rust
 cargo run -p desktop                               # follows the system light or dark appearance
 cargo run -p desktop -- --theme dark --entry 3     # dark, General ledger open
 cargo run -p desktop -- --screen connect           # opens on the connect screen
+cargo run -p desktop -- --report activities        # Reports, on the statement of activities
 ```
 
 Keys `1` to `7` open the nav entries (Accounts, Journal, General ledger, Spend, Grants,
 Reconcile, Reports) while the books show and no field has focus (the shell only handles keys
 while its own focus handle is focused, so typing in a field never switches screens). Other
-keys go to the screen showing: on Accounts, `a` opens the chart, `p` the periods and `n` the
+keys go to the screen showing, except `Page Up`, `Page Down`, `Home` and `End`, which scroll
+the content. On Accounts, `a` opens the chart, `p` the periods and `n` the
 add form with the code field focused (Enter moves to the name, Enter there submits). The
 status bar names the organisation, its currency and the connection, and toggles the theme.
 
@@ -39,6 +41,7 @@ when the app closes.
 | `store` | `LedgerStore`, the one store entity: owns the backend and the `LedgerView`, drains the change channel in batches | yes |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
 | `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`; `panels::accounts::AccountsPanel` (U2) | yes |
+| `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
 Everything under "no" is unit-tested (`cargo test -p desktop`); rendering code stays thin and
@@ -142,3 +145,22 @@ org, light), `docs/screens/u1-shell-dark.png` (dark, General ledger),
 after `hyprctl dispatch focuswindow address:<addr>`; `wtype -k Return` sends Enter. Other
 threads may have their own `flowtrace-books` windows open, so pick yours from
 `hyprctl clients -j` by `pid` (the `$!` of the launch), not by class.
+`wtype -k End` (or `Page_Down`) scrolls the content before the shot.
+
+## Reports (U9)
+
+`desktop -- --report <id>` opens Reports on one report: `trial-balance`, `position`,
+`activities`, `functional`, `cash-flow` or `grant`. The picker, the period presets, the dates,
+the basis and (for the grant report) the grant are the web screen's
+(`flowtrace/src/routes/_authenticated/reports/index.tsx`); the demo books open as at the demo
+date, other books as at today. Each statement is laid out by `statements::statement` as
+`ReportBody` lays it out: tables of rows (`RowKind::Heading`, `Line`, `Subtotal`, `Total`,
+`Gap`), key figures and footing checks; `panels::reports` only draws them. Export writes
+`statements::export_csv` (the web's `reportCsv` columns, amounts as `toFixed(2)`, through
+`ledger_core::csv::to_csv`) to the path in the field, which follows the report as
+`~/Downloads/<id>_<date or from_to_to>[_<basis>].csv` (the web's download name) until the user
+types or chooses one; `Choose...` opens the platform save dialog. `tests/report_csv.rs` parses the
+CSV of every demo-books case of the `report-*.json` fixtures back and checks its totals. Shots:
+`docs/screens/u9-trial-balance.png`, `u9-trial-balance-totals.png`,
+`u9-financial-position.png`, `u9-activities.png`, `u9-grant-dark.png`; a sample export is
+`docs/screens/u9-trial-balance.csv` (checked against a fresh export by the tests).

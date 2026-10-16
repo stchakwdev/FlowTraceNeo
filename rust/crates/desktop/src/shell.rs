@@ -15,13 +15,16 @@ use gpui_kit::component::{ActiveTheme as _, IndexPath, ThemeMode, h_flex, v_flex
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClickEvent, Context, Entity, FocusHandle, FontWeight,
-    InteractiveElement as _, IntoElement, KeyDownEvent, ParentElement as _, Render, SharedString,
-    StatefulInteractiveElement as _, Styled as _, Subscription, Window, div, px,
+    InteractiveElement as _, IntoElement, KeyDownEvent, ParentElement as _, Render, ScrollHandle,
+    SharedString, StatefulInteractiveElement as _, Styled as _, Subscription, Window, div, point,
+    px,
 };
 
-use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen};
+use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen, scroll_target};
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
+use crate::panels::reports::ReportsPanel;
+use crate::statements::ReportKind;
 use crate::store::LedgerStore;
 use crate::theme::{self, palette, space, text};
 
@@ -38,6 +41,8 @@ pub struct Shell {
     database: Entity<InputState>,
     token_path: Entity<InputState>,
     connect_error: Option<SharedString>,
+    reports: Entity<ReportsPanel>,
+    scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -70,6 +75,7 @@ impl Shell {
         });
 
         let accounts = cx.new(|cx| AccountsPanel::new(store.clone(), window, cx));
+        let reports = cx.new(|cx| ReportsPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
@@ -88,6 +94,8 @@ impl Shell {
             database,
             token_path,
             connect_error: None,
+            reports,
+            scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
         }
@@ -117,14 +125,22 @@ impl Shell {
         }
     }
 
-    /// Keys 1 to 7 open their nav entry (`Navigation::press_key`); other keys go to the
-    /// screen showing. Only while the shell itself has focus, so typing in a field never
-    /// switches screens.
+    /// Keys 1 to 7 open their nav entry (`Navigation::press_key`), Page Up, Page Down, Home
+    /// and End scroll the content (`scroll_target`), and other keys go to the screen showing.
+    /// Only while the shell itself has focus, so typing in a field never switches screens.
     fn on_key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         if event.keystroke.modifiers.modified() || !self.focus.is_focused(window) {
             return;
         }
         let key = event.keystroke.key.as_str();
+        let (offset, max) = (self.scroll.offset(), self.scroll.max_offset());
+        let page = f32::from(self.scroll.bounds().size.height);
+        if let Some(target) = scroll_target(key, -f32::from(offset.y), page, f32::from(max.y)) {
+            self.scroll.set_offset(point(offset.x, px(-target)));
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
         let handled = self.nav.press_key(key)
             || (self.nav.screen == Screen::Books
                 && self.nav.entry == NavEntry::Accounts
@@ -137,8 +153,16 @@ impl Shell {
         }
     }
 
+    /// Opens the Reports entry on `kind`.
+    pub fn show_report(&mut self, kind: ReportKind, window: &mut Window, cx: &mut Context<Self>) {
+        self.reports
+            .update(cx, |reports, cx| reports.select(kind, window, cx));
+        self.select_entry(NavEntry::Reports, window, cx);
+    }
+
     fn select_entry(&mut self, entry: NavEntry, window: &mut Window, cx: &mut Context<Self>) {
         self.nav.select(entry);
+        self.scroll.set_offset(point(px(0.0), px(0.0)));
         window.focus(&self.focus, cx);
         cx.notify();
     }
@@ -199,8 +223,8 @@ impl Shell {
             | NavEntry::GeneralLedger
             | NavEntry::Spend
             | NavEntry::Grants
-            | NavEntry::Reconcile
-            | NavEntry::Reports => panels::placeholder(entry, view, demo, cx).into_any_element(),
+            | NavEntry::Reconcile => panels::placeholder(entry, view, demo, cx).into_any_element(),
+            NavEntry::Reports => self.reports.clone().into_any_element(),
         }
     }
 
@@ -453,6 +477,7 @@ impl Render for Shell {
                 h_flex().flex_1().min_h(px(0.0)).child(self.rail(cx)).child(
                     div()
                         .id("content")
+                        .track_scroll(&self.scroll)
                         .flex_1()
                         .h_full()
                         .overflow_y_scroll()
