@@ -24,7 +24,7 @@ import type { DocRow, DocTable, EntryRow, LineRow, OrgRow, OrgRows } from './spa
 import type { Issue } from './errors'
 import type { LedgerBackend } from './backend'
 import type { CommandResult, LedgerCommand } from './commands'
-import type { LedgerState } from './types'
+import type { Actor, LedgerState } from './types'
 
 const TOKEN_KEY = 'flowtrace.spacetimedb.token'
 const RESULT_TIMEOUT_MS = 15_000
@@ -74,6 +74,7 @@ function saveToken(token: string) {
 }
 
 let connection: Promise<DbConnection> | null = null
+let membership: Promise<void> | null = null
 
 function connect(): Promise<DbConnection> {
   if (typeof window === 'undefined') {
@@ -96,6 +97,7 @@ function connect(): Promise<DbConnection> {
       .onDisconnect(() => {
         connection = null
         subscriptions.clear()
+        membership = null
       })
       .build()
   })
@@ -291,4 +293,92 @@ export async function createSpacetimeOrgLedger(
 export async function spacetimeIdentity() {
   const conn = await connect()
   return conn.identity?.toHexString() ?? null
+}
+
+interface MemberRow {
+  identity: { toHexString: () => string }
+  orgId: string
+  userId: string
+  name: string
+  canPost: boolean
+  canApprove: boolean
+  canClose: boolean
+}
+
+/** One organisation this browser's identity belongs to, as the engine's actor. */
+export interface SpacetimeMembership {
+  orgId: string
+  actor: Actor
+}
+
+/** The member row as the actor the module derives for run_command (rust/crates/ledger-module/src/rules.rs:136, actor_of). */
+export function actorFromMember(row: MemberRow): Actor {
+  return {
+    id: row.userId,
+    name: row.name,
+    can_post: row.canPost,
+    can_approve: row.canApprove,
+    can_close: row.canClose,
+  }
+}
+
+function ensureMembership(conn: DbConnection): Promise<void> {
+  membership ??= new Promise<void>((resolve, reject) => {
+    conn
+      .subscriptionBuilder()
+      .onApplied(() => resolve())
+      .onError((ctx) => {
+        membership = null
+        reject(ctx.event ?? new Error('SpacetimeDB subscription failed.'))
+      })
+      .subscribe(['SELECT * FROM my_member'])
+  })
+  return membership
+}
+
+/**
+ * This browser's identity and the organisations it is a member of. A fresh
+ * identity belongs to none until an operator or closing member adds it
+ * (rust/docs/module-release.md section 3).
+ */
+export async function spacetimeMemberships(): Promise<{
+  identity: string | null
+  memberships: Array<SpacetimeMembership>
+}> {
+  const conn = await connect()
+  await ensureMembership(conn)
+  const identity = conn.identity?.toHexString() ?? null
+  const memberships = [...view<MemberRow>(conn, 'member').iter()]
+    .filter((row) => row.identity.toHexString() === identity)
+    .map((row) => ({ orgId: row.orgId, actor: actorFromMember(row) }))
+  return { identity, memberships }
+}
+
+/** Calls back when this identity is added to, changed in or removed from an organisation. */
+export function onSpacetimeMembershipChange(onChange: () => void): () => void {
+  let stopped = false
+  let detach = () => {}
+  const onRow = () => onChange()
+  const onUpdate = () => onChange()
+  void connect()
+    .then(async (conn) => {
+      await ensureMembership(conn)
+      if (stopped) return
+      const members = view<MemberRow>(conn, 'member')
+      members.onInsert(onRow)
+      members.onUpdate(onUpdate)
+      members.onDelete(onRow)
+      detach = () => {
+        members.removeOnInsert(onRow)
+        members.removeOnUpdate(onUpdate)
+        members.removeOnDelete(onRow)
+      }
+    })
+    .catch(() => {
+      // Connection errors surface through spacetimeMemberships().
+    })
+  return () => {
+    stopped = true
+    detach()
+  }
 }
