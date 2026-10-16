@@ -3,16 +3,18 @@
 //! a screen replaces its placeholder").
 
 pub mod accounts;
+pub mod bills;
 pub mod general_ledger;
 pub mod reports;
 pub mod spend;
 
 use gpui_kit::component::button::{Button, ButtonVariants as _};
+use gpui_kit::component::select::{SelectItem, SelectState};
 use gpui_kit::component::{ActiveTheme as _, Sizable as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    App, ClickEvent, Context, Div, FontWeight, IntoElement, ParentElement as _, SharedString,
-    Styled as _, Window, div, px,
+    App, ClickEvent, Context, Div, Entity, FontWeight, IntoElement, ParentElement as _,
+    SharedString, Styled as _, Window, div, px,
 };
 
 use crate::accounts::Failure;
@@ -235,6 +237,42 @@ pub fn form_buttons<T: 'static>(
                 })),
         )
 }
+
+// Shared by the screens: id-valued select items (from U4), form pieces (from U2).
+
+/// A select option: the id as a string (empty for "All ...") and its label.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Pick {
+    /// The id, empty for "All ..." or "None".
+    pub value: String,
+    /// What the list shows.
+    pub label: SharedString,
+}
+
+impl SelectItem for Pick {
+    type Value = String;
+
+    fn title(&self) -> SharedString {
+        self.label.clone()
+    }
+
+    fn value(&self) -> &Self::Value {
+        &self.value
+    }
+}
+
+impl Pick {
+    /// An item for `value` shown as `label`.
+    pub fn new(value: impl Into<String>, label: impl Into<SharedString>) -> Self {
+        Self {
+            value: value.into(),
+            label: label.into(),
+        }
+    }
+}
+
+/// A select over [`Pick`] items.
+pub type PickState = Entity<SelectState<Vec<Pick>>>;
 
 #[cfg(test)]
 mod tests {

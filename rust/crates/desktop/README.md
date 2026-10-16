@@ -40,8 +40,9 @@ when the app closes.
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
 | `store` | `LedgerStore`, the one store entity: owns the backend and the `LedgerView`, drains the change channel in batches | yes |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
+| `bills` | Bills, payments and vendors view models: `bill_rows`, `filtered`, `filter_count`, `vendor_rows`, `NewVendorForm`, `NewBillForm` (lines, `total`, `command`), `next_step` (status to actions), `bill_detail` (coded lines, accrual and payment entries, fund split, status trail), `PayForm` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) | yes |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items | yes |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
@@ -187,8 +188,7 @@ Shots: `docs/screens/u4-general-ledger.png` (demo books, account 1110, an entry 
 
 ## Spend: expense claims (U5)
 
-The Spend entry has two tabs: Expense claims (`c`) and Bills (`b`, a placeholder that U6 fills
-by replacing the `SpendTab::Bills` arms in `panels::spend`). The claims tab shows the list, a new
+The Spend entry has two tabs: Expense claims (`c`) and Bills (`b`, U6, below). The claims tab shows the list, a new
 claim, or one claim (`ClaimsView`). Keys while no field has focus: `n` new claim, `f` next status
 filter, `j`/`k` or the arrows move the highlighted row, Enter opens it; on a claim `s` submits,
 `a` approves, `r` rejects (the reason field takes focus), `p` records the reimbursement, Enter
@@ -201,3 +201,29 @@ with the grant's spend so far (`claims::Posting`). Shots: `docs/screens/u5-claim
 `u5-claim-new.png` (keys `n`, typing, Enter between fields) and `u5-claim-detail.png` (Enter on
 EC-0002, `a`, Enter).
 
+## Spend: bills, payments and vendors (U6)
+
+The Bills tab of Spend is `panels::bills::BillsPanel`, an entity `SpendPanel` holds and
+observes: `SpendPanel::render` takes the title, lede and action from `BillsPanel::header` and
+the body from `BillsPanel::body`, and forwards keys while the Bills tab shows. Under the Spend
+tabs the panel switches between All bills (`b`, which also returns to the list) and Vendors
+(`v`). Keys while no field has focus: `n` new bill, `f` next status filter (All, Draft,
+Approved, To pay, Paid, Void, as the web), `j`/`k` or the arrows move the highlighted row, Enter
+opens the bill, Escape goes back to the list.
+
+The detail shows "What happens next" with only the actions the engine would take from the
+acting user (`bills::next_step`): a draft is approved by someone with approval rights who did
+not enter it, so a bill the demo user enters here waits for another approver, as in the engine.
+Approve and Post run at once; Pay opens an inline form (amount defaulting to what is owed, date,
+cash account, reference; part payments allowed). Each payment lists the engine's fund split
+(the payable debits of its entry, never recomputed), and "In the books" shows the accrual and
+payment entries with their lines (U4's `general_ledger::EntryDetail`). The status trail joins
+the bill's audit events with its posting and payments. `tests/bill_postings.rs` posts and pays
+the approved demo bill through the in-process backend and checks the postings.
+
+Differences from the web: a new supplier is added on the Vendors tab rather than inside the
+bill form; proof files are not attached (the desktop has no file store yet); vendors have no
+default account or contact field in the ledger, so the list shows payment details and the
+flow-node id. Shots: `docs/screens/u6-bills.png`, `u6-vendors.png`, `u6-bill-new.png` (keys `b`,
+`n`, typing) and `u6-bill-detail.png`, `u6-bill-detail-books.png` (the paid AutoXpress bill,
+keys `b`, `j`, `j`, Enter, then End).
