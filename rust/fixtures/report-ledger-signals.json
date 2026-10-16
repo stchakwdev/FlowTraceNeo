@@ -1,0 +1,151 @@
+{
+  "cases": [
+    {
+      "args": [
+        null
+      ],
+      "result": {
+        "grantCodedShare": 0.6845225768348712,
+        "inBudgetShare": 0.7650323991861983,
+        "reconciledShare": 0.4977597943076916
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-31"
+      ],
+      "result": {
+        "grantCodedShare": 0,
+        "inBudgetShare": 1,
+        "reconciledShare": 0
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-31"
+      ],
+      "result": {
+        "grantCodedShare": 0.6179710364554228,
+        "inBudgetShare": 1,
+        "reconciledShare": 0.6402114737692702
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-04"
+      ],
+      "result": {
+        "grantCodedShare": 0.6845225768348712,
+        "inBudgetShare": 0.7650323991861983,
+        "reconciledShare": 0.4977597943076916
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-28"
+      ],
+      "result": {
+        "grantCodedShare": 0.6845225768348712,
+        "inBudgetShare": 0.7650323991861983,
+        "reconciledShare": 0.4977597943076916
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-12-31"
+      ],
+      "result": {
+        "grantCodedShare": 0.6845225768348712,
+        "inBudgetShare": 0.7650323991861983,
+        "reconciledShare": 0.4977597943076916
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        null
+      ],
+      "result": {
+        "grantCodedShare": 0.6834414449367253,
+        "inBudgetShare": 0.7636745093906854,
+        "reconciledShare": 0.4982044881603544
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-12-31"
+      ],
+      "result": {
+        "grantCodedShare": 0,
+        "inBudgetShare": 1,
+        "reconciledShare": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-31"
+      ],
+      "result": {
+        "grantCodedShare": 0.6179710364554228,
+        "inBudgetShare": 1,
+        "reconciledShare": 0.6407433347715394
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-04"
+      ],
+      "result": {
+        "grantCodedShare": 0.6834414449367253,
+        "inBudgetShare": 0.7636745093906854,
+        "reconciledShare": 0.4982044881603544
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-28"
+      ],
+      "result": {
+        "grantCodedShare": 0.6834414449367253,
+        "inBudgetShare": 0.7636745093906854,
+        "reconciledShare": 0.4982044881603544
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-31"
+      ],
+      "result": {
+        "grantCodedShare": 0.6834414449367253,
+        "inBudgetShare": 0.7636745093906854,
+        "reconciledShare": 0.4982044881603544
+      },
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "ledgerSignals"
+  ],
+  "description": "ledgerSignals(state, asOf?) from reports.ts. All three shares are floats in 0..1. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-ledger-signals",
+  "function": "ledgerSignals",
+  "signature": "ledgerSignals(state, asOf?)",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#ledgerSignals"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

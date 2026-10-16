@@ -1,0 +1,216 @@
+{
+  "cases": [
+    {
+      "args": {
+        "fundId": "fund-unrestricted"
+      },
+      "input_source": "flowtrace/src/lib/ledger/reconcile.test.ts:83-88",
+      "name": "QuickBooks journal export",
+      "result": {
+        "entries": [
+          {
+            "date": "2026-01-15",
+            "lines": [
+              {
+                "account_id": "acc-7500",
+                "credit": 0,
+                "debit": 4500000,
+                "fund_id": "fund-unrestricted",
+                "memo": "Office rent January"
+              },
+              {
+                "account_id": "acc-1110",
+                "credit": 4500000,
+                "debit": 0,
+                "fund_id": "fund-unrestricted",
+                "memo": "Office rent January"
+              }
+            ],
+            "memo": "Office rent January",
+            "source_type": "import"
+          },
+          {
+            "date": "2026-01-20",
+            "lines": [],
+            "memo": "Unknown",
+            "source_type": "import"
+          }
+        ],
+        "problems": [],
+        "source": "quickbooks",
+        "unmappedAccounts": [
+          "9999 Mystery"
+        ]
+      },
+      "text": "Date,Transaction Type,Num,Name,Memo/Description,Account,Debit,Credit\n01/15/2026,Journal Entry,12,,Office rent January,7500 Rent,\"45,000.00\",\n,,,,,Bank: Main operating account,,\"45,000.00\"\n20/01/2026,Journal Entry,13,,Unknown,9999 Mystery,100,",
+      "validate": [
+        [],
+        [
+          {
+            "code": "TOO_FEW_LINES",
+            "message": "An entry needs at least two lines."
+          }
+        ]
+      ]
+    },
+    {
+      "args": {
+        "fundId": "fund-unrestricted"
+      },
+      "input_source": "flowtrace/src/lib/ledger/reconcile.test.ts:98",
+      "name": "Xero manual journal import",
+      "result": {
+        "entries": [
+          {
+            "date": "2026-01-31",
+            "lines": [
+              {
+                "account_id": "acc-7600",
+                "credit": 0,
+                "debit": 2500000,
+                "fund_id": "fund-unrestricted",
+                "memo": "Audit fee"
+              },
+              {
+                "account_id": "acc-2200",
+                "credit": 2500000,
+                "debit": 0,
+                "fund_id": "fund-unrestricted",
+                "memo": "Audit fee"
+              }
+            ],
+            "memo": "Audit fee",
+            "source_type": "import"
+          }
+        ],
+        "problems": [],
+        "source": "xero",
+        "unmappedAccounts": []
+      },
+      "text": "*Narration,*Date,Description,*AccountCode,*TaxRate,*Amount\nAudit fee,31/01/2026,Audit,7600,Tax Exempt,25000\nAudit fee,31/01/2026,Audit,2200,Tax Exempt,-25000",
+      "validate": [
+        []
+      ]
+    },
+    {
+      "args": {
+        "fundId": "fund-unrestricted"
+      },
+      "input_source": "synthetic: written for this fixture",
+      "name": "QuickBooks export with an unreadable amount and a journal with no date",
+      "result": {
+        "entries": [
+          {
+            "date": "2026-02-02",
+            "lines": [
+              {
+                "account_id": "acc-7200",
+                "credit": 0,
+                "debit": 100000,
+                "fund_id": "fund-unrestricted",
+                "memo": "Fuel"
+              },
+              {
+                "account_id": "acc-1110",
+                "credit": 100000,
+                "debit": 0,
+                "fund_id": "fund-unrestricted",
+                "memo": "Fuel"
+              }
+            ],
+            "memo": "Fuel",
+            "source_type": "import"
+          }
+        ],
+        "problems": [
+          "Row 2: unreadable amount.",
+          "“Imported journal” has no date."
+        ],
+        "source": "quickbooks",
+        "unmappedAccounts": []
+      },
+      "text": "Date,Num,Memo,Account,Debit,Credit\n,7,Accrual,1110,12.345,\n,,,Rent,,100\n02/02/2026,8,Fuel,7200,\"1,000.00\",\n,,,1110 Bank: Main operating account,,\"1,000.00\"",
+      "validate": [
+        []
+      ]
+    },
+    {
+      "args": {
+        "fundId": "fund-unrestricted"
+      },
+      "input_source": "synthetic: written for this fixture",
+      "name": "Not a journal file",
+      "result": {
+        "entries": [],
+        "problems": [
+          "This file is not a QuickBooks journal export or a Xero manual journal import."
+        ],
+        "source": "quickbooks",
+        "unmappedAccounts": []
+      },
+      "text": "Receipt No.,Completion Time,Details\nX,2026-01-01,Y",
+      "validate": []
+    }
+  ],
+  "covers": [
+    "Ledger.validateEntry",
+    "detectJournalSource",
+    "parseJournalCsv"
+  ],
+  "description": "parseJournalCsv over QuickBooks and Xero samples (from reconcile.test.ts) and synthetic edge cases, into the unrestricted fund, against the default chart (createOrgLedger('org', 'KES', 2026); only state.accounts is read), with validateEntry on each parsed entry; detectJournalSource over header sets.",
+  "detect_journal_source": [
+    {
+      "args": [
+        [
+          "accountcode",
+          "amount",
+          "narration"
+        ]
+      ],
+      "result": "xero"
+    },
+    {
+      "args": [
+        [
+          "account",
+          "debit"
+        ]
+      ],
+      "result": "quickbooks"
+    },
+    {
+      "args": [
+        [
+          "account",
+          "credit"
+        ]
+      ],
+      "result": "quickbooks"
+    },
+    {
+      "args": [
+        [
+          "account"
+        ]
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        [
+          "narration",
+          "amount"
+        ]
+      ],
+      "result": null
+    }
+  ],
+  "env": null,
+  "fixture": "importers-journal",
+  "sources": [
+    "flowtrace/src/lib/ledger/importers.ts#parseJournalCsv",
+    "flowtrace/src/lib/ledger/importers.ts#detectJournalSource",
+    "flowtrace/src/lib/ledger/reconcile.test.ts"
+  ],
+  "state": "createOrgLedger('org', 'KES', 2026, env).state, as in setup.json"
+}

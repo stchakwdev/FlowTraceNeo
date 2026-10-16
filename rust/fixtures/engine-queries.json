@@ -1,0 +1,1666 @@
+{
+  "cases": [
+    {
+      "args": [
+        "acc-1110"
+      ],
+      "method": "account",
+      "result": {
+        "cash_flow_class": "operating",
+        "code": "1110",
+        "expense_function": null,
+        "id": "acc-1110",
+        "is_active": true,
+        "is_cash": true,
+        "is_group": false,
+        "name": "Bank: Main operating account",
+        "normal_balance": "debit",
+        "parent_id": "acc-1100",
+        "type": "asset"
+      }
+    },
+    {
+      "args": [
+        "acc-7000"
+      ],
+      "method": "account",
+      "result": {
+        "cash_flow_class": "operating",
+        "code": "7000",
+        "expense_function": "management",
+        "id": "acc-7000",
+        "is_active": true,
+        "is_cash": false,
+        "is_group": true,
+        "name": "Running costs",
+        "normal_balance": "debit",
+        "parent_id": null,
+        "type": "expense"
+      }
+    },
+    {
+      "args": [
+        "acc-missing"
+      ],
+      "method": "account",
+      "result": null
+    },
+    {
+      "args": [
+        "1110"
+      ],
+      "method": "accountByCode",
+      "result": {
+        "cash_flow_class": "operating",
+        "code": "1110",
+        "expense_function": null,
+        "id": "acc-1110",
+        "is_active": true,
+        "is_cash": true,
+        "is_group": false,
+        "name": "Bank: Main operating account",
+        "normal_balance": "debit",
+        "parent_id": "acc-1100",
+        "type": "asset"
+      }
+    },
+    {
+      "args": [
+        "5100"
+      ],
+      "method": "accountByCode",
+      "result": {
+        "cash_flow_class": "operating",
+        "code": "5100",
+        "expense_function": "program",
+        "id": "acc-5100",
+        "is_active": true,
+        "is_cash": false,
+        "is_group": false,
+        "name": "Programme: Water and sanitation",
+        "normal_balance": "debit",
+        "parent_id": "acc-5000",
+        "type": "expense"
+      }
+    },
+    {
+      "args": [
+        "9999"
+      ],
+      "method": "accountByCode",
+      "result": null
+    },
+    {
+      "args": [
+        "fund-wash"
+      ],
+      "method": "fund",
+      "result": {
+        "id": "fund-wash",
+        "name": "Water and sanitation (restricted)",
+        "restriction": "temporarily_restricted"
+      }
+    },
+    {
+      "args": [
+        "fund-missing"
+      ],
+      "method": "fund",
+      "result": null
+    },
+    {
+      "args": [
+        "grant-kisima-wash"
+      ],
+      "method": "grant",
+      "result": {
+        "award": 400000000,
+        "currency": "KES",
+        "donor_name": "Kisima Water Trust",
+        "donor_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+        "end_date": "2027-06-30",
+        "fund_id": "fund-wash",
+        "id": "grant-kisima-wash",
+        "name": "Kisima WASH: Turkana boreholes",
+        "start_date": "2026-01-01",
+        "terms": "Restricted to the Clean Water Turkana project."
+      }
+    },
+    {
+      "args": [
+        "grant-missing"
+      ],
+      "method": "grant",
+      "result": null
+    },
+    {
+      "args": [
+        "demo-0008"
+      ],
+      "method": "entry",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "system",
+        "date": "2025-12-31",
+        "id": "demo-0008",
+        "memo": "Opening balances carried forward from the 2025 books",
+        "number": "JE-0001",
+        "override_reason": null,
+        "period_id": "period-2025-12",
+        "posted_at": "2026-02-04T09:00:00.000Z",
+        "posted_by": "system",
+        "reversal_of": null,
+        "reversed_by": null,
+        "source_id": null,
+        "source_type": "opening",
+        "status": "posted"
+      }
+    },
+    {
+      "args": [
+        "demo-005h"
+      ],
+      "method": "entry",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "system",
+        "date": "2026-01-31",
+        "id": "demo-005h",
+        "memo": "Equity Bank ledger fee, January",
+        "number": "JE-0022",
+        "override_reason": null,
+        "period_id": "period-2026-01",
+        "posted_at": "2026-02-04T09:00:00.000Z",
+        "posted_by": "system",
+        "reversal_of": null,
+        "reversed_by": null,
+        "source_id": "demo-0058",
+        "source_type": "statement",
+        "status": "posted"
+      }
+    },
+    {
+      "args": [
+        "entry-missing"
+      ],
+      "method": "entry",
+      "result": null
+    },
+    {
+      "args": [
+        "demo-0008"
+      ],
+      "method": "linesOf",
+      "result": [
+        {
+          "account_id": "acc-1110",
+          "base_amount": 300000000,
+          "credit": 0,
+          "currency": "KES",
+          "debit": 300000000,
+          "dimension_ids": [],
+          "entry_id": "demo-0008",
+          "flow_node_id": null,
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-0009",
+          "memo": null
+        },
+        {
+          "account_id": "acc-1120",
+          "base_amount": 40000000,
+          "credit": 0,
+          "currency": "KES",
+          "debit": 40000000,
+          "dimension_ids": [],
+          "entry_id": "demo-0008",
+          "flow_node_id": null,
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-000a",
+          "memo": null
+        },
+        {
+          "account_id": "acc-1150",
+          "base_amount": 6000000,
+          "credit": 0,
+          "currency": "KES",
+          "debit": 6000000,
+          "dimension_ids": [],
+          "entry_id": "demo-0008",
+          "flow_node_id": null,
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-000b",
+          "memo": null
+        },
+        {
+          "account_id": "acc-1510",
+          "base_amount": 240000000,
+          "credit": 0,
+          "currency": "KES",
+          "debit": 240000000,
+          "dimension_ids": [],
+          "entry_id": "demo-0008",
+          "flow_node_id": null,
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-000c",
+          "memo": null
+        },
+        {
+          "account_id": "acc-2200",
+          "base_amount": -8500000,
+          "credit": 8500000,
+          "currency": "KES",
+          "debit": 0,
+          "dimension_ids": [],
+          "entry_id": "demo-0008",
+          "flow_node_id": null,
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-000d",
+          "memo": null
+        },
+        {
+          "account_id": "acc-3100",
+          "base_amount": -577500000,
+          "credit": 577500000,
+          "currency": "KES",
+          "debit": 0,
+          "dimension_ids": [],
+          "entry_id": "demo-0008",
+          "flow_node_id": null,
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-000e",
+          "memo": null
+        }
+      ]
+    },
+    {
+      "args": [
+        "demo-003r"
+      ],
+      "method": "linesOf",
+      "result": [
+        {
+          "account_id": "acc-7300",
+          "base_amount": 3980000,
+          "credit": 0,
+          "currency": "KES",
+          "debit": 3980000,
+          "dimension_ids": [
+            "dim-loc-nairobi"
+          ],
+          "entry_id": "demo-003r",
+          "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-003s",
+          "memo": "Electricity, January usage, Nairobi HQ"
+        },
+        {
+          "account_id": "acc-2100",
+          "base_amount": -3980000,
+          "credit": 3980000,
+          "currency": "KES",
+          "debit": 0,
+          "dimension_ids": [],
+          "entry_id": "demo-003r",
+          "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+          "fund_id": "fund-unrestricted",
+          "fx_rate": 1,
+          "grant_id": null,
+          "id": "demo-003t",
+          "memo": null
+        }
+      ]
+    },
+    {
+      "args": [
+        "entry-missing"
+      ],
+      "method": "linesOf",
+      "result": []
+    },
+    {
+      "args": [
+        "2024-12-31"
+      ],
+      "method": "periodFor",
+      "result": null
+    },
+    {
+      "args": [
+        "2025-06-15"
+      ],
+      "method": "periodFor",
+      "result": {
+        "end_date": "2025-06-30",
+        "fiscal_year": 2025,
+        "id": "period-2025-06",
+        "name": "Jun 2025",
+        "start_date": "2025-06-01",
+        "status": "locked"
+      }
+    },
+    {
+      "args": [
+        "2025-12-31"
+      ],
+      "method": "periodFor",
+      "result": {
+        "end_date": "2025-12-31",
+        "fiscal_year": 2025,
+        "id": "period-2025-12",
+        "name": "Dec 2025",
+        "start_date": "2025-12-01",
+        "status": "closed"
+      }
+    },
+    {
+      "args": [
+        "2026-02-04"
+      ],
+      "method": "periodFor",
+      "result": {
+        "end_date": "2026-02-28",
+        "fiscal_year": 2026,
+        "id": "period-2026-02",
+        "name": "Feb 2026",
+        "start_date": "2026-02-01",
+        "status": "open"
+      }
+    },
+    {
+      "args": [
+        "2026-12-31"
+      ],
+      "method": "periodFor",
+      "result": {
+        "end_date": "2026-12-31",
+        "fiscal_year": 2026,
+        "id": "period-2026-12",
+        "name": "Dec 2026",
+        "start_date": "2026-12-01",
+        "status": "open"
+      }
+    },
+    {
+      "args": [
+        "2027-01-01"
+      ],
+      "method": "periodFor",
+      "result": null
+    },
+    {
+      "args": [
+        "demo-0008"
+      ],
+      "method": "inputOf",
+      "result": {
+        "date": "2025-12-31",
+        "lines": [
+          {
+            "account_id": "acc-1110",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 300000000,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          },
+          {
+            "account_id": "acc-1120",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 40000000,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          },
+          {
+            "account_id": "acc-1150",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 6000000,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          },
+          {
+            "account_id": "acc-1510",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 240000000,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          },
+          {
+            "account_id": "acc-2200",
+            "credit": 8500000,
+            "currency": "KES",
+            "debit": 0,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          },
+          {
+            "account_id": "acc-3100",
+            "credit": 577500000,
+            "currency": "KES",
+            "debit": 0,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          }
+        ],
+        "memo": "Opening balances carried forward from the 2025 books",
+        "override_reason": null,
+        "source_id": null,
+        "source_type": "opening"
+      }
+    },
+    {
+      "args": [
+        "demo-0014"
+      ],
+      "method": "inputOf",
+      "result": {
+        "date": "2026-01-05",
+        "lines": [
+          {
+            "account_id": "acc-1110",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 850000000,
+            "dimension_ids": [],
+            "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": "grant-harambee-2026",
+            "memo": null
+          },
+          {
+            "account_id": "acc-4100",
+            "credit": 850000000,
+            "currency": "KES",
+            "debit": 0,
+            "dimension_ids": [
+              "dim-a12"
+            ],
+            "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": "grant-harambee-2026",
+            "memo": null
+          }
+        ],
+        "memo": "Harambee Health Fund Q1 2026 Disbursement · HHF-2026-Q1-001",
+        "override_reason": null,
+        "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01",
+        "source_type": "transaction"
+      }
+    },
+    {
+      "args": [
+        "demo-003r"
+      ],
+      "method": "inputOf",
+      "result": {
+        "date": "2026-02-02",
+        "lines": [
+          {
+            "account_id": "acc-7300",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 3980000,
+            "dimension_ids": [
+              "dim-loc-nairobi"
+            ],
+            "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": "Electricity, January usage, Nairobi HQ"
+          },
+          {
+            "account_id": "acc-2100",
+            "credit": 3980000,
+            "currency": "KES",
+            "debit": 0,
+            "dimension_ids": [],
+            "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          }
+        ],
+        "memo": "Bill KPLC-0226-77140 · Kenya Power",
+        "override_reason": null,
+        "source_id": "demo-003n",
+        "source_type": "bill"
+      }
+    },
+    {
+      "args": [
+        "demo-0045"
+      ],
+      "method": "inputOf",
+      "result": {
+        "date": "2026-01-26",
+        "lines": [
+          {
+            "account_id": "acc-7200",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 4800000,
+            "dimension_ids": [
+              "dim-a16"
+            ],
+            "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": "Tyres, field vehicle KDA 412M"
+          },
+          {
+            "account_id": "acc-2100",
+            "credit": 4800000,
+            "currency": "KES",
+            "debit": 0,
+            "dimension_ids": [],
+            "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "fund_id": "fund-unrestricted",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          }
+        ],
+        "memo": "Bill AX-2026-0112 · AutoXpress Ltd",
+        "override_reason": null,
+        "source_id": "demo-0041",
+        "source_type": "bill"
+      }
+    },
+    {
+      "args": [
+        "demo-004k"
+      ],
+      "method": "inputOf",
+      "result": {
+        "date": "2026-01-21",
+        "lines": [
+          {
+            "account_id": "acc-5700",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 640000,
+            "dimension_ids": [
+              "dim-a32",
+              "dim-loc-kilifi"
+            ],
+            "flow_node_id": null,
+            "fund_id": "fund-maternal-health",
+            "fx_rate": 1,
+            "grant_id": "grant-northlight-2026",
+            "memo": "Transport, Mombasa to Kilifi and back"
+          },
+          {
+            "account_id": "acc-5700",
+            "credit": 0,
+            "currency": "KES",
+            "debit": 590000,
+            "dimension_ids": [
+              "dim-a32",
+              "dim-loc-kilifi"
+            ],
+            "flow_node_id": null,
+            "fund_id": "fund-maternal-health",
+            "fx_rate": 1,
+            "grant_id": "grant-northlight-2026",
+            "memo": "Lodging, 2 nights"
+          },
+          {
+            "account_id": "acc-2110",
+            "credit": 1230000,
+            "currency": "KES",
+            "debit": 0,
+            "dimension_ids": [],
+            "flow_node_id": null,
+            "fund_id": "fund-maternal-health",
+            "fx_rate": 1,
+            "grant_id": null,
+            "memo": null
+          }
+        ],
+        "memo": "Expense claim EC-0001 · Kiprop Mutai · Baseline survey, Kilifi health centres",
+        "override_reason": null,
+        "source_id": "demo-004g",
+        "source_type": "expense_claim"
+      }
+    },
+    {
+      "args": [
+        "entry-missing"
+      ],
+      "error": {
+        "code": "NOT_FOUND",
+        "issues": [
+          {
+            "code": "NOT_FOUND",
+            "message": "Entry not found."
+          }
+        ],
+        "message": "Entry not found.",
+        "name": "LedgerError"
+      },
+      "method": "inputOf"
+    },
+    {
+      "args": [
+        "grant-harambee-2026"
+      ],
+      "method": "grantSpend",
+      "result": 75000000
+    },
+    {
+      "args": [
+        "grant-northlight-2026"
+      ],
+      "method": "grantSpend",
+      "result": 121230000
+    },
+    {
+      "args": [
+        "grant-kisima-wash"
+      ],
+      "method": "grantSpend",
+      "result": 250000000
+    },
+    {
+      "args": [
+        "grant-paef-education"
+      ],
+      "method": "grantSpend",
+      "result": 0
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "demo-001t"
+      ],
+      "method": "grantSpend",
+      "result": 0
+    },
+    {
+      "args": [
+        "bill",
+        "demo-003n"
+      ],
+      "method": "outstanding",
+      "result": 3980000
+    },
+    {
+      "args": [
+        "bill",
+        "demo-003w"
+      ],
+      "method": "outstanding",
+      "result": 20050000
+    },
+    {
+      "args": [
+        "bill",
+        "demo-0041"
+      ],
+      "method": "outstanding",
+      "result": 0
+    },
+    {
+      "args": [
+        "expense_claim",
+        "demo-004g"
+      ],
+      "method": "outstanding",
+      "result": 0
+    },
+    {
+      "args": [
+        "expense_claim",
+        "demo-004x"
+      ],
+      "method": "outstanding",
+      "result": 1850000
+    },
+    {
+      "args": [
+        "bill",
+        "bill-missing"
+      ],
+      "error": {
+        "code": "NOT_FOUND",
+        "issues": [
+          {
+            "code": "NOT_FOUND",
+            "message": "Bill not found."
+          }
+        ],
+        "message": "Bill not found.",
+        "name": "LedgerError"
+      },
+      "method": "outstanding"
+    },
+    {
+      "args": [
+        "demo-004g"
+      ],
+      "method": "claim",
+      "result": {
+        "approvals": [
+          {
+            "action": "submitted",
+            "at": "2026-02-04T09:00:00.000Z",
+            "by": "staff-kiprop",
+            "note": null
+          },
+          {
+            "action": "approved",
+            "at": "2026-02-04T09:00:00.000Z",
+            "by": "user_dummy",
+            "note": "Receipts match the survey plan."
+          },
+          {
+            "action": "posted",
+            "at": "2026-02-04T09:00:00.000Z",
+            "by": "user_dummy",
+            "note": "JE-0020"
+          },
+          {
+            "action": "reimbursed",
+            "at": "2026-02-04T09:00:00.000Z",
+            "by": "user_dummy",
+            "note": "RAN4K2PQ7Z"
+          }
+        ],
+        "captured_offline": false,
+        "claim_date": "2026-01-21",
+        "claimant": "staff-kiprop",
+        "claimant_name": "Kiprop Mutai",
+        "currency": "KES",
+        "entry_id": "demo-004k",
+        "fx_rate": 1,
+        "id": "demo-004g",
+        "lines": [
+          {
+            "account_id": "acc-5700",
+            "amount": 640000,
+            "description": "Transport, Mombasa to Kilifi and back",
+            "dimension_ids": [
+              "dim-a32",
+              "dim-loc-kilifi"
+            ],
+            "fund_id": "fund-maternal-health",
+            "grant_id": "grant-northlight-2026",
+            "id": "demo-004h"
+          },
+          {
+            "account_id": "acc-5700",
+            "amount": 590000,
+            "description": "Lodging, 2 nights",
+            "dimension_ids": [
+              "dim-a32",
+              "dim-loc-kilifi"
+            ],
+            "fund_id": "fund-maternal-health",
+            "grant_id": "grant-northlight-2026",
+            "id": "demo-004i"
+          }
+        ],
+        "number": "EC-0001",
+        "purpose": "Baseline survey, Kilifi health centres",
+        "receipt_names": [
+          "matatu-receipts.jpg",
+          "lodging-kilifi.pdf"
+        ],
+        "status": "reimbursed"
+      }
+    },
+    {
+      "args": [
+        "demo-004x"
+      ],
+      "method": "claim",
+      "result": {
+        "approvals": [
+          {
+            "action": "submitted",
+            "at": "2026-02-04T09:00:00.000Z",
+            "by": "staff-achieng",
+            "note": null
+          }
+        ],
+        "captured_offline": true,
+        "claim_date": "2026-02-03",
+        "claimant": "staff-achieng",
+        "claimant_name": "Achieng Odhiambo",
+        "currency": "KES",
+        "entry_id": null,
+        "fx_rate": 1,
+        "id": "demo-004x",
+        "lines": [
+          {
+            "account_id": "acc-5700",
+            "amount": 1420000,
+            "description": "Fuel, motorbike hire",
+            "dimension_ids": [
+              "dim-a35",
+              "dim-loc-turkana"
+            ],
+            "fund_id": "fund-wash",
+            "grant_id": "grant-kisima-wash",
+            "id": "demo-004y"
+          },
+          {
+            "account_id": "acc-5700",
+            "amount": 430000,
+            "description": "Meals, 2 days",
+            "dimension_ids": [
+              "dim-a35",
+              "dim-loc-turkana"
+            ],
+            "fund_id": "fund-wash",
+            "grant_id": "grant-kisima-wash",
+            "id": "demo-004z"
+          }
+        ],
+        "number": "EC-0002",
+        "purpose": "Borehole site inspection, Lodwar",
+        "receipt_names": [
+          "fuel-lodwar.jpg",
+          "meals.jpg"
+        ],
+        "status": "submitted"
+      }
+    },
+    {
+      "args": [
+        "claim-missing"
+      ],
+      "error": {
+        "code": "NOT_FOUND",
+        "issues": [
+          {
+            "code": "NOT_FOUND",
+            "message": "Claim not found."
+          }
+        ],
+        "message": "Claim not found.",
+        "name": "LedgerError"
+      },
+      "method": "claim"
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": []
+    },
+    {
+      "args": [
+        {
+          "date": "2026-13-01",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "NO_PERIOD",
+          "message": "No fiscal period covers 2026-13-01."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "   "
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "INVALID_INPUT",
+          "message": "Describe the entry."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2025-11-15",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "PERIOD_LOCKED",
+          "message": "Nov 2025 is locked and can no longer take entries."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2025-12-15",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "PERIOD_CLOSED",
+          "message": "Dec 2025 is closed. Reopen it or date the entry in an open period."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2028-01-01",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "NO_PERIOD",
+          "message": "No fiscal period covers 2028-01-01."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "TOO_FEW_LINES",
+          "message": "An entry needs at least two lines."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 9999,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "UNBALANCED",
+          "message": "Debits and credits differ by KES 0.01."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7000",
+              "debit": 10000,
+              "dimension_ids": [
+                "dim-gone"
+              ],
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-missing",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "GROUP_ACCOUNT",
+          "line": 0,
+          "message": "Line 1: 7000 Running costs is a header account; post to one of its sub-accounts.",
+          "overridable": false
+        },
+        {
+          "code": "UNKNOWN_DIMENSION",
+          "line": 0,
+          "message": "Line 1: a tag on this line no longer exists.",
+          "overridable": false
+        },
+        {
+          "code": "UNKNOWN_ACCOUNT",
+          "line": 1,
+          "message": "Line 2: choose an account.",
+          "overridable": false
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "debit": 10000,
+              "fund_id": "fund-gone"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted",
+              "grant_id": "grant-gone"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "UNKNOWN_FUND",
+          "line": 0,
+          "message": "Line 1: choose a fund.",
+          "overridable": false
+        },
+        {
+          "code": "UNKNOWN_GRANT",
+          "line": 1,
+          "message": "Line 2: the grant no longer exists.",
+          "overridable": false
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "credit": 1,
+              "debit": 1,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "debit": -1,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "debit": 0.5,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-1110",
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "LINE_BOTH_SIDES",
+          "line": 0,
+          "message": "Line 1: use either a debit or a credit, not both.",
+          "overridable": false
+        },
+        {
+          "code": "NEGATIVE_AMOUNT",
+          "line": 1,
+          "message": "Line 2: amounts cannot be negative.",
+          "overridable": false
+        },
+        {
+          "code": "NOT_MINOR_UNITS",
+          "line": 2,
+          "message": "Line 3: amounts must be whole cents.",
+          "overridable": false
+        },
+        {
+          "code": "LINE_ZERO",
+          "line": 3,
+          "message": "Line 4: enter a debit or a credit.",
+          "overridable": false
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-1110",
+              "currency": "USD",
+              "debit": 10000,
+              "fund_id": "fund-unrestricted"
+            },
+            {
+              "account_id": "acc-4100",
+              "credit": 10000,
+              "currency": "USD",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 0
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "FX_RATE_REQUIRED",
+          "line": 0,
+          "message": "Line 1: enter the USD to KES rate.",
+          "overridable": false
+        },
+        {
+          "code": "FX_RATE_REQUIRED",
+          "line": 1,
+          "message": "Line 2: enter the USD to KES rate.",
+          "overridable": false
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-1110",
+              "currency": "USD",
+              "debit": 333,
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 129.37
+            },
+            {
+              "account_id": "acc-4100",
+              "credit": 43080,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": []
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 10000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 10000,
+              "fund_id": "fund-unrestricted"
+            }
+          ],
+          "memo": "Fixture validation"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "FUND_UNBALANCED",
+          "message": "Water and sanitation (restricted) does not balance within this entry. Move money between funds with a transfer that debits and credits each fund."
+        },
+        {
+          "code": "FUND_UNBALANCED",
+          "message": "Unrestricted does not balance within this entry. Move money between funds with a transfer that debits and credits each fund."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 10000,
+              "fund_id": "fund-wash",
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 10000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "RESTRICTED_NEEDS_GRANT",
+          "line": 0,
+          "message": "Line 1: spend from Water and sanitation (restricted) must name the grant it is charged to.",
+          "overridable": false
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 10000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-northlight-2026"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 10000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "GRANT_FUND_MISMATCH",
+          "line": 0,
+          "message": "Line 1: Northlight maternal health 2026 belongs to Maternal health (restricted).",
+          "overridable": false
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2027-07-01",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 10000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 10000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "NO_PERIOD",
+          "message": "No fiscal period covers 2027-07-01."
+        },
+        {
+          "code": "GRANT_ENDED",
+          "line": 0,
+          "message": "Line 1: Kisima WASH: Turkana boreholes ended on 2027-06-30.",
+          "overridable": true
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 500000000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 500000000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "GRANT_OVER_BUDGET",
+          "message": "This takes Kisima WASH: Turkana boreholes over its award by KES 3500000.00.",
+          "overridable": true
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 500000000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 500000000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend",
+          "override_reason": "Donor approved"
+        },
+        null,
+        null
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "GRANT_OVER_BUDGET",
+          "message": "This takes Kisima WASH: Turkana boreholes over its award by KES 3500000.00.",
+          "overridable": true
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 500000000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 500000000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        null,
+        {
+          "system": true
+        }
+      ],
+      "method": "validateEntry",
+      "result": []
+    },
+    {
+      "args": [
+        {
+          "date": "2027-07-01",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 10000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 10000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        null,
+        {
+          "system": true
+        }
+      ],
+      "method": "validateEntry",
+      "result": [
+        {
+          "code": "NO_PERIOD",
+          "message": "No fiscal period covers 2027-07-01."
+        }
+      ]
+    },
+    {
+      "args": [
+        {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "debit": 10000,
+              "fund_id": "fund-wash",
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 10000,
+              "fund_id": "fund-wash"
+            }
+          ],
+          "memo": "Fixture borehole spend"
+        },
+        "demo-001t",
+        null
+      ],
+      "method": "validateEntry",
+      "result": []
+    }
+  ],
+  "covers": [
+    "Ledger.account",
+    "Ledger.accountByCode",
+    "Ledger.claim",
+    "Ledger.entry",
+    "Ledger.fund",
+    "Ledger.grant",
+    "Ledger.grantSpend",
+    "Ledger.inputOf",
+    "Ledger.linesOf",
+    "Ledger.outstanding",
+    "Ledger.periodFor",
+    "Ledger.validateEntry"
+  ],
+  "description": "The Ledger read methods over the demo books: account, accountByCode, fund, grant, entry, linesOf, periodFor, inputOf, grantSpend, outstanding, claim and validateEntry (every issue an input has, with line and overridable). Each case: method, args (undefined written as null), result or error.",
+  "env": null,
+  "env_note": "reads never call the env; this run injects one that throws if called",
+  "fixture": "engine-queries",
+  "sources": [
+    "flowtrace/src/lib/ledger/engine.ts#Ledger"
+  ],
+  "state": "demo-books.json#/state"
+}

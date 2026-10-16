@@ -1,0 +1,440 @@
+{
+  "assertMinor": [
+    {
+      "args": [
+        1
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        -1
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        0
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        1.5
+      ],
+      "error": {
+        "message": "Amount must be a whole number of minor units.",
+        "name": "RangeError"
+      }
+    },
+    {
+      "args": [
+        9007199254740992
+      ],
+      "error": {
+        "message": "Amount must be a whole number of minor units.",
+        "name": "RangeError"
+      }
+    },
+    {
+      "args": [
+        "NaN"
+      ],
+      "error": {
+        "message": "Amount must be a whole number of minor units.",
+        "name": "RangeError"
+      }
+    },
+    {
+      "args": [
+        10.5,
+        "Line 1 amount"
+      ],
+      "error": {
+        "message": "Line 1 amount must be a whole number of minor units.",
+        "name": "RangeError"
+      }
+    }
+  ],
+  "convert": [
+    {
+      "args": [
+        1,
+        0.5
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        3,
+        0.5
+      ],
+      "result": 2
+    },
+    {
+      "args": [
+        100,
+        129.5
+      ],
+      "result": 12950
+    },
+    {
+      "args": [
+        -1,
+        0.5
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        -3,
+        0.5
+      ],
+      "result": -2
+    },
+    {
+      "args": [
+        5,
+        0.1
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        12345,
+        129.37
+      ],
+      "result": 1597073
+    },
+    {
+      "args": [
+        6789,
+        129.37
+      ],
+      "result": 878293
+    },
+    {
+      "args": [
+        19134,
+        129.37
+      ],
+      "result": 2475366
+    },
+    {
+      "args": [
+        10000,
+        128
+      ],
+      "result": 1280000
+    },
+    {
+      "args": [
+        10000,
+        130
+      ],
+      "result": 1300000
+    },
+    {
+      "args": [
+        1,
+        1.5
+      ],
+      "result": 2
+    },
+    {
+      "args": [
+        2,
+        1.5
+      ],
+      "result": 3
+    },
+    {
+      "args": [
+        -10000,
+        1
+      ],
+      "result": -10000
+    },
+    {
+      "args": [
+        0,
+        129.5
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        100,
+        0
+      ],
+      "error": {
+        "message": "An exchange rate must be a positive number.",
+        "name": "RangeError"
+      }
+    },
+    {
+      "args": [
+        100,
+        -1
+      ],
+      "error": {
+        "message": "An exchange rate must be a positive number.",
+        "name": "RangeError"
+      }
+    },
+    {
+      "args": [
+        100,
+        "Infinity"
+      ],
+      "error": {
+        "message": "An exchange rate must be a positive number.",
+        "name": "RangeError"
+      }
+    },
+    {
+      "args": [
+        100,
+        "NaN"
+      ],
+      "error": {
+        "message": "An exchange rate must be a positive number.",
+        "name": "RangeError"
+      }
+    }
+  ],
+  "covers": [
+    "assertMinor",
+    "convert",
+    "fromMajor",
+    "parseMoney",
+    "sum",
+    "toMajor"
+  ],
+  "description": "Money helpers: parseMoney (decimal strings to minor units), convert (half-to-even with a 1e-9 tolerance), fromMajor, toMajor, sum and assertMinor. Inputs from engine.test.ts plus edges; errors are RangeErrors.",
+  "env": null,
+  "fixture": "money",
+  "fromMajor": [
+    {
+      "args": [
+        34000000
+      ],
+      "result": 3400000000
+    },
+    {
+      "args": [
+        0.1
+      ],
+      "result": 10
+    },
+    {
+      "args": [
+        12.345
+      ],
+      "result": 1235
+    },
+    {
+      "args": [
+        1.005
+      ],
+      "result": 100
+    },
+    {
+      "args": [
+        -2.5
+      ],
+      "result": -250
+    },
+    {
+      "args": [
+        0
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        90071992547409.92
+      ],
+      "error": {
+        "message": "Amount must be a whole number of minor units.",
+        "name": "RangeError"
+      }
+    }
+  ],
+  "parseMoney": [
+    {
+      "args": [
+        "1,250.5"
+      ],
+      "result": 125050
+    },
+    {
+      "args": [
+        "0.1"
+      ],
+      "result": 10
+    },
+    {
+      "args": [
+        "(300)"
+      ],
+      "result": -30000
+    },
+    {
+      "args": [
+        "12.345"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "abc"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        ""
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "0"
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        "-0.05"
+      ],
+      "result": -5
+    },
+    {
+      "args": [
+        "-12"
+      ],
+      "result": -1200
+    },
+    {
+      "args": [
+        " 1 000.00 "
+      ],
+      "result": 100000
+    },
+    {
+      "args": [
+        "1e3"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "00.10"
+      ],
+      "result": 10
+    },
+    {
+      "args": [
+        ".5"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "5."
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "(1,200.25)"
+      ],
+      "result": -120025
+    },
+    {
+      "args": [
+        "90071992547409.91"
+      ],
+      "result": 9007199254740991
+    },
+    {
+      "args": [
+        "90071992547409.92"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "99999999999999999"
+      ],
+      "result": null
+    }
+  ],
+  "sources": [
+    "flowtrace/src/lib/ledger/money.ts",
+    "flowtrace/src/lib/ledger/engine.test.ts"
+  ],
+  "sum": [
+    {
+      "args": [
+        []
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "result": 6
+    },
+    {
+      "args": [
+        [
+          -5,
+          5
+        ]
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        [
+          100000,
+          -250
+        ]
+      ],
+      "result": 99750
+    }
+  ],
+  "toMajor": [
+    {
+      "args": [
+        125050
+      ],
+      "result": 1250.5
+    },
+    {
+      "args": [
+        -1
+      ],
+      "result": -0.01
+    },
+    {
+      "args": [
+        0
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "result": 0.01
+    }
+  ]
+}

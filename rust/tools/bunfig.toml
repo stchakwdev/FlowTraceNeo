@@ -1,0 +1,4 @@
+# The exporter must never fetch packages at run time: every module it loads
+# comes from flowtrace/src or from this folder's pinned node_modules.
+[install]
+auto = "disable"

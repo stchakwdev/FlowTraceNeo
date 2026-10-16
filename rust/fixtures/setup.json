@@ -1,0 +1,1796 @@
+{
+  "SYSTEM_ACTOR": {
+    "can_approve": true,
+    "can_close": true,
+    "can_post": true,
+    "id": "system",
+    "name": "FlowTrace"
+  },
+  "UNRESTRICTED_FUND_ID": "fund-unrestricted",
+  "accountId": [
+    {
+      "args": [
+        "1110"
+      ],
+      "result": "acc-1110"
+    },
+    {
+      "args": [
+        "7000"
+      ],
+      "result": "acc-7000"
+    },
+    {
+      "args": [
+        ""
+      ],
+      "result": "acc-"
+    }
+  ],
+  "actorFromPermissions": [
+    {
+      "args": [
+        {
+          "id": "u1",
+          "name": "Finance Lead"
+        },
+        {
+          "can_edit_transactions": true,
+          "can_manage_groups": true
+        }
+      ],
+      "result": {
+        "can_approve": true,
+        "can_close": true,
+        "can_post": true,
+        "id": "u1",
+        "name": "Finance Lead"
+      }
+    },
+    {
+      "args": [
+        {
+          "id": "u2",
+          "name": "Clerk"
+        },
+        {
+          "can_edit_transactions": true,
+          "can_manage_groups": false,
+          "can_manage_members": true
+        }
+      ],
+      "result": {
+        "can_approve": true,
+        "can_close": false,
+        "can_post": true,
+        "id": "u2",
+        "name": "Clerk"
+      }
+    },
+    {
+      "args": [
+        {
+          "id": "u3",
+          "name": "Viewer"
+        },
+        {
+          "can_edit_transactions": false,
+          "can_manage_groups": false
+        }
+      ],
+      "result": {
+        "can_approve": false,
+        "can_close": false,
+        "can_post": false,
+        "id": "u3",
+        "name": "Viewer"
+      }
+    }
+  ],
+  "covers": [
+    "Ledger.ensureFiscalYear",
+    "SYSTEM_ACTOR",
+    "UNRESTRICTED_FUND_ID",
+    "accountId",
+    "actorFromPermissions",
+    "createOrgLedger",
+    "defaultSettings",
+    "emptyLedger",
+    "ngoChartOfAccounts",
+    "normalBalanceOf"
+  ],
+  "createOrgLedger": {
+    "args": [
+      "org",
+      "KES",
+      2026
+    ],
+    "state": {
+      "accounts": [
+        {
+          "cash_flow_class": "operating",
+          "code": "1000",
+          "expense_function": null,
+          "id": "acc-1000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Assets",
+          "normal_balance": "debit",
+          "parent_id": null,
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1100",
+          "expense_function": null,
+          "id": "acc-1100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Cash and cash equivalents",
+          "normal_balance": "debit",
+          "parent_id": "acc-1000",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1110",
+          "expense_function": null,
+          "id": "acc-1110",
+          "is_active": true,
+          "is_cash": true,
+          "is_group": false,
+          "name": "Bank: Main operating account",
+          "normal_balance": "debit",
+          "parent_id": "acc-1100",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1120",
+          "expense_function": null,
+          "id": "acc-1120",
+          "is_active": true,
+          "is_cash": true,
+          "is_group": false,
+          "name": "Bank: Operations account",
+          "normal_balance": "debit",
+          "parent_id": "acc-1100",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1130",
+          "expense_function": null,
+          "id": "acc-1130",
+          "is_active": true,
+          "is_cash": true,
+          "is_group": false,
+          "name": "Bank: Restricted projects account",
+          "normal_balance": "debit",
+          "parent_id": "acc-1100",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1140",
+          "expense_function": null,
+          "id": "acc-1140",
+          "is_active": true,
+          "is_cash": true,
+          "is_group": false,
+          "name": "Bank: Payroll account",
+          "normal_balance": "debit",
+          "parent_id": "acc-1100",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1150",
+          "expense_function": null,
+          "id": "acc-1150",
+          "is_active": true,
+          "is_cash": true,
+          "is_group": false,
+          "name": "M-Pesa till and float",
+          "normal_balance": "debit",
+          "parent_id": "acc-1100",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1160",
+          "expense_function": null,
+          "id": "acc-1160",
+          "is_active": true,
+          "is_cash": true,
+          "is_group": false,
+          "name": "Petty cash",
+          "normal_balance": "debit",
+          "parent_id": "acc-1100",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1200",
+          "expense_function": null,
+          "id": "acc-1200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Receivables",
+          "normal_balance": "debit",
+          "parent_id": "acc-1000",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1210",
+          "expense_function": null,
+          "id": "acc-1210",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Grants receivable",
+          "normal_balance": "debit",
+          "parent_id": "acc-1200",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1220",
+          "expense_function": null,
+          "id": "acc-1220",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Staff advances",
+          "normal_balance": "debit",
+          "parent_id": "acc-1200",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1300",
+          "expense_function": null,
+          "id": "acc-1300",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Prepayments",
+          "normal_balance": "debit",
+          "parent_id": "acc-1000",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1400",
+          "expense_function": null,
+          "id": "acc-1400",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Suspense: unexplained movements",
+          "normal_balance": "debit",
+          "parent_id": "acc-1000",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "1500",
+          "expense_function": null,
+          "id": "acc-1500",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Property and equipment",
+          "normal_balance": "debit",
+          "parent_id": "acc-1000",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "investing",
+          "code": "1510",
+          "expense_function": null,
+          "id": "acc-1510",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Vehicles",
+          "normal_balance": "debit",
+          "parent_id": "acc-1500",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "investing",
+          "code": "1520",
+          "expense_function": null,
+          "id": "acc-1520",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Equipment",
+          "normal_balance": "debit",
+          "parent_id": "acc-1500",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "investing",
+          "code": "1590",
+          "expense_function": null,
+          "id": "acc-1590",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Accumulated depreciation",
+          "normal_balance": "debit",
+          "parent_id": "acc-1500",
+          "type": "asset"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "2000",
+          "expense_function": null,
+          "id": "acc-2000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Liabilities",
+          "normal_balance": "credit",
+          "parent_id": null,
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "2100",
+          "expense_function": null,
+          "id": "acc-2100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Accounts payable",
+          "normal_balance": "credit",
+          "parent_id": "acc-2000",
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "2110",
+          "expense_function": null,
+          "id": "acc-2110",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Staff claims payable",
+          "normal_balance": "credit",
+          "parent_id": "acc-2000",
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "2200",
+          "expense_function": null,
+          "id": "acc-2200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Accrued expenses",
+          "normal_balance": "credit",
+          "parent_id": "acc-2000",
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "2300",
+          "expense_function": null,
+          "id": "acc-2300",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Deferred grant income",
+          "normal_balance": "credit",
+          "parent_id": "acc-2000",
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "2400",
+          "expense_function": null,
+          "id": "acc-2400",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Payroll liabilities (PAYE, NSSF, SHIF)",
+          "normal_balance": "credit",
+          "parent_id": "acc-2000",
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "financing",
+          "code": "2500",
+          "expense_function": null,
+          "id": "acc-2500",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Loans",
+          "normal_balance": "credit",
+          "parent_id": "acc-2000",
+          "type": "liability"
+        },
+        {
+          "cash_flow_class": "financing",
+          "code": "3000",
+          "expense_function": null,
+          "id": "acc-3000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Net assets",
+          "normal_balance": "credit",
+          "parent_id": null,
+          "type": "equity"
+        },
+        {
+          "cash_flow_class": "financing",
+          "code": "3100",
+          "expense_function": null,
+          "id": "acc-3100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Net assets without donor restrictions",
+          "normal_balance": "credit",
+          "parent_id": "acc-3000",
+          "type": "equity"
+        },
+        {
+          "cash_flow_class": "financing",
+          "code": "3200",
+          "expense_function": null,
+          "id": "acc-3200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Net assets with donor restrictions",
+          "normal_balance": "credit",
+          "parent_id": "acc-3000",
+          "type": "equity"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "4000",
+          "expense_function": null,
+          "id": "acc-4000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Income",
+          "normal_balance": "credit",
+          "parent_id": null,
+          "type": "income"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "4100",
+          "expense_function": null,
+          "id": "acc-4100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Grant income",
+          "normal_balance": "credit",
+          "parent_id": "acc-4000",
+          "type": "income"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "4200",
+          "expense_function": null,
+          "id": "acc-4200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Donations",
+          "normal_balance": "credit",
+          "parent_id": "acc-4000",
+          "type": "income"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "4300",
+          "expense_function": null,
+          "id": "acc-4300",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Other income",
+          "normal_balance": "credit",
+          "parent_id": "acc-4000",
+          "type": "income"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "4400",
+          "expense_function": null,
+          "id": "acc-4400",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Exchange gains and losses",
+          "normal_balance": "credit",
+          "parent_id": "acc-4000",
+          "type": "income"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5000",
+          "expense_function": "program",
+          "id": "acc-5000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Programme expenses",
+          "normal_balance": "debit",
+          "parent_id": null,
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5100",
+          "expense_function": "program",
+          "id": "acc-5100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Programme: Water and sanitation",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5200",
+          "expense_function": "program",
+          "id": "acc-5200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Programme: Health",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5300",
+          "expense_function": "program",
+          "id": "acc-5300",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Programme: Education",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5400",
+          "expense_function": "program",
+          "id": "acc-5400",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Stipends and transfers to beneficiaries",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5500",
+          "expense_function": "program",
+          "id": "acc-5500",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Programme equipment and supplies",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5600",
+          "expense_function": "program",
+          "id": "acc-5600",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Training and workshops",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "5700",
+          "expense_function": "program",
+          "id": "acc-5700",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Field travel",
+          "normal_balance": "debit",
+          "parent_id": "acc-5000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "6000",
+          "expense_function": "management",
+          "id": "acc-6000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Staff costs",
+          "normal_balance": "debit",
+          "parent_id": null,
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "6100",
+          "expense_function": "management",
+          "id": "acc-6100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Salaries and wages",
+          "normal_balance": "debit",
+          "parent_id": "acc-6000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "6200",
+          "expense_function": "management",
+          "id": "acc-6200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Staff benefits",
+          "normal_balance": "debit",
+          "parent_id": "acc-6000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7000",
+          "expense_function": "management",
+          "id": "acc-7000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Running costs",
+          "normal_balance": "debit",
+          "parent_id": null,
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7100",
+          "expense_function": "management",
+          "id": "acc-7100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Office supplies",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7200",
+          "expense_function": "management",
+          "id": "acc-7200",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Vehicle running and maintenance",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7300",
+          "expense_function": "management",
+          "id": "acc-7300",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Utilities",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7400",
+          "expense_function": "management",
+          "id": "acc-7400",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Communication and mobile money fees",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7500",
+          "expense_function": "management",
+          "id": "acc-7500",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Rent",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7600",
+          "expense_function": "management",
+          "id": "acc-7600",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Audit and professional fees",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7700",
+          "expense_function": "management",
+          "id": "acc-7700",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Bank charges",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "7800",
+          "expense_function": "management",
+          "id": "acc-7800",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Depreciation",
+          "normal_balance": "debit",
+          "parent_id": "acc-7000",
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "8000",
+          "expense_function": "fundraising",
+          "id": "acc-8000",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": true,
+          "name": "Fundraising",
+          "normal_balance": "debit",
+          "parent_id": null,
+          "type": "expense"
+        },
+        {
+          "cash_flow_class": "operating",
+          "code": "8100",
+          "expense_function": "fundraising",
+          "id": "acc-8100",
+          "is_active": true,
+          "is_cash": false,
+          "is_group": false,
+          "name": "Fundraising and campaigns",
+          "normal_balance": "debit",
+          "parent_id": "acc-8000",
+          "type": "expense"
+        }
+      ],
+      "audit": [],
+      "bankAccounts": [],
+      "bills": [],
+      "budgetLines": [],
+      "budgets": [],
+      "claims": [],
+      "counters": {},
+      "dimensions": [],
+      "entries": [],
+      "funds": [
+        {
+          "id": "fund-unrestricted",
+          "name": "Unrestricted",
+          "restriction": "unrestricted"
+        }
+      ],
+      "grants": [],
+      "lines": [],
+      "payments": [],
+      "periods": [
+        {
+          "end_date": "2026-01-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-01",
+          "name": "Jan 2026",
+          "start_date": "2026-01-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-02-28",
+          "fiscal_year": 2026,
+          "id": "period-2026-02",
+          "name": "Feb 2026",
+          "start_date": "2026-02-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-03-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-03",
+          "name": "Mar 2026",
+          "start_date": "2026-03-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-04-30",
+          "fiscal_year": 2026,
+          "id": "period-2026-04",
+          "name": "Apr 2026",
+          "start_date": "2026-04-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-05-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-05",
+          "name": "May 2026",
+          "start_date": "2026-05-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-06-30",
+          "fiscal_year": 2026,
+          "id": "period-2026-06",
+          "name": "Jun 2026",
+          "start_date": "2026-06-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-07-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-07",
+          "name": "Jul 2026",
+          "start_date": "2026-07-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-08-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-08",
+          "name": "Aug 2026",
+          "start_date": "2026-08-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-09-30",
+          "fiscal_year": 2026,
+          "id": "period-2026-09",
+          "name": "Sep 2026",
+          "start_date": "2026-09-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-10-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-10",
+          "name": "Oct 2026",
+          "start_date": "2026-10-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-11-30",
+          "fiscal_year": 2026,
+          "id": "period-2026-11",
+          "name": "Nov 2026",
+          "start_date": "2026-11-01",
+          "status": "open"
+        },
+        {
+          "end_date": "2026-12-31",
+          "fiscal_year": 2026,
+          "id": "period-2026-12",
+          "name": "Dec 2026",
+          "start_date": "2026-12-01",
+          "status": "open"
+        }
+      ],
+      "settings": {
+        "base_currency": "KES",
+        "basis": "accrual",
+        "fiscal_year_start_month": 1,
+        "organization_id": "org",
+        "reporting_standard": "ifrs_sme",
+        "system_accounts": {
+          "accounts_payable": "acc-2100",
+          "claims_payable": "acc-2110",
+          "fx_gain_loss": "acc-4400",
+          "net_assets_restricted": "acc-3200",
+          "net_assets_unrestricted": "acc-3100",
+          "suspense": "acc-1400"
+        }
+      },
+      "statementLines": [],
+      "vendors": []
+    }
+  },
+  "defaultSettings": [
+    {
+      "args": [
+        "org"
+      ],
+      "result": {
+        "base_currency": "KES",
+        "basis": "accrual",
+        "fiscal_year_start_month": 1,
+        "organization_id": "org",
+        "reporting_standard": "ifrs_sme",
+        "system_accounts": {
+          "accounts_payable": "acc-2100",
+          "claims_payable": "acc-2110",
+          "fx_gain_loss": "acc-4400",
+          "net_assets_restricted": "acc-3200",
+          "net_assets_unrestricted": "acc-3100",
+          "suspense": "acc-1400"
+        }
+      }
+    },
+    {
+      "args": [
+        "org",
+        "UGX"
+      ],
+      "result": {
+        "base_currency": "UGX",
+        "basis": "accrual",
+        "fiscal_year_start_month": 1,
+        "organization_id": "org",
+        "reporting_standard": "ifrs_sme",
+        "system_accounts": {
+          "accounts_payable": "acc-2100",
+          "claims_payable": "acc-2110",
+          "fx_gain_loss": "acc-4400",
+          "net_assets_restricted": "acc-3200",
+          "net_assets_unrestricted": "acc-3100",
+          "suspense": "acc-1400"
+        }
+      }
+    }
+  ],
+  "description": "A new organisation’s books: createOrgLedger('org', 'KES', 2026) (the base every test scenario starts from), the NGO chart of accounts, default settings, emptyLedger, accountId, normalBalanceOf, actorFromPermissions, SYSTEM_ACTOR and UNRESTRICTED_FUND_ID.",
+  "emptyLedger": [
+    {
+      "args": [
+        {
+          "base_currency": "KES",
+          "basis": "accrual",
+          "fiscal_year_start_month": 1,
+          "organization_id": "org",
+          "reporting_standard": "ifrs_sme",
+          "system_accounts": {
+            "accounts_payable": "acc-2100",
+            "claims_payable": "acc-2110",
+            "fx_gain_loss": "acc-4400",
+            "net_assets_restricted": "acc-3200",
+            "net_assets_unrestricted": "acc-3100",
+            "suspense": "acc-1400"
+          }
+        }
+      ],
+      "result": {
+        "accounts": [],
+        "audit": [],
+        "bankAccounts": [],
+        "bills": [],
+        "budgetLines": [],
+        "budgets": [],
+        "claims": [],
+        "counters": {},
+        "dimensions": [],
+        "entries": [],
+        "funds": [],
+        "grants": [],
+        "lines": [],
+        "payments": [],
+        "periods": [],
+        "settings": {
+          "base_currency": "KES",
+          "basis": "accrual",
+          "fiscal_year_start_month": 1,
+          "organization_id": "org",
+          "reporting_standard": "ifrs_sme",
+          "system_accounts": {
+            "accounts_payable": "acc-2100",
+            "claims_payable": "acc-2110",
+            "fx_gain_loss": "acc-4400",
+            "net_assets_restricted": "acc-3200",
+            "net_assets_unrestricted": "acc-3100",
+            "suspense": "acc-1400"
+          }
+        },
+        "statementLines": [],
+        "vendors": []
+      }
+    }
+  ],
+  "env": {
+    "defined_at": "rust/tools/src/primitives.ts, mirroring testEnv() in flowtrace/src/lib/ledger/engine.test.ts:16-19",
+    "new_id": "id- then n in decimal, n = 1, 2, 3, ... (id-1); createOrgLedger itself draws no ids",
+    "now": "2026-03-01T00:00:00.000Z"
+  },
+  "fixture": "setup",
+  "ngoChartOfAccounts": [
+    {
+      "cash_flow_class": "operating",
+      "code": "1000",
+      "expense_function": null,
+      "id": "acc-1000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Assets",
+      "normal_balance": "debit",
+      "parent_id": null,
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1100",
+      "expense_function": null,
+      "id": "acc-1100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Cash and cash equivalents",
+      "normal_balance": "debit",
+      "parent_id": "acc-1000",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1110",
+      "expense_function": null,
+      "id": "acc-1110",
+      "is_active": true,
+      "is_cash": true,
+      "is_group": false,
+      "name": "Bank: Main operating account",
+      "normal_balance": "debit",
+      "parent_id": "acc-1100",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1120",
+      "expense_function": null,
+      "id": "acc-1120",
+      "is_active": true,
+      "is_cash": true,
+      "is_group": false,
+      "name": "Bank: Operations account",
+      "normal_balance": "debit",
+      "parent_id": "acc-1100",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1130",
+      "expense_function": null,
+      "id": "acc-1130",
+      "is_active": true,
+      "is_cash": true,
+      "is_group": false,
+      "name": "Bank: Restricted projects account",
+      "normal_balance": "debit",
+      "parent_id": "acc-1100",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1140",
+      "expense_function": null,
+      "id": "acc-1140",
+      "is_active": true,
+      "is_cash": true,
+      "is_group": false,
+      "name": "Bank: Payroll account",
+      "normal_balance": "debit",
+      "parent_id": "acc-1100",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1150",
+      "expense_function": null,
+      "id": "acc-1150",
+      "is_active": true,
+      "is_cash": true,
+      "is_group": false,
+      "name": "M-Pesa till and float",
+      "normal_balance": "debit",
+      "parent_id": "acc-1100",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1160",
+      "expense_function": null,
+      "id": "acc-1160",
+      "is_active": true,
+      "is_cash": true,
+      "is_group": false,
+      "name": "Petty cash",
+      "normal_balance": "debit",
+      "parent_id": "acc-1100",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1200",
+      "expense_function": null,
+      "id": "acc-1200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Receivables",
+      "normal_balance": "debit",
+      "parent_id": "acc-1000",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1210",
+      "expense_function": null,
+      "id": "acc-1210",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Grants receivable",
+      "normal_balance": "debit",
+      "parent_id": "acc-1200",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1220",
+      "expense_function": null,
+      "id": "acc-1220",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Staff advances",
+      "normal_balance": "debit",
+      "parent_id": "acc-1200",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1300",
+      "expense_function": null,
+      "id": "acc-1300",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Prepayments",
+      "normal_balance": "debit",
+      "parent_id": "acc-1000",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1400",
+      "expense_function": null,
+      "id": "acc-1400",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Suspense: unexplained movements",
+      "normal_balance": "debit",
+      "parent_id": "acc-1000",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "1500",
+      "expense_function": null,
+      "id": "acc-1500",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Property and equipment",
+      "normal_balance": "debit",
+      "parent_id": "acc-1000",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "investing",
+      "code": "1510",
+      "expense_function": null,
+      "id": "acc-1510",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Vehicles",
+      "normal_balance": "debit",
+      "parent_id": "acc-1500",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "investing",
+      "code": "1520",
+      "expense_function": null,
+      "id": "acc-1520",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Equipment",
+      "normal_balance": "debit",
+      "parent_id": "acc-1500",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "investing",
+      "code": "1590",
+      "expense_function": null,
+      "id": "acc-1590",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Accumulated depreciation",
+      "normal_balance": "debit",
+      "parent_id": "acc-1500",
+      "type": "asset"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "2000",
+      "expense_function": null,
+      "id": "acc-2000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Liabilities",
+      "normal_balance": "credit",
+      "parent_id": null,
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "2100",
+      "expense_function": null,
+      "id": "acc-2100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Accounts payable",
+      "normal_balance": "credit",
+      "parent_id": "acc-2000",
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "2110",
+      "expense_function": null,
+      "id": "acc-2110",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Staff claims payable",
+      "normal_balance": "credit",
+      "parent_id": "acc-2000",
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "2200",
+      "expense_function": null,
+      "id": "acc-2200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Accrued expenses",
+      "normal_balance": "credit",
+      "parent_id": "acc-2000",
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "2300",
+      "expense_function": null,
+      "id": "acc-2300",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Deferred grant income",
+      "normal_balance": "credit",
+      "parent_id": "acc-2000",
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "2400",
+      "expense_function": null,
+      "id": "acc-2400",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Payroll liabilities (PAYE, NSSF, SHIF)",
+      "normal_balance": "credit",
+      "parent_id": "acc-2000",
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "financing",
+      "code": "2500",
+      "expense_function": null,
+      "id": "acc-2500",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Loans",
+      "normal_balance": "credit",
+      "parent_id": "acc-2000",
+      "type": "liability"
+    },
+    {
+      "cash_flow_class": "financing",
+      "code": "3000",
+      "expense_function": null,
+      "id": "acc-3000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Net assets",
+      "normal_balance": "credit",
+      "parent_id": null,
+      "type": "equity"
+    },
+    {
+      "cash_flow_class": "financing",
+      "code": "3100",
+      "expense_function": null,
+      "id": "acc-3100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Net assets without donor restrictions",
+      "normal_balance": "credit",
+      "parent_id": "acc-3000",
+      "type": "equity"
+    },
+    {
+      "cash_flow_class": "financing",
+      "code": "3200",
+      "expense_function": null,
+      "id": "acc-3200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Net assets with donor restrictions",
+      "normal_balance": "credit",
+      "parent_id": "acc-3000",
+      "type": "equity"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "4000",
+      "expense_function": null,
+      "id": "acc-4000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Income",
+      "normal_balance": "credit",
+      "parent_id": null,
+      "type": "income"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "4100",
+      "expense_function": null,
+      "id": "acc-4100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Grant income",
+      "normal_balance": "credit",
+      "parent_id": "acc-4000",
+      "type": "income"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "4200",
+      "expense_function": null,
+      "id": "acc-4200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Donations",
+      "normal_balance": "credit",
+      "parent_id": "acc-4000",
+      "type": "income"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "4300",
+      "expense_function": null,
+      "id": "acc-4300",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Other income",
+      "normal_balance": "credit",
+      "parent_id": "acc-4000",
+      "type": "income"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "4400",
+      "expense_function": null,
+      "id": "acc-4400",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Exchange gains and losses",
+      "normal_balance": "credit",
+      "parent_id": "acc-4000",
+      "type": "income"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5000",
+      "expense_function": "program",
+      "id": "acc-5000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Programme expenses",
+      "normal_balance": "debit",
+      "parent_id": null,
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5100",
+      "expense_function": "program",
+      "id": "acc-5100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Programme: Water and sanitation",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5200",
+      "expense_function": "program",
+      "id": "acc-5200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Programme: Health",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5300",
+      "expense_function": "program",
+      "id": "acc-5300",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Programme: Education",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5400",
+      "expense_function": "program",
+      "id": "acc-5400",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Stipends and transfers to beneficiaries",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5500",
+      "expense_function": "program",
+      "id": "acc-5500",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Programme equipment and supplies",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5600",
+      "expense_function": "program",
+      "id": "acc-5600",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Training and workshops",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "5700",
+      "expense_function": "program",
+      "id": "acc-5700",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Field travel",
+      "normal_balance": "debit",
+      "parent_id": "acc-5000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "6000",
+      "expense_function": "management",
+      "id": "acc-6000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Staff costs",
+      "normal_balance": "debit",
+      "parent_id": null,
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "6100",
+      "expense_function": "management",
+      "id": "acc-6100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Salaries and wages",
+      "normal_balance": "debit",
+      "parent_id": "acc-6000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "6200",
+      "expense_function": "management",
+      "id": "acc-6200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Staff benefits",
+      "normal_balance": "debit",
+      "parent_id": "acc-6000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7000",
+      "expense_function": "management",
+      "id": "acc-7000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Running costs",
+      "normal_balance": "debit",
+      "parent_id": null,
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7100",
+      "expense_function": "management",
+      "id": "acc-7100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Office supplies",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7200",
+      "expense_function": "management",
+      "id": "acc-7200",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Vehicle running and maintenance",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7300",
+      "expense_function": "management",
+      "id": "acc-7300",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Utilities",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7400",
+      "expense_function": "management",
+      "id": "acc-7400",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Communication and mobile money fees",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7500",
+      "expense_function": "management",
+      "id": "acc-7500",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Rent",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7600",
+      "expense_function": "management",
+      "id": "acc-7600",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Audit and professional fees",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7700",
+      "expense_function": "management",
+      "id": "acc-7700",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Bank charges",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "7800",
+      "expense_function": "management",
+      "id": "acc-7800",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Depreciation",
+      "normal_balance": "debit",
+      "parent_id": "acc-7000",
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "8000",
+      "expense_function": "fundraising",
+      "id": "acc-8000",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": true,
+      "name": "Fundraising",
+      "normal_balance": "debit",
+      "parent_id": null,
+      "type": "expense"
+    },
+    {
+      "cash_flow_class": "operating",
+      "code": "8100",
+      "expense_function": "fundraising",
+      "id": "acc-8100",
+      "is_active": true,
+      "is_cash": false,
+      "is_group": false,
+      "name": "Fundraising and campaigns",
+      "normal_balance": "debit",
+      "parent_id": "acc-8000",
+      "type": "expense"
+    }
+  ],
+  "normalBalanceOf": [
+    {
+      "args": [
+        "asset"
+      ],
+      "result": "debit"
+    },
+    {
+      "args": [
+        "liability"
+      ],
+      "result": "credit"
+    },
+    {
+      "args": [
+        "equity"
+      ],
+      "result": "credit"
+    },
+    {
+      "args": [
+        "income"
+      ],
+      "result": "credit"
+    },
+    {
+      "args": [
+        "expense"
+      ],
+      "result": "debit"
+    }
+  ],
+  "sources": [
+    "flowtrace/src/lib/ledger/setup.ts",
+    "flowtrace/src/lib/ledger/coa-template.ts",
+    "flowtrace/src/lib/ledger/engine.ts#emptyLedger",
+    "flowtrace/src/lib/ledger/engine.ts#normalBalanceOf"
+  ]
+}

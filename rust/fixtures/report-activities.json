@@ -1,0 +1,4343 @@
+{
+  "cases": [
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-12-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-12-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 573325000,
+            "expenses": 276675000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850000000
+          },
+          {
+            "change": 318770000,
+            "expenses": 1230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 468770000,
+          "total": 1042095000,
+          "unrestricted": 573325000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 720000000,
+            "total": 1570000000,
+            "unrestricted": 850000000
+          }
+        ],
+        "to": "2026-01-31",
+        "totalExpenses": {
+          "restricted": 251230000,
+          "total": 527905000,
+          "unrestricted": 276675000
+        },
+        "totalIncome": {
+          "restricted": 720000000,
+          "total": 1570000000,
+          "unrestricted": 850000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 578125000,
+            "expenses": 271875000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850000000
+          },
+          {
+            "change": 318770000,
+            "expenses": 1230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 468770000,
+          "total": 1046895000,
+          "unrestricted": 578125000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 6700000,
+            "unrestricted": 6700000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 720000000,
+            "total": 1570000000,
+            "unrestricted": 850000000
+          }
+        ],
+        "to": "2026-01-31",
+        "totalExpenses": {
+          "restricted": 251230000,
+          "total": 523105000,
+          "unrestricted": 271875000
+        },
+        "totalIncome": {
+          "restricted": 720000000,
+          "total": 1570000000,
+          "unrestricted": 850000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": -3980000,
+            "expenses": 3980000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 0
+          },
+          {
+            "change": -120000000,
+            "expenses": 120000000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 0
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 480000000,
+          "total": 476020000,
+          "unrestricted": -3980000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120000000,
+            "total": 120000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 3980000,
+            "unrestricted": 3980000
+          }
+        ],
+        "from": "2026-02-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 600000000,
+            "total": 600000000,
+            "unrestricted": 0
+          }
+        ],
+        "to": "2026-02-28",
+        "totalExpenses": {
+          "restricted": 120000000,
+          "total": 123980000,
+          "unrestricted": 3980000
+        },
+        "totalIncome": {
+          "restricted": 600000000,
+          "total": 600000000,
+          "unrestricted": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": -4800000,
+            "expenses": 4800000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 0
+          },
+          {
+            "change": -120000000,
+            "expenses": 120000000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 0
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 480000000,
+          "total": 475200000,
+          "unrestricted": -4800000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120000000,
+            "total": 120000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4800000,
+            "unrestricted": 4800000
+          }
+        ],
+        "from": "2026-02-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 600000000,
+            "total": 600000000,
+            "unrestricted": 0
+          }
+        ],
+        "to": "2026-02-28",
+        "totalExpenses": {
+          "restricted": 120000000,
+          "total": 124800000,
+          "unrestricted": 4800000
+        },
+        "totalIncome": {
+          "restricted": 600000000,
+          "total": 600000000,
+          "unrestricted": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-01-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-01-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 569345000,
+            "expenses": 280655000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850000000
+          },
+          {
+            "change": 198770000,
+            "expenses": 121230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 948770000,
+          "total": 1518115000,
+          "unrestricted": 569345000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120000000,
+            "total": 120000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 8180000,
+            "unrestricted": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          }
+        ],
+        "to": "2026-12-31",
+        "totalExpenses": {
+          "restricted": 371230000,
+          "total": 651885000,
+          "unrestricted": 280655000
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170000000,
+          "unrestricted": 850000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 573325000,
+            "expenses": 276675000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850000000
+          },
+          {
+            "change": 198770000,
+            "expenses": 121230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 948770000,
+          "total": 1522095000,
+          "unrestricted": 573325000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120000000,
+            "total": 120000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          }
+        ],
+        "to": "2026-12-31",
+        "totalExpenses": {
+          "restricted": 371230000,
+          "total": 647905000,
+          "unrestricted": 276675000
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170000000,
+          "unrestricted": 850000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 569345000,
+            "expenses": 280655000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850000000
+          },
+          {
+            "change": 198770000,
+            "expenses": 121230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 948770000,
+          "total": 1518115000,
+          "unrestricted": 569345000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120000000,
+            "total": 120000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 8180000,
+            "unrestricted": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          }
+        ],
+        "to": "2026-02-04",
+        "totalExpenses": {
+          "restricted": 371230000,
+          "total": 651885000,
+          "unrestricted": 280655000
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170000000,
+          "unrestricted": 850000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 573325000,
+            "expenses": 276675000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850000000
+          },
+          {
+            "change": 198770000,
+            "expenses": 121230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 948770000,
+          "total": 1522095000,
+          "unrestricted": 573325000
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120000000,
+            "total": 120000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          }
+        ],
+        "to": "2026-02-04",
+        "totalExpenses": {
+          "restricted": 371230000,
+          "total": 647905000,
+          "unrestricted": 276675000
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170000000,
+          "unrestricted": 850000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-12-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-12-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 573666200,
+            "expenses": 276675000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850341200
+          },
+          {
+            "change": 318770000,
+            "expenses": 1230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 468770000,
+          "total": 1042436200,
+          "unrestricted": 573666200
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 720000000,
+            "total": 1570000000,
+            "unrestricted": 850000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4300",
+              "expense_function": null,
+              "id": "acc-4300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Other income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 0,
+            "total": 341200,
+            "unrestricted": 341200
+          }
+        ],
+        "to": "2026-01-31",
+        "totalExpenses": {
+          "restricted": 251230000,
+          "total": 527905000,
+          "unrestricted": 276675000
+        },
+        "totalIncome": {
+          "restricted": 720000000,
+          "total": 1570341200,
+          "unrestricted": 850341200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 578466200,
+            "expenses": 271875000,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850341200
+          },
+          {
+            "change": 318770000,
+            "expenses": 1230000,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 150000000,
+            "expenses": 250000000,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 468770000,
+          "total": 1047236200,
+          "unrestricted": 578466200
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1230000,
+            "total": 1230000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 2850000,
+            "unrestricted": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 6700000,
+            "unrestricted": 6700000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 720000000,
+            "total": 1570000000,
+            "unrestricted": 850000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4300",
+              "expense_function": null,
+              "id": "acc-4300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Other income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 0,
+            "total": 341200,
+            "unrestricted": 341200
+          }
+        ],
+        "to": "2026-01-31",
+        "totalExpenses": {
+          "restricted": 251230000,
+          "total": 523105000,
+          "unrestricted": 271875000
+        },
+        "totalIncome": {
+          "restricted": 720000000,
+          "total": 1570341200,
+          "unrestricted": 850341200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": -5902073,
+            "expenses": 5902073,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 0
+          },
+          {
+            "change": -121045050,
+            "expenses": 121045050,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 0
+          },
+          {
+            "change": -878293,
+            "expenses": 878293,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 0
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 478076657,
+          "total": 472174584,
+          "unrestricted": -5902073
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120878293,
+            "total": 120878293,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1045050,
+            "total": 1045050,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 275000,
+            "unrestricted": 275000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 3980000,
+            "unrestricted": 3980000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 1597073,
+            "unrestricted": 1597073
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 50000,
+            "unrestricted": 50000
+          }
+        ],
+        "from": "2026-02-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 600000000,
+            "total": 600000000,
+            "unrestricted": 0
+          }
+        ],
+        "to": "2026-02-28",
+        "totalExpenses": {
+          "restricted": 121923343,
+          "total": 127825416,
+          "unrestricted": 5902073
+        },
+        "totalIncome": {
+          "restricted": 600000000,
+          "total": 600000000,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": -5959695,
+            "expenses": 5959695,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 0
+          },
+          {
+            "change": -121045050,
+            "expenses": 121045050,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 0
+          },
+          {
+            "change": -459005,
+            "expenses": 459005,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 0
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 478495945,
+          "total": 472536250,
+          "unrestricted": -5959695
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120459005,
+            "total": 120459005,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 1045050,
+            "total": 1045050,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 275000,
+            "unrestricted": 275000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4800000,
+            "unrestricted": 4800000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 834695,
+            "unrestricted": 834695
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 50000,
+            "unrestricted": 50000
+          }
+        ],
+        "from": "2026-02-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 600000000,
+            "total": 600000000,
+            "unrestricted": 0
+          }
+        ],
+        "to": "2026-02-28",
+        "totalExpenses": {
+          "restricted": 121504055,
+          "total": 127463750,
+          "unrestricted": 5959695
+        },
+        "totalIncome": {
+          "restricted": 600000000,
+          "total": 600000000,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-01",
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2026-12-01",
+        "income": [],
+        "to": "2026-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-01",
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2026-12-01",
+        "income": [],
+        "to": "2026-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-01-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [],
+        "changeInNetAssets": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "expenses": [],
+        "from": "2025-01-01",
+        "income": [],
+        "to": "2025-12-31",
+        "totalExpenses": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        },
+        "totalIncome": {
+          "restricted": 0,
+          "total": 0,
+          "unrestricted": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 567764127,
+            "expenses": 282577073,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850341200
+          },
+          {
+            "change": 197724950,
+            "expenses": 122275050,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 149121707,
+            "expenses": 250878293,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 946846657,
+          "total": 1514610784,
+          "unrestricted": 567764127
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120878293,
+            "total": 120878293,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 2275050,
+            "total": 2275050,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 3125000,
+            "unrestricted": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 8180000,
+            "unrestricted": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 1597073,
+            "unrestricted": 1597073
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 50000,
+            "unrestricted": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4300",
+              "expense_function": null,
+              "id": "acc-4300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Other income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 0,
+            "total": 341200,
+            "unrestricted": 341200
+          }
+        ],
+        "to": "2026-12-31",
+        "totalExpenses": {
+          "restricted": 373153343,
+          "total": 655730416,
+          "unrestricted": 282577073
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170341200,
+          "unrestricted": 850341200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 572506505,
+            "expenses": 277834695,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850341200
+          },
+          {
+            "change": 197724950,
+            "expenses": 122275050,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 149540995,
+            "expenses": 250459005,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 947265945,
+          "total": 1519772450,
+          "unrestricted": 572506505
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120459005,
+            "total": 120459005,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 2275050,
+            "total": 2275050,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 3125000,
+            "unrestricted": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 834695,
+            "unrestricted": 834695
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 50000,
+            "unrestricted": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4300",
+              "expense_function": null,
+              "id": "acc-4300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Other income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 0,
+            "total": 341200,
+            "unrestricted": 341200
+          }
+        ],
+        "to": "2026-12-31",
+        "totalExpenses": {
+          "restricted": 372734055,
+          "total": 650568750,
+          "unrestricted": 277834695
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170341200,
+          "unrestricted": 850341200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "accrual"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 567764127,
+            "expenses": 282577073,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850341200
+          },
+          {
+            "change": 197724950,
+            "expenses": 122275050,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 149121707,
+            "expenses": 250878293,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 946846657,
+          "total": 1514610784,
+          "unrestricted": 567764127
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120878293,
+            "total": 120878293,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 2275050,
+            "total": 2275050,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 3125000,
+            "unrestricted": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 8180000,
+            "unrestricted": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 1597073,
+            "unrestricted": 1597073
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 50000,
+            "unrestricted": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4300",
+              "expense_function": null,
+              "id": "acc-4300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Other income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 0,
+            "total": 341200,
+            "unrestricted": 341200
+          }
+        ],
+        "to": "2026-02-04",
+        "totalExpenses": {
+          "restricted": 373153343,
+          "total": 655730416,
+          "unrestricted": 282577073
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170341200,
+          "unrestricted": 850341200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "cash"
+      ],
+      "result": {
+        "byFund": [
+          {
+            "change": 572506505,
+            "expenses": 277834695,
+            "fund": {
+              "id": "fund-unrestricted",
+              "name": "Unrestricted",
+              "restriction": "unrestricted"
+            },
+            "income": 850341200
+          },
+          {
+            "change": 197724950,
+            "expenses": 122275050,
+            "fund": {
+              "id": "fund-maternal-health",
+              "name": "Maternal health (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 320000000
+          },
+          {
+            "change": 149540995,
+            "expenses": 250459005,
+            "fund": {
+              "id": "fund-wash",
+              "name": "Water and sanitation (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 400000000
+          },
+          {
+            "change": 600000000,
+            "expenses": 0,
+            "fund": {
+              "id": "fund-education",
+              "name": "Education (restricted)",
+              "restriction": "temporarily_restricted"
+            },
+            "income": 600000000
+          }
+        ],
+        "changeInNetAssets": {
+          "restricted": 947265945,
+          "total": 1519772450,
+          "unrestricted": 572506505
+        },
+        "expenses": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 250000000,
+            "total": 250000000,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 75000000,
+            "unrestricted": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 120459005,
+            "total": 120459005,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 38000000,
+            "unrestricted": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "restricted": 2275050,
+            "total": 2275050,
+            "unrestricted": 0
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 145000000,
+            "unrestricted": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 3125000,
+            "unrestricted": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 11500000,
+            "unrestricted": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 4200000,
+            "unrestricted": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 834695,
+            "unrestricted": 834695
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 50000,
+            "unrestricted": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "restricted": 0,
+            "total": 125000,
+            "unrestricted": 125000
+          }
+        ],
+        "from": "2026-01-01",
+        "income": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4100",
+              "expense_function": null,
+              "id": "acc-4100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Grant income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 1320000000,
+            "total": 2170000000,
+            "unrestricted": 850000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "4300",
+              "expense_function": null,
+              "id": "acc-4300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Other income",
+              "normal_balance": "credit",
+              "parent_id": "acc-4000",
+              "type": "income"
+            },
+            "restricted": 0,
+            "total": 341200,
+            "unrestricted": 341200
+          }
+        ],
+        "to": "2026-02-04",
+        "totalExpenses": {
+          "restricted": 372734055,
+          "total": 650568750,
+          "unrestricted": 277834695
+        },
+        "totalIncome": {
+          "restricted": 1320000000,
+          "total": 2170341200,
+          "unrestricted": 850341200
+        }
+      },
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "activities"
+  ],
+  "description": "activities(state, from, to, basis = \"accrual\") from reports.ts. Every active period, every active fiscal year and the year to the demo as-of date, both bases. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-activities",
+  "function": "activities",
+  "signature": "activities(state, from, to, basis = \"accrual\")",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#activities"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

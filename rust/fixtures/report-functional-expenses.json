@@ -1,0 +1,3163 @@
+{
+  "cases": [
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.6899536848485996,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 163675000,
+          "program": 364230000,
+          "total": 527905000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.6962846847191291,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 6700000,
+            "program": 0,
+            "total": 6700000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 158875000,
+          "program": 364230000,
+          "total": 523105000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.9678980480722698,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120000000,
+            "total": 120000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 3980000,
+            "program": 0,
+            "total": 3980000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 3980000,
+          "program": 120000000,
+          "total": 123980000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.9615384615384616,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120000000,
+            "total": 120000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4800000,
+            "program": 0,
+            "total": 4800000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 4800000,
+          "program": 120000000,
+          "total": 124800000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.7428150670747141,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120000000,
+            "total": 120000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 8180000,
+            "program": 0,
+            "total": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 167655000,
+          "program": 484230000,
+          "total": 651885000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.7473780878369514,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120000000,
+            "total": 120000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 163675000,
+          "program": 484230000,
+          "total": 647905000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.7428150670747141,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120000000,
+            "total": 120000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 8180000,
+            "program": 0,
+            "total": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 167655000,
+          "program": 484230000,
+          "total": 651885000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.7473780878369514,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120000000,
+            "total": 120000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 163675000,
+          "program": 484230000,
+          "total": 647905000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.6899536848485996,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 163675000,
+          "program": 364230000,
+          "total": 527905000
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.6962846847191291,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1230000,
+            "total": 1230000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 2850000,
+            "program": 0,
+            "total": 2850000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 6700000,
+            "program": 0,
+            "total": 6700000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 158875000,
+          "program": 364230000,
+          "total": 523105000
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.9663212517923665,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120878293,
+            "total": 120878293
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1045050,
+            "total": 1045050
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 275000,
+            "program": 0,
+            "total": 275000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 3980000,
+            "program": 0,
+            "total": 3980000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1597073,
+            "total": 1597073
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 50000,
+            "program": 0,
+            "total": 50000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 4305000,
+          "program": 123520416,
+          "total": 127825416
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.9597924900216729,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120459005,
+            "total": 120459005
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1045050,
+            "total": 1045050
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 275000,
+            "program": 0,
+            "total": 275000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4800000,
+            "program": 0,
+            "total": 4800000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 834695,
+            "total": 834695
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 50000,
+            "program": 0,
+            "total": 50000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 5125000,
+          "program": 122338750,
+          "total": 127463750
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-01",
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-01",
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0,
+        "rows": [],
+        "totals": {
+          "fundraising": 0,
+          "management": 0,
+          "program": 0,
+          "total": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.7438276524906541,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120878293,
+            "total": 120878293
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 2275050,
+            "total": 2275050
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 3125000,
+            "program": 0,
+            "total": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 8180000,
+            "program": 0,
+            "total": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1597073,
+            "total": 1597073
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 50000,
+            "program": 0,
+            "total": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 167980000,
+          "program": 487750416,
+          "total": 655730416
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.7479128839188787,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120459005,
+            "total": 120459005
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 2275050,
+            "total": 2275050
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 3125000,
+            "program": 0,
+            "total": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 834695,
+            "total": 834695
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 50000,
+            "program": 0,
+            "total": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 164000000,
+          "program": 486568750,
+          "total": 650568750
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "accrual"
+      ],
+      "result": {
+        "programRatio": 0.7438276524906541,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120878293,
+            "total": 120878293
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 2275050,
+            "total": 2275050
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 3125000,
+            "program": 0,
+            "total": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 8180000,
+            "program": 0,
+            "total": 8180000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 1597073,
+            "total": 1597073
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 50000,
+            "program": 0,
+            "total": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 167980000,
+          "program": 487750416,
+          "total": 655730416
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04",
+        "cash"
+      ],
+      "result": {
+        "programRatio": 0.7479128839188787,
+        "rows": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5100",
+              "expense_function": "program",
+              "id": "acc-5100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme: Water and sanitation",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 250000000,
+            "total": 250000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5400",
+              "expense_function": "program",
+              "id": "acc-5400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Stipends and transfers to beneficiaries",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 75000000,
+            "total": 75000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5500",
+              "expense_function": "program",
+              "id": "acc-5500",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Programme equipment and supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 120459005,
+            "total": 120459005
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5600",
+              "expense_function": "program",
+              "id": "acc-5600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Training and workshops",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 38000000,
+            "total": 38000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "5700",
+              "expense_function": "program",
+              "id": "acc-5700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Field travel",
+              "normal_balance": "debit",
+              "parent_id": "acc-5000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 2275050,
+            "total": 2275050
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "6100",
+              "expense_function": "management",
+              "id": "acc-6100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Salaries and wages",
+              "normal_balance": "debit",
+              "parent_id": "acc-6000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 145000000,
+            "program": 0,
+            "total": 145000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7100",
+              "expense_function": "management",
+              "id": "acc-7100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Office supplies",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 3125000,
+            "program": 0,
+            "total": 3125000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7200",
+              "expense_function": "management",
+              "id": "acc-7200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicle running and maintenance",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 11500000,
+            "program": 0,
+            "total": 11500000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7300",
+              "expense_function": "management",
+              "id": "acc-7300",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Utilities",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 4200000,
+            "program": 0,
+            "total": 4200000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7450",
+              "expense_function": "program",
+              "id": "fx-0038",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Internet, data and airtime",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 0,
+            "program": 834695,
+            "total": 834695
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7600",
+              "expense_function": "management",
+              "id": "acc-7600",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Audit and professional fees",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 50000,
+            "program": 0,
+            "total": 50000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "7700",
+              "expense_function": "management",
+              "id": "acc-7700",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Bank charges",
+              "normal_balance": "debit",
+              "parent_id": "acc-7000",
+              "type": "expense"
+            },
+            "fundraising": 0,
+            "management": 125000,
+            "program": 0,
+            "total": 125000
+          }
+        ],
+        "totals": {
+          "fundraising": 0,
+          "management": 164000000,
+          "program": 486568750,
+          "total": 650568750
+        }
+      },
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "functionalExpenses"
+  ],
+  "description": "functionalExpenses(state, from, to, basis = \"accrual\") from reports.ts. Same ranges as activities. programRatio is a float. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-functional-expenses",
+  "function": "functionalExpenses",
+  "signature": "functionalExpenses(state, from, to, basis = \"accrual\")",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#functionalExpenses"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

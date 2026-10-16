@@ -1,0 +1,919 @@
+{
+  "cases": [
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": null,
+        "monthsToEnd": 11.991786447638603,
+        "received": 0,
+        "remaining": 3400000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 75000000,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 44.333333333333336,
+        "monthsToEnd": 10.973305954825461,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 67141544,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 49.52224512441954,
+        "monthsToEnd": 10.841889117043122,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 39358836,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 84.4791243318273,
+        "monthsToEnd": 10.053388090349076,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 6271463,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 530.1793217946116,
+        "monthsToEnd": 0,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": null,
+        "monthsToEnd": 11.991786447638603,
+        "received": 0,
+        "remaining": 320000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 1230000,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 259.1626016260163,
+        "monthsToEnd": 10.973305954825461,
+        "received": 320000000,
+        "remaining": 318770000,
+        "spent": 1230000,
+        "status": "within",
+        "used": 0.00384375
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 108527592,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 1.8315158047549789,
+        "monthsToEnd": 10.841889117043122,
+        "received": 320000000,
+        "remaining": 198770000,
+        "spent": 121230000,
+        "status": "within",
+        "used": 0.37884375
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 63619623,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 3.1243504853840456,
+        "monthsToEnd": 10.053388090349076,
+        "received": 320000000,
+        "remaining": 198770000,
+        "spent": 121230000,
+        "status": "within",
+        "used": 0.37884375
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 10137193,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 19.607992074334582,
+        "monthsToEnd": 0,
+        "received": 320000000,
+        "remaining": 198770000,
+        "spent": 121230000,
+        "status": "within",
+        "used": 0.37884375
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 0,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": null,
+        "monthsToEnd": 17.93839835728953,
+        "received": 0,
+        "remaining": 398150000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.004625
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 250000000,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 0.6,
+        "monthsToEnd": 16.919917864476385,
+        "received": 400000000,
+        "remaining": 148150000,
+        "spent": 250000000,
+        "status": "within",
+        "used": 0.629625
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 223805147,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 0.6702258728660964,
+        "monthsToEnd": 16.788501026694046,
+        "received": 400000000,
+        "remaining": 148150000,
+        "spent": 250000000,
+        "status": "within",
+        "used": 0.629625
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 131196121,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 1.143326486001823,
+        "monthsToEnd": 16,
+        "received": 400000000,
+        "remaining": 148150000,
+        "spent": 250000000,
+        "status": "within",
+        "used": 0.629625
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 20904876,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 7.175359471158786,
+        "monthsToEnd": 5.946611909650924,
+        "received": 400000000,
+        "remaining": 148150000,
+        "spent": 250000000,
+        "status": "within",
+        "used": 0.629625
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 13.010266940451745,
+        "received": 0,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 11.991786447638603,
+        "received": 0,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 11.860369609856264,
+        "received": 600000000,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 11.071868583162217,
+        "received": 600000000,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 1.0184804928131417,
+        "received": 600000000,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": null,
+        "monthsToEnd": 11.991786447638603,
+        "received": 0,
+        "remaining": 3400000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 75000000,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 44.333333333333336,
+        "monthsToEnd": 10.973305954825461,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 67141544,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 49.52224512441954,
+        "monthsToEnd": 10.841889117043122,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 39358836,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 84.4791243318273,
+        "monthsToEnd": 10.053388090349076,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-harambee-2026",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 3400000000,
+        "burnPerMonth": 6271463,
+        "committed": 0,
+        "grantId": "grant-harambee-2026",
+        "monthsLeft": 530.1793217946116,
+        "monthsToEnd": 0,
+        "received": 850000000,
+        "remaining": 3325000000,
+        "spent": 75000000,
+        "status": "within",
+        "used": 0.022058823529411766
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": null,
+        "monthsToEnd": 11.991786447638603,
+        "received": 0,
+        "remaining": 320000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 1230000,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 259.1626016260163,
+        "monthsToEnd": 10.973305954825461,
+        "received": 320000000,
+        "remaining": 318770000,
+        "spent": 1230000,
+        "status": "within",
+        "used": 0.00384375
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 109463142,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 1.8063153166204566,
+        "monthsToEnd": 10.841889117043122,
+        "received": 320000000,
+        "remaining": 197724950,
+        "spent": 122275050,
+        "status": "within",
+        "used": 0.38210953125
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 64168049,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 3.0813614108791123,
+        "monthsToEnd": 10.053388090349076,
+        "received": 320000000,
+        "remaining": 197724950,
+        "spent": 122275050,
+        "status": "within",
+        "used": 0.38210953125
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-northlight-2026",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 320000000,
+        "burnPerMonth": 10224579,
+        "committed": 0,
+        "grantId": "grant-northlight-2026",
+        "monthsLeft": 19.33819964616636,
+        "monthsToEnd": 0,
+        "received": 320000000,
+        "remaining": 197724950,
+        "spent": 122275050,
+        "status": "within",
+        "used": 0.38210953125
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 0,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": null,
+        "monthsToEnd": 17.93839835728953,
+        "received": 0,
+        "remaining": 398150000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.004625
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 250000000,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 0.6,
+        "monthsToEnd": 16.919917864476385,
+        "received": 400000000,
+        "remaining": 148150000,
+        "spent": 250000000,
+        "status": "within",
+        "used": 0.629625
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 224591413,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 0.6639688713299114,
+        "monthsToEnd": 16.788501026694046,
+        "received": 400000000,
+        "remaining": 147271707,
+        "spent": 250878293,
+        "status": "within",
+        "used": 0.6318207325
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 131657035,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 1.1326527822839092,
+        "monthsToEnd": 16,
+        "received": 400000000,
+        "remaining": 147271707,
+        "spent": 250878293,
+        "status": "within",
+        "used": 0.6318207325
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-kisima-wash",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 400000000,
+        "burnPerMonth": 20978319,
+        "committed": 1850000,
+        "grantId": "grant-kisima-wash",
+        "monthsLeft": 7.1083725535873485,
+        "monthsToEnd": 5.946611909650924,
+        "received": 400000000,
+        "remaining": 147271707,
+        "spent": 250878293,
+        "status": "within",
+        "used": 0.6318207325
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 13.010266940451745,
+        "received": 0,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 11.991786447638603,
+        "received": 0,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 11.860369609856264,
+        "received": 600000000,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 11.071868583162217,
+        "received": 600000000,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "grant-paef-education",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 600000000,
+        "burnPerMonth": 0,
+        "committed": 18600000,
+        "grantId": "grant-paef-education",
+        "monthsLeft": null,
+        "monthsToEnd": 1.0184804928131417,
+        "received": 600000000,
+        "remaining": 581400000,
+        "spent": 0,
+        "status": "within",
+        "used": 0.031
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "fx-0041",
+        "2025-12-31"
+      ],
+      "result": {
+        "award": 150000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "fx-0041",
+        "monthsLeft": null,
+        "monthsToEnd": 6.965092402464066,
+        "received": 0,
+        "remaining": 150000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "fx-0041",
+        "2026-01-31"
+      ],
+      "result": {
+        "award": 150000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "fx-0041",
+        "monthsLeft": null,
+        "monthsToEnd": 5.946611909650924,
+        "received": 0,
+        "remaining": 150000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "fx-0041",
+        "2026-02-04"
+      ],
+      "result": {
+        "award": 150000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "fx-0041",
+        "monthsLeft": null,
+        "monthsToEnd": 5.815195071868583,
+        "received": 0,
+        "remaining": 150000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "fx-0041",
+        "2026-02-28"
+      ],
+      "result": {
+        "award": 150000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "fx-0041",
+        "monthsLeft": null,
+        "monthsToEnd": 5.026694045174538,
+        "received": 0,
+        "remaining": 150000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "fx-0041",
+        "2026-12-31"
+      ],
+      "result": {
+        "award": 150000000,
+        "burnPerMonth": 0,
+        "committed": 0,
+        "grantId": "fx-0041",
+        "monthsLeft": null,
+        "monthsToEnd": 0,
+        "received": 0,
+        "remaining": 150000000,
+        "spent": 0,
+        "status": "within",
+        "used": 0
+      },
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "grantSummary"
+  ],
+  "description": "grantSummary(state, grantId, asOf) from reports.ts. Every grant at every as-of date. used, monthsLeft and monthsToEnd are floats. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-grant-summary",
+  "function": "grantSummary",
+  "signature": "grantSummary(state, grantId, asOf)",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#grantSummary"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

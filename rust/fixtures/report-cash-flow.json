@@ -1,0 +1,279 @@
+{
+  "cases": [
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31"
+      ],
+      "result": {
+        "closing": 346000000,
+        "difference": 0,
+        "financing": 346000000,
+        "investing": 0,
+        "net": 346000000,
+        "opening": 0,
+        "operating": {
+          "net": 0,
+          "payments": 0,
+          "receipts": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31"
+      ],
+      "result": {
+        "closing": 1342895000,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 996895000,
+        "opening": 346000000,
+        "operating": {
+          "net": 996895000,
+          "payments": -573105000,
+          "receipts": 1570000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28"
+      ],
+      "result": {
+        "closing": 1818095000,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 475200000,
+        "opening": 1342895000,
+        "operating": {
+          "net": 475200000,
+          "payments": -124800000,
+          "receipts": 600000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31"
+      ],
+      "result": {
+        "closing": 346000000,
+        "difference": 0,
+        "financing": 346000000,
+        "investing": 0,
+        "net": 346000000,
+        "opening": 0,
+        "operating": {
+          "net": 0,
+          "payments": 0,
+          "receipts": 0
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31"
+      ],
+      "result": {
+        "closing": 1818095000,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 1472095000,
+        "opening": 346000000,
+        "operating": {
+          "net": 1472095000,
+          "payments": -697905000,
+          "receipts": 2170000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04"
+      ],
+      "result": {
+        "closing": 1818095000,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 1472095000,
+        "opening": 346000000,
+        "operating": {
+          "net": 1472095000,
+          "payments": -697905000,
+          "receipts": 2170000000
+        }
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-01",
+        "2025-12-31"
+      ],
+      "result": {
+        "closing": 346000000,
+        "difference": 0,
+        "financing": 346000000,
+        "investing": 0,
+        "net": 346000000,
+        "opening": 0,
+        "operating": {
+          "net": 0,
+          "payments": 0,
+          "receipts": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-01-31"
+      ],
+      "result": {
+        "closing": 1343236200,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 997236200,
+        "opening": 346000000,
+        "operating": {
+          "net": 997236200,
+          "payments": -573105000,
+          "receipts": 1570341200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-01",
+        "2026-02-28"
+      ],
+      "result": {
+        "closing": 1815772450,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 472536250,
+        "opening": 1343236200,
+        "operating": {
+          "net": 472536250,
+          "payments": -127583750,
+          "receipts": 600120000
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-01",
+        "2026-12-31"
+      ],
+      "result": {
+        "closing": 1815772450,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 0,
+        "opening": 1815772450,
+        "operating": {
+          "net": 0,
+          "payments": 0,
+          "receipts": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-01-01",
+        "2025-12-31"
+      ],
+      "result": {
+        "closing": 346000000,
+        "difference": 0,
+        "financing": 346000000,
+        "investing": 0,
+        "net": 346000000,
+        "opening": 0,
+        "operating": {
+          "net": 0,
+          "payments": 0,
+          "receipts": 0
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-12-31"
+      ],
+      "result": {
+        "closing": 1815772450,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 1469772450,
+        "opening": 346000000,
+        "operating": {
+          "net": 1469772450,
+          "payments": -700688750,
+          "receipts": 2170461200
+        }
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-01",
+        "2026-02-04"
+      ],
+      "result": {
+        "closing": 1815772450,
+        "difference": 0,
+        "financing": 0,
+        "investing": 0,
+        "net": 1469772450,
+        "opening": 346000000,
+        "operating": {
+          "net": 1469772450,
+          "payments": -700688750,
+          "receipts": 2170461200
+        }
+      },
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "cashFlow"
+  ],
+  "description": "cashFlow(state, from, to) from reports.ts. Same ranges as activities. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-cash-flow",
+  "function": "cashFlow",
+  "signature": "cashFlow(state, from, to)",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#cashFlow"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

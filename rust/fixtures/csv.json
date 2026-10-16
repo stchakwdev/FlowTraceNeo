@@ -1,0 +1,300 @@
+{
+  "covers": [
+    "parseCsv",
+    "parseCsvRecords",
+    "parseStatementDate",
+    "toCsv"
+  ],
+  "description": "The CSV reader and writer and statement dates: parseCsv, parseCsvRecords, toCsv and parseStatementDate (day-first, falling back to month-first only when day-first is impossible). Inputs from reconcile.test.ts plus edges.",
+  "env": null,
+  "fixture": "csv",
+  "parseCsv": [
+    {
+      "args": [
+        "a,\"b,c\",\"say \"\"hi\"\"\",\"line\nbreak\"\r\n"
+      ],
+      "result": [
+        [
+          "a",
+          "b,c",
+          "say \"hi\"",
+          "line\nbreak"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "a,b\r\n1,2\r\n"
+      ],
+      "result": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "1",
+          "2"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "﻿x,y\n\"q,1\",\"say \"\"hi\"\"\"\n"
+      ],
+      "result": [
+        [
+          "x",
+          "y"
+        ],
+        [
+          "q,1",
+          "say \"hi\""
+        ]
+      ]
+    },
+    {
+      "args": [
+        "a,b\n\n , \n3,4"
+      ],
+      "result": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "3",
+          "4"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "a,\"unterminated\nquote"
+      ],
+      "result": [
+        [
+          "a",
+          "unterminated\nquote"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "a,b,\n1,,3"
+      ],
+      "result": [
+        [
+          "a",
+          "b",
+          ""
+        ],
+        [
+          "1",
+          "",
+          "3"
+        ]
+      ]
+    },
+    {
+      "args": [
+        ""
+      ],
+      "result": []
+    }
+  ],
+  "parseCsvRecords": [
+    {
+      "args": [
+        "*Narration, Date ,AMOUNT\nx, 2026-01-01 ,5\ny"
+      ],
+      "result": {
+        "headers": [
+          "narration",
+          "date",
+          "amount"
+        ],
+        "records": [
+          {
+            "amount": "5",
+            "date": "2026-01-01",
+            "narration": "x"
+          },
+          {
+            "amount": "",
+            "date": "",
+            "narration": "y"
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        ""
+      ],
+      "result": {
+        "headers": [],
+        "records": []
+      }
+    }
+  ],
+  "parseStatementDate": [
+    {
+      "args": [
+        "2026-01-15 14:03:22"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "15/01/2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "15 Jan 2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "31/02/2026"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "01/15/2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "15-01-2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "15.01.2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "15-Jan-2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "15 January 2026"
+      ],
+      "result": "2026-01-15"
+    },
+    {
+      "args": [
+        "2026-1-5"
+      ],
+      "result": "2026-01-05"
+    },
+    {
+      "args": [
+        "5/1/2026"
+      ],
+      "result": "2026-01-05"
+    },
+    {
+      "args": [
+        "29/02/2028"
+      ],
+      "result": "2028-02-29"
+    },
+    {
+      "args": [
+        "29/02/2026"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "13/13/2026"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "00/01/2026"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        " 2026-02-03T10:12 "
+      ],
+      "result": "2026-02-03"
+    },
+    {
+      "args": [
+        "15 Foo 2026"
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        ""
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "garbage"
+      ],
+      "result": null
+    }
+  ],
+  "sources": [
+    "flowtrace/src/lib/ledger/csv.ts",
+    "flowtrace/src/lib/ledger/reconcile.test.ts"
+  ],
+  "toCsv": [
+    {
+      "args": [
+        [
+          [
+            "a",
+            "b,c",
+            "say \"hi\"",
+            "line\nbreak"
+          ]
+        ]
+      ],
+      "result": "a,\"b,c\",\"say \"\"hi\"\"\",\"line\nbreak\"\r\n"
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            2.5,
+            -3,
+            null,
+            null,
+            true
+          ],
+          [
+            "",
+            "x\ry"
+          ]
+        ]
+      ],
+      "result": "1,2.5,-3,,,true\r\n,\"x\ry\"\r\n"
+    },
+    {
+      "args": [
+        []
+      ],
+      "result": "\r\n"
+    }
+  ]
+}

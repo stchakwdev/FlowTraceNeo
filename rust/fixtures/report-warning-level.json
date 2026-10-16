@@ -1,0 +1,70 @@
+{
+  "cases": [
+    {
+      "args": [
+        0
+      ],
+      "result": "within"
+    },
+    {
+      "args": [
+        0.5
+      ],
+      "result": "within"
+    },
+    {
+      "args": [
+        0.7999999
+      ],
+      "result": "within"
+    },
+    {
+      "args": [
+        0.8
+      ],
+      "result": "warning"
+    },
+    {
+      "args": [
+        1
+      ],
+      "result": "warning"
+    },
+    {
+      "args": [
+        1.0000001
+      ],
+      "result": "over"
+    },
+    {
+      "args": [
+        2
+      ],
+      "result": "over"
+    },
+    {
+      "args": [
+        "Infinity"
+      ],
+      "result": "over"
+    },
+    {
+      "args": [
+        -1
+      ],
+      "result": "within"
+    }
+  ],
+  "covers": [
+    "warningLevel"
+  ],
+  "description": "warningLevel(used) from reports.ts. Pure: no books. Thresholds at 0.8 and 1. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-warning-level",
+  "function": "warningLevel",
+  "signature": "warningLevel(used)",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#warningLevel"
+  ],
+  "states": null
+}

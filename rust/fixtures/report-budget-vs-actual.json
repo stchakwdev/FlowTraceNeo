@@ -1,0 +1,5920 @@
+{
+  "cases": [
+    {
+      "args": [
+        {}
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "basis": "cash"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 4200000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.0875,
+          "variance": 43800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "budgetId": "budget-2026"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-harambee-2026"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-northlight-2026"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-kisima-wash"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-paef-education"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "dimensionId": "dim-a16"
+        }
+      ],
+      "result": [
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "to": "2025-12-31"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0,
+          "variance": 340000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0,
+          "variance": 240000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0,
+          "variance": 900000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0,
+          "variance": 1740000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0,
+          "variance": 60000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0,
+          "variance": 48000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0,
+          "variance": 120000000
+        },
+        {
+          "account": null,
+          "actual": 0,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "within",
+          "used": 0,
+          "variance": 180000000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-01-31"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0,
+          "variance": 240000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 4200000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.0875,
+          "variance": 43800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 79800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "within",
+          "used": 0.44333333333333336,
+          "variance": 100200000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-02-04"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-02-28"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-12-31"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 340000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7352941176470589,
+          "variance": 90000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        {}
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 3125000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.10416666666666667,
+          "variance": 26875000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 1597073,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "over",
+          "used": "Infinity",
+          "variance": -1597073
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "basis": "cash"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 3125000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.10416666666666667,
+          "variance": 26875000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 4200000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.0875,
+          "variance": 43800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 834695,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "over",
+          "used": "Infinity",
+          "variance": -834695
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "budgetId": "budget-2026"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 3125000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.10416666666666667,
+          "variance": 26875000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 1597073,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "over",
+          "used": "Infinity",
+          "variance": -1597073
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-harambee-2026"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-northlight-2026"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-kisima-wash"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "grantId": "grant-paef-education"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "grantId": "fx-0041"
+        }
+      ],
+      "result": [],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "dimensionId": "dim-a16"
+        }
+      ],
+      "result": [
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "to": "2025-12-31"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0,
+          "variance": 350000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0,
+          "variance": 240000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0,
+          "variance": 900000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0,
+          "variance": 1740000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0,
+          "variance": 60000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0,
+          "variance": 48000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0,
+          "variance": 120000000
+        },
+        {
+          "account": null,
+          "actual": 0,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "within",
+          "used": 0,
+          "variance": 180000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "within",
+          "used": 0,
+          "variance": 0
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-01-31"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0,
+          "variance": 240000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 2850000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.095,
+          "variance": 27150000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 4200000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.0875,
+          "variance": 43800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 79800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "within",
+          "used": 0.44333333333333336,
+          "variance": 100200000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "within",
+          "used": 0,
+          "variance": 0
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-02-04"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 3125000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.10416666666666667,
+          "variance": 26875000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 1597073,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "over",
+          "used": "Infinity",
+          "variance": -1597073
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-02-28"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 3125000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.10416666666666667,
+          "variance": 26875000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 1597073,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "over",
+          "used": "Infinity",
+          "variance": -1597073
+        }
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        {
+          "to": "2026-12-31"
+        }
+      ],
+      "result": [
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5100",
+            "expense_function": "program",
+            "id": "acc-5100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Water and sanitation",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 250000000,
+          "budget": 350000000,
+          "label": "5100 Programme: Water and sanitation · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0038",
+          "status": "within",
+          "used": 0.7142857142857143,
+          "variance": 100000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5700",
+            "expense_function": "program",
+            "id": "acc-5700",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Field travel",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 30000000,
+          "label": "5700 Field travel · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-0039",
+          "status": "within",
+          "used": 0,
+          "variance": 30000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 5000000,
+          "label": "7400 Communication and mobile money fees · Kisima WASH: Turkana boreholes",
+          "lineId": "demo-003a",
+          "status": "within",
+          "used": 0,
+          "variance": 5000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5500",
+            "expense_function": "program",
+            "id": "acc-5500",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme equipment and supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 120000000,
+          "budget": 240000000,
+          "label": "5500 Programme equipment and supplies · Northlight maternal health 2026",
+          "lineId": "demo-003b",
+          "status": "within",
+          "used": 0.5,
+          "variance": 120000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · Northlight maternal health 2026",
+          "lineId": "demo-003c",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5300",
+            "expense_function": "program",
+            "id": "acc-5300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Programme: Education",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 520000000,
+          "label": "5300 Programme: Education · PAEF education grant",
+          "lineId": "demo-003d",
+          "status": "within",
+          "used": 0,
+          "variance": 520000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 80000000,
+          "label": "5600 Training and workshops · PAEF education grant",
+          "lineId": "demo-003e",
+          "status": "within",
+          "used": 0,
+          "variance": 80000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5400",
+            "expense_function": "program",
+            "id": "acc-5400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Stipends and transfers to beneficiaries",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 75000000,
+          "budget": 900000000,
+          "label": "5400 Stipends and transfers to beneficiaries · Harambee core support 2026",
+          "lineId": "demo-003f",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 825000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "6100",
+            "expense_function": "management",
+            "id": "acc-6100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Salaries and wages",
+            "normal_balance": "debit",
+            "parent_id": "acc-6000",
+            "type": "expense"
+          },
+          "actual": 145000000,
+          "budget": 1740000000,
+          "label": "6100 Salaries and wages",
+          "lineId": "demo-003g",
+          "status": "within",
+          "used": 0.08333333333333333,
+          "variance": 1595000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7100",
+            "expense_function": "management",
+            "id": "acc-7100",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Office supplies",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 3125000,
+          "budget": 30000000,
+          "label": "7100 Office supplies",
+          "lineId": "demo-003h",
+          "status": "within",
+          "used": 0.10416666666666667,
+          "variance": 26875000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7200",
+            "expense_function": "management",
+            "id": "acc-7200",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Vehicle running and maintenance",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 11500000,
+          "budget": 60000000,
+          "label": "7200 Vehicle running and maintenance",
+          "lineId": "demo-003i",
+          "status": "within",
+          "used": 0.19166666666666668,
+          "variance": 48500000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7300",
+            "expense_function": "management",
+            "id": "acc-7300",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Utilities",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 8180000,
+          "budget": 48000000,
+          "label": "7300 Utilities",
+          "lineId": "demo-003j",
+          "status": "within",
+          "used": 0.17041666666666666,
+          "variance": 39820000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7400",
+            "expense_function": "management",
+            "id": "acc-7400",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Communication and mobile money fees",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 0,
+          "budget": 18000000,
+          "label": "7400 Communication and mobile money fees",
+          "lineId": "demo-003k",
+          "status": "within",
+          "used": 0,
+          "variance": 18000000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "5600",
+            "expense_function": "program",
+            "id": "acc-5600",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Training and workshops",
+            "normal_balance": "debit",
+            "parent_id": "acc-5000",
+            "type": "expense"
+          },
+          "actual": 38000000,
+          "budget": 120000000,
+          "label": "5600 Training and workshops",
+          "lineId": "demo-003l",
+          "status": "within",
+          "used": 0.31666666666666665,
+          "variance": 82000000
+        },
+        {
+          "account": null,
+          "actual": 199800000,
+          "budget": 180000000,
+          "label": "All expenses · Field Operations",
+          "lineId": "demo-003m",
+          "status": "over",
+          "used": 1.11,
+          "variance": -19800000
+        },
+        {
+          "account": {
+            "cash_flow_class": "operating",
+            "code": "7450",
+            "expense_function": "program",
+            "id": "fx-0038",
+            "is_active": true,
+            "is_cash": false,
+            "is_group": false,
+            "name": "Internet, data and airtime",
+            "normal_balance": "debit",
+            "parent_id": "acc-7000",
+            "type": "expense"
+          },
+          "actual": 1597073,
+          "budget": 0,
+          "label": "7450 Internet, data and airtime · Feb 2026",
+          "lineId": "fx-0043",
+          "status": "over",
+          "used": "Infinity",
+          "variance": -1597073
+        }
+      ],
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "budgetVsActual"
+  ],
+  "description": "budgetVsActual(state, opts = {}) from reports.ts. used is a float (actual / budget), \"Infinity\" when the budget is 0 and actual > 0. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-budget-vs-actual",
+  "function": "budgetVsActual",
+  "signature": "budgetVsActual(state, opts = {})",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#budgetVsActual"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}
