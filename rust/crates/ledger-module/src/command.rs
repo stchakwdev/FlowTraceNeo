@@ -262,6 +262,24 @@ mod tests {
     }
 
     #[test]
+    fn a_seventeen_digit_rate_parses_to_the_nearest_double_as_json_parse_does() {
+        // serde_json's default float parser lands one ulp below here; JS `JSON.parse` and Rust's
+        // `str::parse` take the nearest double, as serde_json does with `float_roundtrip`
+        // (rust/Cargo.toml).
+        const RATE: &str = "1.3729230000000001";
+        let cmd = parse_command(&format!(
+            r#"{{"type":"entry.post","input":{{"date":"2026-02-04","memo":"FX","lines":[
+                {{"account_id":"acc-7100","debit":100,"currency":"USD","fx_rate":{RATE},
+                  "fund_id":"fund-unrestricted"}}]}}}}"#
+        ))
+        .unwrap();
+        let LedgerCommand::EntryPost { input } = cmd else {
+            panic!("not an entry.post: {cmd:?}");
+        };
+        assert_eq!(input.lines[0].fx_rate, Some(RATE.parse::<f64>().unwrap()));
+    }
+
+    #[test]
     fn a_result_json_starts_with_its_type_as_the_ts_literal_does() {
         let json = result_json(&CommandResult::Id {
             id: "fx-0001".to_owned(),
