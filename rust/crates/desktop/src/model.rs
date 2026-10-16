@@ -161,6 +161,7 @@ pub struct LedgerView {
     status: ConnectionStatus,
     snapshot: Option<Arc<LedgerState>>,
     revision: u64,
+    remote: bool,
 }
 
 impl LedgerView {
@@ -178,7 +179,53 @@ impl LedgerView {
             status,
             snapshot,
             revision: 0,
+            remote: false,
         }
+    }
+
+    /// Marks the books as living on a server ([`crate::backend::LedgerBackend::is_remote`]), so
+    /// that not being connected means being offline.
+    pub fn set_remote(&mut self, remote: bool) {
+        self.remote = remote;
+    }
+
+    /// Whether the books live on a server.
+    #[must_use]
+    pub fn is_remote(&self) -> bool {
+        self.remote
+    }
+
+    /// The notice every screen shows above its content while the books on a server are not
+    /// live: the last books seen stay readable and writes are refused
+    /// ([`crate::backend::BackendError::Offline`]). `None` while connected and for books that
+    /// live in the app.
+    #[must_use]
+    pub fn offline_notice(&self) -> Option<String> {
+        if !self.remote {
+            return None;
+        }
+        let books = self.snapshot.is_some();
+        let text = match (&self.status, books) {
+            (ConnectionStatus::Connected { .. }, _) => return None,
+            (ConnectionStatus::Connecting, true) => {
+                "Connecting. These are the last books seen; changes wait until the connection is up."
+                    .to_owned()
+            }
+            (ConnectionStatus::Connecting, false) => {
+                "Connecting to the server. The books show once they have loaded.".to_owned()
+            }
+            (ConnectionStatus::Disconnected | ConnectionStatus::Error { .. }, true) => {
+                "You are offline. These are the last books seen, and nothing can be saved until \
+                 you reconnect on the Connection screen."
+                    .to_owned()
+            }
+            (ConnectionStatus::Disconnected | ConnectionStatus::Error { .. }, false) => {
+                "You are offline and no books have loaded. Check the server on the Connection \
+                 screen."
+                    .to_owned()
+            }
+        };
+        Some(text)
     }
 
     /// Every organisation, in the backend's order.
@@ -267,7 +314,10 @@ impl LedgerView {
     /// The status bar text: the organisation, its currency and the connection.
     #[must_use]
     pub fn status_text(&self) -> String {
-        let connection = status_label(&self.status);
+        let connection = match &self.status {
+            ConnectionStatus::Disconnected if self.remote => "Offline".to_owned(),
+            status => status_label(status),
+        };
         match self.selected() {
             Some(org) => format!("{} · {} · {connection}", org.name, org.base_currency),
             None => format!("No organisation · {connection}"),
@@ -281,8 +331,42 @@ pub fn status_label(status: &ConnectionStatus) -> String {
     match status {
         ConnectionStatus::Disconnected => "Not connected, local books".to_owned(),
         ConnectionStatus::Connecting => "Connecting".to_owned(),
-        ConnectionStatus::Connected { identity } => format!("Connected as {identity}"),
+        ConnectionStatus::Connected { identity } => {
+            format!("Connected as {}", short_identity(identity))
+        }
         ConnectionStatus::Error { message } => format!("Connection error: {message}"),
+    }
+}
+
+/// The short form of an identity: its first eight hex digits, as `spacetime login show` and the
+/// TS client's settings page shorten it. Shorter names (the in-process `in-process`) stay whole.
+#[must_use]
+pub fn short_identity(identity: &str) -> String {
+    let hex = identity.trim_start_matches("0x");
+    if hex.len() > 16 && hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        hex[..8].to_owned()
+    } else {
+        identity.to_owned()
+    }
+}
+
+/// The Connection screen's sentence on the status: what the books on screen are and whether
+/// changes are saved.
+#[must_use]
+pub fn connection_summary(status: &ConnectionStatus, remote: bool) -> String {
+    match (status, remote) {
+        (ConnectionStatus::Disconnected, false) => {
+            "Not connected. These are the demo books in the app; nothing is saved.".to_owned()
+        }
+        (ConnectionStatus::Disconnected, true) => {
+            "Disconnected. The last books seen stay on screen; nothing can be saved.".to_owned()
+        }
+        (ConnectionStatus::Connected { identity }, _) => format!(
+            "Connected as {}. The identity is kept in the token file, so the next start \
+             connects as the same identity.",
+            short_identity(identity)
+        ),
+        (other, _) => status_label(other),
     }
 }
 
@@ -548,6 +632,98 @@ mod tests {
         assert_eq!(view.status_text(), "Alpha · KES · Connected as c200abcd");
         let empty = LedgerView::new(vec![], ConnectionStatus::Connecting, None);
         assert_eq!(empty.status_text(), "No organisation · Connecting");
+    }
+
+    #[test]
+    fn remote_books_show_an_offline_notice_unless_connected() {
+        let mut local = view();
+        assert_eq!(
+            local.offline_notice(),
+            None,
+            "in-app books are never offline"
+        );
+
+        let mut remote = LedgerView::new(vec![], ConnectionStatus::Connecting, None);
+        remote.set_remote(true);
+        assert!(
+            remote
+                .offline_notice()
+                .unwrap()
+                .starts_with("Connecting to the server")
+        );
+
+        let id = "c2008f29".repeat(8);
+        remote.apply(vec![
+            BackendEvent::Organisations(vec![org("a", "Alpha")]),
+            BackendEvent::Ledger {
+                org: OrganizationId::from("a"),
+                state: books(),
+            },
+            BackendEvent::Status(ConnectionStatus::Connected {
+                identity: id.clone(),
+            }),
+        ]);
+        assert_eq!(remote.offline_notice(), None);
+        assert_eq!(remote.status_text(), "Alpha · KES · Connected as c2008f29");
+
+        remote.apply(vec![BackendEvent::Status(ConnectionStatus::Error {
+            message: "connection reset".to_owned(),
+        })]);
+        assert!(remote.snapshot().is_some(), "the last books stay");
+        assert!(
+            remote
+                .offline_notice()
+                .unwrap()
+                .starts_with("You are offline. These are the last books seen")
+        );
+        remote.apply(vec![BackendEvent::Status(ConnectionStatus::Disconnected)]);
+        assert_eq!(remote.status_text(), "Alpha · KES · Offline");
+
+        let mut empty = LedgerView::new(vec![], ConnectionStatus::Disconnected, None);
+        empty.set_remote(true);
+        assert!(
+            empty
+                .offline_notice()
+                .unwrap()
+                .starts_with("You are offline and no books")
+        );
+
+        local.apply(vec![BackendEvent::Status(ConnectionStatus::Disconnected)]);
+        assert_eq!(local.offline_notice(), None);
+    }
+
+    #[test]
+    fn the_connection_screen_says_what_the_books_are() {
+        assert!(connection_summary(&ConnectionStatus::Disconnected, false).contains("demo books"));
+        assert!(
+            connection_summary(&ConnectionStatus::Disconnected, true).starts_with("Disconnected.")
+        );
+        assert!(
+            connection_summary(
+                &ConnectionStatus::Connected {
+                    identity: "c2008f29".repeat(8)
+                },
+                true
+            )
+            .starts_with("Connected as c2008f29.")
+        );
+        assert_eq!(
+            connection_summary(
+                &ConnectionStatus::Error {
+                    message: "refused".to_owned()
+                },
+                true
+            ),
+            "Connection error: refused"
+        );
+    }
+
+    #[test]
+    fn identities_shorten_to_eight_hex_digits() {
+        let id = "c2008f29".repeat(8);
+        assert_eq!(short_identity(&id), "c2008f29");
+        assert_eq!(short_identity(&format!("0x{id}")), "c2008f29");
+        assert_eq!(short_identity("in-process"), "in-process");
     }
 
     #[test]

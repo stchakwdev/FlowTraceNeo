@@ -363,14 +363,21 @@ impl BillsPanel {
         self.load_detail();
     }
 
+    /// [`crate::panels::submit`] with a refusal as a "Not done" [`Failure`].
     fn submit(
-        &self,
+        &mut self,
         command: LedgerCommand,
         cx: &mut Context<Self>,
-    ) -> Result<CommandResult, Failure> {
-        self.store
-            .update(cx, |store, _| store.submit(command))
-            .map_err(|err| Failure::new("Not done", &err))
+        then: impl FnOnce(&mut Self, Result<CommandResult, Failure>, &mut Context<Self>) + 'static,
+    ) {
+        let store = self.store.clone();
+        crate::panels::submit(self, &store, command, cx, move |this, result, cx| {
+            then(
+                this,
+                result.map_err(|err| Failure::new("Not done", &err)),
+                cx,
+            );
+        });
     }
 
     // Vendors.
@@ -396,19 +403,20 @@ impl BillsPanel {
             Err(message) => self.vendor_error = Some(message),
             Ok(command) => {
                 self.vendor_error = None;
-                match self.submit(command, cx) {
+                let done = format!("Added {}.", form.name.trim());
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(_) => {
-                        self.vendor_open = false;
-                        self.vendor_failure = None;
-                        self.vendor_done = Some(format!("Added {}.", form.name.trim()));
+                        this.vendor_open = false;
+                        this.vendor_failure = None;
+                        this.vendor_done = Some(done);
                     }
                     Err(f) => {
-                        self.vendor_failure = Some(Failure {
+                        this.vendor_failure = Some(Failure {
                             title: "Not added".into(),
                             ..f
                         });
                     }
-                }
+                });
             }
         }
         cx.notify();
@@ -628,23 +636,23 @@ impl BillsPanel {
             }
             Ok(command) => {
                 self.form_errors = BillErrors::default();
-                match self.submit(command, cx) {
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(CommandResult::Id { id }) => {
-                        self.form = None;
-                        self.lines.clear();
-                        self.open_detail(BillId::from(id));
-                        self.done = Some(
+                        this.form = None;
+                        this.lines.clear();
+                        this.open_detail(BillId::from(id));
+                        this.done = Some(
                             "Saved as a draft. Someone with approval rights who did not enter \
                              it approves it next."
                                 .to_owned(),
                         );
                     }
                     Ok(_) => {
-                        self.form = None;
-                        self.page = Page::List;
+                        this.form = None;
+                        this.page = Page::List;
                     }
-                    Err(f) => self.form_failure = Some(f),
-                }
+                    Err(f) => this.form_failure = Some(f),
+                });
             }
         }
         cx.notify();
@@ -674,10 +682,10 @@ impl BillsPanel {
             self.pay_failure = None;
             self.pay_amount.update(cx, |i, cx| i.focus(window, cx));
         } else if let Some(command) = action.command(&detail.bill.id) {
-            match self.submit(command, cx) {
-                Ok(_) => self.done = Some(action.done().to_owned()),
-                Err(f) => self.action_failure = Some(f),
-            }
+            self.submit(command, cx, move |this, result, _| match result {
+                Ok(_) => this.done = Some(action.done().to_owned()),
+                Err(f) => this.action_failure = Some(f),
+            });
         }
         cx.notify();
     }
@@ -694,13 +702,13 @@ impl BillsPanel {
             Err(errors) => self.pay_errors = errors,
             Ok(command) => {
                 self.pay_errors = PayErrors::default();
-                match self.submit(command, cx) {
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(_) => {
-                        self.pay = None;
-                        self.done = Some(BillAction::Pay.done().to_owned());
+                        this.pay = None;
+                        this.done = Some(BillAction::Pay.done().to_owned());
                     }
-                    Err(f) => self.pay_failure = Some(f),
-                }
+                    Err(f) => this.pay_failure = Some(f),
+                });
             }
         }
         cx.notify();

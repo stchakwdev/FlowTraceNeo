@@ -443,10 +443,17 @@ impl GrantsPanel {
         );
     }
 
-    fn submit(&self, command: LedgerCommand, cx: &mut Context<Self>) -> Result<(), BackendError> {
-        self.store
-            .update(cx, |store, _| store.submit(command))
-            .map(|_| ())
+    /// [`crate::panels::submit`] with the result reduced to whether it went through.
+    fn submit(
+        &mut self,
+        command: LedgerCommand,
+        cx: &mut Context<Self>,
+        then: impl FnOnce(&mut Self, Result<(), BackendError>, &mut Context<Self>) + 'static,
+    ) {
+        let store = self.store.clone();
+        crate::panels::submit(self, &store, command, cx, move |this, result, cx| {
+            then(this, result.map(|_| ()), cx);
+        });
     }
 
     // The add-grant form.
@@ -502,16 +509,16 @@ impl GrantsPanel {
             }
             Ok(command) => {
                 self.add_errors = GrantErrors::default();
-                match self.submit(command, cx) {
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(()) => {
-                        self.add = None;
-                        self.add_failure = None;
+                        this.add = None;
+                        this.add_failure = None;
                     }
                     Err(err) => {
-                        self.add_failure = Some(Failure::new("Not added", &err));
-                        self.add = Some(form);
+                        this.add_failure = Some(Failure::new("Not added", &err));
+                        this.add = Some(form);
                     }
-                }
+                });
             }
         }
         cx.notify();
@@ -572,21 +579,26 @@ impl GrantsPanel {
         };
         form.amount = self.line_amount.read(cx).value().to_string();
         match form.command() {
-            Err(message) => self.line_error = Some(message),
+            Err(message) => {
+                self.line_error = Some(message);
+                self.line = Some(form);
+            }
             Ok(command) => {
                 self.line_error = None;
-                match self.submit(command, cx) {
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(()) => {
-                        self.line = None;
-                        self.line_failure = None;
-                        self.saved = Some("Budget line added.".to_owned());
+                        this.line = None;
+                        this.line_failure = None;
+                        this.saved = Some("Budget line added.".to_owned());
                     }
-                    Err(err) => self.line_failure = Some(Failure::new("Line not added", &err)),
-                }
+                    Err(err) => {
+                        this.line_failure = Some(Failure::new("Line not added", &err));
+                        if this.line.is_some() {
+                            this.line = Some(form);
+                        }
+                    }
+                });
             }
-        }
-        if self.line.is_some() {
-            self.line = Some(form);
         }
         cx.notify();
     }
@@ -612,22 +624,25 @@ impl GrantsPanel {
         };
         edit.value = self.edit_amount.read(cx).value().to_string();
         match edit.command(&self.base) {
-            Err(message) => self.edit_error = Some(message),
+            Err(message) => {
+                self.edit_error = Some(message);
+                self.edit = Some(edit);
+            }
             Ok((command, saved)) => {
                 self.edit_error = None;
-                match self.submit(command, cx) {
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(()) => {
-                        self.edit = None;
-                        self.edit_failure = None;
-                        self.saved = Some(saved);
-                        cx.notify();
-                        return;
+                        this.edit = None;
+                        this.edit_failure = None;
+                        this.saved = Some(saved);
                     }
-                    Err(err) => self.edit_failure = Some(Failure::new("Budget not changed", &err)),
-                }
+                    Err(err) => {
+                        this.edit_failure = Some(Failure::new("Budget not changed", &err));
+                        this.edit = Some(edit);
+                    }
+                });
             }
         }
-        self.edit = Some(edit);
         cx.notify();
     }
 

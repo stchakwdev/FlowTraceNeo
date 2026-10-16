@@ -442,11 +442,13 @@ impl JournalPanel {
     }
 
     fn submit(
-        &self,
+        &mut self,
         command: LedgerCommand,
         cx: &mut Context<Self>,
-    ) -> Result<CommandResult, BackendError> {
-        self.store.update(cx, |store, _| store.submit(command))
+        then: impl FnOnce(&mut Self, Result<CommandResult, BackendError>, &mut Context<Self>) + 'static,
+    ) {
+        let store = self.store.clone();
+        crate::panels::submit(self, &store, command, cx, then);
     }
 
     fn set_status(&mut self, status: Option<EntryStatus>) {
@@ -499,22 +501,32 @@ impl JournalPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        match self.submit(detail.post_command(reason), cx) {
-            Ok(_) => {
-                self.pending = None;
-                self.done = Some("Posted. The entry is in the books.".to_owned());
-            }
-            Err(err) => {
-                self.action_failure = Some(Failure::new(detail.failure_title(), &err));
-                if has_overridable(&err) && self.pending != Some(Pending::Override) {
-                    self.override_error = None;
-                    self.override_text
-                        .update(cx, |i, cx| i.set_value("", window, cx));
-                    self.override_text.update(cx, |i, cx| i.focus(window, cx));
-                    self.pending = Some(Pending::Override);
+        let store = self.store.clone();
+        let title = detail.failure_title();
+        let command = detail.post_command(reason);
+        crate::panels::submit_in(
+            self,
+            &store,
+            command,
+            window,
+            cx,
+            move |this, result, window, cx| match result {
+                Ok(_) => {
+                    this.pending = None;
+                    this.done = Some("Posted. The entry is in the books.".to_owned());
                 }
-            }
-        }
+                Err(err) => {
+                    this.action_failure = Some(Failure::new(title, &err));
+                    if has_overridable(&err) && this.pending != Some(Pending::Override) {
+                        this.override_error = None;
+                        this.override_text
+                            .update(cx, |i, cx| i.set_value("", window, cx));
+                        this.override_text.update(cx, |i, cx| i.focus(window, cx));
+                        this.pending = Some(Pending::Override);
+                    }
+                }
+            },
+        );
     }
 
     /// Confirms the open box.
@@ -530,37 +542,46 @@ impl JournalPanel {
                 }
                 Err(message) => self.override_error = Some(message),
             },
-            Pending::Delete(_) => match self.submit(detail.delete_command(), cx) {
-                Ok(_) => {
-                    self.back_to_list();
-                    self.done = Some(format!("{} deleted.", detail.entry.number));
-                }
-                Err(err) => {
-                    self.pending = None;
-                    self.action_failure = Some(Failure::new("Not done", &err));
-                }
-            },
+            Pending::Delete(_) => {
+                let number = detail.entry.number.clone();
+                self.submit(
+                    detail.delete_command(),
+                    cx,
+                    move |this, result, _| match result {
+                        Ok(_) => {
+                            this.back_to_list();
+                            this.done = Some(format!("{number} deleted."));
+                        }
+                        Err(err) => {
+                            this.pending = None;
+                            this.action_failure = Some(Failure::new("Not done", &err));
+                        }
+                    },
+                );
+            }
             Pending::Reverse(mut form) => {
                 form.date = self.reverse_date.read(cx).value().to_string();
                 form.reason = self.reverse_reason.read(cx).value().to_string();
                 match form.command(&detail.entry.id) {
                     Err(errors) => self.reverse_errors = errors,
-                    Ok(command) => match self.submit(command, cx) {
-                        Ok(result) => {
-                            let number = detail.entry.number.clone();
-                            match created_entry(&result) {
-                                Some(id) => self.open_entry(id, cx),
-                                None => self.pending = None,
+                    Ok(command) => {
+                        let number = detail.entry.number.clone();
+                        self.submit(command, cx, move |this, result, cx| match result {
+                            Ok(result) => {
+                                match created_entry(&result) {
+                                    Some(id) => this.open_entry(id, cx),
+                                    None => this.pending = None,
+                                }
+                                this.done = Some(format!(
+                                    "{number} is reversed. This is the reversing entry."
+                                ));
                             }
-                            self.done = Some(format!(
-                                "{number} is reversed. This is the reversing entry."
-                            ));
-                        }
-                        Err(err) => {
-                            self.reverse_errors = ReverseErrors::default();
-                            self.action_failure = Some(Failure::new("Not reversed", &err));
-                        }
-                    },
+                            Err(err) => {
+                                this.reverse_errors = ReverseErrors::default();
+                                this.action_failure = Some(Failure::new("Not reversed", &err));
+                            }
+                        });
+                    }
                 }
             }
         }

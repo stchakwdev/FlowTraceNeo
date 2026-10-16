@@ -398,14 +398,16 @@ impl ReconcilePanel {
 
     /// Submits `command`; `Err` holds the refusal as `title` with the engine's messages.
     fn submit(
-        &self,
+        &mut self,
         command: LedgerCommand,
-        title: &str,
+        title: &'static str,
         cx: &mut Context<Self>,
-    ) -> Result<CommandResult, Failure> {
-        self.store
-            .update(cx, |s, _| s.submit(command))
-            .map_err(|e| Failure::new(title, &e))
+        then: impl FnOnce(&mut Self, Result<CommandResult, Failure>, &mut Context<Self>) + 'static,
+    ) {
+        let store = self.store.clone();
+        crate::panels::submit(self, &store, command, cx, move |this, result, cx| {
+            then(this, result.map_err(|e| Failure::new(title, &e)), cx);
+        });
     }
 
     // Accounts list and the add form.
@@ -446,15 +448,20 @@ impl ReconcilePanel {
             }
         };
         let name = form.name.trim().to_owned();
-        match self.submit(command, "Not added", cx) {
-            Ok(_) => {
-                self.add = None;
-                self.add_error = None;
-                self.add_failure = None;
-                self.add_done = Some(format!("Added {name}. Open it to import its statement."));
-            }
-            Err(f) => self.add_failure = Some(f),
-        }
+        self.submit(
+            command,
+            "Not added",
+            cx,
+            move |this, result, _| match result {
+                Ok(_) => {
+                    this.add = None;
+                    this.add_error = None;
+                    this.add_failure = None;
+                    this.add_done = Some(format!("Added {name}. Open it to import its statement."));
+                }
+                Err(f) => this.add_failure = Some(f),
+            },
+        );
         cx.notify();
     }
 
@@ -466,16 +473,22 @@ impl ReconcilePanel {
         };
         self.notice = None;
         self.failure = None;
-        match self.submit(auto_match_command(&bank), "That did not go through", cx) {
-            Ok(CommandResult::AutoMatch { result }) => {
-                self.auto = Some(auto_match_summary(&result));
-            }
-            Ok(_) => self.auto = None,
-            Err(f) => {
-                self.auto = None;
-                self.failure = Some(f);
-            }
-        }
+        let command = auto_match_command(&bank);
+        self.submit(
+            command,
+            "That did not go through",
+            cx,
+            |this, result, _| match result {
+                Ok(CommandResult::AutoMatch { result }) => {
+                    this.auto = Some(auto_match_summary(&result));
+                }
+                Ok(_) => this.auto = None,
+                Err(f) => {
+                    this.auto = None;
+                    this.failure = Some(f);
+                }
+            },
+        );
     }
 
     fn match_current(&mut self, cx: &mut Context<Self>) {
@@ -487,15 +500,21 @@ impl ReconcilePanel {
         };
         self.failure = None;
         self.auto = None;
-        match self.submit(match_command(&line.id, &c.journal_line), "Not matched", cx) {
-            Ok(_) => {
-                self.notice = Some(format!(
-                    "Matched \u{201c}{}\u{201d} to {}.",
-                    line.description, c.number
-                ));
-            }
-            Err(f) => self.failure = Some(f),
-        }
+        let command = match_command(&line.id, &c.journal_line);
+        self.submit(
+            command,
+            "Not matched",
+            cx,
+            move |this, result, _| match result {
+                Ok(_) => {
+                    this.notice = Some(format!(
+                        "Matched \u{201c}{}\u{201d} to {}.",
+                        line.description, c.number
+                    ));
+                }
+                Err(f) => this.failure = Some(f),
+            },
+        );
     }
 
     fn unmatch_current(&mut self, cx: &mut Context<Self>) {
@@ -507,15 +526,21 @@ impl ReconcilePanel {
         }
         self.failure = None;
         self.auto = None;
-        match self.submit(unmatch_command(&line.id), "That did not go through", cx) {
-            Ok(_) => {
-                self.notice = Some(format!(
-                    "Unmatched \u{201c}{}\u{201d}. It is back in the unmatched lines.",
-                    line.description
-                ));
-            }
-            Err(f) => self.failure = Some(f),
-        }
+        let command = unmatch_command(&line.id);
+        self.submit(
+            command,
+            "That did not go through",
+            cx,
+            move |this, result, _| match result {
+                Ok(_) => {
+                    this.notice = Some(format!(
+                        "Unmatched \u{201c}{}\u{201d}. It is back in the unmatched lines.",
+                        line.description
+                    ));
+                }
+                Err(f) => this.failure = Some(f),
+            },
+        );
     }
 
     // Import.
@@ -608,23 +633,28 @@ impl ReconcilePanel {
         let Some(command) = preview.command(&bank) else {
             return;
         };
-        match self.submit(command, "Not imported", cx) {
-            Ok(result) => {
-                let added = match result {
-                    CommandResult::Ids { ids } => ids.len(),
-                    _ => 0,
-                };
-                self.import = None;
-                self.auto = None;
-                self.failure = None;
-                self.notice = Some(import_notice(added, preview.rows.len()));
-            }
-            Err(f) => {
-                if let Some(import) = &mut self.import {
-                    import.failure = Some(f);
+        self.submit(
+            command,
+            "Not imported",
+            cx,
+            move |this, result, _| match result {
+                Ok(result) => {
+                    let added = match result {
+                        CommandResult::Ids { ids } => ids.len(),
+                        _ => 0,
+                    };
+                    this.import = None;
+                    this.auto = None;
+                    this.failure = None;
+                    this.notice = Some(import_notice(added, preview.rows.len()));
                 }
-            }
-        }
+                Err(f) => {
+                    if let Some(import) = &mut this.import {
+                        import.failure = Some(f);
+                    }
+                }
+            },
+        );
         cx.notify();
     }
 
@@ -715,17 +745,22 @@ impl ReconcilePanel {
             .find(|r| r.id == line)
             .map(|r| r.description.clone())
             .unwrap_or_default();
-        match self.submit(command, "Not posted", cx) {
-            Ok(_) => {
-                self.post = None;
-                self.auto = None;
-                self.failure = None;
-                self.notice = Some(format!(
-                    "Posted \u{201c}{description}\u{201d} as a new entry and matched it."
-                ));
-            }
-            Err(f) => self.post_failure = Some(f),
-        }
+        self.submit(
+            command,
+            "Not posted",
+            cx,
+            move |this, result, _| match result {
+                Ok(_) => {
+                    this.post = None;
+                    this.auto = None;
+                    this.failure = None;
+                    this.notice = Some(format!(
+                        "Posted \u{201c}{description}\u{201d} as a new entry and matched it."
+                    ));
+                }
+                Err(f) => this.post_failure = Some(f),
+            },
+        );
         cx.notify();
     }
 }

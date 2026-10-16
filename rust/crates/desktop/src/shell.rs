@@ -20,7 +20,11 @@ use gpui_kit::{
     px,
 };
 
-use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen, scroll_target};
+use crate::backend::ConnectionStatus;
+use crate::model::{
+    ConnectForm, LedgerView, NavEntry, Navigation, Screen, connection_summary, scroll_target,
+    status_label,
+};
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
@@ -44,6 +48,7 @@ pub struct Shell {
     general_ledger: Entity<GeneralLedgerPanel>,
     journal: Entity<JournalPanel>,
     org_select: Entity<SelectState<OrgItems>>,
+    org_items: OrgItems,
     host: Entity<InputState>,
     database: Entity<InputState>,
     token_path: Entity<InputState>,
@@ -58,18 +63,20 @@ pub struct Shell {
 }
 
 impl Shell {
-    /// Builds the shell over `store`, showing `nav`.
+    /// Builds the shell over `store`, showing `nav`, with the connect screen's fields filled
+    /// from `form`.
     pub fn new(
         store: Entity<LedgerStore>,
         nav: Navigation,
+        form: &ConnectForm,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let names = org_names(store.read(cx).view());
         let selected = (!names.is_empty()).then(|| IndexPath::new(0));
+        let org_items = names.clone();
         let org_select = cx.new(|cx| SelectState::new(names, selected, window, cx));
 
-        let form = ConnectForm::default();
         let host = cx.new(|cx| {
             InputState::new(window, cx)
                 .default_value(form.host.clone())
@@ -81,7 +88,9 @@ impl Shell {
                 .placeholder("flowtrace-ledger-dev")
         });
         let token_path = cx.new(|cx| {
-            InputState::new(window, cx).placeholder("~/.config/flowtrace/token (optional)")
+            InputState::new(window, cx)
+                .default_value(form.token_path.clone())
+                .placeholder("Next to config.toml when empty")
         });
 
         let accounts = cx.new(|cx| AccountsPanel::new(store.clone(), window, cx));
@@ -93,7 +102,10 @@ impl Shell {
         let reconcile = cx.new(|cx| ReconcilePanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
-            cx.observe(&store, |_, _, cx| cx.notify()),
+            cx.observe_in(&store, window, |shell, _, window, cx| {
+                shell.sync_orgs(window, cx);
+                cx.notify();
+            }),
             cx.subscribe_in(&org_select, window, Self::on_org_selected),
             cx.subscribe_in(&general_ledger, window, Self::on_open_entry),
         ];
@@ -108,6 +120,7 @@ impl Shell {
             general_ledger,
             journal,
             org_select,
+            org_items,
             host,
             database,
             token_path,
@@ -119,6 +132,24 @@ impl Shell {
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
+        }
+    }
+
+    /// Keeps the organisation picker on the store's list and selection: a live backend's list
+    /// arrives after the window opens and changes when a membership does.
+    fn sync_orgs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let view = self.store.read(cx).view();
+        let names = org_names(view);
+        let selected = view
+            .selected()
+            .and_then(|org| view.organisations().iter().position(|o| o.id == org.id))
+            .map(IndexPath::new);
+        if names != self.org_items {
+            self.org_items.clone_from(&names);
+            self.org_select.update(cx, |select, cx| {
+                select.set_items(names, window, cx);
+                select.set_selected_index(selected, window, cx);
+            });
         }
     }
 
@@ -255,18 +286,40 @@ impl Shell {
         };
         let outcome = form.validate().and_then(|settings| {
             self.store
-                .update(cx, |store, _| store.connect(settings))
+                .update(cx, |store, cx| store.connect(settings, cx))
                 .map_err(|err| err.to_string())
         });
         match outcome {
             Ok(()) => {
                 self.connect_error = None;
-                self.nav.close_connect();
                 window.focus(&self.focus, cx);
             }
             Err(message) => self.connect_error = Some(message.into()),
         }
         cx.notify();
+    }
+
+    fn disconnect(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
+        self.store.update(cx, |store, _| store.disconnect());
+        cx.notify();
+    }
+
+    fn open_org(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+        let org = self
+            .store
+            .read(cx)
+            .view()
+            .organisations()
+            .get(index)
+            .map(|org| org.id.clone());
+        if let Some(org) = org {
+            self.store
+                .update(cx, |store, cx| store.select_org(&org, cx));
+            self.sync_orgs(window, cx);
+            self.nav.close_connect();
+            window.focus(&self.focus, cx);
+            cx.notify();
+        }
     }
 
     fn toggle_theme(_: &ClickEvent, _: &mut Window, cx: &mut App) {
@@ -387,21 +440,36 @@ impl Shell {
 
     fn connect_screen(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let p = palette(cx.theme().mode);
-        let field = |label: &'static str, input: &Entity<InputState>| {
-            v_flex()
-                .gap(px(6.0))
-                .child(
-                    div()
-                        .text_size(px(text::BODY))
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .child(label),
-                )
-                .child(Input::new(input))
-        };
+        let field = connect_field;
+        let view = self.store.read(cx).view();
+        let status = view.status().clone();
+        let remote = view.is_remote();
+        let live = matches!(status, ConnectionStatus::Connected { .. });
+        let status_line = connection_summary(&status, remote);
         v_flex()
             .gap(px(space::SECTION))
             .max_w(px(560.0))
             .child(panels::page_title("Connect"))
+            .child(
+                v_flex()
+                    .child(panels::section_header(
+                        "Status",
+                        div()
+                            .text_size(px(12.0))
+                            .text_color(p.ink_muted.to_hsla())
+                            .child(status_label(&status)),
+                        cx,
+                    ))
+                    .child(
+                        div()
+                            .py(px(space::CELL))
+                            .text_size(px(text::BODY))
+                            .when(matches!(status, ConnectionStatus::Error { .. }), |d| {
+                                d.text_color(p.rejection_red.to_hsla())
+                            })
+                            .child(status_line),
+                    ),
+            )
             .child(
                 v_flex()
                     .child(panels::section_header("SpacetimeDB server", div(), cx))
@@ -414,8 +482,8 @@ impl Shell {
                                     .text_size(px(text::BODY))
                                     .text_color(p.ink_muted.to_hsla())
                                     .child(
-                                        "The live client arrives with U10. For now Connect records \
-                                         these values and marks the in-process books connected.",
+                                        "Connect opens the books this identity is a member of \
+                                         and remembers the server for the next start.",
                                     ),
                             )
                             .child(field("Server", &self.host))
@@ -436,8 +504,19 @@ impl Shell {
                                     .child(
                                         Button::new("connect")
                                             .primary()
-                                            .label("Connect")
+                                            .label(if remote { "Reconnect" } else { "Connect" })
                                             .on_click(cx.listener(Self::connect)),
+                                    )
+                                    .when(
+                                        remote && !matches!(status, ConnectionStatus::Disconnected),
+                                        |row| {
+                                            row.child(
+                                                Button::new("disconnect")
+                                                    .outline()
+                                                    .label("Disconnect")
+                                                    .on_click(cx.listener(Self::disconnect)),
+                                            )
+                                        },
                                     )
                                     .child(
                                         Button::new("back")
@@ -448,6 +527,100 @@ impl Shell {
                             ),
                     ),
             )
+            .child(self.org_section(live, cx))
+    }
+
+    /// The organisations this identity can open, with a count.
+    fn org_section(&self, live: bool, cx: &mut Context<Self>) -> impl IntoElement {
+        let p = palette(cx.theme().mode);
+        let org_count = self.store.read(cx).view().organisations().len().to_string();
+        let orgs = self.org_rows(cx);
+        let no_orgs = orgs.is_empty();
+        v_flex()
+            .child(panels::section_header(
+                "Organisations",
+                div()
+                    .text_size(px(12.0))
+                    .text_color(p.ink_muted.to_hsla())
+                    .child(org_count),
+                cx,
+            ))
+            .when(no_orgs, |list| {
+                list.child(div().py(px(space::CELL)).child(panels::hint(
+                    if live {
+                        "This identity is not a member of any organisation yet. Ask an \
+                                 operator to add it, then the books appear here."
+                    } else {
+                        "The organisations show once the books have loaded."
+                    },
+                    cx,
+                )))
+            })
+            .children(orgs)
+    }
+
+    /// The Connection screen's organisation rows; a click opens that organisation's books.
+    fn org_rows(&self, cx: &mut Context<Self>) -> Vec<gpui_kit::Stateful<gpui_kit::Div>> {
+        let p = palette(cx.theme().mode);
+        let view = self.store.read(cx).view();
+        let selected = view.selected().map(|org| org.id.clone());
+        view.organisations()
+            .iter()
+            .enumerate()
+            .map(|(index, org)| {
+                let current = selected.as_ref() == Some(&org.id);
+                h_flex()
+                    .id(("org", index))
+                    .h(px(space::NAV_ITEM))
+                    .px(px(12.0))
+                    .gap(px(12.0))
+                    .justify_between()
+                    .border_b(px(space::HAIRLINE))
+                    .border_color(p.hairline.to_hsla())
+                    .cursor_pointer()
+                    .hover(|row| row.bg(p.rail_hover.to_hsla()))
+                    .child(
+                        div()
+                            .font_weight(if current {
+                                FontWeight::BOLD
+                            } else {
+                                FontWeight::NORMAL
+                            })
+                            .child(org.name.clone()),
+                    )
+                    .child(
+                        div()
+                            .text_size(px(12.0))
+                            .text_color(p.ink_muted.to_hsla())
+                            .child(if current {
+                                format!("{} · open", org.base_currency)
+                            } else {
+                                org.base_currency.clone()
+                            }),
+                    )
+                    .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {
+                        shell.open_org(index, window, cx);
+                    }))
+            })
+            .collect()
+    }
+
+    /// The notice above every screen while the books on a server are not live
+    /// (`LedgerView::offline_notice`).
+    fn offline_notice(&self, cx: &App) -> Option<impl IntoElement> {
+        let p = palette(cx.theme().mode);
+        let text_ = self.store.read(cx).view().offline_notice()?;
+        Some(
+            div()
+                .mb(px(space::CELL))
+                .px(px(16.0))
+                .py(px(10.0))
+                .border_1()
+                .border_color(p.signal_orange.to_hsla())
+                .text_size(px(text::BODY))
+                .font_weight(FontWeight::SEMIBOLD)
+                .child(text_),
+        )
     }
 
     fn status_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -478,6 +651,19 @@ impl Shell {
                     .on_click(Self::toggle_theme),
             )
     }
+}
+
+/// One labelled field of the connect form.
+fn connect_field(label: &'static str, input: &Entity<InputState>) -> impl IntoElement {
+    v_flex()
+        .gap(px(6.0))
+        .child(
+            div()
+                .text_size(px(text::BODY))
+                .font_weight(FontWeight::SEMIBOLD)
+                .child(label),
+        )
+        .child(Input::new(input))
 }
 
 /// The organisation names, in the store's order, for the picker.
@@ -525,7 +711,10 @@ impl Render for Shell {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let p = palette(cx.theme().mode);
         let content: AnyElement = match self.nav.screen {
-            Screen::Books => self.panel(self.nav.entry),
+            Screen::Books => v_flex()
+                .children(self.offline_notice(cx))
+                .child(self.panel(self.nav.entry))
+                .into_any_element(),
             Screen::Connect => self.connect_screen(cx).into_any_element(),
         };
         v_flex()

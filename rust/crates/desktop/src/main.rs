@@ -3,7 +3,8 @@
 //! ```text
 //! desktop [--theme light|dark] [--screen books|connect] [--entry 1-7] [--report <id>]
 //!         [--large-books LINES] [--gl-account CODE] [--gl-row N] [--gl-scroll-bench on]
-//!         [--grants list|budgets|<grant id>]
+//!         [--grants list|budgets|<grant id>] [--server <url>] [--database <name>]
+//!         [--timings on]
 //! ```
 //!
 //! Without `--theme` the app follows the system appearance. `--screen` and `--entry` choose
@@ -12,7 +13,10 @@
 //! `--large-books` adds synthetic books with that many posted lines, selected first; the
 //! `--gl-*` flags filter the General ledger on an account code, open a row, or scroll the whole
 //! table once and log the frame times. `--grants` opens the Grants entry on its list, its
-//! budget tab or one grant (with `--entry 5`).
+//! budget tab or one grant (with `--entry 5`). `--server` and `--database` open the books on a
+//! SpacetimeDB server instead of the demo, over `flowtrace-books/config.toml` (README.md,
+//! Configuration); `--timings on` writes the time to the first books and each write's round
+//! trip to stderr.
 
 use anyhow::{Context as _, bail};
 use desktop::app::{Launch, run};
@@ -67,6 +71,9 @@ fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
             }
             "--grants" => launch.grants = Some(value),
             "--gl-scroll-bench" => launch.general_ledger.scroll_bench = value == "on",
+            "--server" => launch.server = Some(value),
+            "--database" => launch.database = Some(value),
+            "--timings" => launch.timings = value == "on",
             other => bail!("unknown option {other}"),
         }
     }
