@@ -8,16 +8,23 @@
 //! `ledger_core::reconcile::{parse_statement, candidates_for}` and the `statement.autoMatch`
 //! command (`flowtrace/src/lib/ledger/reconcile.ts:41-166`).
 
+use std::collections::{BTreeMap, BTreeSet};
+
 use ledger_core::LedgerCommand;
 use ledger_core::Minor;
-use ledger_core::commands::{NewBankAccount, StatementCounter};
+use ledger_core::coa_template::UNRESTRICTED_FUND_ID;
+use ledger_core::commands::{NewBankAccount, StatementCounter, StatementRow};
 use ledger_core::reconcile::{
-    AutoMatchResult, DEFAULT_WINDOW_DAYS, ParsedStatementRow, StatementFormat,
+    AutoMatchResult, DEFAULT_WINDOW_DAYS, ParsedStatementRow, StatementFormat, candidates_for,
+    parse_statement,
 };
+use ledger_core::reports::{LineFilter, balances, ledger_signals};
 use ledger_core::types::{
-    AccountId, BankAccountId, BankAccountKind, EntryId, FundId, GrantId, IsoDate, LedgerState,
-    LineId, StatementLine, StatementLineId,
+    AccountId, AccountType, BankAccountId, BankAccountKind, EntryId, EntryStatus, FundId, GrantId,
+    IsoDate, LedgerState, LineId, Nullish, SourceType, StatementLine, StatementLineId,
 };
+
+use crate::accounts::format_minor;
 
 /// The window auto-match uses (`$bankId.tsx:77`, `reconcile.ts:130`).
 pub const AUTO_WINDOW: u32 = DEFAULT_WINDOW_DAYS;
@@ -28,23 +35,49 @@ pub const MANUAL_WINDOW: u32 = 7;
 /// `KIND_LABEL` (`index.tsx:25`).
 #[must_use]
 pub fn kind_label(kind: BankAccountKind) -> &'static str {
-    let _ = kind;
-    ""
+    match kind {
+        BankAccountKind::Bank => "Bank",
+        BankAccountKind::MobileMoney => "Mobile money",
+        BankAccountKind::Cash => "Cash",
+    }
 }
 
 /// `FORMAT_LABEL` (`$bankId.tsx:69-74`).
 #[must_use]
 pub fn format_label(format: StatementFormat) -> &'static str {
-    let _ = format;
-    ""
+    match format {
+        StatementFormat::Mpesa => "Safaricom M-Pesa statement",
+        StatementFormat::Mtn => "MTN MoMo statement",
+        StatementFormat::Airtel => "Airtel Money statement",
+        StatementFormat::Bank => "Bank CSV",
+    }
 }
 
 /// `formatMinor(minor, { signed: true })` (`flowtrace/src/components/ledger/money.tsx:8-21`):
 /// a minus sign (U+2212) instead of parentheses, zero as an en dash.
 #[must_use]
 pub fn format_signed(minor: Minor) -> String {
-    let _ = minor;
-    String::new()
+    let text = format_minor(minor.abs());
+    if minor < 0 {
+        format!("\u{2212}{text}")
+    } else {
+        text
+    }
+}
+
+/// `Math.round(share * 100)` as `NN%`, `share` in 0..=1.
+fn percent(share: f64) -> String {
+    format!("{}%", ledger_core::money::js_round(share * 100.0))
+}
+
+/// The share `part / whole`, 0 for no whole.
+#[expect(clippy::cast_precision_loss, reason = "line counts, as the TS number")]
+fn share(part: usize, whole: usize) -> f64 {
+    if whole == 0 {
+        0.0
+    } else {
+        part as f64 / whole as f64
+    }
 }
 
 /// One bank or mobile-money account in the list (`index.tsx:30-47`).
@@ -83,15 +116,62 @@ impl BankRow {
     /// `No statement imported yet`.
     #[must_use]
     pub fn coverage_text(&self) -> String {
-        String::new()
+        if self.lines == 0 {
+            return "No statement imported yet".to_owned();
+        }
+        format!(
+            "{} of {} statement lines matched",
+            percent(share(self.matched, self.lines)),
+            self.lines
+        )
     }
+}
+
+/// Book balances at `as_of` (`balances(state, { to: asOf })`, `index.tsx:32`).
+fn book_balances(state: &LedgerState, as_of: &IsoDate) -> BTreeMap<AccountId, Minor> {
+    balances(
+        state,
+        &LineFilter {
+            to: Some(as_of.clone()),
+            ..LineFilter::default()
+        },
+    )
 }
 
 /// The accounts list (`index.tsx:30-47`), in the books' order.
 #[must_use]
 pub fn bank_rows(state: &LedgerState, as_of: &IsoDate) -> Vec<BankRow> {
-    let _ = (state, as_of);
-    Vec::new()
+    let bal = book_balances(state, as_of);
+    state
+        .bank_accounts
+        .iter()
+        .map(|bank| {
+            let lines: Vec<_> = state
+                .statement_lines
+                .iter()
+                .filter(|s| s.bank_account_id == bank.id)
+                .collect();
+            let matched = lines.iter().filter(|s| s.matched_line_id.is_some()).count();
+            BankRow {
+                id: bank.id.clone(),
+                name: bank.name.clone(),
+                kind: kind_label(bank.kind),
+                provider: bank.provider.clone(),
+                number_masked: bank.number_masked.clone(),
+                currency: bank.currency.clone(),
+                gl: state.account(&bank.account_id).map_or_else(
+                    || "Cash account".to_owned(),
+                    |a| format!("{} {}", a.code, a.name),
+                ),
+                ledger_balance: bal.get(&bank.account_id).copied().unwrap_or(0),
+                statement_balance: lines.iter().map(|s| s.amount).sum(),
+                lines: lines.len(),
+                matched,
+                unmatched: lines.len() - matched,
+                last: lines.iter().map(|s| s.date.clone()).max(),
+            }
+        })
+        .collect()
 }
 
 /// The key figures across all accounts (`index.tsx:49-91`).
@@ -110,12 +190,11 @@ pub struct Overview {
 /// The overview of `rows` on `state` at `as_of`.
 #[must_use]
 pub fn overview(state: &LedgerState, as_of: &IsoDate, rows: &[BankRow]) -> Overview {
-    let _ = (state, as_of, rows);
     Overview {
-        reconciled: String::new(),
-        accounts: 0,
-        lines: 0,
-        unmatched: 0,
+        reconciled: percent(ledger_signals(state, Some(as_of)).reconciled_share),
+        accounts: rows.len(),
+        lines: rows.iter().map(|r| r.lines).sum(),
+        unmatched: rows.iter().map(|r| r.unmatched).sum(),
     }
 }
 
@@ -158,7 +237,24 @@ impl NewBankForm {
     ///
     /// A message when the name or the account is missing.
     pub fn command(&self) -> Result<LedgerCommand, String> {
-        Err(String::new())
+        let name = self.name.trim();
+        if name.is_empty() {
+            return Err("Enter the account name.".to_owned());
+        }
+        let Some(account_id) = self.account.clone() else {
+            return Err("Choose the cash account in the chart it posts to.".to_owned());
+        };
+        Ok(LedgerCommand::BankAdd {
+            input: NewBankAccount {
+                id: None,
+                name: name.to_owned(),
+                kind: self.kind,
+                provider: self.provider.trim().to_owned(),
+                account_id,
+                currency: self.currency.trim().to_uppercase(),
+                number_masked: self.number_masked.trim().to_owned(),
+            },
+        })
     }
 }
 
@@ -181,46 +277,96 @@ pub struct ImportPreview {
 }
 
 impl ImportPreview {
-    /// The preview of `text` for `bank`, `None` for a blank text.
+    /// The preview of `text` for `bank`, `None` for a blank text (`$bankId.tsx:528-535`).
     #[must_use]
     pub fn of(state: &LedgerState, bank: &BankAccountId, text: &str) -> Option<Self> {
-        let _ = (state, bank, text);
-        None
+        if text.trim().is_empty() {
+            return None;
+        }
+        let parsed = parse_statement(text);
+        let money_in = parsed.rows.iter().map(|r| r.amount.max(0)).sum();
+        let money_out = parsed.rows.iter().map(|r| r.amount.min(0)).sum();
+        Some(Self {
+            format: parsed.format,
+            repeats: repeats(state, bank, &parsed.rows),
+            skipped: parsed
+                .skipped
+                .iter()
+                .map(|k| format!("Line {}: {}", k.line, k.reason))
+                .collect(),
+            rows: parsed.rows,
+            money_in,
+            money_out,
+        })
     }
 
     /// Rows the import will add.
     #[must_use]
     pub fn to_add(&self) -> usize {
-        0
+        self.rows.len() - self.repeats
     }
 
-    /// The Import button: `Import 3 lines`, or `Import` when nothing was read.
+    /// The Import button (`$bankId.tsx:584-590`): `Import 3 lines`, or `Import` when nothing
+    /// was read.
     #[must_use]
     pub fn button_label(&self) -> String {
-        String::new()
+        match self.rows.len() {
+            0 => "Import".to_owned(),
+            1 => "Import 1 line".to_owned(),
+            n => format!("Import {n} lines"),
+        }
     }
 
-    /// The `statement.import` command, `None` when no row was read.
+    /// The `statement.import` command, `None` when no row was read (`$bankId.tsx:558-567`).
     #[must_use]
     pub fn command(&self, bank: &BankAccountId) -> Option<LedgerCommand> {
-        let _ = bank;
-        None
+        (!self.rows.is_empty()).then(|| LedgerCommand::StatementImport {
+            bank_account_id: bank.clone(),
+            rows: self.rows.iter().cloned().map(StatementRow::from).collect(),
+        })
     }
 }
 
-/// How many of `rows` `importStatement` leaves out as already on `bank`'s statement
+/// The duplicate key of a statement line (`engine.ts:1166-1167`): date, amount, and the
+/// reference, or the description when there is none.
+fn statement_key(date: &IsoDate, amount: Minor, reference: Option<&str>, description: &str) -> String {
+    format!("{date}|{amount}|{}", reference.unwrap_or(description))
+}
+
+/// How many of `rows` `importStatement` leaves out as already on `bank`'s statement: a row is a
+/// repeat while earlier lines with its key outnumber the rows of this file that used them up
 /// (`flowtrace/src/lib/ledger/engine.ts:1166-1170`).
 #[must_use]
 pub fn repeats(state: &LedgerState, bank: &BankAccountId, rows: &[ParsedStatementRow]) -> usize {
-    let _ = (state, bank, rows);
-    0
+    let mut earlier: BTreeMap<String, usize> = BTreeMap::new();
+    for s in state.statement_lines.iter().filter(|s| &s.bank_account_id == bank) {
+        let key = statement_key(&s.date, s.amount, s.reference.as_deref(), &s.description);
+        *earlier.entry(key).or_default() += 1;
+    }
+    rows.iter()
+        .filter(|r| {
+            let key = statement_key(&r.date, r.amount, r.reference.as_deref(), &r.description);
+            earlier.get_mut(&key).is_some_and(|left| {
+                let repeat = *left > 0;
+                *left = left.saturating_sub(1);
+                repeat
+            })
+        })
+        .count()
 }
 
 /// The notice after an import (`$bankId.tsx:313-320`).
 #[must_use]
 pub fn import_notice(added: usize, total: usize) -> String {
-    let _ = (added, total);
-    String::new()
+    if added == total {
+        let noun = if added == 1 { "line" } else { "lines" };
+        format!("{added} statement {noun} imported. Run Auto-match to pair them with the books.")
+    } else {
+        format!(
+            "{added} of {total} lines imported; {} were already on this statement and were left out.",
+            total - added
+        )
+    }
 }
 
 /// A statement line's state (`MatchState`, `$bankId.tsx:80-83`), with Posted split out of
@@ -253,27 +399,69 @@ impl LineStatus {
     /// `MATCH_LABEL` (`flowtrace/src/components/ledger/reports/match-mark.tsx:9-14`).
     #[must_use]
     pub fn label(self) -> &'static str {
-        ""
+        match self {
+            Self::Auto => "Matched automatically",
+            Self::Manual => "Matched by hand",
+            Self::Posted => "Posted from the statement",
+            Self::Ambiguous => "Needs a decision",
+            Self::Unmatched => "Unmatched",
+        }
     }
 
     /// `MATCH_SHORT` (`match-mark.tsx:16-21`).
     #[must_use]
     pub fn short(self) -> &'static str {
-        ""
+        match self {
+            Self::Auto => "Auto",
+            Self::Manual => "By hand",
+            Self::Posted => "Posted",
+            Self::Ambiguous => "Needs a decision",
+            Self::Unmatched => "Unmatched",
+        }
     }
 
     /// Matched in any way.
     #[must_use]
     pub fn matched(self) -> bool {
-        false
+        matches!(self, Self::Auto | Self::Manual | Self::Posted)
     }
 }
 
-/// `matchState` (`$bankId.tsx:80-83`) with Posted.
+/// `matchState` (`$bankId.tsx:80-83`) with Posted: a matched line is Auto or else Manual, or
+/// Posted when its journal line's entry came from this statement line
+/// (`postFromStatementLine`, `engine.ts:1226-1252`); an open line is Ambiguous when auto-match
+/// would see more than one candidate.
 #[must_use]
 pub fn status_of(state: &LedgerState, line: &StatementLine) -> LineStatus {
-    let _ = (state, line);
-    LineStatus::Unmatched
+    match (&line.matched_line_id, line.match_kind) {
+        (Some(_), Some(ledger_core::types::MatchKind::Auto)) => LineStatus::Auto,
+        (Some(id), _) => {
+            let posted = matched_entry(state, id).is_some_and(|e| {
+                e.source_type == SourceType::Statement
+                    && e.source_id.as_deref() == Some(line.id.as_str())
+            });
+            if posted {
+                LineStatus::Posted
+            } else {
+                LineStatus::Manual
+            }
+        }
+        (None, _) if candidates_for(state, line, AUTO_WINDOW, &[]).len() > 1 => {
+            LineStatus::Ambiguous
+        }
+        (None, _) => LineStatus::Unmatched,
+    }
+}
+
+fn matched_entry<'a>(
+    state: &'a LedgerState,
+    line: &LineId,
+) -> Option<&'a ledger_core::types::JournalEntry> {
+    state
+        .lines
+        .iter()
+        .find(|l| &l.id == line)
+        .and_then(|l| state.entry(&l.entry_id))
 }
 
 /// One statement line on the account page (`$bankId.tsx:96-105`).
@@ -295,18 +483,38 @@ pub struct LineRow {
     pub entry: Option<(EntryId, String)>,
 }
 
-/// The statement lines of `bank`, latest first, ties in import order (`$bankId.tsx:96-105`).
+/// The statement lines of `bank`, latest first, ties in import order (`$bankId.tsx:96-105`;
+/// `Array.prototype.sort` is stable).
 #[must_use]
 pub fn line_rows(state: &LedgerState, bank: &BankAccountId) -> Vec<LineRow> {
-    let _ = (state, bank);
-    Vec::new()
+    let mut rows: Vec<LineRow> = state
+        .statement_lines
+        .iter()
+        .filter(|s| &s.bank_account_id == bank)
+        .map(|s| LineRow {
+            id: s.id.clone(),
+            date: s.date.clone(),
+            description: s.description.clone(),
+            reference: s.reference.clone(),
+            amount: s.amount,
+            status: status_of(state, s),
+            entry: s
+                .matched_line_id
+                .as_ref()
+                .and_then(|id| matched_entry(state, id))
+                .map(|e| (e.id.clone(), e.number.clone())),
+        })
+        .collect();
+    rows.sort_by(|a, b| b.date.cmp(&a.date));
+    rows
 }
 
-/// The lines in each state (`$bankId.tsx:107-111`).
+/// The lines in `status`, every line for `None` (`$bankId.tsx:107-111`).
 #[must_use]
 pub fn count(rows: &[LineRow], status: Option<LineStatus>) -> usize {
-    let _ = (rows, status);
-    0
+    rows.iter()
+        .filter(|r| status.is_none_or(|s| r.status == s))
+        .count()
 }
 
 /// One candidate journal line for an open statement line (`MatchDialog`, `$bankId.tsx:719-800`).
@@ -329,19 +537,44 @@ pub struct CandidateRow {
 }
 
 impl CandidateRow {
-    /// `Same day`, `1 day apart`, `n days apart`, then ` · Reference matches` when it does.
+    /// `Same day`, `1 day apart`, `n days apart`, then ` · Reference matches` when it does
+    /// (`$bankId.tsx:783-786`).
     #[must_use]
     pub fn gap_text(&self) -> String {
-        String::new()
+        let gap = match self.day_gap {
+            0 => "Same day".to_owned(),
+            1 => "1 day apart".to_owned(),
+            n => format!("{n} days apart"),
+        };
+        if self.reference_match {
+            format!("{gap} \u{b7} Reference matches")
+        } else {
+            gap
+        }
     }
 }
 
 /// The candidates of statement line `line` within `window` days, in the engine's order:
-/// reference matches first, then by day gap, ties in line order (`candidates_for`).
+/// reference matches first, then by day gap, ties in line order (`candidates_for`,
+/// `reconcile.ts:110-127`).
 #[must_use]
 pub fn candidates(state: &LedgerState, line: &StatementLineId, window: u32) -> Vec<CandidateRow> {
-    let _ = (state, line, window);
-    Vec::new()
+    let Some(s) = state.statement_lines.iter().find(|s| &s.id == line) else {
+        return Vec::new();
+    };
+    candidates_for(state, s, window, &[])
+        .into_iter()
+        .map(|c| CandidateRow {
+            journal_line: c.line.id,
+            number: c.entry.number,
+            date: c.entry.date,
+            memo: c.line.memo.unwrap_or(c.entry.memo),
+            entry: c.entry.id,
+            #[expect(clippy::cast_possible_truncation, reason = "a whole day count")]
+            day_gap: c.day_gap as i64,
+            reference_match: c.reference_match,
+        })
+        .collect()
 }
 
 /// The account against its statement (`Summary`, `$bankId.tsx:386-504`).
@@ -365,83 +598,172 @@ impl Position {
     /// Statement net movement.
     #[must_use]
     pub fn statement_net(&self) -> Minor {
-        0
+        self.matched + self.only_statement
     }
 
     /// Books net movement.
     #[must_use]
     pub fn books_net(&self) -> Minor {
-        0
+        self.matched + self.only_books
     }
 
     /// Statement less books.
     #[must_use]
     pub fn difference(&self) -> Minor {
-        0
+        self.statement_net() - self.books_net()
     }
 
     /// The sentence under the table (`$bankId.tsx:490-494`).
     #[must_use]
     pub fn verdict(&self) -> &'static str {
-        ""
+        if self.difference() == 0 {
+            "The statement and the books agree over these dates."
+        } else {
+            "The difference is what is only on the statement less what is only in the books. \
+             Match or post the open lines to close it."
+        }
     }
 }
 
-/// The position of `bank` at `as_of`.
+/// The position of `bank` at `as_of` (`Summary`, `$bankId.tsx:399-416`).
 #[must_use]
 pub fn position(state: &LedgerState, bank: &BankAccountId, as_of: &IsoDate) -> Position {
-    let _ = (state, bank, as_of);
+    let account = state
+        .bank_accounts
+        .iter()
+        .find(|b| &b.id == bank)
+        .map(|b| b.account_id.clone());
+    let book_balance = account
+        .as_ref()
+        .and_then(|a| book_balances(state, as_of).get(a).copied())
+        .unwrap_or(0);
+    let lines: Vec<_> = state
+        .statement_lines
+        .iter()
+        .filter(|s| &s.bank_account_id == bank)
+        .collect();
+    let (Some(from), Some(to)) = (
+        lines.iter().map(|s| &s.date).min(),
+        lines.iter().map(|s| &s.date).max(),
+    ) else {
+        return Position {
+            book_balance,
+            span: None,
+            matched: 0,
+            only_statement: 0,
+            only_books: 0,
+            only_books_count: 0,
+        };
+    };
+    let matched_ids: BTreeSet<&LineId> = state
+        .statement_lines
+        .iter()
+        .filter_map(|s| s.matched_line_id.as_ref())
+        .collect();
+    let book_only: Vec<_> = state
+        .lines
+        .iter()
+        .filter(|l| Some(&l.account_id) == account.as_ref() && !matched_ids.contains(&l.id))
+        .filter(|l| {
+            state.entry(&l.entry_id).is_some_and(|e| {
+                e.status != EntryStatus::Draft
+                    && e.source_type != SourceType::Opening
+                    && &e.date >= from
+                    && &e.date <= to
+            })
+        })
+        .collect();
+    let net = |matched: bool| {
+        lines
+            .iter()
+            .filter(|s| s.matched_line_id.is_some() == matched)
+            .map(|s| s.amount)
+            .sum()
+    };
     Position {
-        book_balance: 0,
-        span: None,
-        matched: 0,
-        only_statement: 0,
-        only_books: 0,
-        only_books_count: 0,
+        book_balance,
+        span: Some((from.clone(), to.clone())),
+        matched: net(true),
+        only_statement: net(false),
+        only_books: book_only.iter().map(|l| l.base_amount).sum(),
+        only_books_count: book_only.len(),
     }
 }
 
 /// `AutoMatchReport` (`$bankId.tsx:357-378`): the three lines after an auto-match.
 #[must_use]
 pub fn auto_match_summary(result: &AutoMatchResult) -> [String; 3] {
-    let _ = result;
-    [String::new(), String::new(), String::new()]
+    let n = |x: usize, one: &str, many: &str| format!("{x} {}", if x == 1 { one } else { many });
+    [
+        format!("{} matched", n(result.matched.len(), "line", "lines")),
+        format!(
+            "{} a decision",
+            n(result.ambiguous.len(), "line needs", "lines need")
+        ),
+        format!("{} unmatched", n(result.unmatched.len(), "line", "lines")),
+    ]
 }
 
 /// `statement.autoMatch` on `bank` (`$bankId.tsx:123-133`).
 #[must_use]
 pub fn auto_match_command(bank: &BankAccountId) -> LedgerCommand {
-    let _ = bank;
-    LedgerCommand::StatementUnmatch {
-        statement_line_id: StatementLineId::from(""),
+    LedgerCommand::StatementAutoMatch {
+        bank_account_id: bank.clone(),
     }
 }
 
 /// `statement.match` of `line` to `journal_line` (`$bankId.tsx:734-743`).
 #[must_use]
 pub fn match_command(line: &StatementLineId, journal_line: &LineId) -> LedgerCommand {
-    let _ = journal_line;
-    LedgerCommand::StatementUnmatch {
+    LedgerCommand::StatementMatch {
         statement_line_id: line.clone(),
+        journal_line_id: journal_line.clone(),
     }
 }
 
 /// `statement.unmatch` of `line` (`$bankId.tsx:135-147`).
 #[must_use]
 pub fn unmatch_command(line: &StatementLineId) -> LedgerCommand {
-    let _ = line;
     LedgerCommand::StatementUnmatch {
-        statement_line_id: StatementLineId::from(""),
+        statement_line_id: line.clone(),
     }
 }
+
+/// The account types in `TYPE_LABEL` order (`flowtrace/src/components/ledger/pickers.tsx:7-13`).
+const TYPE_ORDER: [AccountType; 5] = [
+    AccountType::Asset,
+    AccountType::Liability,
+    AccountType::Equity,
+    AccountType::Income,
+    AccountType::Expense,
+];
 
 /// `AccountSelect types=...` of `PostDialog` (`$bankId.tsx:883`): for money out, expense, asset
 /// and liability accounts; for money in, income, asset and liability; active, non-header, by
 /// type then code (`flowtrace/src/components/ledger/pickers.tsx:25-44`).
 #[must_use]
 pub fn post_accounts(state: &LedgerState, amount: Minor) -> Vec<(AccountId, String)> {
-    let _ = (state, amount);
-    Vec::new()
+    let wanted = |t: AccountType| match t {
+        AccountType::Asset | AccountType::Liability => true,
+        AccountType::Income => amount >= 0,
+        AccountType::Expense => amount < 0,
+        AccountType::Equity => false,
+    };
+    TYPE_ORDER
+        .into_iter()
+        .filter(|t| wanted(*t))
+        .flat_map(|t| {
+            let mut accounts: Vec<_> = state
+                .accounts
+                .iter()
+                .filter(|a| a.account_type == t && !a.is_group && a.is_active)
+                .collect();
+            accounts.sort_by(|a, b| a.code.cmp(&b.code));
+            accounts
+                .into_iter()
+                .map(|a| (a.id.clone(), format!("{} \u{b7} {}", a.code, a.name)))
+        })
+        .collect()
 }
 
 /// The Post as a new entry form (`PostDialog`, `$bankId.tsx:806-910`).
@@ -462,42 +784,57 @@ impl PostForm {
     /// statement description as memo (`$bankId.tsx:818-821`).
     #[must_use]
     pub fn new(state: &LedgerState, line: &StatementLine) -> Self {
-        let _ = (state, line);
+        let fund = state
+            .funds
+            .iter()
+            .find(|f| f.id.as_str() == UNRESTRICTED_FUND_ID)
+            .or_else(|| state.funds.first())
+            .map(|f| f.id.clone());
         Self {
             account: None,
-            fund: None,
+            fund,
             grant: None,
-            memo: String::new(),
+            memo: line.description.clone(),
         }
     }
 
     /// Choosing a fund clears the grant (`$bankId.tsx:893-896`).
     pub fn set_fund(&mut self, fund: Option<FundId>) {
         self.fund = fund;
+        self.grant = None;
     }
 
-    /// The `statement.post` command (`$bankId.tsx:825-839`).
+    /// The `statement.post` command (`$bankId.tsx:825-839`): an empty account posts to
+    /// suspense, no grant is `null`, a blank memo is left out.
     ///
     /// # Errors
     ///
     /// `Choose the fund this money belongs to.` when no fund is chosen.
     pub fn command(&self, line: &StatementLineId) -> Result<LedgerCommand, String> {
-        let _ = line;
-        Err(String::new())
+        let Some(fund_id) = self.fund.clone() else {
+            return Err("Choose the fund this money belongs to.".to_owned());
+        };
+        let memo = self.memo.trim();
+        Ok(LedgerCommand::StatementPost {
+            statement_line_id: line.clone(),
+            counter: StatementCounter {
+                account_id: self.account.clone(),
+                fund_id,
+                grant_id: self.grant.clone().map_or(Nullish::Null, Nullish::Value),
+                memo: (!memo.is_empty()).then(|| memo.to_owned()),
+            },
+        })
     }
 }
 
 /// The hint under the account (`$bankId.tsx:875`).
 #[must_use]
 pub fn suspense_hint(state: &LedgerState) -> String {
-    let _ = state;
-    String::new()
+    let held = state
+        .account(&state.settings.system_accounts.suspense)
+        .map_or_else(|| "suspense".to_owned(), |a| format!("{} {}", a.code, a.name));
+    format!("Leave empty to hold it in {held} until it is explained.")
 }
-
-/// Keeps the import of [`StatementCounter`] and [`NewBankAccount`] used until the commands are
-/// built.
-#[doc(hidden)]
-pub fn _types(_: Option<StatementCounter>, _: Option<NewBankAccount>) {}
 
 #[cfg(test)]
 mod tests {
