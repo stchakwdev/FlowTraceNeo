@@ -13,8 +13,8 @@ use ledger_core::engine::EntryOptions;
 use ledger_core::importers::{JournalSource, parse_journal_csv};
 use ledger_core::money::{assert_minor, format_major, js_round, parse_money};
 use ledger_core::types::{
-    AccountId, DimensionId, EntryId, EntryInput, EntryStatus, FlowNodeId, FundId, GrantId, IsoDate,
-    LedgerState, LineInput, Nullish,
+    AccountId, AccountType, DimensionId, DimensionKind, EntryId, EntryInput, EntryStatus,
+    FlowNodeId, FundId, GrantId, IsoDate, LedgerState, LineInput, Nullish,
 };
 use ledger_core::{Issue, IssueCode, LedgerCommand, Minor};
 
@@ -707,6 +707,55 @@ fn validate(state: &LedgerState, input: &EntryInput, ignore: Option<&EntryId>) -
         .unwrap_or_else(|err| vec![Issue::new(IssueCode::InvalidInput, err.to_string())])
 }
 
+/// `AccountSelect` (`flowtrace/src/components/ledger/pickers.tsx:25-44`): active accounts that
+/// take postings, by type (assets, liabilities, net assets, income, expenses), then code, as
+/// `1110 · Bank: Main operating account`.
+#[must_use]
+pub fn account_choices(state: &LedgerState) -> Vec<(AccountId, String)> {
+    let rank = |t: AccountType| match t {
+        AccountType::Asset => 0,
+        AccountType::Liability => 1,
+        AccountType::Equity => 2,
+        AccountType::Income => 3,
+        AccountType::Expense => 4,
+    };
+    let mut accounts: Vec<_> = state
+        .accounts
+        .iter()
+        .filter(|a| !a.is_group && a.is_active)
+        .collect();
+    accounts.sort_by(|a, b| {
+        rank(a.account_type)
+            .cmp(&rank(b.account_type))
+            .then_with(|| a.code.cmp(&b.code))
+    });
+    accounts
+        .into_iter()
+        .map(|a| (a.id.clone(), format!("{} \u{b7} {}", a.code, a.name)))
+        .collect()
+}
+
+/// `DimensionSelect` (`pickers.tsx:72-84`): tags by kind (projects, departments, locations,
+/// donors) in book order, as `Project · Name` since a flat picker has no group headings.
+#[must_use]
+pub fn tag_choices(state: &LedgerState) -> Vec<(DimensionId, String)> {
+    [
+        (DimensionKind::Project, "Project"),
+        (DimensionKind::Department, "Department"),
+        (DimensionKind::Location, "Location"),
+        (DimensionKind::Donor, "Donor"),
+    ]
+    .into_iter()
+    .flat_map(|(kind, label)| {
+        state
+            .dimensions
+            .iter()
+            .filter(move |d| d.kind == kind)
+            .map(move |d| (d.id.clone(), format!("{label} \u{b7} {}", d.name)))
+    })
+    .collect()
+}
+
 /// One draft of the import preview.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PreviewEntry {
@@ -901,6 +950,39 @@ mod tests {
         form.lines[1].account = Some(AccountId::from("acc-1110"));
         form.set_credit(1, "2500.00");
         form
+    }
+
+    #[test]
+    fn pickers_list_what_the_web_pickers_list() {
+        let state = demo();
+        let accounts = account_choices(&state);
+        assert!(accounts.iter().all(|(id, _)| {
+            let a = state.accounts.iter().find(|a| &a.id == id).unwrap();
+            !a.is_group && a.is_active
+        }));
+        assert_eq!(
+            accounts.len(),
+            state
+                .accounts
+                .iter()
+                .filter(|a| !a.is_group && a.is_active)
+                .count()
+        );
+        assert_eq!(accounts[0].1.split(' ').next(), Some("1110"));
+        assert!(accounts.contains(&(
+            AccountId::from("acc-7100"),
+            "7100 \u{b7} Office supplies".to_owned()
+        )));
+        let tags = tag_choices(&state);
+        assert_eq!(tags.len(), state.dimensions.len());
+        assert!(
+            tags.contains(&(
+                DimensionId::from("dim-a31"),
+                "Project \u{b7} Pan-African Education Fund".to_owned()
+            )) || tags.iter().any(
+                |(id, l)| id.as_str() == "dim-a31" && l.ends_with("Pan-African Education Fund")
+            )
+        );
     }
 
     #[test]
