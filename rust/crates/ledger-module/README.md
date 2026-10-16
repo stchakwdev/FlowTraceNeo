@@ -120,4 +120,45 @@ UUIDs and stamps the reducer time where the fixture has `fx-0001`, ... and a fro
 are compared through a fixture-to-module map learned as records appear, and a reducer timestamp
 stands in for the frozen one; everything else must be equal. It then checks four refusals and a
 repeated request id, deletes the database (unless `--keep`) and prints `spacetime list -s local`.
-It exits 1 on any difference. A run takes about 3 s.
+It exits 1 on any difference. A run takes about 3 s. It shares `tools/src/module-server.ts` and
+`tools/src/demo-replay.ts` with the integration run below.
+
+## Integration
+
+One command, with the local server up, proves the published module end to end (gate G3):
+
+```sh
+cd rust/tools && ~/.bun/bin/bun install --frozen-lockfile && ~/.bun/bin/bun run integration
+```
+
+`tools/module-integration.ts` builds the release wasm (cargo, waiting while two other cargo
+builds run), publishes it as a fresh `ft-s2-<timestamp>` database, and prints one timed `pass` or
+`FAIL` line per check:
+
+- `init` made the publisher the only operator (the owner from `GET /v1/database/:name`);
+- the demo organisation opens (`create_org_ledger`, three members); `import_books` loads
+  `fixtures/demo-books.json#/state` (the demo backfill is engine-level, so it is not expressible
+  as commands); `run_command` then replays the 37 commands of `fixtures/commands-accepted.json`
+  with every result and the final books equal to the fixture;
+- after each load, with `spacetime sql` as the owner: `COUNT(*)` per table and organisation
+  against the fixture collections (plus `ledger_org`, `member`, `command_result`); from the
+  `journal_line` rows of posted entries: debits equal credits in base currency overall, per fund
+  and per entry; the accrual trial balance computed from the rows equals
+  `fixtures/report-trial-balance.json` case 0 (demo books) and case 12 (after the command log);
+- refusals with the TS text: a non-member `run_command`, a non-operator `create_org_ledger`, a
+  non-operator `import_books` (Rust-only reducer, text from `src/rules.rs`), a member removing
+  themselves;
+- every `my_*` view gives a member exactly the organisation's table rows and `--anonymous` none;
+- a repeated request id runs again and overwrites the caller's `command_result`;
+- the database is deleted (also on failure; `--keep` keeps it) and the run fails at five minutes.
+
+It takes about 4 s when the wasm is already built (about 15 s more for a cold wasm build) and
+exits 1 on any failure. `--no-build` skips the cargo step; `--db ft-s2-<name>` picks the name.
+
+The same run from cargo, ignored by default so the workspace checks stay offline:
+
+```sh
+FT_MODULE_INTEGRATION=1 cargo test -p ledger-module --test integration -- --ignored
+```
+
+Without `FT_MODULE_INTEGRATION` that test returns at once (`tests/integration.rs`).
