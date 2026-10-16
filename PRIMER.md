@@ -135,7 +135,7 @@ installed and configured on both machines.
 | Machine | Address (tailnet only) |
 |---|---|
 | omarchy | https://omarchy.tail3b280b.ts.net |
-| mac | https://samuels-macbook-pro-16-max-1.tail3b280b.ts.net |
+| mac | https://macbook.tail3b280b.ts.net |
 
 Your own Tailscale devices get in with no code. On the phone: open the address, add it to the
 home screen, then the menu, Alerts, for push alerts. Health: `curl -s http://127.0.0.1:7317/api/health`.
