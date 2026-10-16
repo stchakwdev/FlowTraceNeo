@@ -5,6 +5,7 @@ use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
 use ledger_client::{ClientError, ClientEvent, ConnectionStatus, SpacetimeClient};
+use ledger_core::ids::OrganizationId;
 use ledger_core::reports::{Basis, financial_position, trial_balance};
 use ledger_core::types::{IsoDate, LedgerState};
 use ledger_core::{CommandResult, IssueCode, LedgerCommand, sanitize_command};
@@ -19,6 +20,14 @@ pub fn fixture(name: &str) -> Value {
 /// `demo-books.json#/state`.
 pub fn demo_state() -> LedgerState {
     serde_json::from_value(fixture("demo-books")["state"].clone()).unwrap()
+}
+
+/// `demo-books.json#/state` as the books of `org_id`: only `settings.organization_id` changes,
+/// which `import_books` requires to name the organisation (`write_back.rs` `books_to_rows`).
+pub fn demo_state_for(org_id: &str) -> LedgerState {
+    let mut state = demo_state();
+    state.settings.organization_id = OrganizationId::new(org_id);
+    state
 }
 
 /// The demo organisation's id, from its settings.
@@ -127,6 +136,8 @@ pub struct ContractRun {
     pub events: Vec<ClientEvent>,
     /// The refusal's issue codes.
     pub refused: Vec<IssueCode>,
+    /// How long the accepted command took, sent to resolved with its change readable.
+    pub accepted_took: Duration,
 }
 
 /// What the client must do on books equal to the demo books:
@@ -146,7 +157,7 @@ pub fn client_contract(backend: &SpacetimeClient, org_id: &str) -> ContractRun {
         "first event {first:?}"
     );
 
-    let demo = demo_state();
+    let demo = demo_state_for(org_id);
     assert!(
         backend.organisations().iter().any(|o| o.org_id == org_id),
         "{org_id} is not listed"
@@ -155,7 +166,9 @@ pub fn client_contract(backend: &SpacetimeClient, org_id: &str) -> ContractRun {
     assert_eq!(before, demo, "the books equal demo-books.json#/state");
     reports_match_the_demo_fixtures(&before);
 
+    let started = Instant::now();
     let result = backend.submit(org_id, &new_vendor()).unwrap();
+    let accepted_took = started.elapsed();
     let CommandResult::Id { id: vendor_id } = result else {
         panic!("vendor.add returned {result:?}");
     };
@@ -196,5 +209,6 @@ pub fn client_contract(backend: &SpacetimeClient, org_id: &str) -> ContractRun {
         vendor_id,
         events,
         refused: e.issues().iter().map(|i| i.code).collect(),
+        accepted_took,
     }
 }

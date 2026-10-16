@@ -2,6 +2,7 @@
 // minutes (gate G3's repeatable proof):
 //
 //   cd rust/tools && ~/.bun/bin/bun run integration [--keep] [--no-build]
+//   cd rust/tools && ~/.bun/bin/bun run integration --existing --url <server> --db <name>
 //
 // Builds the release wasm, publishes it as a fresh database `ft-s2-<timestamp>`, opens the demo
 // organisation, loads the demo books with `import_books` and the 37-step command log with
@@ -11,23 +12,31 @@
 // prints one `pass` or `FAIL` line with its time. The database is deleted at the end, also on
 // failure, unless `--keep`. Exits 1 on any failure or when the run takes five minutes or more.
 //
+// `--existing` runs the same checks against a database that is already published (maincloud dev
+// for gate G3): no build, publish or delete, a new organisation with a random id each run (every
+// count and view check scopes to it), `init` checked as "the owner is an operator", and the
+// operator the run added withdrawn at the end. It WRITES a demo organisation into that database
+// and leaves it there; the last steps print the run-time measures and the rows left.
+//
 // Shared with module-replay.ts: src/module-server.ts (CLI, HTTP, SQL, books through the TS
 // client codec) and src/demo-replay.ts (demo organisation, import, command log, id map).
 // CLI reference: https://spacetimedb.com/docs/cli-reference; HTTP:
-// https://spacetimedb.com/docs/http/database. Never maincloud: src/module-server.ts refuses any
-// URL but the local server.
+// https://spacetimedb.com/docs/http/database. Publish and delete only ever on the local server:
+// src/module-server.ts refuses them on an existing database.
 import fs from 'node:fs'
-import { IdMap, demoFixtures, importDemoBooks, openDemoOrg, readFixture, replayCommandLog } from './src/demo-replay'
+import { IdMap, demoFixtures, importDemoBooks, openDemoOrg, readFixture, replayCommandLog, retireOperator } from './src/demo-replay'
 import type { DemoPeople } from './src/demo-replay'
-import { COLLECTION_TABLES, WASM, args, localServer } from './src/module-server'
+import { COLLECTION_TABLES, WASM, args, openServer, parseTarget } from './src/module-server'
 import type { Json, Obj, Row } from './src/module-server'
 import { RUST_DIR } from './src/paths'
 
 const LIMIT_SECONDS = 300
-const { flag, option } = args()
+const { flag } = args()
 const KEEP = flag('keep')
 const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14)
-const server = localServer(option('db', `ft-s2-${stamp}`), option('url', 'http://127.0.0.1:3100'))
+const target = parseTarget(process.argv.slice(2), `ft-s2-${stamp}`)
+const server = openServer(target)
+const EXISTING = target.existing
 const started = performance.now()
 const log = (...xs: Array<unknown>) => console.log(...xs)
 
@@ -37,6 +46,13 @@ const log = (...xs: Array<unknown>) => console.log(...xs)
 
 class Failed extends Error {}
 const results: Array<{ name: string; ok: boolean; seconds: number }> = []
+const skipped: Array<string> = []
+
+/** A step that does not run in this mode, with why. */
+function skip(name: string, why: string) {
+  skipped.push(name)
+  log(`skip ${'-'.padStart(6)}    ${name}: ${why}`)
+}
 
 /** Runs one check. `fn` returns the detail for the pass line or throws; a failed critical step stops the run. */
 async function step(name: string, fn: () => Promise<string> | string, critical = false) {
@@ -77,7 +93,7 @@ function cliRows(out: string): Array<Array<string>> {
 }
 
 const ownerSql = (query: string, anonymous = false) =>
-  cliRows(server.cli(['sql', '-s', 'local', ...(anonymous ? ['--anonymous'] : []), server.db, query]))
+  cliRows(server.cli(['sql', '-s', server.cliServer, ...(anonymous ? ['--anonymous'] : []), server.db, query]))
 
 function ownerCount(table: string, orgId: string): number {
   const [[n]] = ownerSql(`SELECT COUNT(*) AS n FROM ${table} WHERE org_id = '${orgId}'`)
@@ -173,19 +189,48 @@ async function checkTrialBalance(who: DemoPeople['admin'], orgId: string, lines:
 }
 
 // ---------------------------------------------------------------------------
+// After a run on an existing database: tidy the operator table, measure, count what is left
+// ---------------------------------------------------------------------------
+
+async function existingDatabaseEpilogue() {
+  if (people) {
+    const p = people
+    await step('withdraw the run operator (remove_operator)', () => {
+      retireOperator(server, p)
+      const ops = ownerSql('SELECT identity FROM operator').map(([id]) => id.replace(/^0x/, ''))
+      expect(!ops.includes(p.operator.identity), 'the operator is still there')
+      return `0x${p.operator.identity.slice(0, 12)}... removed by the CLI identity; ${ops.length} operator row(s) remain`
+    })
+  }
+  await step('run_command round trip', () => {
+    const ms = server.calls.filter((c) => c.reducer === 'run_command').map((c) => c.ms).sort((a, b) => a - b)
+    expect(ms.length > 0, 'no run_command call was made')
+    const at = (q: number) => ms[Math.min(ms.length - 1, Math.floor(q * ms.length))].toFixed(0)
+    return `${ms.length} HTTP calls: min ${at(0)} ms, median ${at(0.5)} ms, p90 ${at(0.9)} ms, max ${at(1)} ms`
+  })
+  await step('rows this run left in the database', () => {
+    const tables = [...COLLECTION_TABLES.map(([, t]) => t), 'ledger_org', 'member', 'command_result']
+    const counts = tables.map((t): [string, number] => [t, ownerCount(t, ORG)])
+    return `${sum(counts.map(([, n]) => n))} rows for ${ORG}: ${counts.map(([t, n]) => `${t} ${n}`).join(', ')}`
+  })
+}
+
+// ---------------------------------------------------------------------------
 // The run
 // ---------------------------------------------------------------------------
 
-const fx = demoFixtures()
+// An existing database may hold earlier runs' books: each run opens its own organisation.
+const fx = demoFixtures(EXISTING ? crypto.randomUUID() : undefined)
 const ORG = fx.org
 const map = new IdMap(fx.frozenNow)
 let people: DemoPeople | undefined
 let books: Obj = {}
 let published = false
 
-log(`module-integration: database ${server.db} on ${server.url}`)
+log(`module-integration: database ${server.db} on ${server.url}${EXISTING ? ' (existing: no build, publish or delete)' : ''}`)
 try {
-  if (!flag('no-build')) {
+  if (EXISTING) skip('build the wasm', 'the database is already published')
+  else if (!flag('no-build')) {
     await step(
       'build the wasm',
       async () => {
@@ -217,17 +262,29 @@ try {
     )
   }
 
-  await step(
-    'publish',
-    () => {
-      const out = server.publish()
-      published = true
-      return out.split('\n').pop() ?? ''
-    },
-    true,
-  )
+  if (EXISTING) skip('publish', '--existing never publishes')
+  else {
+    await step(
+      'publish',
+      () => {
+        const out = server.publish()
+        published = true
+        return out.split('\n').pop() ?? ''
+      },
+      true,
+    )
+  }
 
-  await step('init made the publisher the only operator', async () => {
+  if (EXISTING) {
+    await step('init made the publisher an operator', async () => {
+      // index.ts:541-543, on a database other runs may have used: the owner (the CLI login, so
+      // the CLI's calls are an operator's) must be an operator; any others are listed.
+      const { owner_identity } = await server.info()
+      const ops = ownerSql('SELECT identity FROM operator').map(([id]) => id.replace(/^0x/, ''))
+      expect(ops.includes(owner_identity), `operators ${JSON.stringify(ops)}, owner ${owner_identity}`)
+      return `the owner 0x${owner_identity.slice(0, 12)}... is an operator; ${ops.length} operator row(s) before this run`
+    })
+  } else await step('init made the publisher the only operator', async () => {
     // index.ts:541-543: the publisher becomes the first operator. The publisher is the owner
     // GET /v1/database/:name reports; the private operator table is readable by the owner only.
     const { owner_identity } = await server.info()
@@ -235,6 +292,7 @@ try {
     expect(ops.length === 1 && ops[0][0].replace(/^0x/, '') === owner_identity, `operators ${JSON.stringify(ops)}, owner ${owner_identity}`)
     return `operator table holds exactly the owner 0x${owner_identity.slice(0, 12)}...`
   })
+  if (EXISTING) log(`organisation for this run: ${ORG}`)
 
   await step(
     'open the demo organisation',
@@ -346,7 +404,8 @@ try {
     log(`FAIL unexpected error: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`)
   }
 } finally {
-  if (KEEP) log(`kept database ${server.db}`)
+  if (EXISTING) await existingDatabaseEpilogue()
+  else if (KEEP) log(`kept database ${server.db}`)
   else if (published) {
     await step('delete the database', () => {
       server.remove()
@@ -358,6 +417,7 @@ try {
 }
 
 const total = (performance.now() - started) / 1000
+if (skipped.length > 0) log(`skipped in this mode: ${skipped.join(', ')}`)
 results.push({ name: 'under five minutes', ok: total < LIMIT_SECONDS, seconds: total })
 log(`${total < LIMIT_SECONDS ? 'pass' : 'FAIL'} ${total.toFixed(2).padStart(6)} s  under five minutes: total wall time ${total.toFixed(1)} s (limit ${LIMIT_SECONDS} s)`)
 const failed = results.filter((r) => !r.ok)

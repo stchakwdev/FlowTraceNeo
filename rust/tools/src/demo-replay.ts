@@ -11,13 +11,25 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { FIXTURES_DIR } from './paths'
-import type { Json, LocalServer, Obj, Who } from './module-server'
+import type { Json, ModuleServer, Obj, Who } from './module-server'
 
 export const readFixture = (name: string) => JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, name), 'utf8')) as Obj
 
-export function demoFixtures() {
-  const commands = readFixture('commands-accepted.json')
-  const demoState = readFixture('demo-books.json').state as Obj
+/** The demo organisation's id in the fixtures. */
+export const DEMO_ORG = ((readFixture('demo-books.json').state as Obj).settings as Obj).organization_id as string
+
+/**
+ * The demo books and the command log. With `org`, every value equal to the demo organisation's
+ * id (`demo-books.json#/state/settings/organization_id`, and the same field in `final_state`)
+ * becomes `org`, so a run against an existing database opens its own organisation each time.
+ */
+export function demoFixtures(org?: string) {
+  const load = (name: string) => {
+    const text = fs.readFileSync(path.join(FIXTURES_DIR, name), 'utf8')
+    return JSON.parse(org === undefined ? text : text.replaceAll(JSON.stringify(DEMO_ORG), JSON.stringify(org))) as Obj
+  }
+  const commands = load('commands-accepted.json')
+  const demoState = load('demo-books.json').state as Obj
   const settings = demoState.settings as Obj
   return {
     commands,
@@ -126,14 +138,14 @@ export interface DemoPeople {
  * (`create_org_ledger`) and adds the actors as members with the fixture's user ids and
  * permissions. Returns before any books are loaded.
  */
-export async function openDemoOrg(server: LocalServer, fx: DemoFixtures, displayName: string): Promise<DemoPeople> {
+export async function openDemoOrg(server: ModuleServer, fx: DemoFixtures, displayName: string): Promise<DemoPeople> {
   const operator = await server.newIdentity('operator')
   const stranger = await server.newIdentity('stranger')
   const who: Record<string, Who> = {}
   for (const key of Object.keys(fx.actors)) who[key] = await server.newIdentity(key)
   const actorKey = (id: string) => Object.keys(fx.actors).find((k) => fx.actors[k].id === id) as string
 
-  server.cli(['call', '-s', 'local', server.db, 'add_operator', JSON.stringify(`0x${operator.identity}`)])
+  server.cli(['call', '-s', server.cliServer, server.db, 'add_operator', JSON.stringify(`0x${operator.identity}`)])
   await server.mustCall(operator, 'create_org_ledger', [fx.org, fx.settings.base_currency as string, 2026, displayName])
   for (const [key, a] of Object.entries(fx.actors)) {
     await server.mustCall(operator, 'add_member', [
@@ -151,10 +163,18 @@ export async function openDemoOrg(server: LocalServer, fx: DemoFixtures, display
 }
 
 /**
+ * Withdraws the operator `openDemoOrg` added (`remove_operator`, as the CLI identity), so a run
+ * against an existing database leaves its operator table as it found it.
+ */
+export function retireOperator(server: ModuleServer, people: DemoPeople) {
+  server.cli(['call', '-s', server.cliServer, server.db, 'remove_operator', JSON.stringify(`0x${people.operator.identity}`)])
+}
+
+/**
  * Loads demo-books.json#/state with `import_books` (after the members: add_member appends
  * member.add audit events, which the import replaces) and compares the books read back.
  */
-export async function importDemoBooks(server: LocalServer, fx: DemoFixtures, people: DemoPeople, map: IdMap) {
+export async function importDemoBooks(server: ModuleServer, fx: DemoFixtures, people: DemoPeople, map: IdMap) {
   await server.mustCall(people.operator, 'import_books', [fx.org, JSON.stringify(fx.demoState)])
   const books = await server.readBooks(people.admin, fx.org)
   const before = map.mismatches.length
@@ -176,7 +196,7 @@ export interface StepOutcome {
  * new records' ids, and compares the actor's `my_command_result` row with the step's result.
  * Then compares the final books with `final_state`.
  */
-export async function replayCommandLog(server: LocalServer, fx: DemoFixtures, people: DemoPeople, map: IdMap, start: Obj) {
+export async function replayCommandLog(server: ModuleServer, fx: DemoFixtures, people: DemoPeople, map: IdMap, start: Obj) {
   let books = start
   const steps: Array<StepOutcome> = []
   for (const [i, step] of fx.steps.entries()) {

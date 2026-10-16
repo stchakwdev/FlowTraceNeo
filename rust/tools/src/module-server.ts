@@ -1,4 +1,4 @@
-// The ledger-module on the LOCAL SpacetimeDB server, shared by module-replay.ts and
+// The ledger-module on a SpacetimeDB server, shared by module-replay.ts and
 // module-integration.ts: the CLI for publish, delete and owner-only calls, HTTP for identities,
 // reducer calls and SQL, and the rows read back as books through the TS client codec.
 //
@@ -6,8 +6,11 @@
 // HTTP reference: https://spacetimedb.com/docs/http/identity (POST /v1/identity) and
 // https://spacetimedb.com/docs/http/database (call, sql, GET /v1/database/:name).
 //
-// Only ever the local server (http://127.0.0.1:3100): `localServer` refuses any other URL and any
-// database name that does not start with `ft-`.
+// Two modes. `localServer` publishes and deletes its own database, only ever on the local server
+// (http://127.0.0.1:3100): it refuses any other URL and any database name that does not start
+// with `ft-`. `remoteServer` targets an existing database on any server (maincloud dev for gate
+// G3) and only calls reducers and reads: publish, remove and list throw, and its CLI refuses every
+// subcommand but `call` and `sql`, and any server or database but its own.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -23,15 +26,47 @@ export const SPACETIME = process.env.SPACETIME ?? path.join(os.homedir(), '.loca
 export const WASM = path.join(RUST_DIR, 'target/wasm32-unknown-unknown/release/ledger_module.wasm')
 export const LOCAL_URL = 'http://127.0.0.1:3100'
 
-/** `--name value` and `--name` from the command line. */
+/** `--name value` and `--name` from the command line; a value is never another flag. */
 export function args(argv = process.argv.slice(2)) {
   return {
     flag: (name: string) => argv.includes(`--${name}`),
     option: (name: string, fallback: string) => {
       const i = argv.indexOf(`--${name}`)
-      return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback
+      const v = i >= 0 ? argv[i + 1] : undefined
+      return v && !v.startsWith('--') ? v : fallback
     },
   }
+}
+
+export interface Target {
+  /** True: call and read an existing database, never publish or delete it (`--existing`). */
+  existing: boolean
+  url: string
+  db: string
+}
+
+/**
+ * The database a script talks to. Without `--existing` it is the local server and `defaultDb`
+ * (or `--url`, `--db`), published and deleted by the script; with `--existing` both `--url` and
+ * `--db` must be given, and `--keep` is refused since nothing is deleted.
+ */
+export function parseTarget(argv: Array<string>, defaultDb: string): Target {
+  const { flag, option } = args(argv)
+  if (!flag('existing')) return { existing: false, url: option('url', LOCAL_URL), db: option('db', defaultDb) }
+  const url = option('url', '')
+  const db = option('db', '')
+  if (url === '') throw new Error('--existing needs --url <server>, for example https://maincloud.spacetimedb.com.')
+  if (db === '') throw new Error('--existing needs --db <name> of a database that is already published.')
+  if (flag('keep')) throw new Error('--keep does not apply to --existing: the script never deletes an existing database.')
+  return { existing: true, url, db }
+}
+
+/** The `spacetime -s` value for a server URL: the CLI's `maincloud` and `local` nicknames, else the URL. */
+export function cliServerFor(url: string): string {
+  const u = url.replace(/\/+$/, '')
+  if (u === 'https://maincloud.spacetimedb.com') return 'maincloud'
+  if (u === LOCAL_URL) return 'local'
+  return u
 }
 
 export interface Who {
@@ -65,9 +100,51 @@ const big = (v: unknown) => BigInt(v as number)
 export function localServer(db: string, url = LOCAL_URL) {
   if (!db.startsWith('ft-')) throw new Error(`Refusing database name ${db}: use ft-<task>.`)
   if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(url)) throw new Error(`Refusing ${url}: local server only.`)
+  return moduleServer(db, url, false)
+}
+
+/**
+ * An existing database on any server, for example `flowtrace-ledger-dev` on maincloud: reducer
+ * calls and reads only. Every run writes a new organisation into it.
+ */
+export function remoteServer(db: string, url: string) {
+  if (db === '') throw new Error('remoteServer needs a database name.')
+  if (!/^https?:\/\/[^/\s]+\/?$/.test(url)) throw new Error(`Refusing ${url}: not an http(s) URL.`)
+  return moduleServer(db, url.replace(/\/+$/, ''), true)
+}
+
+/** Open a server from the command line's target (`parseTarget`). */
+export const openServer = (t: Target) => (t.existing ? remoteServer(t.db, t.url) : localServer(t.db, t.url))
+
+/** The CLI subcommands an existing database allows: reducer calls and SQL. */
+const EXISTING_CLI = new Set(['call', 'sql'])
+
+/**
+ * Throws unless `argv` is a `call` or `sql` on `server` and `db`. Options with a value: `-s`,
+ * `--server`; the first other word that is no option is the database.
+ */
+function checkExistingCli(argv: Array<string>, server: string, db: string) {
+  const [sub, ...rest] = argv
+  if (!EXISTING_CLI.has(sub)) throw new Error(`Refusing spacetime ${sub}: only call and sql on the existing database ${db}.`)
+  let target: string | undefined
+  let named: string | undefined
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '-s' || rest[i] === '--server') target = rest[++i]
+    else if (!rest[i].startsWith('-') && named === undefined) named = rest[i]
+  }
+  if (target !== server) throw new Error(`Refusing spacetime ${sub} -s ${String(target)}: the database is on ${server}.`)
+  if (named !== db) throw new Error(`Refusing spacetime ${sub} on ${String(named)}: only ${db}.`)
+}
+
+function moduleServer(db: string, url: string, existing: boolean) {
+  const cliServer = cliServerFor(url)
+  const unavailable = (what: string) => () => {
+    throw new Error(`${what} is not available on the existing database ${db}: --existing never publishes, deletes or lists.`)
+  }
 
   /** The CLI as the identity that published the module, with its exit status. */
   function cliStatus(argv: Array<string>): { ok: boolean; text: string } {
+    if (existing) checkExistingCli(argv, cliServer, db)
     const r = Bun.spawnSync([SPACETIME, ...argv], { stdout: 'pipe', stderr: 'pipe' })
     const out = `${r.stdout.toString()}${r.stderr.toString()}`.replace(/WARNING: This command is UNSTABLE[^\n]*\n\n?/g, '')
     return { ok: r.exitCode === 0, text: out.trim() }
@@ -80,14 +157,15 @@ export function localServer(db: string, url = LOCAL_URL) {
     return r.text
   }
 
-  function publish(wasm = WASM) {
+  function localPublish(wasm = WASM) {
     if (!fs.existsSync(wasm)) throw new Error(`No module at ${wasm}; build it first.`)
     cli(['delete', '-s', 'local', '-y', db], true)
     return cli(['publish', '-s', 'local', '-b', wasm, '-y', db])
   }
 
-  const remove = () => cli(['delete', '-s', 'local', '-y', db])
-  const list = () => cli(['list', '-s', 'local'])
+  const publish: (wasm?: string) => string = existing ? unavailable('publish') : localPublish
+  const remove: () => string = existing ? unavailable('remove') : () => cli(['delete', '-s', 'local', '-y', db])
+  const list: () => string = existing ? unavailable('list') : () => cli(['list', '-s', 'local'])
 
   /** `GET /v1/database/:name`: the database's owner and address. */
   async function info(): Promise<{ owner_identity: string; database_identity: string }> {
@@ -105,14 +183,20 @@ export function localServer(db: string, url = LOCAL_URL) {
     return { label, identity: body.identity, token: body.token }
   }
 
+  /** Every reducer call over HTTP so far, with its round-trip time (request sent to response read). */
+  const calls: Array<{ reducer: string; ok: boolean; ms: number }> = []
+
   /** A reducer call; `ok` false carries the reducer's error text (HTTP 530). */
   async function call(who: Who, reducer: string, argv: Array<Json>): Promise<{ ok: boolean; text: string }> {
+    const t = performance.now()
     const res = await fetch(`${url}/v1/database/${db}/call/${reducer}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${who.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(argv),
     })
-    return { ok: res.ok, text: await res.text() }
+    const text = await res.text()
+    calls.push({ reducer, ok: res.ok, ms: performance.now() - t })
+    return { ok: res.ok, text }
   }
 
   async function mustCall(who: Who, reducer: string, argv: Array<Json>) {
@@ -214,7 +298,7 @@ export function localServer(db: string, url = LOCAL_URL) {
     return JSON.parse(JSON.stringify(assembleState(rows))) as Obj
   }
 
-  return { db, url, cli, cliStatus, publish, remove, list, info, newIdentity, call, mustCall, sql, readBooks }
+  return { db, url, existing, cliServer, calls, cli, cliStatus, publish, remove, list, info, newIdentity, call, mustCall, sql, readBooks }
 }
 
-export type LocalServer = ReturnType<typeof localServer>
+export type ModuleServer = ReturnType<typeof moduleServer>
