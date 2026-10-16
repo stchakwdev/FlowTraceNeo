@@ -107,14 +107,16 @@ maincloud, as publishing is. The same calls with `-s local` are how threads test
 
 ## 4. What a production publish will need
 
-Not done, and not to be run by an agent. The user decides each item:
+Not done, and not to be run by an agent. Items 1 and 2 are decided; the user decides the rest:
 
-1. **A name.** Still to be chosen by the user (pre-decision P8 queued it). Database names match
-   `^[a-z0-9]+(-[a-z0-9]+)*$`. The desktop's default database is `flowtrace-ledger-dev`
-   (`crates/desktop/src/config.rs`); a production build would either change that default or ship
-   a `config.toml` naming the production database.
-2. **The three open decisions** in `handoff.md` confirmed first, because two of them shape stored
-   data: timestamps in milliseconds (every audit and engine timestamp written), and
+1. **The name: `flowtrace-ledger`**, named by the user on 2026-10-16. It is not published yet.
+   Only the user publishes, resets or deletes it; an agent never does. The dev database stays
+   `flowtrace-ledger-dev`. The desktop's default database is `flowtrace-ledger-dev`
+   (`DEFAULT_DATABASE` in `crates/desktop/src/model.rs`, used by `crates/desktop/src/config.rs`),
+   so a production build either ships a `config.toml` naming `flowtrace-ledger` or changes that
+   default. Neither is done yet.
+2. **The three decisions** in `handoff.md`, confirmed by the user on 2026-10-16. Two of them
+   shape stored data: timestamps in milliseconds (every audit and engine timestamp written), and
    `float_roundtrip` (how stored rates are parsed). Changing either after real books exist means
    a migration.
 3. **Which identity publishes.** The publisher becomes the only operator through `init`. Use an
@@ -126,7 +128,7 @@ Not done, and not to be run by an agent. The user decides each item:
    `-y` so every prompt is read:
 
    ```sh
-   spacetime publish -s maincloud <production-name> -p rust/crates/ledger-module
+   spacetime publish -s maincloud flowtrace-ledger -p rust/crates/ledger-module
    ```
 
 6. **Later publishes** update the schema of a database that holds real books. The CLI prompts
