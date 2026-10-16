@@ -1,4 +1,4 @@
-//! Tasks C2 to C4 acceptance: the demo backfill and the accepted commands replay through the
+//! Tasks C2 to C4 and C6 acceptance: the demo backfill and the accepted commands replay through the
 //! engine step by step, commands through `sanitize_command` and `apply_command`. Steps whose method is ported run live and must reproduce the fixture's return value
 //! and state delta exactly (ids, timestamps, audit events); the rest apply their recorded delta.
 //! See `common/replay.rs`.
@@ -9,9 +9,7 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::fixture;
-use common::replay::{
-    C2_METHODS, C3_METHODS, Ran, assert_json_eq, run_command_step, run_method_step, to_json,
-};
+use common::replay::{Ran, assert_json_eq, ported, run_command_step, run_method_step, to_json};
 use ledger_core::env::fixed;
 use ledger_core::types::LedgerState;
 
@@ -36,7 +34,7 @@ fn demo_backfill_replays_through_the_engine() {
         } else {
             counts.1 += 1;
             assert!(
-                !C2_METHODS.contains(&method) && !C3_METHODS.contains(&method),
+                !ported(method),
                 "{what}: {method} is ported but did not run live"
             );
         }
@@ -54,9 +52,9 @@ fn demo_backfill_replays_through_the_engine() {
     // C2: ensureFiscalYear 2, addFund 3, addDimension 13, post 16, closePeriod 12, lockPeriod 11.
     // C3: addGrant 4, addBudget 1, setBudgetLine 15, addVendor 5, createBill 3, approveBill 3,
     // postBill 2, payBill 1, createClaim 2, approveClaim 1, reimburseClaim 1.
-    // Left to C6: addBankAccount 4, importStatement 2, matchStatementLine 6,
+    // C6: addBankAccount 4, importStatement 2, matchStatementLine 6 (through autoMatch),
     // postFromStatementLine 1.
-    assert_eq!((live, delta), (95, 13));
+    assert_eq!((live, delta), (108, 0));
 }
 
 #[test]
@@ -82,7 +80,7 @@ fn accepted_commands_replay_through_the_engine() {
     eprintln!("commands-accepted: {live} commands live, {delta} applied as deltas");
     // C2: entry.* 9 (post 2, saveDraft 2, updateDraft, postDraft, deleteDraft, reverse, import),
     // account.* 2, period.* 4, year.* 2. C3: grant.add, budgetLine.set 2, vendor.add, bill.* 4,
-    // claim.* 6 (create 2, submit, reject, approve, reimburse). Left to C6: bank.add and the five
+    // claim.* 6 (create 2, submit, reject, approve, reimburse). C6: bank.add and the five
     // statement.* commands.
-    assert_eq!((live, delta), (31, 6));
+    assert_eq!((live, delta), (37, 0));
 }

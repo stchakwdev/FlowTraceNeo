@@ -6,7 +6,7 @@
 mod common;
 
 use common::fixture;
-use common::replay::{C2_METHODS, C3_METHODS, Ran, run_command_step, run_method_step};
+use common::replay::{Ran, ported, run_command_step, run_method_step};
 use ledger_core::env::fixed;
 use ledger_core::types::LedgerState;
 
@@ -34,7 +34,7 @@ fn rejected_cases_match_for_the_ported_methods() {
                 Ran::Delta => {
                     let method = step["method"].as_str().unwrap_or("");
                     assert!(
-                        !C2_METHODS.contains(&method) && !C3_METHODS.contains(&method),
+                        !ported(method),
                         "{what}: {method} is ported but did not run"
                     );
                     if rejected {

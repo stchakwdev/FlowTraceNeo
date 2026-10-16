@@ -16,10 +16,13 @@ use crate::engine::{
     AccountPatch, EntryOptions, Error, Ledger, NewAccount, NewBill, NewBudgetLine, NewClaim,
     NewGrant, NewVendor, PaymentInput, ReimburseInput,
 };
+pub use crate::engine::{NewBankAccount, StatementCounter, StatementRow};
 use crate::errors::{IssueCode, LedgerError};
+pub use crate::reconcile::{AmbiguousMatch, AutoMatchResult, AutoMatched, MatchCandidate};
+use crate::reconcile::{DEFAULT_WINDOW_DAYS, auto_match};
 use crate::types::{
-    AccountId, Actor, BankAccountId, BankAccountKind, BillId, ClaimId, EntryId, EntryInput, FundId,
-    GrantId, JournalEntry, JournalLine, LineId, Nullish, PeriodId, StatementLineId,
+    AccountId, Actor, BankAccountId, BillId, ClaimId, EntryId, EntryInput, FundId, GrantId, LineId,
+    MatchKind, Nullish, PeriodId, StatementLineId,
 };
 
 /// A ledger write (`LedgerCommand`, `commands.ts:25-79`), tagged by `type` as in TS.
@@ -224,13 +227,13 @@ pub enum LedgerCommand {
         #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
         reference: Nullish<String>,
     },
-    /// `bank.add`: add a bank, mobile money or cash account (engine method in task C6).
+    /// `bank.add`: add a bank, mobile money or cash account.
     #[serde(rename = "bank.add")]
     BankAdd {
         /// The account.
         input: NewBankAccount,
     },
-    /// `statement.import`: import statement rows (engine method in task C6).
+    /// `statement.import`: import statement rows.
     #[serde(rename = "statement.import", rename_all = "camelCase")]
     StatementImport {
         /// The account the statement belongs to.
@@ -238,13 +241,13 @@ pub enum LedgerCommand {
         /// The rows.
         rows: Vec<StatementRow>,
     },
-    /// `statement.autoMatch`: match open statement lines to journal lines (task C6).
+    /// `statement.autoMatch`: match open statement lines to journal lines.
     #[serde(rename = "statement.autoMatch", rename_all = "camelCase")]
     StatementAutoMatch {
         /// The account.
         bank_account_id: BankAccountId,
     },
-    /// `statement.match`: match one statement line by hand (task C6).
+    /// `statement.match`: match one statement line by hand.
     #[serde(rename = "statement.match", rename_all = "camelCase")]
     StatementMatch {
         /// The statement line.
@@ -252,13 +255,13 @@ pub enum LedgerCommand {
         /// The journal line.
         journal_line_id: LineId,
     },
-    /// `statement.unmatch`: undo a match (task C6).
+    /// `statement.unmatch`: undo a match.
     #[serde(rename = "statement.unmatch", rename_all = "camelCase")]
     StatementUnmatch {
         /// The statement line.
         statement_line_id: StatementLineId,
     },
-    /// `statement.post`: post an entry for an unmatched statement line (task C6).
+    /// `statement.post`: post an entry for an unmatched statement line.
     #[serde(rename = "statement.post", rename_all = "camelCase")]
     StatementPost {
         /// The statement line.
@@ -266,54 +269,6 @@ pub enum LedgerCommand {
         /// The other side of the entry.
         counter: StatementCounter,
     },
-}
-
-/// The input of `bank.add`: `Omit<BankAccount, 'id'>` (`commands.ts:66`, `types.ts:238-246`).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NewBankAccount {
-    /// Display name.
-    pub name: String,
-    /// Bank, mobile money or cash.
-    pub kind: BankAccountKind,
-    /// Provider, for example `Equity Bank`.
-    pub provider: String,
-    /// The GL cash account.
-    pub account_id: AccountId,
-    /// Account currency.
-    pub currency: String,
-    /// Masked number.
-    pub number_masked: String,
-}
-
-/// One row of `statement.import`: `Pick<StatementLine, 'date' | 'description' | 'reference' |
-/// 'amount'>` (`commands.ts:67-71`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct StatementRow {
-    /// Value date.
-    pub date: String,
-    /// Statement text.
-    pub description: String,
-    /// Statement reference.
-    pub reference: Option<String>,
-    /// Signed amount in the account's currency, as the raw JS number sent.
-    #[serde(serialize_with = "crate::js_number::serialize")]
-    pub amount: f64,
-}
-
-/// The other side of `statement.post` (`commands.ts:75-79`).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct StatementCounter {
-    /// The account to post against.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub account_id: Option<AccountId>,
-    /// The fund.
-    pub fund_id: FundId,
-    /// The grant, if any.
-    #[serde(default, skip_serializing_if = "Nullish::is_undefined")]
-    pub grant_id: Nullish<GrantId>,
-    /// Entry memo.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub memo: Option<String>,
 }
 
 /// What a command returns (`CommandResult`, `commands.ts:81-85`), tagged by `type`.
@@ -343,62 +298,12 @@ pub enum CommandResult {
     None,
 }
 
-/// `AutoMatchResult` (`reconcile.ts:101-105`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AutoMatchResult {
-    /// Lines matched, one candidate each.
-    pub matched: Vec<AutoMatched>,
-    /// Lines with more than one equally good candidate.
-    pub ambiguous: Vec<AmbiguousMatch>,
-    /// Statement lines with no candidate.
-    pub unmatched: Vec<StatementLineId>,
-}
-
-/// One automatic match (`reconcile.ts:102`).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AutoMatched {
-    /// The statement line.
-    pub statement_line_id: StatementLineId,
-    /// The journal line.
-    pub journal_line_id: LineId,
-}
-
-/// A statement line with several candidates (`reconcile.ts:103`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AmbiguousMatch {
-    /// The statement line.
-    pub statement_line_id: StatementLineId,
-    /// Its candidates.
-    pub candidates: Vec<MatchCandidate>,
-}
-
-/// `MatchCandidate` (`reconcile.ts:94-99`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MatchCandidate {
-    /// The journal line.
-    pub line: JournalLine,
-    /// Its entry.
-    pub entry: JournalEntry,
-    /// Days between the statement and entry dates.
-    #[serde(with = "crate::js_number")]
-    pub day_gap: f64,
-    /// The references agree.
-    pub reference_match: bool,
-}
-
 /// Why [`apply_command`] did not apply a command.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum CommandError {
     /// The engine refused it; the books are unchanged.
     #[error(transparent)]
     Engine(#[from] Error),
-    /// A bank or statement command, whose engine method is not ported yet (task C6). Nothing
-    /// was changed and no id was drawn.
-    #[error("The {0} command is not implemented yet.")]
-    NotImplemented(&'static str),
 }
 
 /// The `type` of every command (`COMMAND_TYPES`, `commands.ts:92-98`).
@@ -543,8 +448,7 @@ fn id(x: impl AsRef<str>) -> CommandResult {
 ///
 /// # Errors
 ///
-/// [`CommandError::Engine`] when a rule blocks the command; [`CommandError::NotImplemented`] for
-/// `bank.add` and the five `statement.*` commands until task C6 ports their engine methods.
+/// [`CommandError::Engine`] when a rule blocks the command.
 #[expect(
     clippy::too_many_lines,
     reason = "one arm per command, as the applyCommand switch (commands.ts:141-221)"
@@ -660,16 +564,40 @@ pub fn apply_command(
             };
             id(ledger.reimburse_claim(actor, &claim_id, &input)?.id)
         }
-        // commands.ts:209-220: C6 replaces each arm with its engine call.
-        C::BankAdd { .. } => return Err(CommandError::NotImplemented("bank.add")),
-        C::StatementImport { .. } => return Err(CommandError::NotImplemented("statement.import")),
-        C::StatementAutoMatch { .. } => {
-            return Err(CommandError::NotImplemented("statement.autoMatch"));
+        // commands.ts:209-220
+        C::BankAdd { input } => id(ledger.add_bank_account(actor, input)?.id),
+        C::StatementImport {
+            bank_account_id,
+            rows,
+        } => CommandResult::Ids {
+            ids: ledger
+                .import_statement(actor, &bank_account_id, &rows)?
+                .into_iter()
+                .map(|l| l.id.into())
+                .collect(),
+        },
+        C::StatementAutoMatch { bank_account_id } => CommandResult::AutoMatch {
+            result: auto_match(ledger, actor, &bank_account_id, DEFAULT_WINDOW_DAYS)?,
+        },
+        C::StatementMatch {
+            statement_line_id,
+            journal_line_id,
+        } => id(ledger
+            .match_statement_line(
+                actor,
+                &statement_line_id,
+                &journal_line_id,
+                MatchKind::Manual,
+            )?
+            .id),
+        C::StatementUnmatch { statement_line_id } => {
+            id(ledger.unmatch_statement_line(actor, &statement_line_id)?.id)
         }
-        C::StatementMatch { .. } => return Err(CommandError::NotImplemented("statement.match")),
-        C::StatementUnmatch { .. } => {
-            return Err(CommandError::NotImplemented("statement.unmatch"));
-        }
-        C::StatementPost { .. } => return Err(CommandError::NotImplemented("statement.post")),
+        C::StatementPost {
+            statement_line_id,
+            counter,
+        } => id(ledger
+            .post_from_statement_line(actor, &statement_line_id, &counter)?
+            .id),
     })
 }
