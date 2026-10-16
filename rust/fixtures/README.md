@@ -162,6 +162,13 @@ reformatted. Where JSON forces a representation, it is listed here.
   `.0`, non-finite values as the strings above) and every other state number is an integer.
   It would break on a float that ryu and ECMAScript print differently, such as `1e21` against
   `1e+21`; no state fixture holds one.
+- **Rust reports** (task C5, pre-decision P4 did not fire): `crates/ledger-core/tests/reports.rs`
+  runs all 344 cases of the fifteen `report-*.json` files through `ledger_core::reports`, equal as
+  JSON values, and reprints each whole file byte-equal with the Rust results in place. No case
+  differs only through formatting: every ratio and month count is the same double and prints
+  the same digits. Reading the fixtures needs a correctly rounded float parser: `serde_json`
+  without its `float_roundtrip` feature reads some 17-digit values one ulp off (it fails three of
+  the fifteen files), so ledger-core's tests turn that feature on.
 
 ## Not covered here
 

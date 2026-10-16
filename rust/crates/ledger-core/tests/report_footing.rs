@@ -13,7 +13,7 @@ use ledger_core::reports::{
     Basis, activities, cash_flow, day_before, financial_position, functional_expenses,
     grant_summary, trial_balance,
 };
-use ledger_core::types::{AccountType, IsoDate, LedgerState};
+use ledger_core::types::{AccountType, IsoDate, LedgerState, SourceType};
 
 const BASES: [Basis; 2] = [Basis::Accrual, Basis::Cash];
 
@@ -218,4 +218,53 @@ fn grant_reports_tie_to_grant_spend() {
         .map(|l| l.base_amount)
         .sum();
     assert_eq!(spent_total, coded);
+}
+
+#[test]
+fn year_end_close_moves_net_assets_without_changing_them() {
+    // engine.test.ts:284-293 and review-regressions.test.ts:143-144, on the commands' books,
+    // which close 2026 on 2026-12-31: the books without the closing entry are the "before".
+    let after = commands_final();
+    let close: Vec<_> = (after.entries.iter())
+        .filter(|e| e.source_type == SourceType::YearEndClose)
+        .map(|e| e.id.clone())
+        .collect();
+    assert_eq!(close.len(), 1);
+    let mut before = after.clone();
+    before.entries.retain(|e| !close.contains(&e.id));
+    before.lines.retain(|l| !close.contains(&l.entry_id));
+    let year_end = date("2026-12-31");
+    for basis in BASES {
+        let (b, a) = (
+            financial_position(&before, &year_end, basis),
+            financial_position(&after, &year_end, basis),
+        );
+        assert_eq!(a.total_net_assets, b.total_net_assets, "{basis:?}");
+        assert_eq!(
+            a.net_assets.restricted, b.net_assets.restricted,
+            "{basis:?}"
+        );
+        assert_eq!(a.difference, 0, "{basis:?}");
+        // The close is computed from accrual balances, so only the accrual trial balance is left
+        // with no income or expense; the cash view keeps the closing lines but re-codes
+        // settlements, as in TS (report-trial-balance.json, commands-final, cash).
+        let open = trial_balance(&after, None, basis)
+            .rows
+            .iter()
+            .filter(|r| {
+                matches!(
+                    r.account.account_type,
+                    AccountType::Income | AccountType::Expense
+                )
+            })
+            .count();
+        assert_eq!(open == 0, basis == Basis::Accrual, "{basis:?}: {open} open");
+        // Activities leave the closing entry out, so the year reads the same either way.
+        let (from, to) = (date("2026-01-01"), year_end.clone());
+        assert_eq!(
+            activities(&after, &from, &to, basis),
+            activities(&before, &from, &to, basis),
+            "{basis:?}"
+        );
+    }
 }
