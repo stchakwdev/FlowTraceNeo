@@ -16,6 +16,7 @@ thiserror.workspace = true
 # Correctly rounded float parsing in the tests, so a ratio or month count read from a fixture is
 # the exact double TS wrote; the default parser can be one ulp off on 17-digit values.
 serde_json = { workspace = true, features = ["float_roundtrip"] }
+proptest.workspace = true
 
 [lints]
 workspace = true

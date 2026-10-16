@@ -76,4 +76,6 @@ pub fn find_strings<'a>(value: &'a Value, pred: &dyn Fn(&str) -> bool, out: &mut
     }
 }
 
+pub mod books;
 pub mod replay;
+pub mod strategies;

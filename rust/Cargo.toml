@@ -36,6 +36,9 @@ spacetimedb-sdk = "2.12.0"
 # Server module crate, pinned to the server's 2.12.0: https://spacetimedb.com/docs/quickstarts/rust/
 spacetimedb = "=2.12.0"
 async-channel = "2.5"
+# Property tests (dev-dependency of ledger-core; see crates/ledger-core/tests/README.md). Without the
+# fork and timeout defaults: https://docs.rs/proptest/1.12.0/proptest/#features
+proptest = { version = "1.12", default-features = false, features = ["std"] }
 
 # Every crate inherits these with `[lints] workspace = true`.
 # Test modules opt out of unwrap_used / expect_used with a module-level
