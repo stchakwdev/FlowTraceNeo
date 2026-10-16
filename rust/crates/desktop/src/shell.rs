@@ -23,6 +23,7 @@ use gpui_kit::{
 use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen, scroll_target};
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
+use crate::panels::general_ledger::GeneralLedgerPanel;
 use crate::panels::reports::ReportsPanel;
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
@@ -36,6 +37,7 @@ pub struct Shell {
     store: Entity<LedgerStore>,
     nav: Navigation,
     accounts: Entity<AccountsPanel>,
+    general_ledger: Entity<GeneralLedgerPanel>,
     org_select: Entity<SelectState<OrgItems>>,
     host: Entity<InputState>,
     database: Entity<InputState>,
@@ -76,6 +78,7 @@ impl Shell {
 
         let accounts = cx.new(|cx| AccountsPanel::new(store.clone(), window, cx));
         let reports = cx.new(|cx| ReportsPanel::new(store.clone(), window, cx));
+        let general_ledger = cx.new(|cx| GeneralLedgerPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
@@ -89,6 +92,7 @@ impl Shell {
             store,
             nav,
             accounts,
+            general_ledger,
             org_select,
             host,
             database,
@@ -99,6 +103,12 @@ impl Shell {
             focus,
             _subscriptions: subscriptions,
         }
+    }
+
+    /// The General ledger panel, for the launch flags (`app.rs`).
+    #[must_use]
+    pub fn general_ledger(&self) -> &Entity<GeneralLedgerPanel> {
+        &self.general_ledger
     }
 
     fn on_org_selected(
@@ -219,11 +229,10 @@ impl Shell {
             .is_some_and(|org| org.id.as_str() == ledger_core::demo::DEMO_ORG_ID);
         match entry {
             NavEntry::Accounts => self.accounts.clone().into_any_element(),
-            NavEntry::Journal
-            | NavEntry::GeneralLedger
-            | NavEntry::Spend
-            | NavEntry::Grants
-            | NavEntry::Reconcile => panels::placeholder(entry, view, demo, cx).into_any_element(),
+            NavEntry::GeneralLedger => self.general_ledger.clone().into_any_element(),
+            NavEntry::Journal | NavEntry::Spend | NavEntry::Grants | NavEntry::Reconcile => {
+                panels::placeholder(entry, view, demo, cx).into_any_element()
+            }
             NavEntry::Reports => self.reports.clone().into_any_element(),
         }
     }

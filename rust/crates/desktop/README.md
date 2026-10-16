@@ -164,3 +164,22 @@ CSV of every demo-books case of the `report-*.json` fixtures back and checks its
 `docs/screens/u9-trial-balance.png`, `u9-trial-balance-totals.png`,
 `u9-financial-position.png`, `u9-activities.png`, `u9-grant-dark.png`; a sample export is
 `docs/screens/u9-trial-balance.csv` (checked against a fresh export by the tests).
+
+## General ledger (U4)
+
+`general_ledger` holds the screen's view models, free of GPUI: `GlFilter` (account with its
+sub-accounts, fund, grant, tag, period, from, to) maps to a `ledger_core::reports::LineFilter`
+(a period gives its first and last day, overlapped with from and to); `FilterChoices` lists each
+select's options in the web screen's order; `GlTable::derive` turns
+`reports::general_ledger` into rows (date, entry, account, memo, fund, grant, debit, credit, and
+the running balance natural side positive) plus a totals row; `GlCache` derives again only when
+the store revision or the filter changes; `EntryDetail` is the clicked line's entry.
+`panels::general_ledger` draws it with a gpui-kit `DataTable`, which renders only the rows in
+view (`uniform_list`), and emits `OpenEntry(EntryId)` on a click for the Journal screen (U3).
+
+Flags: `--large-books 50000` adds synthetic books (`large_books::build`, two-line entries posted
+through the engine with the fixed test env) listed and selected first; `--gl-account 1110`
+filters on an account code; `--gl-row 25000` scrolls to a row and opens its entry;
+`--gl-scroll-bench on` scrolls the whole table 25 rows a frame and logs frame times to stderr.
+Shots: `docs/screens/u4-general-ledger.png` (demo books, account 1110, an entry open) and
+`docs/screens/u4-general-ledger-50k.png` (50,000 lines, mid-scroll).

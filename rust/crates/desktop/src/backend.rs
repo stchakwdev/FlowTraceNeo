@@ -212,6 +212,29 @@ impl InProcessBackend {
         })
     }
 
+    /// Puts [`crate::large_books`] with `lines` posted lines first in the list, so it opens
+    /// selected (`--large-books`, for the General ledger's 50,000-line check). Its commands draw
+    /// UUIDs and wall-clock time from [`SystemEnv`].
+    ///
+    /// # Errors
+    ///
+    /// [`BackendError::Setup`] when the books cannot be built.
+    pub fn with_large_books(mut self, lines: usize) -> Result<Self, BackendError> {
+        let state = crate::large_books::build(lines)?;
+        let large = Books {
+            org: Organisation {
+                id: state.settings.organization_id.clone(),
+                name: crate::large_books::LARGE_ORG_NAME.to_owned(),
+                base_currency: state.settings.base_currency.clone(),
+            },
+            state: Arc::new(state),
+            env: Box::new(SystemEnv),
+            actor: local_actor(),
+        };
+        self.books.insert(0, large);
+        Ok(self)
+    }
+
     /// Sends `event` to every live subscriber and forgets the closed ones.
     fn broadcast(&mut self, event: &BackendEvent) {
         self.subscribers
@@ -400,6 +423,19 @@ mod tests {
     use ledger_core::demo::DEMO_ORG_ID;
     use ledger_core::sanitize_command;
     use serde_json::json;
+
+    #[test]
+    fn large_books_open_first_with_their_lines() {
+        let backend = InProcessBackend::with_demo_and_empty()
+            .unwrap()
+            .with_large_books(100)
+            .unwrap();
+        let orgs = backend.organisations();
+        assert_eq!(orgs.len(), 3);
+        assert_eq!(orgs[0].name, crate::large_books::LARGE_ORG_NAME);
+        assert_eq!(orgs[1].name, DEMO_ORG_NAME);
+        assert_eq!(backend.state(&orgs[0].id).unwrap().lines.len(), 100);
+    }
 
     fn backend() -> InProcessBackend {
         InProcessBackend::with_demo_and_empty().unwrap()
