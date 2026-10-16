@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ledger-core",
+    "crates/ledger-module",
+    "crates/ledger-client",
+    "crates/desktop",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "UNLICENSED"
+repository = "https://github.com/stchakwdev/FlowTraceNeo"
+publish = false
+
+# Shared dependency versions. Crates opt in with `name.workspace = true`:
+# thiserror in libraries, anyhow in the desktop binary only.
+[workspace.dependencies]
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "2.0"
+
+# Every crate inherits these with `[lints] workspace = true`.
+# Test modules opt out of unwrap_used / expect_used with a module-level
+# `#![expect(..., reason = "...")]`; see crates/ledger-core/src/lib.rs.
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
