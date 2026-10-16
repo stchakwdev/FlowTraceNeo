@@ -24,11 +24,11 @@ use crate::tables::{
 };
 
 /// An error as the text a reducer returns.
-fn text(e: impl Display) -> String {
+pub(crate) fn text(e: impl Display) -> String {
     e.to_string()
 }
 
-fn is_operator(ctx: &ReducerContext, identity: Identity) -> bool {
+pub(crate) fn is_operator(ctx: &ReducerContext, identity: Identity) -> bool {
     ctx.db.operator().identity().find(identity).is_some()
 }
 
@@ -307,7 +307,7 @@ fn write_back(ctx: &ReducerContext, org: LedgerOrg, plan: WriteBack) -> Result<(
 
 /// `envFor(ctx)` (`index.ts:361-365`): the reducer time in milliseconds ([`crate::clock`]) and
 /// a fresh `ctx.new_uuid_v4()` per id.
-fn reducer_env(
+pub(crate) fn reducer_env(
     ctx: &ReducerContext,
 ) -> Result<ModuleEnv<impl FnMut() -> Result<String, String> + '_>, String> {
     let now = reducer_time(ctx.timestamp).map_err(text)?;

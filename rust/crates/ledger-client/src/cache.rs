@@ -139,6 +139,8 @@ pub enum Row {
     Doc(DocTable, DocColumns),
     /// `my_command_result`.
     Result(ResultRow),
+    /// One of the transparency views, cached apart ([`crate::transparency`]).
+    Transparency(crate::transparency::TransparencyRow),
 }
 
 /// What a row callback sends: a row that is now present (insert, or the new side of an
@@ -196,7 +198,7 @@ pub struct RowCache {
 
 impl RowCache {
     /// Applies one change and returns the organisation it touched; `None` for a command result,
-    /// which belongs to no books.
+    /// which belongs to no books, and for a transparency row, which the client caches apart.
     pub fn apply(&mut self, change: RowChange) -> Option<String> {
         let (row, upsert) = match change {
             RowChange::Upsert(row) => (row, true),
@@ -208,7 +210,7 @@ impl RowCache {
             Row::Entry(r) => r.org_id.clone(),
             Row::Line(r) => r.org_id.clone(),
             Row::Doc(_, r) => r.org_id.clone(),
-            Row::Result(_) => return None,
+            Row::Result(_) | Row::Transparency(_) => return None,
         };
         let org = self.orgs.entry(org_id.clone()).or_default();
         match row {
@@ -230,7 +232,7 @@ impl RowCache {
                     upsert,
                 );
             }
-            Row::Result(_) => {}
+            Row::Result(_) | Row::Transparency(_) => {}
         }
         if org.is_empty() {
             self.orgs.remove(&org_id);

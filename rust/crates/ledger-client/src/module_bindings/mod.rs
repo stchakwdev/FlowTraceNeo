@@ -6,7 +6,10 @@
 #![allow(unused, clippy::all)]
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
+pub mod access_group_member_row_type;
+pub mod access_group_row_type;
 pub mod account_row_type;
+pub mod add_access_group_member_reducer;
 pub mod add_member_reducer;
 pub mod add_operator_reducer;
 pub mod audit_event_row_type;
@@ -14,26 +17,46 @@ pub mod bank_account_row_type;
 pub mod bill_row_type;
 pub mod budget_line_row_type;
 pub mod budget_row_type;
+pub mod campaign_row_type;
+pub mod campaign_stat_row_type;
 pub mod command_result_type;
+pub mod create_access_group_reducer;
+pub mod create_campaign_reducer;
+pub mod create_default_access_groups_reducer;
 pub mod create_org_ledger_reducer;
+pub mod create_verification_reducer;
+pub mod delete_access_group_reducer;
+pub mod delete_campaign_reducer;
 pub mod dimension_row_type;
+pub mod donation_row_type;
+pub mod donor_update_row_type;
 pub mod expense_claim_row_type;
 pub mod fiscal_period_row_type;
 pub mod fund_row_type;
 pub mod grant_row_type;
 pub mod import_books_reducer;
+pub mod import_transparency_reducer;
+pub mod invite_access_group_member_reducer;
 pub mod journal_entry_row_type;
 pub mod journal_line_row_type;
 pub mod ledger_org_type;
+pub mod log_verification_access_reducer;
+pub mod mark_donor_update_sent_reducer;
 pub mod member_type;
+pub mod my_access_group_member_table;
+pub mod my_access_group_table;
 pub mod my_account_table;
 pub mod my_audit_event_table;
 pub mod my_bank_account_table;
 pub mod my_bill_table;
 pub mod my_budget_line_table;
 pub mod my_budget_table;
+pub mod my_campaign_stat_table;
+pub mod my_campaign_table;
 pub mod my_command_result_table;
 pub mod my_dimension_table;
+pub mod my_donation_table;
+pub mod my_donor_update_table;
 pub mod my_expense_claim_table;
 pub mod my_fiscal_period_table;
 pub mod my_fund_table;
@@ -42,18 +65,37 @@ pub mod my_journal_entry_table;
 pub mod my_journal_line_table;
 pub mod my_ledger_org_table;
 pub mod my_member_table;
+pub mod my_organization_profile_table;
 pub mod my_payment_table;
+pub mod my_profile_table;
 pub mod my_statement_line_table;
 pub mod my_vendor_table;
+pub mod my_verification_access_log_table;
+pub mod my_verification_table;
 pub mod operator_type;
+pub mod organization_profile_row_type;
 pub mod payment_row_type;
+pub mod post_donor_update_reducer;
+pub mod profile_row_type;
+pub mod record_donation_reducer;
+pub mod remove_access_group_member_reducer;
 pub mod remove_member_reducer;
 pub mod remove_operator_reducer;
 pub mod run_command_reducer;
+pub mod set_profile_reducer;
 pub mod statement_line_row_type;
+pub mod update_access_group_reducer;
+pub mod update_campaign_reducer;
+pub mod update_donation_status_reducer;
+pub mod update_organization_profile_reducer;
 pub mod vendor_row_type;
+pub mod verification_access_row_type;
+pub mod verification_row_type;
 
+pub use access_group_member_row_type::AccessGroupMemberRow;
+pub use access_group_row_type::AccessGroupRow;
 pub use account_row_type::AccountRow;
+pub use add_access_group_member_reducer::add_access_group_member;
 pub use add_member_reducer::add_member;
 pub use add_operator_reducer::add_operator;
 pub use audit_event_row_type::AuditEventRow;
@@ -61,26 +103,46 @@ pub use bank_account_row_type::BankAccountRow;
 pub use bill_row_type::BillRow;
 pub use budget_line_row_type::BudgetLineRow;
 pub use budget_row_type::BudgetRow;
+pub use campaign_row_type::CampaignRow;
+pub use campaign_stat_row_type::CampaignStatRow;
 pub use command_result_type::CommandResult;
+pub use create_access_group_reducer::create_access_group;
+pub use create_campaign_reducer::create_campaign;
+pub use create_default_access_groups_reducer::create_default_access_groups;
 pub use create_org_ledger_reducer::create_org_ledger;
+pub use create_verification_reducer::create_verification;
+pub use delete_access_group_reducer::delete_access_group;
+pub use delete_campaign_reducer::delete_campaign;
 pub use dimension_row_type::DimensionRow;
+pub use donation_row_type::DonationRow;
+pub use donor_update_row_type::DonorUpdateRow;
 pub use expense_claim_row_type::ExpenseClaimRow;
 pub use fiscal_period_row_type::FiscalPeriodRow;
 pub use fund_row_type::FundRow;
 pub use grant_row_type::GrantRow;
 pub use import_books_reducer::import_books;
+pub use import_transparency_reducer::import_transparency;
+pub use invite_access_group_member_reducer::invite_access_group_member;
 pub use journal_entry_row_type::JournalEntryRow;
 pub use journal_line_row_type::JournalLineRow;
 pub use ledger_org_type::LedgerOrg;
+pub use log_verification_access_reducer::log_verification_access;
+pub use mark_donor_update_sent_reducer::mark_donor_update_sent;
 pub use member_type::Member;
+pub use my_access_group_member_table::*;
+pub use my_access_group_table::*;
 pub use my_account_table::*;
 pub use my_audit_event_table::*;
 pub use my_bank_account_table::*;
 pub use my_bill_table::*;
 pub use my_budget_line_table::*;
 pub use my_budget_table::*;
+pub use my_campaign_stat_table::*;
+pub use my_campaign_table::*;
 pub use my_command_result_table::*;
 pub use my_dimension_table::*;
+pub use my_donation_table::*;
+pub use my_donor_update_table::*;
 pub use my_expense_claim_table::*;
 pub use my_fiscal_period_table::*;
 pub use my_fund_table::*;
@@ -89,16 +151,32 @@ pub use my_journal_entry_table::*;
 pub use my_journal_line_table::*;
 pub use my_ledger_org_table::*;
 pub use my_member_table::*;
+pub use my_organization_profile_table::*;
 pub use my_payment_table::*;
+pub use my_profile_table::*;
 pub use my_statement_line_table::*;
 pub use my_vendor_table::*;
+pub use my_verification_access_log_table::*;
+pub use my_verification_table::*;
 pub use operator_type::Operator;
+pub use organization_profile_row_type::OrganizationProfileRow;
 pub use payment_row_type::PaymentRow;
+pub use post_donor_update_reducer::post_donor_update;
+pub use profile_row_type::ProfileRow;
+pub use record_donation_reducer::record_donation;
+pub use remove_access_group_member_reducer::remove_access_group_member;
 pub use remove_member_reducer::remove_member;
 pub use remove_operator_reducer::remove_operator;
 pub use run_command_reducer::run_command;
+pub use set_profile_reducer::set_profile;
 pub use statement_line_row_type::StatementLineRow;
+pub use update_access_group_reducer::update_access_group;
+pub use update_campaign_reducer::update_campaign;
+pub use update_donation_status_reducer::update_donation_status;
+pub use update_organization_profile_reducer::update_organization_profile;
 pub use vendor_row_type::VendorRow;
+pub use verification_access_row_type::VerificationAccessRow;
+pub use verification_row_type::VerificationRow;
 
 #[derive(Clone, PartialEq, Debug)]
 
@@ -108,6 +186,10 @@ pub use vendor_row_type::VendorRow;
 /// to indicate which reducer caused the event.
 
 pub enum Reducer {
+    AddAccessGroupMember {
+        org_id: String,
+        member_json: String,
+    },
     AddMember {
         org_id: String,
         identity: __sdk::Identity,
@@ -120,15 +202,69 @@ pub enum Reducer {
     AddOperator {
         identity: __sdk::Identity,
     },
+    CreateAccessGroup {
+        org_id: String,
+        group_json: String,
+    },
+    CreateCampaign {
+        org_id: String,
+        campaign_json: String,
+    },
+    CreateDefaultAccessGroups {
+        org_id: String,
+    },
     CreateOrgLedger {
         org_id: String,
         base_currency: String,
         fiscal_year: u32,
         display_name: String,
     },
+    CreateVerification {
+        org_id: String,
+        verification_json: String,
+    },
+    DeleteAccessGroup {
+        org_id: String,
+        group_id: String,
+    },
+    DeleteCampaign {
+        org_id: String,
+        campaign_id: String,
+    },
     ImportBooks {
         org_id: String,
         state_json: String,
+    },
+    ImportTransparency {
+        org_id: String,
+        store_json: String,
+    },
+    InviteAccessGroupMember {
+        org_id: String,
+        group_id: String,
+        email: String,
+        valid_until: Option<String>,
+    },
+    LogVerificationAccess {
+        org_id: String,
+        verification_id: String,
+        access_type: String,
+    },
+    MarkDonorUpdateSent {
+        org_id: String,
+        update_id: String,
+    },
+    PostDonorUpdate {
+        org_id: String,
+        update_json: String,
+    },
+    RecordDonation {
+        org_id: String,
+        donation_json: String,
+    },
+    RemoveAccessGroupMember {
+        org_id: String,
+        member_id: String,
     },
     RemoveMember {
         org_id: String,
@@ -142,6 +278,30 @@ pub enum Reducer {
         request_id: String,
         command_json: String,
     },
+    SetProfile {
+        display_name: String,
+        email: String,
+    },
+    UpdateAccessGroup {
+        org_id: String,
+        group_id: String,
+        patch_json: String,
+    },
+    UpdateCampaign {
+        org_id: String,
+        campaign_id: String,
+        patch_json: String,
+    },
+    UpdateDonationStatus {
+        org_id: String,
+        donation_id: String,
+        status: String,
+        payment_reference: Option<String>,
+    },
+    UpdateOrganizationProfile {
+        org_id: String,
+        patch_json: String,
+    },
 }
 
 impl __sdk::InModule for Reducer {
@@ -151,19 +311,47 @@ impl __sdk::InModule for Reducer {
 impl __sdk::Reducer for Reducer {
     fn reducer_name(&self) -> &'static str {
         match self {
+            Reducer::AddAccessGroupMember { .. } => "add_access_group_member",
             Reducer::AddMember { .. } => "add_member",
             Reducer::AddOperator { .. } => "add_operator",
+            Reducer::CreateAccessGroup { .. } => "create_access_group",
+            Reducer::CreateCampaign { .. } => "create_campaign",
+            Reducer::CreateDefaultAccessGroups { .. } => "create_default_access_groups",
             Reducer::CreateOrgLedger { .. } => "create_org_ledger",
+            Reducer::CreateVerification { .. } => "create_verification",
+            Reducer::DeleteAccessGroup { .. } => "delete_access_group",
+            Reducer::DeleteCampaign { .. } => "delete_campaign",
             Reducer::ImportBooks { .. } => "import_books",
+            Reducer::ImportTransparency { .. } => "import_transparency",
+            Reducer::InviteAccessGroupMember { .. } => "invite_access_group_member",
+            Reducer::LogVerificationAccess { .. } => "log_verification_access",
+            Reducer::MarkDonorUpdateSent { .. } => "mark_donor_update_sent",
+            Reducer::PostDonorUpdate { .. } => "post_donor_update",
+            Reducer::RecordDonation { .. } => "record_donation",
+            Reducer::RemoveAccessGroupMember { .. } => "remove_access_group_member",
             Reducer::RemoveMember { .. } => "remove_member",
             Reducer::RemoveOperator { .. } => "remove_operator",
             Reducer::RunCommand { .. } => "run_command",
+            Reducer::SetProfile { .. } => "set_profile",
+            Reducer::UpdateAccessGroup { .. } => "update_access_group",
+            Reducer::UpdateCampaign { .. } => "update_campaign",
+            Reducer::UpdateDonationStatus { .. } => "update_donation_status",
+            Reducer::UpdateOrganizationProfile { .. } => "update_organization_profile",
             _ => unreachable!(),
         }
     }
     #[allow(clippy::clone_on_copy)]
     fn args_bsatn(&self) -> Result<Vec<u8>, __sats::bsatn::EncodeError> {
         match self {
+            Reducer::AddAccessGroupMember {
+                org_id,
+                member_json,
+            } => {
+                __sats::bsatn::to_vec(&add_access_group_member_reducer::AddAccessGroupMemberArgs {
+                    org_id: org_id.clone(),
+                    member_json: member_json.clone(),
+                })
+            }
             Reducer::AddMember {
                 org_id,
                 identity,
@@ -186,6 +374,24 @@ impl __sdk::Reducer for Reducer {
                     identity: identity.clone(),
                 })
             }
+            Reducer::CreateAccessGroup { org_id, group_json } => {
+                __sats::bsatn::to_vec(&create_access_group_reducer::CreateAccessGroupArgs {
+                    org_id: org_id.clone(),
+                    group_json: group_json.clone(),
+                })
+            }
+            Reducer::CreateCampaign {
+                org_id,
+                campaign_json,
+            } => __sats::bsatn::to_vec(&create_campaign_reducer::CreateCampaignArgs {
+                org_id: org_id.clone(),
+                campaign_json: campaign_json.clone(),
+            }),
+            Reducer::CreateDefaultAccessGroups { org_id } => __sats::bsatn::to_vec(
+                &create_default_access_groups_reducer::CreateDefaultAccessGroupsArgs {
+                    org_id: org_id.clone(),
+                },
+            ),
             Reducer::CreateOrgLedger {
                 org_id,
                 base_currency,
@@ -197,12 +403,88 @@ impl __sdk::Reducer for Reducer {
                 fiscal_year: fiscal_year.clone(),
                 display_name: display_name.clone(),
             }),
+            Reducer::CreateVerification {
+                org_id,
+                verification_json,
+            } => __sats::bsatn::to_vec(&create_verification_reducer::CreateVerificationArgs {
+                org_id: org_id.clone(),
+                verification_json: verification_json.clone(),
+            }),
+            Reducer::DeleteAccessGroup { org_id, group_id } => {
+                __sats::bsatn::to_vec(&delete_access_group_reducer::DeleteAccessGroupArgs {
+                    org_id: org_id.clone(),
+                    group_id: group_id.clone(),
+                })
+            }
+            Reducer::DeleteCampaign {
+                org_id,
+                campaign_id,
+            } => __sats::bsatn::to_vec(&delete_campaign_reducer::DeleteCampaignArgs {
+                org_id: org_id.clone(),
+                campaign_id: campaign_id.clone(),
+            }),
             Reducer::ImportBooks { org_id, state_json } => {
                 __sats::bsatn::to_vec(&import_books_reducer::ImportBooksArgs {
                     org_id: org_id.clone(),
                     state_json: state_json.clone(),
                 })
             }
+            Reducer::ImportTransparency { org_id, store_json } => {
+                __sats::bsatn::to_vec(&import_transparency_reducer::ImportTransparencyArgs {
+                    org_id: org_id.clone(),
+                    store_json: store_json.clone(),
+                })
+            }
+            Reducer::InviteAccessGroupMember {
+                org_id,
+                group_id,
+                email,
+                valid_until,
+            } => __sats::bsatn::to_vec(
+                &invite_access_group_member_reducer::InviteAccessGroupMemberArgs {
+                    org_id: org_id.clone(),
+                    group_id: group_id.clone(),
+                    email: email.clone(),
+                    valid_until: valid_until.clone(),
+                },
+            ),
+            Reducer::LogVerificationAccess {
+                org_id,
+                verification_id,
+                access_type,
+            } => __sats::bsatn::to_vec(
+                &log_verification_access_reducer::LogVerificationAccessArgs {
+                    org_id: org_id.clone(),
+                    verification_id: verification_id.clone(),
+                    access_type: access_type.clone(),
+                },
+            ),
+            Reducer::MarkDonorUpdateSent { org_id, update_id } => {
+                __sats::bsatn::to_vec(&mark_donor_update_sent_reducer::MarkDonorUpdateSentArgs {
+                    org_id: org_id.clone(),
+                    update_id: update_id.clone(),
+                })
+            }
+            Reducer::PostDonorUpdate {
+                org_id,
+                update_json,
+            } => __sats::bsatn::to_vec(&post_donor_update_reducer::PostDonorUpdateArgs {
+                org_id: org_id.clone(),
+                update_json: update_json.clone(),
+            }),
+            Reducer::RecordDonation {
+                org_id,
+                donation_json,
+            } => __sats::bsatn::to_vec(&record_donation_reducer::RecordDonationArgs {
+                org_id: org_id.clone(),
+                donation_json: donation_json.clone(),
+            }),
+            Reducer::RemoveAccessGroupMember { org_id, member_id } => __sats::bsatn::to_vec(
+                &remove_access_group_member_reducer::RemoveAccessGroupMemberArgs {
+                    org_id: org_id.clone(),
+                    member_id: member_id.clone(),
+                },
+            ),
             Reducer::RemoveMember { org_id, identity } => {
                 __sats::bsatn::to_vec(&remove_member_reducer::RemoveMemberArgs {
                     org_id: org_id.clone(),
@@ -223,6 +505,48 @@ impl __sdk::Reducer for Reducer {
                 request_id: request_id.clone(),
                 command_json: command_json.clone(),
             }),
+            Reducer::SetProfile {
+                display_name,
+                email,
+            } => __sats::bsatn::to_vec(&set_profile_reducer::SetProfileArgs {
+                display_name: display_name.clone(),
+                email: email.clone(),
+            }),
+            Reducer::UpdateAccessGroup {
+                org_id,
+                group_id,
+                patch_json,
+            } => __sats::bsatn::to_vec(&update_access_group_reducer::UpdateAccessGroupArgs {
+                org_id: org_id.clone(),
+                group_id: group_id.clone(),
+                patch_json: patch_json.clone(),
+            }),
+            Reducer::UpdateCampaign {
+                org_id,
+                campaign_id,
+                patch_json,
+            } => __sats::bsatn::to_vec(&update_campaign_reducer::UpdateCampaignArgs {
+                org_id: org_id.clone(),
+                campaign_id: campaign_id.clone(),
+                patch_json: patch_json.clone(),
+            }),
+            Reducer::UpdateDonationStatus {
+                org_id,
+                donation_id,
+                status,
+                payment_reference,
+            } => __sats::bsatn::to_vec(&update_donation_status_reducer::UpdateDonationStatusArgs {
+                org_id: org_id.clone(),
+                donation_id: donation_id.clone(),
+                status: status.clone(),
+                payment_reference: payment_reference.clone(),
+            }),
+            Reducer::UpdateOrganizationProfile { org_id, patch_json } => __sats::bsatn::to_vec(
+                &update_organization_profile_reducer::UpdateOrganizationProfileArgs {
+                    org_id: org_id.clone(),
+                    patch_json: patch_json.clone(),
+                },
+            ),
             _ => unreachable!(),
         }
     }
@@ -232,14 +556,20 @@ impl __sdk::Reducer for Reducer {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct DbUpdate {
+    my_access_group: __sdk::TableUpdate<AccessGroupRow>,
+    my_access_group_member: __sdk::TableUpdate<AccessGroupMemberRow>,
     my_account: __sdk::TableUpdate<AccountRow>,
     my_audit_event: __sdk::TableUpdate<AuditEventRow>,
     my_bank_account: __sdk::TableUpdate<BankAccountRow>,
     my_bill: __sdk::TableUpdate<BillRow>,
     my_budget: __sdk::TableUpdate<BudgetRow>,
     my_budget_line: __sdk::TableUpdate<BudgetLineRow>,
+    my_campaign: __sdk::TableUpdate<CampaignRow>,
+    my_campaign_stat: __sdk::TableUpdate<CampaignStatRow>,
     my_command_result: __sdk::TableUpdate<CommandResult>,
     my_dimension: __sdk::TableUpdate<DimensionRow>,
+    my_donation: __sdk::TableUpdate<DonationRow>,
+    my_donor_update: __sdk::TableUpdate<DonorUpdateRow>,
     my_expense_claim: __sdk::TableUpdate<ExpenseClaimRow>,
     my_fiscal_period: __sdk::TableUpdate<FiscalPeriodRow>,
     my_fund: __sdk::TableUpdate<FundRow>,
@@ -248,9 +578,13 @@ pub struct DbUpdate {
     my_journal_line: __sdk::TableUpdate<JournalLineRow>,
     my_ledger_org: __sdk::TableUpdate<LedgerOrg>,
     my_member: __sdk::TableUpdate<Member>,
+    my_organization_profile: __sdk::TableUpdate<OrganizationProfileRow>,
     my_payment: __sdk::TableUpdate<PaymentRow>,
+    my_profile: __sdk::TableUpdate<ProfileRow>,
     my_statement_line: __sdk::TableUpdate<StatementLineRow>,
     my_vendor: __sdk::TableUpdate<VendorRow>,
+    my_verification: __sdk::TableUpdate<VerificationRow>,
+    my_verification_access_log: __sdk::TableUpdate<VerificationAccessRow>,
 }
 
 impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
@@ -259,6 +593,12 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
         let mut db_update = DbUpdate::default();
         for table_update in __sdk::transaction_update_iter_table_updates(raw) {
             match &table_update.table_name[..] {
+                "my_access_group" => db_update
+                    .my_access_group
+                    .append(my_access_group_table::parse_table_update(table_update)?),
+                "my_access_group_member" => db_update.my_access_group_member.append(
+                    my_access_group_member_table::parse_table_update(table_update)?,
+                ),
                 "my_account" => db_update
                     .my_account
                     .append(my_account_table::parse_table_update(table_update)?),
@@ -277,12 +617,24 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_budget_line" => db_update
                     .my_budget_line
                     .append(my_budget_line_table::parse_table_update(table_update)?),
+                "my_campaign" => db_update
+                    .my_campaign
+                    .append(my_campaign_table::parse_table_update(table_update)?),
+                "my_campaign_stat" => db_update
+                    .my_campaign_stat
+                    .append(my_campaign_stat_table::parse_table_update(table_update)?),
                 "my_command_result" => db_update
                     .my_command_result
                     .append(my_command_result_table::parse_table_update(table_update)?),
                 "my_dimension" => db_update
                     .my_dimension
                     .append(my_dimension_table::parse_table_update(table_update)?),
+                "my_donation" => db_update
+                    .my_donation
+                    .append(my_donation_table::parse_table_update(table_update)?),
+                "my_donor_update" => db_update
+                    .my_donor_update
+                    .append(my_donor_update_table::parse_table_update(table_update)?),
                 "my_expense_claim" => db_update
                     .my_expense_claim
                     .append(my_expense_claim_table::parse_table_update(table_update)?),
@@ -307,15 +659,27 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_member" => db_update
                     .my_member
                     .append(my_member_table::parse_table_update(table_update)?),
+                "my_organization_profile" => db_update.my_organization_profile.append(
+                    my_organization_profile_table::parse_table_update(table_update)?,
+                ),
                 "my_payment" => db_update
                     .my_payment
                     .append(my_payment_table::parse_table_update(table_update)?),
+                "my_profile" => db_update
+                    .my_profile
+                    .append(my_profile_table::parse_table_update(table_update)?),
                 "my_statement_line" => db_update
                     .my_statement_line
                     .append(my_statement_line_table::parse_table_update(table_update)?),
                 "my_vendor" => db_update
                     .my_vendor
                     .append(my_vendor_table::parse_table_update(table_update)?),
+                "my_verification" => db_update
+                    .my_verification
+                    .append(my_verification_table::parse_table_update(table_update)?),
+                "my_verification_access_log" => db_update.my_verification_access_log.append(
+                    my_verification_access_log_table::parse_table_update(table_update)?,
+                ),
 
                 unknown => {
                     return Err(__sdk::InternalError::unknown_name(
@@ -342,6 +706,15 @@ impl __sdk::DbUpdate for DbUpdate {
     ) -> AppliedDiff<'_> {
         let mut diff = AppliedDiff::default();
 
+        diff.my_access_group = cache
+            .apply_diff_to_table::<AccessGroupRow>("my_access_group", &self.my_access_group)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_access_group_member = cache
+            .apply_diff_to_table::<AccessGroupMemberRow>(
+                "my_access_group_member",
+                &self.my_access_group_member,
+            )
+            .with_updates_by_pk(|row| &row.key);
         diff.my_account = cache
             .apply_diff_to_table::<AccountRow>("my_account", &self.my_account)
             .with_updates_by_pk(|row| &row.key);
@@ -360,11 +733,23 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.my_budget_line = cache
             .apply_diff_to_table::<BudgetLineRow>("my_budget_line", &self.my_budget_line)
             .with_updates_by_pk(|row| &row.key);
+        diff.my_campaign = cache
+            .apply_diff_to_table::<CampaignRow>("my_campaign", &self.my_campaign)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_campaign_stat = cache
+            .apply_diff_to_table::<CampaignStatRow>("my_campaign_stat", &self.my_campaign_stat)
+            .with_updates_by_pk(|row| &row.key);
         diff.my_command_result = cache
             .apply_diff_to_table::<CommandResult>("my_command_result", &self.my_command_result)
             .with_updates_by_pk(|row| &row.identity);
         diff.my_dimension = cache
             .apply_diff_to_table::<DimensionRow>("my_dimension", &self.my_dimension)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_donation = cache
+            .apply_diff_to_table::<DonationRow>("my_donation", &self.my_donation)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_donor_update = cache
+            .apply_diff_to_table::<DonorUpdateRow>("my_donor_update", &self.my_donor_update)
             .with_updates_by_pk(|row| &row.key);
         diff.my_expense_claim = cache
             .apply_diff_to_table::<ExpenseClaimRow>("my_expense_claim", &self.my_expense_claim)
@@ -388,15 +773,28 @@ impl __sdk::DbUpdate for DbUpdate {
             .apply_diff_to_table::<LedgerOrg>("my_ledger_org", &self.my_ledger_org)
             .with_updates_by_pk(|row| &row.org_id);
         diff.my_member = cache.apply_diff_to_table::<Member>("my_member", &self.my_member);
+        diff.my_organization_profile = cache
+            .apply_diff_to_table::<OrganizationProfileRow>(
+                "my_organization_profile",
+                &self.my_organization_profile,
+            )
+            .with_updates_by_pk(|row| &row.org_id);
         diff.my_payment = cache
             .apply_diff_to_table::<PaymentRow>("my_payment", &self.my_payment)
             .with_updates_by_pk(|row| &row.key);
+        diff.my_profile = cache.apply_diff_to_table::<ProfileRow>("my_profile", &self.my_profile);
         diff.my_statement_line = cache
             .apply_diff_to_table::<StatementLineRow>("my_statement_line", &self.my_statement_line)
             .with_updates_by_pk(|row| &row.key);
         diff.my_vendor = cache
             .apply_diff_to_table::<VendorRow>("my_vendor", &self.my_vendor)
             .with_updates_by_pk(|row| &row.key);
+        diff.my_verification =
+            cache.apply_diff_to_table::<VerificationRow>("my_verification", &self.my_verification);
+        diff.my_verification_access_log = cache.apply_diff_to_table::<VerificationAccessRow>(
+            "my_verification_access_log",
+            &self.my_verification_access_log,
+        );
 
         diff
     }
@@ -404,6 +802,12 @@ impl __sdk::DbUpdate for DbUpdate {
         let mut db_update = DbUpdate::default();
         for table_rows in raw.tables {
             match &table_rows.table[..] {
+                "my_access_group" => db_update
+                    .my_access_group
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_access_group_member" => db_update
+                    .my_access_group_member
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_account" => db_update
                     .my_account
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
@@ -422,11 +826,23 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_budget_line" => db_update
                     .my_budget_line
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_campaign" => db_update
+                    .my_campaign
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_campaign_stat" => db_update
+                    .my_campaign_stat
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_command_result" => db_update
                     .my_command_result
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_dimension" => db_update
                     .my_dimension
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_donation" => db_update
+                    .my_donation
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_donor_update" => db_update
+                    .my_donor_update
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_expense_claim" => db_update
                     .my_expense_claim
@@ -452,14 +868,26 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_member" => db_update
                     .my_member
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_organization_profile" => db_update
+                    .my_organization_profile
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_payment" => db_update
                     .my_payment
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_profile" => db_update
+                    .my_profile
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_statement_line" => db_update
                     .my_statement_line
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_vendor" => db_update
                     .my_vendor
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_verification" => db_update
+                    .my_verification
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_verification_access_log" => db_update
+                    .my_verification_access_log
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 unknown => {
                     return Err(
@@ -474,6 +902,12 @@ impl __sdk::DbUpdate for DbUpdate {
         let mut db_update = DbUpdate::default();
         for table_rows in raw.tables {
             match &table_rows.table[..] {
+                "my_access_group" => db_update
+                    .my_access_group
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_access_group_member" => db_update
+                    .my_access_group_member
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_account" => db_update
                     .my_account
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
@@ -492,11 +926,23 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_budget_line" => db_update
                     .my_budget_line
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_campaign" => db_update
+                    .my_campaign
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_campaign_stat" => db_update
+                    .my_campaign_stat
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_command_result" => db_update
                     .my_command_result
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_dimension" => db_update
                     .my_dimension
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_donation" => db_update
+                    .my_donation
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_donor_update" => db_update
+                    .my_donor_update
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_expense_claim" => db_update
                     .my_expense_claim
@@ -522,14 +968,26 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_member" => db_update
                     .my_member
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_organization_profile" => db_update
+                    .my_organization_profile
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_payment" => db_update
                     .my_payment
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_profile" => db_update
+                    .my_profile
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_statement_line" => db_update
                     .my_statement_line
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_vendor" => db_update
                     .my_vendor
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_verification" => db_update
+                    .my_verification
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_verification_access_log" => db_update
+                    .my_verification_access_log
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 unknown => {
                     return Err(
@@ -546,14 +1004,20 @@ impl __sdk::DbUpdate for DbUpdate {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct AppliedDiff<'r> {
+    my_access_group: __sdk::TableAppliedDiff<'r, AccessGroupRow>,
+    my_access_group_member: __sdk::TableAppliedDiff<'r, AccessGroupMemberRow>,
     my_account: __sdk::TableAppliedDiff<'r, AccountRow>,
     my_audit_event: __sdk::TableAppliedDiff<'r, AuditEventRow>,
     my_bank_account: __sdk::TableAppliedDiff<'r, BankAccountRow>,
     my_bill: __sdk::TableAppliedDiff<'r, BillRow>,
     my_budget: __sdk::TableAppliedDiff<'r, BudgetRow>,
     my_budget_line: __sdk::TableAppliedDiff<'r, BudgetLineRow>,
+    my_campaign: __sdk::TableAppliedDiff<'r, CampaignRow>,
+    my_campaign_stat: __sdk::TableAppliedDiff<'r, CampaignStatRow>,
     my_command_result: __sdk::TableAppliedDiff<'r, CommandResult>,
     my_dimension: __sdk::TableAppliedDiff<'r, DimensionRow>,
+    my_donation: __sdk::TableAppliedDiff<'r, DonationRow>,
+    my_donor_update: __sdk::TableAppliedDiff<'r, DonorUpdateRow>,
     my_expense_claim: __sdk::TableAppliedDiff<'r, ExpenseClaimRow>,
     my_fiscal_period: __sdk::TableAppliedDiff<'r, FiscalPeriodRow>,
     my_fund: __sdk::TableAppliedDiff<'r, FundRow>,
@@ -562,9 +1026,13 @@ pub struct AppliedDiff<'r> {
     my_journal_line: __sdk::TableAppliedDiff<'r, JournalLineRow>,
     my_ledger_org: __sdk::TableAppliedDiff<'r, LedgerOrg>,
     my_member: __sdk::TableAppliedDiff<'r, Member>,
+    my_organization_profile: __sdk::TableAppliedDiff<'r, OrganizationProfileRow>,
     my_payment: __sdk::TableAppliedDiff<'r, PaymentRow>,
+    my_profile: __sdk::TableAppliedDiff<'r, ProfileRow>,
     my_statement_line: __sdk::TableAppliedDiff<'r, StatementLineRow>,
     my_vendor: __sdk::TableAppliedDiff<'r, VendorRow>,
+    my_verification: __sdk::TableAppliedDiff<'r, VerificationRow>,
+    my_verification_access_log: __sdk::TableAppliedDiff<'r, VerificationAccessRow>,
     __unused: std::marker::PhantomData<&'r ()>,
 }
 
@@ -578,6 +1046,16 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         event: &EventContext,
         callbacks: &mut __sdk::DbCallbacks<RemoteModule>,
     ) {
+        callbacks.invoke_table_row_callbacks::<AccessGroupRow>(
+            "my_access_group",
+            &self.my_access_group,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<AccessGroupMemberRow>(
+            "my_access_group_member",
+            &self.my_access_group_member,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<AccountRow>("my_account", &self.my_account, event);
         callbacks.invoke_table_row_callbacks::<AuditEventRow>(
             "my_audit_event",
@@ -596,6 +1074,16 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
             &self.my_budget_line,
             event,
         );
+        callbacks.invoke_table_row_callbacks::<CampaignRow>(
+            "my_campaign",
+            &self.my_campaign,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<CampaignStatRow>(
+            "my_campaign_stat",
+            &self.my_campaign_stat,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<CommandResult>(
             "my_command_result",
             &self.my_command_result,
@@ -604,6 +1092,16 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         callbacks.invoke_table_row_callbacks::<DimensionRow>(
             "my_dimension",
             &self.my_dimension,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<DonationRow>(
+            "my_donation",
+            &self.my_donation,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<DonorUpdateRow>(
+            "my_donor_update",
+            &self.my_donor_update,
             event,
         );
         callbacks.invoke_table_row_callbacks::<ExpenseClaimRow>(
@@ -634,13 +1132,29 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
             event,
         );
         callbacks.invoke_table_row_callbacks::<Member>("my_member", &self.my_member, event);
+        callbacks.invoke_table_row_callbacks::<OrganizationProfileRow>(
+            "my_organization_profile",
+            &self.my_organization_profile,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<PaymentRow>("my_payment", &self.my_payment, event);
+        callbacks.invoke_table_row_callbacks::<ProfileRow>("my_profile", &self.my_profile, event);
         callbacks.invoke_table_row_callbacks::<StatementLineRow>(
             "my_statement_line",
             &self.my_statement_line,
             event,
         );
         callbacks.invoke_table_row_callbacks::<VendorRow>("my_vendor", &self.my_vendor, event);
+        callbacks.invoke_table_row_callbacks::<VerificationRow>(
+            "my_verification",
+            &self.my_verification,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<VerificationAccessRow>(
+            "my_verification_access_log",
+            &self.my_verification_access_log,
+            event,
+        );
     }
 }
 
@@ -1301,14 +1815,20 @@ impl __sdk::SpacetimeModule for RemoteModule {
     type QueryBuilder = __sdk::QueryBuilder;
 
     fn register_tables(client_cache: &mut __sdk::ClientCache<Self>) {
+        my_access_group_table::register_table(client_cache);
+        my_access_group_member_table::register_table(client_cache);
         my_account_table::register_table(client_cache);
         my_audit_event_table::register_table(client_cache);
         my_bank_account_table::register_table(client_cache);
         my_bill_table::register_table(client_cache);
         my_budget_table::register_table(client_cache);
         my_budget_line_table::register_table(client_cache);
+        my_campaign_table::register_table(client_cache);
+        my_campaign_stat_table::register_table(client_cache);
         my_command_result_table::register_table(client_cache);
         my_dimension_table::register_table(client_cache);
+        my_donation_table::register_table(client_cache);
+        my_donor_update_table::register_table(client_cache);
         my_expense_claim_table::register_table(client_cache);
         my_fiscal_period_table::register_table(client_cache);
         my_fund_table::register_table(client_cache);
@@ -1317,19 +1837,29 @@ impl __sdk::SpacetimeModule for RemoteModule {
         my_journal_line_table::register_table(client_cache);
         my_ledger_org_table::register_table(client_cache);
         my_member_table::register_table(client_cache);
+        my_organization_profile_table::register_table(client_cache);
         my_payment_table::register_table(client_cache);
+        my_profile_table::register_table(client_cache);
         my_statement_line_table::register_table(client_cache);
         my_vendor_table::register_table(client_cache);
+        my_verification_table::register_table(client_cache);
+        my_verification_access_log_table::register_table(client_cache);
     }
     const ALL_TABLE_NAMES: &'static [&'static str] = &[
+        "my_access_group",
+        "my_access_group_member",
         "my_account",
         "my_audit_event",
         "my_bank_account",
         "my_bill",
         "my_budget",
         "my_budget_line",
+        "my_campaign",
+        "my_campaign_stat",
         "my_command_result",
         "my_dimension",
+        "my_donation",
+        "my_donor_update",
         "my_expense_claim",
         "my_fiscal_period",
         "my_fund",
@@ -1338,8 +1868,12 @@ impl __sdk::SpacetimeModule for RemoteModule {
         "my_journal_line",
         "my_ledger_org",
         "my_member",
+        "my_organization_profile",
         "my_payment",
+        "my_profile",
         "my_statement_line",
         "my_vendor",
+        "my_verification",
+        "my_verification_access_log",
     ];
 }

@@ -181,6 +181,8 @@ impl Live {
                 self.set_status(status_of(&status), &mut out);
             }
             ClientEvent::Changed { orgs } => self.refresh(client, Some(orgs), &mut out),
+            // No desktop screen reads the transparency records yet (DT1 to DT4 add them).
+            ClientEvent::TransparencyChanged { .. } => {}
             ClientEvent::Error(message) => {
                 self.set_status(ConnectionStatus::Error { message }, &mut out);
             }

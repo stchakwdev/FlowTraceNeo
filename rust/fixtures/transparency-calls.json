@@ -1,0 +1,1987 @@
+{
+  "calls": [
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "country": "KE",
+          "name": "Demo NGO Kenya",
+          "public_slug": "demo-ngo-kenya"
+        }
+      ],
+      "delta": {
+        "organizations": {
+          "changed": [
+            {
+              "country": "KE",
+              "created_at": "2025-06-01T09:00:00Z",
+              "currency": "KES",
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "logo_url": null,
+              "name": "Demo NGO Kenya",
+              "public_slug": "demo-ngo-kenya",
+              "trust_score": 87,
+              "type": "NGO",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verified": true
+            }
+          ]
+        }
+      },
+      "fn": "updateOrganization",
+      "outcome": "ok",
+      "result": {
+        "country": "KE",
+        "created_at": "2025-06-01T09:00:00Z",
+        "currency": "KES",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "logo_url": null,
+        "name": "Demo NGO Kenya",
+        "public_slug": "demo-ngo-kenya",
+        "trust_score": 87,
+        "type": "NGO",
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "verified": true
+      }
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "public_slug": "afya-bora"
+        }
+      ],
+      "delta": {},
+      "error": "That public link is already taken. Choose another.",
+      "fn": "updateOrganization",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "org-missing",
+        {
+          "name": "Nobody"
+        }
+      ],
+      "delta": {},
+      "error": "Organization not found in the demo data.",
+      "fn": "updateOrganization",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        {
+          "color": "#1C5FA8",
+          "description": "People who follow the Harambee Health Fund money",
+          "icon": "users",
+          "is_default": false,
+          "is_public": false,
+          "name": "Harambee grant team",
+          "node_scope": "assigned",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "permissions": {
+            "can_edit_nodes": false,
+            "can_edit_transactions": false,
+            "can_manage_groups": false,
+            "can_manage_members": false,
+            "can_view_amounts": true,
+            "can_view_executor": false,
+            "can_view_full_proofs": false,
+            "can_view_nodes": true,
+            "can_view_proofs": true
+          },
+          "priority": 50,
+          "slug": "harambee-grant-team"
+        }
+      ],
+      "delta": {
+        "accessGroups": {
+          "added": [
+            {
+              "color": "#1C5FA8",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "description": "People who follow the Harambee Health Fund money",
+              "icon": "users",
+              "id": "00000000-0000-4000-8000-000000000001",
+              "is_default": false,
+              "is_public": false,
+              "name": "Harambee grant team",
+              "node_scope": "assigned",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "permissions": {
+                "can_edit_nodes": false,
+                "can_edit_transactions": false,
+                "can_manage_groups": false,
+                "can_manage_members": false,
+                "can_view_amounts": true,
+                "can_view_executor": false,
+                "can_view_full_proofs": false,
+                "can_view_nodes": true,
+                "can_view_proofs": true
+              },
+              "priority": 50,
+              "slug": "harambee-grant-team",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "createAccessGroup",
+      "outcome": "ok",
+      "result": {
+        "color": "#1C5FA8",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "description": "People who follow the Harambee Health Fund money",
+        "icon": "users",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "is_default": false,
+        "is_public": false,
+        "name": "Harambee grant team",
+        "node_scope": "assigned",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "permissions": {
+          "can_edit_nodes": false,
+          "can_edit_transactions": false,
+          "can_manage_groups": false,
+          "can_manage_members": false,
+          "can_view_amounts": true,
+          "can_view_executor": false,
+          "can_view_full_proofs": false,
+          "can_view_nodes": true,
+          "can_view_proofs": true
+        },
+        "priority": 50,
+        "slug": "harambee-grant-team",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000001",
+        {
+          "description": "Grant officers who see the original proofs",
+          "permissions": {
+            "can_edit_nodes": false,
+            "can_edit_transactions": false,
+            "can_manage_groups": false,
+            "can_manage_members": false,
+            "can_view_amounts": true,
+            "can_view_executor": true,
+            "can_view_full_proofs": true,
+            "can_view_nodes": true,
+            "can_view_proofs": true
+          }
+        }
+      ],
+      "delta": {
+        "accessGroups": {
+          "changed": [
+            {
+              "color": "#1C5FA8",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "description": "Grant officers who see the original proofs",
+              "icon": "users",
+              "id": "00000000-0000-4000-8000-000000000001",
+              "is_default": false,
+              "is_public": false,
+              "name": "Harambee grant team",
+              "node_scope": "assigned",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "permissions": {
+                "can_edit_nodes": false,
+                "can_edit_transactions": false,
+                "can_manage_groups": false,
+                "can_manage_members": false,
+                "can_view_amounts": true,
+                "can_view_executor": true,
+                "can_view_full_proofs": true,
+                "can_view_nodes": true,
+                "can_view_proofs": true
+              },
+              "priority": 50,
+              "slug": "harambee-grant-team",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "updateAccessGroup",
+      "outcome": "ok",
+      "result": {
+        "color": "#1C5FA8",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "description": "Grant officers who see the original proofs",
+        "icon": "users",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "is_default": false,
+        "is_public": false,
+        "name": "Harambee grant team",
+        "node_scope": "assigned",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "permissions": {
+          "can_edit_nodes": false,
+          "can_edit_transactions": false,
+          "can_manage_groups": false,
+          "can_manage_members": false,
+          "can_view_amounts": true,
+          "can_view_executor": true,
+          "can_view_full_proofs": true,
+          "can_view_nodes": true,
+          "can_view_proofs": true
+        },
+        "priority": 50,
+        "slug": "harambee-grant-team",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "group-missing",
+        {
+          "name": "Nobody"
+        }
+      ],
+      "delta": {},
+      "error": "Access group not found in the demo data.",
+      "fn": "updateAccessGroup",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        {
+          "granted_by": "user_dummy",
+          "group_id": "00000000-0000-4000-8000-000000000001",
+          "notes": null,
+          "user_email": "grants.officer@harambeehealth.example.org",
+          "user_id": "user_grants",
+          "valid_from": "2026-02-04T09:00:00.000Z",
+          "valid_until": null
+        }
+      ],
+      "delta": {
+        "groupMembers": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "granted_by": "user_dummy",
+              "group_id": "00000000-0000-4000-8000-000000000001",
+              "id": "00000000-0000-4000-8000-000000000002",
+              "notes": null,
+              "user_email": "grants.officer@harambeehealth.example.org",
+              "user_id": "user_grants",
+              "valid_from": "2026-02-04T09:00:00.000Z",
+              "valid_until": null
+            }
+          ]
+        }
+      },
+      "fn": "addGroupMember",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "granted_by": "user_dummy",
+        "group_id": "00000000-0000-4000-8000-000000000001",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "notes": null,
+        "user_email": "grants.officer@harambeehealth.example.org",
+        "user_id": "user_grants",
+        "valid_from": "2026-02-04T09:00:00.000Z",
+        "valid_until": null
+      }
+    },
+    {
+      "args": [
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "donor.relations@northlight.example.org",
+        "user_dummy",
+        "2026-06-30T23:59:59Z"
+      ],
+      "delta": {
+        "groupMembers": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "granted_by": "user_dummy",
+              "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+              "id": "00000000-0000-4000-8000-000000000003",
+              "notes": "Invited in the demo. No email was sent.",
+              "user_email": "donor.relations@northlight.example.org",
+              "user_id": null,
+              "valid_from": "2026-02-04T09:00:00.000Z",
+              "valid_until": "2026-06-30T23:59:59Z"
+            }
+          ]
+        }
+      },
+      "fn": "inviteMemberByEmail",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "granted_by": "user_dummy",
+        "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "id": "00000000-0000-4000-8000-000000000003",
+        "notes": "Invited in the demo. No email was sent.",
+        "user_email": "donor.relations@northlight.example.org",
+        "user_id": null,
+        "valid_from": "2026-02-04T09:00:00.000Z",
+        "valid_until": "2026-06-30T23:59:59Z"
+      }
+    },
+    {
+      "args": [
+        {
+          "granted_by": "user_dummy",
+          "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+          "notes": null,
+          "user_email": "giving@kisima.example.org",
+          "user_id": "user_donor",
+          "valid_from": "2026-02-04T09:00:00.000Z",
+          "valid_until": null
+        }
+      ],
+      "delta": {
+        "groupMembers": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "granted_by": "user_dummy",
+              "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+              "id": "00000000-0000-4000-8000-000000000004",
+              "notes": null,
+              "user_email": "giving@kisima.example.org",
+              "user_id": "user_donor",
+              "valid_from": "2026-02-04T09:00:00.000Z",
+              "valid_until": null
+            }
+          ]
+        }
+      },
+      "fn": "addGroupMember",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "granted_by": "user_dummy",
+        "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "id": "00000000-0000-4000-8000-000000000004",
+        "notes": null,
+        "user_email": "giving@kisima.example.org",
+        "user_id": "user_donor",
+        "valid_from": "2026-02-04T09:00:00.000Z",
+        "valid_until": null
+      }
+    },
+    {
+      "args": [
+        {
+          "granted_by": "user_dummy",
+          "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+          "notes": null,
+          "user_email": "partners@majisafi.example.org",
+          "user_id": "user_partner",
+          "valid_from": "2026-02-04T09:00:00.000Z",
+          "valid_until": null
+        }
+      ],
+      "delta": {
+        "groupMembers": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "granted_by": "user_dummy",
+              "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+              "id": "00000000-0000-4000-8000-000000000005",
+              "notes": null,
+              "user_email": "partners@majisafi.example.org",
+              "user_id": "user_partner",
+              "valid_from": "2026-02-04T09:00:00.000Z",
+              "valid_until": null
+            }
+          ]
+        }
+      },
+      "fn": "addGroupMember",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "granted_by": "user_dummy",
+        "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        "id": "00000000-0000-4000-8000-000000000005",
+        "notes": null,
+        "user_email": "partners@majisafi.example.org",
+        "user_id": "user_partner",
+        "valid_from": "2026-02-04T09:00:00.000Z",
+        "valid_until": null
+      }
+    },
+    {
+      "args": [
+        "user_dummy",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getUserPermissions",
+      "outcome": "ok",
+      "result": {
+        "can_edit_nodes": true,
+        "can_edit_transactions": true,
+        "can_manage_groups": true,
+        "can_manage_members": true,
+        "can_view_amounts": true,
+        "can_view_executor": true,
+        "can_view_full_proofs": true,
+        "can_view_nodes": true,
+        "can_view_proofs": true
+      }
+    },
+    {
+      "args": [
+        "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c01",
+        {
+          "can_edit_nodes": true,
+          "can_edit_transactions": true,
+          "can_manage_groups": true,
+          "can_manage_members": true,
+          "can_view_amounts": true,
+          "can_view_executor": true,
+          "can_view_full_proofs": true,
+          "can_view_nodes": true,
+          "can_view_proofs": true
+        }
+      ],
+      "delta": {},
+      "fn": "getVerificationVisibility",
+      "outcome": "ok",
+      "result": "full"
+    },
+    {
+      "args": [
+        "user_grants",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getUserPermissions",
+      "outcome": "ok",
+      "result": {
+        "can_edit_nodes": false,
+        "can_edit_transactions": false,
+        "can_manage_groups": false,
+        "can_manage_members": false,
+        "can_view_amounts": true,
+        "can_view_executor": true,
+        "can_view_full_proofs": true,
+        "can_view_nodes": true,
+        "can_view_proofs": true
+      }
+    },
+    {
+      "args": [
+        "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c01",
+        {
+          "can_edit_nodes": false,
+          "can_edit_transactions": false,
+          "can_manage_groups": false,
+          "can_manage_members": false,
+          "can_view_amounts": true,
+          "can_view_executor": true,
+          "can_view_full_proofs": true,
+          "can_view_nodes": true,
+          "can_view_proofs": true
+        }
+      ],
+      "delta": {},
+      "fn": "getVerificationVisibility",
+      "outcome": "ok",
+      "result": "full"
+    },
+    {
+      "args": [
+        "user_donor",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getUserPermissions",
+      "outcome": "ok",
+      "result": {
+        "can_edit_nodes": false,
+        "can_edit_transactions": false,
+        "can_manage_groups": false,
+        "can_manage_members": false,
+        "can_view_amounts": true,
+        "can_view_executor": false,
+        "can_view_full_proofs": false,
+        "can_view_nodes": true,
+        "can_view_proofs": true
+      }
+    },
+    {
+      "args": [
+        "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c01",
+        {
+          "can_edit_nodes": false,
+          "can_edit_transactions": false,
+          "can_manage_groups": false,
+          "can_manage_members": false,
+          "can_view_amounts": true,
+          "can_view_executor": false,
+          "can_view_full_proofs": false,
+          "can_view_nodes": true,
+          "can_view_proofs": true
+        }
+      ],
+      "delta": {},
+      "fn": "getVerificationVisibility",
+      "outcome": "ok",
+      "result": "thumbnail"
+    },
+    {
+      "args": [
+        "user_partner",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getUserPermissions",
+      "outcome": "ok",
+      "result": {
+        "can_edit_nodes": false,
+        "can_edit_transactions": false,
+        "can_manage_groups": false,
+        "can_manage_members": false,
+        "can_view_amounts": true,
+        "can_view_executor": false,
+        "can_view_full_proofs": false,
+        "can_view_nodes": true,
+        "can_view_proofs": false
+      }
+    },
+    {
+      "args": [
+        "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c01",
+        {
+          "can_edit_nodes": false,
+          "can_edit_transactions": false,
+          "can_manage_groups": false,
+          "can_manage_members": false,
+          "can_view_amounts": true,
+          "can_view_executor": false,
+          "can_view_full_proofs": false,
+          "can_view_nodes": true,
+          "can_view_proofs": false
+        }
+      ],
+      "delta": {},
+      "fn": "getVerificationVisibility",
+      "outcome": "ok",
+      "result": "summary"
+    },
+    {
+      "args": [
+        "user_nobody",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getUserPermissions",
+      "outcome": "ok",
+      "result": {
+        "can_edit_nodes": false,
+        "can_edit_transactions": false,
+        "can_manage_groups": false,
+        "can_manage_members": false,
+        "can_view_amounts": false,
+        "can_view_executor": false,
+        "can_view_full_proofs": false,
+        "can_view_nodes": false,
+        "can_view_proofs": false
+      }
+    },
+    {
+      "args": [
+        "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c01",
+        {
+          "can_edit_nodes": false,
+          "can_edit_transactions": false,
+          "can_manage_groups": false,
+          "can_manage_members": false,
+          "can_view_amounts": false,
+          "can_view_executor": false,
+          "can_view_full_proofs": false,
+          "can_view_nodes": false,
+          "can_view_proofs": false
+        }
+      ],
+      "delta": {},
+      "fn": "getVerificationVisibility",
+      "outcome": "ok",
+      "result": "hidden"
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000003"
+      ],
+      "delta": {
+        "groupMembers": {
+          "removed": [
+            "00000000-0000-4000-8000-000000000003"
+          ]
+        }
+      },
+      "fn": "removeGroupMember",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000001"
+      ],
+      "delta": {
+        "accessGroups": {
+          "removed": [
+            "00000000-0000-4000-8000-000000000001"
+          ]
+        },
+        "groupMembers": {
+          "removed": [
+            "00000000-0000-4000-8000-000000000002"
+          ]
+        }
+      },
+      "fn": "deleteAccessGroup",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "user_grants",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getUserPermissions",
+      "outcome": "ok",
+      "result": {
+        "can_edit_nodes": false,
+        "can_edit_transactions": false,
+        "can_manage_groups": false,
+        "can_manage_members": false,
+        "can_view_amounts": false,
+        "can_view_executor": false,
+        "can_view_full_proofs": false,
+        "can_view_nodes": false,
+        "can_view_proofs": false
+      }
+    },
+    {
+      "args": [
+        {
+          "created_by": "user_dummy",
+          "description": "M-Pesa float top-up confirmation",
+          "executor_name": null,
+          "file_url": null,
+          "gps_accuracy": null,
+          "gps_latitude": null,
+          "gps_longitude": null,
+          "location_name": null,
+          "metadata": {},
+          "ocr_data": null,
+          "status": "pending",
+          "thumbnail_url": null,
+          "transaction_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+          "type": "receipt",
+          "verified_by": null,
+          "visibility_level": "full"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 15000,
+              "amount_usd": null,
+              "category": "Operations",
+              "created_at": "2026-02-03T09:00:00Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "M-Pesa Float Top-up",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+              "notes": "Mobile money float for field disbursements",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "MPESA-2026-02",
+              "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+              "transaction_date": "2026-02-03",
+              "updated_at": "2026-02-03T09:00:00Z",
+              "verification_count": 1,
+              "verification_status": "pending"
+            }
+          ]
+        },
+        "verifications": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "description": "M-Pesa float top-up confirmation",
+              "executor_name": null,
+              "file_url": null,
+              "gps_accuracy": null,
+              "gps_latitude": null,
+              "gps_longitude": null,
+              "id": "00000000-0000-4000-8000-000000000006",
+              "location_name": null,
+              "metadata": {},
+              "ocr_data": null,
+              "status": "pending",
+              "thumbnail_url": null,
+              "transaction_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+              "trust_points": 5,
+              "type": "receipt",
+              "verified_at": null,
+              "verified_by": null,
+              "visibility_level": "full"
+            }
+          ]
+        }
+      },
+      "fn": "createVerification",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "description": "M-Pesa float top-up confirmation",
+        "executor_name": null,
+        "file_url": null,
+        "gps_accuracy": null,
+        "gps_latitude": null,
+        "gps_longitude": null,
+        "id": "00000000-0000-4000-8000-000000000006",
+        "location_name": null,
+        "metadata": {},
+        "ocr_data": null,
+        "status": "pending",
+        "thumbnail_url": null,
+        "transaction_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "trust_points": 5,
+        "type": "receipt",
+        "verified_at": null,
+        "verified_by": null,
+        "visibility_level": "full"
+      }
+    },
+    {
+      "args": [
+        {
+          "created_by": "user_dummy",
+          "description": "Agent till receipt photographed at the counter",
+          "executor_name": "Achieng Otieno",
+          "file_url": null,
+          "gps_accuracy": 15,
+          "gps_latitude": -1.2676,
+          "gps_longitude": 36.8108,
+          "location_name": "Westlands, Nairobi",
+          "metadata": {},
+          "ocr_data": null,
+          "status": "verified",
+          "thumbnail_url": null,
+          "transaction_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+          "type": "photo",
+          "verified_by": "user_dummy",
+          "visibility_level": "thumbnail"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 15000,
+              "amount_usd": null,
+              "category": "Operations",
+              "created_at": "2026-02-03T09:00:00Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "M-Pesa Float Top-up",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+              "notes": "Mobile money float for field disbursements",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "MPESA-2026-02",
+              "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+              "transaction_date": "2026-02-03",
+              "updated_at": "2026-02-03T09:00:00Z",
+              "verification_count": 2,
+              "verification_status": "verified"
+            }
+          ]
+        },
+        "verifications": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "description": "Agent till receipt photographed at the counter",
+              "executor_name": "Achieng Otieno",
+              "file_url": null,
+              "gps_accuracy": 15,
+              "gps_latitude": -1.2676,
+              "gps_longitude": 36.8108,
+              "id": "00000000-0000-4000-8000-000000000007",
+              "location_name": "Westlands, Nairobi",
+              "metadata": {},
+              "ocr_data": null,
+              "status": "verified",
+              "thumbnail_url": null,
+              "transaction_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+              "trust_points": 8,
+              "type": "photo",
+              "verified_at": "2026-02-04T09:00:00.000Z",
+              "verified_by": "user_dummy",
+              "visibility_level": "thumbnail"
+            }
+          ]
+        }
+      },
+      "fn": "createVerification",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "description": "Agent till receipt photographed at the counter",
+        "executor_name": "Achieng Otieno",
+        "file_url": null,
+        "gps_accuracy": 15,
+        "gps_latitude": -1.2676,
+        "gps_longitude": 36.8108,
+        "id": "00000000-0000-4000-8000-000000000007",
+        "location_name": "Westlands, Nairobi",
+        "metadata": {},
+        "ocr_data": null,
+        "status": "verified",
+        "thumbnail_url": null,
+        "transaction_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "trust_points": 8,
+        "type": "photo",
+        "verified_at": "2026-02-04T09:00:00.000Z",
+        "verified_by": "user_dummy",
+        "visibility_level": "thumbnail"
+      }
+    },
+    {
+      "args": [
+        {
+          "allow_overflow": false,
+          "category": "education",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "description": "Digital Literacy: a fixture campaign.",
+          "ends_at": "2026-09-30T23:59:59Z",
+          "image_url": null,
+          "is_public": true,
+          "metadata": {},
+          "name": "Digital Literacy",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": null,
+          "short_description": "Digital Literacy",
+          "starts_at": "2026-03-01T00:00:00Z",
+          "status": "draft",
+          "tags": [
+            "schools"
+          ],
+          "target_amount": 1500000,
+          "target_node_id": null
+        }
+      ],
+      "delta": {
+        "campaigns": {
+          "added": [
+            {
+              "allow_overflow": false,
+              "category": "education",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 0,
+              "description": "Digital Literacy: a fixture campaign.",
+              "ends_at": "2026-09-30T23:59:59Z",
+              "id": "00000000-0000-4000-8000-000000000008",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "Digital Literacy",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "digital-literacy-2",
+              "short_description": "Digital Literacy",
+              "starts_at": "2026-03-01T00:00:00Z",
+              "status": "draft",
+              "tags": [
+                "schools"
+              ],
+              "target_amount": 1500000,
+              "target_node_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "createCampaign",
+      "outcome": "ok",
+      "result": {
+        "allow_overflow": false,
+        "category": "education",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "current_amount": 0,
+        "description": "Digital Literacy: a fixture campaign.",
+        "ends_at": "2026-09-30T23:59:59Z",
+        "id": "00000000-0000-4000-8000-000000000008",
+        "image_url": null,
+        "is_public": true,
+        "metadata": {},
+        "name": "Digital Literacy",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "overflow_campaign_id": null,
+        "overflow_consent_message": null,
+        "public_slug": "digital-literacy-2",
+        "short_description": "Digital Literacy",
+        "starts_at": "2026-03-01T00:00:00Z",
+        "status": "draft",
+        "tags": [
+          "schools"
+        ],
+        "target_amount": 1500000,
+        "target_node_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        {
+          "allow_overflow": false,
+          "category": "water",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "description": "Borehole Maintenance Fund: a fixture campaign.",
+          "ends_at": "2026-09-30T23:59:59Z",
+          "image_url": null,
+          "is_public": false,
+          "metadata": {},
+          "name": "Borehole Maintenance Fund",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": null,
+          "short_description": "Borehole Maintenance Fund",
+          "starts_at": "2026-03-01T00:00:00Z",
+          "status": "draft",
+          "tags": null,
+          "target_amount": 1500000,
+          "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+        }
+      ],
+      "delta": {
+        "campaigns": {
+          "added": [
+            {
+              "allow_overflow": false,
+              "category": "water",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 0,
+              "description": "Borehole Maintenance Fund: a fixture campaign.",
+              "ends_at": "2026-09-30T23:59:59Z",
+              "id": "00000000-0000-4000-8000-000000000009",
+              "image_url": null,
+              "is_public": false,
+              "metadata": {},
+              "name": "Borehole Maintenance Fund",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": null,
+              "short_description": "Borehole Maintenance Fund",
+              "starts_at": "2026-03-01T00:00:00Z",
+              "status": "draft",
+              "tags": null,
+              "target_amount": 1500000,
+              "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "createCampaign",
+      "outcome": "ok",
+      "result": {
+        "allow_overflow": false,
+        "category": "water",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "current_amount": 0,
+        "description": "Borehole Maintenance Fund: a fixture campaign.",
+        "ends_at": "2026-09-30T23:59:59Z",
+        "id": "00000000-0000-4000-8000-000000000009",
+        "image_url": null,
+        "is_public": false,
+        "metadata": {},
+        "name": "Borehole Maintenance Fund",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "overflow_campaign_id": null,
+        "overflow_consent_message": null,
+        "public_slug": null,
+        "short_description": "Borehole Maintenance Fund",
+        "starts_at": "2026-03-01T00:00:00Z",
+        "status": "draft",
+        "tags": null,
+        "target_amount": 1500000,
+        "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        {
+          "allow_overflow": false,
+          "category": "education",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "description": "School Feeding: a fixture campaign.",
+          "ends_at": "2026-09-30T23:59:59Z",
+          "image_url": null,
+          "is_public": true,
+          "metadata": {},
+          "name": "School Feeding",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": "school-feeding-kilifi",
+          "short_description": "School Feeding",
+          "starts_at": "2026-03-01T00:00:00Z",
+          "status": "draft",
+          "tags": [
+            "schools"
+          ],
+          "target_amount": 1500000,
+          "target_node_id": null
+        }
+      ],
+      "delta": {
+        "campaigns": {
+          "added": [
+            {
+              "allow_overflow": false,
+              "category": "education",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 0,
+              "description": "School Feeding: a fixture campaign.",
+              "ends_at": "2026-09-30T23:59:59Z",
+              "id": "00000000-0000-4000-8000-000000000010",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "School Feeding",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "school-feeding-kilifi",
+              "short_description": "School Feeding",
+              "starts_at": "2026-03-01T00:00:00Z",
+              "status": "draft",
+              "tags": [
+                "schools"
+              ],
+              "target_amount": 1500000,
+              "target_node_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "createCampaign",
+      "outcome": "ok",
+      "result": {
+        "allow_overflow": false,
+        "category": "education",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "current_amount": 0,
+        "description": "School Feeding: a fixture campaign.",
+        "ends_at": "2026-09-30T23:59:59Z",
+        "id": "00000000-0000-4000-8000-000000000010",
+        "image_url": null,
+        "is_public": true,
+        "metadata": {},
+        "name": "School Feeding",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "overflow_campaign_id": null,
+        "overflow_consent_message": null,
+        "public_slug": "school-feeding-kilifi",
+        "short_description": "School Feeding",
+        "starts_at": "2026-03-01T00:00:00Z",
+        "status": "draft",
+        "tags": [
+          "schools"
+        ],
+        "target_amount": 1500000,
+        "target_node_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000008",
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "status": "active"
+        }
+      ],
+      "delta": {
+        "campaigns": {
+          "changed": [
+            {
+              "allow_overflow": false,
+              "category": "education",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 0,
+              "description": "Digital Literacy: a fixture campaign.",
+              "ends_at": "2026-09-30T23:59:59Z",
+              "id": "00000000-0000-4000-8000-000000000008",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "Digital Literacy",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "digital-literacy-2",
+              "short_description": "Digital Literacy",
+              "starts_at": "2026-03-01T00:00:00Z",
+              "status": "active",
+              "tags": [
+                "schools"
+              ],
+              "target_amount": 1500000,
+              "target_node_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "updateCampaign",
+      "outcome": "ok",
+      "result": {
+        "allow_overflow": false,
+        "category": "education",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "current_amount": 0,
+        "description": "Digital Literacy: a fixture campaign.",
+        "ends_at": "2026-09-30T23:59:59Z",
+        "id": "00000000-0000-4000-8000-000000000008",
+        "image_url": null,
+        "is_public": true,
+        "metadata": {},
+        "name": "Digital Literacy",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "overflow_campaign_id": null,
+        "overflow_consent_message": null,
+        "public_slug": "digital-literacy-2",
+        "short_description": "Digital Literacy",
+        "starts_at": "2026-03-01T00:00:00Z",
+        "status": "active",
+        "tags": [
+          "schools"
+        ],
+        "target_amount": 1500000,
+        "target_node_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02",
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "short_description": "Equipping 8 health centres in Kilifi",
+          "target_amount": 4000000
+        }
+      ],
+      "delta": {
+        "campaigns": {
+          "changed": [
+            {
+              "allow_overflow": false,
+              "category": "health",
+              "created_at": "2026-01-15T00:00:00Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 1800000,
+              "description": "Equip 8 health centers in Kilifi County with essential maternal health equipment. Reduce maternal mortality by improving access to quality care.",
+              "ends_at": "2026-11-30T23:59:59Z",
+              "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "Maternal Health Kilifi",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "maternal-health-kilifi",
+              "short_description": "Equipping 8 health centres in Kilifi",
+              "starts_at": "2026-01-15T00:00:00Z",
+              "status": "active",
+              "tags": null,
+              "target_amount": 4000000,
+              "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "updateCampaign",
+      "outcome": "ok",
+      "result": {
+        "allow_overflow": false,
+        "category": "health",
+        "created_at": "2026-01-15T00:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "current_amount": 1800000,
+        "description": "Equip 8 health centers in Kilifi County with essential maternal health equipment. Reduce maternal mortality by improving access to quality care.",
+        "ends_at": "2026-11-30T23:59:59Z",
+        "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02",
+        "image_url": null,
+        "is_public": true,
+        "metadata": {},
+        "name": "Maternal Health Kilifi",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "overflow_campaign_id": null,
+        "overflow_consent_message": null,
+        "public_slug": "maternal-health-kilifi",
+        "short_description": "Equipping 8 health centres in Kilifi",
+        "starts_at": "2026-01-15T00:00:00Z",
+        "status": "active",
+        "tags": null,
+        "target_amount": 4000000,
+        "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "campaign-missing",
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "name": "Nobody"
+        }
+      ],
+      "delta": {},
+      "error": "Campaign not found in the demo data.",
+      "fn": "updateCampaign",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e04",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {
+        "campaigns": {
+          "removed": [
+            "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e04"
+          ]
+        }
+      },
+      "fn": "deleteCampaign",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "deleteCampaign",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        {
+          "allow_reallocation": true,
+          "amount": 40000,
+          "amount_usd": null,
+          "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+          "currency": "KES",
+          "donor_email": "wanjiru.k@example.org",
+          "donor_name": "Wanjiru Kamau",
+          "donor_phone": null,
+          "earmark_notes": null,
+          "earmarked_node_id": null,
+          "exchange_rate": null,
+          "flow_node_id": null,
+          "is_anonymous": false,
+          "metadata": {},
+          "payment_method": "mpesa",
+          "payment_reference": "REF-NEW1",
+          "payment_status": "confirmed",
+          "source": "website",
+          "transaction_id": null,
+          "utm_campaign": null,
+          "utm_medium": null,
+          "utm_source": null
+        }
+      ],
+      "delta": {
+        "campaigns": {
+          "changed": [
+            {
+              "allow_overflow": false,
+              "category": "water",
+              "created_at": "2025-12-01T00:00:00Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 3240000,
+              "description": "Help us bring clean drinking water to 15,000 people in Turkana County. Funds will be used to drill boreholes, install solar-powered pumps, and train local maintenance teams.",
+              "ends_at": "2026-12-31T23:59:59Z",
+              "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "Clean Water for Turkana",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "clean-water-turkana",
+              "short_description": "Bringing clean water to 15,000 people in Turkana",
+              "starts_at": "2025-12-01T00:00:00Z",
+              "status": "active",
+              "tags": null,
+              "target_amount": 5000000,
+              "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "updated_at": "2025-12-01T00:00:00Z"
+            }
+          ]
+        },
+        "donations": {
+          "added": [
+            {
+              "allow_reallocation": true,
+              "amount": 40000,
+              "amount_usd": null,
+              "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "currency": "KES",
+              "donor_email": "wanjiru.k@example.org",
+              "donor_name": "Wanjiru Kamau",
+              "donor_phone": null,
+              "earmark_notes": null,
+              "earmarked_node_id": null,
+              "exchange_rate": null,
+              "flow_node_id": null,
+              "id": "00000000-0000-4000-8000-000000000011",
+              "impact_percentage": null,
+              "is_anonymous": false,
+              "metadata": {},
+              "payment_method": "mpesa",
+              "payment_reference": "REF-NEW1",
+              "payment_status": "confirmed",
+              "source": "website",
+              "transaction_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "utm_campaign": null,
+              "utm_medium": null,
+              "utm_source": null
+            }
+          ]
+        }
+      },
+      "fn": "createDonation",
+      "outcome": "ok",
+      "result": {
+        "allow_reallocation": true,
+        "amount": 40000,
+        "amount_usd": null,
+        "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "currency": "KES",
+        "donor_email": "wanjiru.k@example.org",
+        "donor_name": "Wanjiru Kamau",
+        "donor_phone": null,
+        "earmark_notes": null,
+        "earmarked_node_id": null,
+        "exchange_rate": null,
+        "flow_node_id": null,
+        "id": "00000000-0000-4000-8000-000000000011",
+        "impact_percentage": null,
+        "is_anonymous": false,
+        "metadata": {},
+        "payment_method": "mpesa",
+        "payment_reference": "REF-NEW1",
+        "payment_status": "confirmed",
+        "source": "website",
+        "transaction_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "utm_campaign": null,
+        "utm_medium": null,
+        "utm_source": null
+      }
+    },
+    {
+      "args": [
+        {
+          "allow_reallocation": true,
+          "amount": 25000,
+          "amount_usd": null,
+          "campaign_id": "00000000-0000-4000-8000-000000000008",
+          "currency": "KES",
+          "donor_email": null,
+          "donor_name": null,
+          "donor_phone": null,
+          "earmark_notes": null,
+          "earmarked_node_id": null,
+          "exchange_rate": null,
+          "flow_node_id": null,
+          "is_anonymous": true,
+          "metadata": {},
+          "payment_method": "mpesa",
+          "payment_reference": null,
+          "payment_status": "pending",
+          "source": "website",
+          "transaction_id": null,
+          "utm_campaign": null,
+          "utm_medium": null,
+          "utm_source": null
+        }
+      ],
+      "delta": {
+        "donations": {
+          "added": [
+            {
+              "allow_reallocation": true,
+              "amount": 25000,
+              "amount_usd": null,
+              "campaign_id": "00000000-0000-4000-8000-000000000008",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "currency": "KES",
+              "donor_email": null,
+              "donor_name": null,
+              "donor_phone": null,
+              "earmark_notes": null,
+              "earmarked_node_id": null,
+              "exchange_rate": null,
+              "flow_node_id": null,
+              "id": "00000000-0000-4000-8000-000000000012",
+              "impact_percentage": null,
+              "is_anonymous": true,
+              "metadata": {},
+              "payment_method": "mpesa",
+              "payment_reference": null,
+              "payment_status": "pending",
+              "source": "website",
+              "transaction_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "utm_campaign": null,
+              "utm_medium": null,
+              "utm_source": null
+            }
+          ]
+        }
+      },
+      "fn": "createDonation",
+      "outcome": "ok",
+      "result": {
+        "allow_reallocation": true,
+        "amount": 25000,
+        "amount_usd": null,
+        "campaign_id": "00000000-0000-4000-8000-000000000008",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "currency": "KES",
+        "donor_email": null,
+        "donor_name": null,
+        "donor_phone": null,
+        "earmark_notes": null,
+        "earmarked_node_id": null,
+        "exchange_rate": null,
+        "flow_node_id": null,
+        "id": "00000000-0000-4000-8000-000000000012",
+        "impact_percentage": null,
+        "is_anonymous": true,
+        "metadata": {},
+        "payment_method": "mpesa",
+        "payment_reference": null,
+        "payment_status": "pending",
+        "source": "website",
+        "transaction_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "utm_campaign": null,
+        "utm_medium": null,
+        "utm_source": null
+      }
+    },
+    {
+      "args": [
+        "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f08",
+        "confirmed",
+        "REF-F08"
+      ],
+      "delta": {
+        "campaigns": {
+          "changed": [
+            {
+              "allow_overflow": false,
+              "category": "water",
+              "created_at": "2025-12-01T00:00:00Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 3250000,
+              "description": "Help us bring clean drinking water to 15,000 people in Turkana County. Funds will be used to drill boreholes, install solar-powered pumps, and train local maintenance teams.",
+              "ends_at": "2026-12-31T23:59:59Z",
+              "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "Clean Water for Turkana",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "clean-water-turkana",
+              "short_description": "Bringing clean water to 15,000 people in Turkana",
+              "starts_at": "2025-12-01T00:00:00Z",
+              "status": "active",
+              "tags": null,
+              "target_amount": 5000000,
+              "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "updated_at": "2025-12-01T00:00:00Z"
+            }
+          ]
+        },
+        "donations": {
+          "changed": [
+            {
+              "allow_reallocation": true,
+              "amount": 10000,
+              "amount_usd": null,
+              "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "created_at": "2026-02-05T12:00:00Z",
+              "currency": "KES",
+              "donor_email": "d.mutua@gmail.com",
+              "donor_name": "Daniel Mutua",
+              "donor_phone": null,
+              "earmark_notes": null,
+              "earmarked_node_id": null,
+              "exchange_rate": null,
+              "flow_node_id": null,
+              "id": "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f08",
+              "impact_percentage": null,
+              "is_anonymous": false,
+              "metadata": {},
+              "payment_method": "mpesa",
+              "payment_reference": "REF-F08",
+              "payment_status": "confirmed",
+              "source": "website",
+              "transaction_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "utm_campaign": null,
+              "utm_medium": null,
+              "utm_source": null
+            }
+          ]
+        }
+      },
+      "fn": "updateDonationStatus",
+      "outcome": "ok",
+      "result": {
+        "allow_reallocation": true,
+        "amount": 10000,
+        "amount_usd": null,
+        "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+        "created_at": "2026-02-05T12:00:00Z",
+        "currency": "KES",
+        "donor_email": "d.mutua@gmail.com",
+        "donor_name": "Daniel Mutua",
+        "donor_phone": null,
+        "earmark_notes": null,
+        "earmarked_node_id": null,
+        "exchange_rate": null,
+        "flow_node_id": null,
+        "id": "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f08",
+        "impact_percentage": null,
+        "is_anonymous": false,
+        "metadata": {},
+        "payment_method": "mpesa",
+        "payment_reference": "REF-F08",
+        "payment_status": "confirmed",
+        "source": "website",
+        "transaction_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "utm_campaign": null,
+        "utm_medium": null,
+        "utm_source": null
+      }
+    },
+    {
+      "args": [
+        "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f01",
+        "refunded"
+      ],
+      "delta": {
+        "campaigns": {
+          "changed": [
+            {
+              "allow_overflow": false,
+              "category": "water",
+              "created_at": "2025-12-01T00:00:00Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "current_amount": 3200000,
+              "description": "Help us bring clean drinking water to 15,000 people in Turkana County. Funds will be used to drill boreholes, install solar-powered pumps, and train local maintenance teams.",
+              "ends_at": "2026-12-31T23:59:59Z",
+              "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "image_url": null,
+              "is_public": true,
+              "metadata": {},
+              "name": "Clean Water for Turkana",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "overflow_campaign_id": null,
+              "overflow_consent_message": null,
+              "public_slug": "clean-water-turkana",
+              "short_description": "Bringing clean water to 15,000 people in Turkana",
+              "starts_at": "2025-12-01T00:00:00Z",
+              "status": "active",
+              "tags": null,
+              "target_amount": 5000000,
+              "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "updated_at": "2025-12-01T00:00:00Z"
+            }
+          ]
+        },
+        "donations": {
+          "changed": [
+            {
+              "allow_reallocation": true,
+              "amount": 50000,
+              "amount_usd": null,
+              "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "created_at": "2025-12-15T10:00:00Z",
+              "currency": "KES",
+              "donor_email": "sarah.k@gmail.com",
+              "donor_name": "Sarah Kimani",
+              "donor_phone": null,
+              "earmark_notes": null,
+              "earmarked_node_id": null,
+              "exchange_rate": null,
+              "flow_node_id": null,
+              "id": "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f01",
+              "impact_percentage": null,
+              "is_anonymous": false,
+              "metadata": {},
+              "payment_method": "mpesa",
+              "payment_reference": null,
+              "payment_status": "refunded",
+              "source": "website",
+              "transaction_id": null,
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "utm_campaign": null,
+              "utm_medium": null,
+              "utm_source": null
+            }
+          ]
+        }
+      },
+      "fn": "updateDonationStatus",
+      "outcome": "ok",
+      "result": {
+        "allow_reallocation": true,
+        "amount": 50000,
+        "amount_usd": null,
+        "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+        "created_at": "2025-12-15T10:00:00Z",
+        "currency": "KES",
+        "donor_email": "sarah.k@gmail.com",
+        "donor_name": "Sarah Kimani",
+        "donor_phone": null,
+        "earmark_notes": null,
+        "earmarked_node_id": null,
+        "exchange_rate": null,
+        "flow_node_id": null,
+        "id": "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f01",
+        "impact_percentage": null,
+        "is_anonymous": false,
+        "metadata": {},
+        "payment_method": "mpesa",
+        "payment_reference": null,
+        "payment_status": "refunded",
+        "source": "website",
+        "transaction_id": null,
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "utm_campaign": null,
+        "utm_medium": null,
+        "utm_source": null
+      }
+    },
+    {
+      "args": [
+        "donation-missing",
+        "confirmed"
+      ],
+      "delta": {},
+      "error": "Donation not found in the demo data.",
+      "fn": "updateDonationStatus",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01"
+      ],
+      "delta": {},
+      "fn": "getCampaignStats",
+      "outcome": "ok",
+      "result": {
+        "avg_donation": 266667,
+        "days_active": 65,
+        "days_remaining": 331,
+        "donation_count": 12,
+        "funding_percentage": 64,
+        "largest_donation": 1500000,
+        "smallest_donation": 10000,
+        "total_raised": 3200000,
+        "unique_donors": 12
+      }
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02"
+      ],
+      "delta": {},
+      "fn": "getCampaignStats",
+      "outcome": "ok",
+      "result": {
+        "avg_donation": 257143,
+        "days_active": 20,
+        "days_remaining": 300,
+        "donation_count": 7,
+        "funding_percentage": 45,
+        "largest_donation": 1000000,
+        "smallest_donation": 20000,
+        "total_raised": 1800000,
+        "unique_donors": 7
+      }
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e03"
+      ],
+      "delta": {},
+      "fn": "getCampaignStats",
+      "outcome": "ok",
+      "result": {
+        "avg_donation": 400000,
+        "days_active": 248,
+        "days_remaining": 0,
+        "donation_count": 5,
+        "funding_percentage": 100,
+        "largest_donation": 1000000,
+        "smallest_donation": 50000,
+        "total_raised": 2000000,
+        "unique_donors": 5
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000008"
+      ],
+      "delta": {},
+      "fn": "getCampaignStats",
+      "outcome": "ok",
+      "result": {
+        "avg_donation": 0,
+        "days_active": 0,
+        "days_remaining": 239,
+        "donation_count": 0,
+        "funding_percentage": 0,
+        "largest_donation": 0,
+        "smallest_donation": 0,
+        "total_raised": 0,
+        "unique_donors": 0
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000009"
+      ],
+      "delta": {},
+      "fn": "getCampaignStats",
+      "outcome": "ok",
+      "result": {
+        "avg_donation": 0,
+        "days_active": 0,
+        "days_remaining": 239,
+        "donation_count": 0,
+        "funding_percentage": 0,
+        "largest_donation": 0,
+        "smallest_donation": 0,
+        "total_raised": 0,
+        "unique_donors": 0
+      }
+    },
+    {
+      "args": [
+        "campaign-missing"
+      ],
+      "delta": {},
+      "error": "Campaign not found in the demo data.",
+      "fn": "getCampaignStats",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        {
+          "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+          "delivery_method": "email",
+          "donation_id": "00000000-0000-4000-8000-000000000011",
+          "image_url": null,
+          "message": "Your gift is part of the borehole maintenance budget for Turkana South.",
+          "metadata": {},
+          "related_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+          "related_transaction_id": null,
+          "title": "Thank you for your gift",
+          "update_type": "thank_you"
+        }
+      ],
+      "delta": {
+        "donorUpdates": {
+          "added": [
+            {
+              "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "delivery_method": "email",
+              "donation_id": "00000000-0000-4000-8000-000000000011",
+              "id": "00000000-0000-4000-8000-000000000013",
+              "image_url": null,
+              "message": "Your gift is part of the borehole maintenance budget for Turkana South.",
+              "metadata": {},
+              "related_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "related_transaction_id": null,
+              "sent_at": null,
+              "title": "Thank you for your gift",
+              "update_type": "thank_you"
+            }
+          ]
+        }
+      },
+      "fn": "createDonorUpdate",
+      "outcome": "ok",
+      "result": {
+        "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "delivery_method": "email",
+        "donation_id": "00000000-0000-4000-8000-000000000011",
+        "id": "00000000-0000-4000-8000-000000000013",
+        "image_url": null,
+        "message": "Your gift is part of the borehole maintenance budget for Turkana South.",
+        "metadata": {},
+        "related_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "related_transaction_id": null,
+        "sent_at": null,
+        "title": "Thank you for your gift",
+        "update_type": "thank_you"
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000013"
+      ],
+      "delta": {
+        "donorUpdates": {
+          "changed": [
+            {
+              "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "delivery_method": "email",
+              "donation_id": "00000000-0000-4000-8000-000000000011",
+              "id": "00000000-0000-4000-8000-000000000013",
+              "image_url": null,
+              "message": "Your gift is part of the borehole maintenance budget for Turkana South.",
+              "metadata": {},
+              "related_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "related_transaction_id": null,
+              "sent_at": "2026-02-04T09:00:00.000Z",
+              "title": "Thank you for your gift",
+              "update_type": "thank_you"
+            }
+          ]
+        }
+      },
+      "fn": "markUpdateSent",
+      "outcome": "ok",
+      "result": {
+        "campaign_id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "delivery_method": "email",
+        "donation_id": "00000000-0000-4000-8000-000000000011",
+        "id": "00000000-0000-4000-8000-000000000013",
+        "image_url": null,
+        "message": "Your gift is part of the borehole maintenance budget for Turkana South.",
+        "metadata": {},
+        "related_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "related_transaction_id": null,
+        "sent_at": "2026-02-04T09:00:00.000Z",
+        "title": "Thank you for your gift",
+        "update_type": "thank_you"
+      }
+    },
+    {
+      "args": [
+        "update-missing"
+      ],
+      "delta": {},
+      "error": "Update not found in the demo data.",
+      "fn": "markUpdateSent",
+      "outcome": "error"
+    }
+  ],
+  "covers": [
+    "addGroupMember",
+    "createAccessGroup",
+    "createCampaign",
+    "createDonation",
+    "createDonorUpdate",
+    "createVerification",
+    "deleteAccessGroup",
+    "deleteCampaign",
+    "getCampaignStats",
+    "getUserPermissions",
+    "getVerificationVisibility",
+    "inviteMemberByEmail",
+    "markUpdateSent",
+    "removeGroupMember",
+    "updateAccessGroup",
+    "updateCampaign",
+    "updateDonationStatus",
+    "updateOrganization"
+  ],
+  "description": "A scripted run of the demo API over transparency-dataset.json#/store, one call at a time: the function, its arguments, the outcome (`ok` with the result, `error` with the message) and the store delta per collection (`added` records, `removed` ids, `changed` whole new records). Covers every MOD1 write the demo API has and the reads whose rules the module mirrors (campaign stats, user permissions and verification visibility). The `transactions` delta of createVerification belongs to MOD2.",
+  "env": {
+    "defined_at": "rust/tools/src/transparency.ts#withFrozenClock: replaces Date and crypto.randomUUID while the demo API runs (it has no LedgerEnv)",
+    "new_id": "00000000-0000-4000-8000- then n left-padded with 0 to 12 digits, n = 1, 2, 3, ... (a UUID v4 shape), one per crypto.randomUUID() call",
+    "now": "2026-02-04T09:00:00.000Z"
+  },
+  "fixture": "transparency-calls",
+  "sources": [
+    "flowtrace/src/lib/demo/api.ts",
+    "flowtrace/src/lib/supabase.ts#getVerificationVisibility"
+  ],
+  "store": "transparency-dataset.json#/store"
+}

@@ -6,6 +6,8 @@
 //! - [`cache`]: the client's row cache and the `LedgerState` rebuild through the module's own
 //!   `ledger_module::codec`.
 //! - [`TokenFile`]: the connection token in a file the caller names.
+//! - [`transparency`]: the cache of the transparency views (MOD1) and the typed records rebuilt
+//!   from it through the module's own codec.
 //! - [`module_bindings`]: `spacetime generate` output for `crates/ledger-module`; regenerate with
 //!   the command in `README.md`, never edit.
 
@@ -15,6 +17,7 @@ mod error;
 mod rows;
 mod status;
 mod token;
+pub mod transparency;
 
 #[allow(
     clippy::pedantic,

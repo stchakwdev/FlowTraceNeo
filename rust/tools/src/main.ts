@@ -12,6 +12,7 @@ import { exportQueries } from './queries'
 import { exportReconcile } from './reconcile'
 import { exportRejected } from './rejected'
 import { exportReports } from './reports'
+import { exportTransparency } from './transparency'
 import { FIXTURES_DIR } from './paths'
 
 const outArg = process.argv.indexOf('--out')
@@ -27,12 +28,16 @@ exportQueries(outDir, demo.state)
 exportReports(outDir, { 'demo-books': demo.state, 'commands-final': afterCommands })
 exportReconcile(outDir, demo.state, demo.preAutoMatch)
 const rejected = exportRejected(outDir)
+await exportTransparency(outDir)
 
 // Every timestamp the engine writes (audit `at`, entry `created_at` and
-// `posted_at`, approval `at`) and every env `now` must be a frozen now.
+// `posted_at`, approval `at`) and every env `now` must be a frozen now. The
+// transparency fixtures carry the demo dataset's own timestamps; the ones the
+// demo API writes there come from its frozen clock (transparency.ts).
 const FROZEN = new Set(['2026-02-04T09:00:00.000Z', '2026-03-01T00:00:00.000Z'])
 let stamps = 0
 for (const { file } of written) {
+  if (file.startsWith('transparency-')) continue
   const text = fs.readFileSync(path.join(outDir, file), 'utf8')
   for (const m of text.matchAll(/"(at|created_at|posted_at|now)": "([^"]*)"/g)) {
     stamps++

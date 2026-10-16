@@ -8,11 +8,12 @@ use `~/.bun/bin/bun`. Install once with `~/.bun/bin/bun install --frozen-lockfil
 
 | Script | What it does | Details |
 |---|---|---|
-| `bun run export` | Writes `rust/fixtures/*.json` from the TS engine in `flowtrace/src/lib/ledger` | `rust/fixtures/README.md` |
+| `bun run export` | Writes `rust/fixtures/*.json` from the TS engine in `flowtrace/src/lib/ledger`, and the transparency fixtures from the demo dataset and demo API in `flowtrace/src/lib/demo` | `rust/fixtures/README.md` |
 | `bun run check` | Exports twice into `rust/out/`, requires both runs and `rust/fixtures` byte-identical, then runs `coverage` | `rust/fixtures/README.md` |
 | `bun run coverage` | The fixture coverage assertions alone | `coverage.ts` |
 | `bun run module-replay` | Replays the 37-command fixture through the module on the local server and compares every result and the final books (needs the wasm built) | `rust/crates/ledger-module/README.md` |
 | `bun run integration` | Builds, publishes `ft-s2-<timestamp>`, loads the demo books and command log, checks rows, balances, trial balance, refusals, views and a repeated request id with SQL, deletes the database; under five minutes | `rust/crates/ledger-module/README.md#integration` |
+| `bun run transparency-proof` | MOD1 on the local server: publishes `ft-mod1-<stamp>` (over main's module with `--base-wasm`), loads the transparency fixtures, runs all 19 transparency reducers through `spacetime call`, reads back through SQL and ledger-client, deletes the database | `rust/crates/ledger-module/README.md` |
 | `bun test` | Unit tests of the module tools, offline | `src/*.test.ts` |
 
 `bun test` runs the offline unit tests in `src/*.test.ts` (the remote-mode refusals and flags).

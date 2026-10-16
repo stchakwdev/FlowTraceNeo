@@ -28,26 +28,33 @@ use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
 use crate::cache::{Row, RowCache, RowChange};
 use crate::error::{ClientError, decode_reducer_error, is_valid_org_id};
 use crate::module_bindings::{
-    self as b, DbConnection, MyAccountTableAccess as _, MyAuditEventTableAccess as _,
-    MyBankAccountTableAccess as _, MyBillTableAccess as _, MyBudgetLineTableAccess as _,
-    MyBudgetTableAccess as _, MyCommandResultTableAccess as _, MyDimensionTableAccess as _,
+    self as b, DbConnection, MyAccessGroupMemberTableAccess as _, MyAccessGroupTableAccess as _,
+    MyAccountTableAccess as _, MyAuditEventTableAccess as _, MyBankAccountTableAccess as _,
+    MyBillTableAccess as _, MyBudgetLineTableAccess as _, MyBudgetTableAccess as _,
+    MyCampaignStatTableAccess as _, MyCampaignTableAccess as _, MyCommandResultTableAccess as _,
+    MyDimensionTableAccess as _, MyDonationTableAccess as _, MyDonorUpdateTableAccess as _,
     MyExpenseClaimTableAccess as _, MyFiscalPeriodTableAccess as _, MyFundTableAccess as _,
     MyGrantTableAccess as _, MyJournalEntryTableAccess as _, MyJournalLineTableAccess as _,
-    MyLedgerOrgTableAccess as _, MyMemberTableAccess as _, MyPaymentTableAccess as _,
-    MyStatementLineTableAccess as _, MyVendorTableAccess as _, create_org_ledger as _,
-    import_books as _, run_command as _,
+    MyLedgerOrgTableAccess as _, MyMemberTableAccess as _, MyOrganizationProfileTableAccess as _,
+    MyPaymentTableAccess as _, MyProfileTableAccess as _, MyStatementLineTableAccess as _,
+    MyVendorTableAccess as _, MyVerificationAccessLogTableAccess as _,
+    MyVerificationTableAccess as _, create_org_ledger as _, import_books as _, run_command as _,
 };
 use crate::status::{
     ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
     TicketSender,
 };
 use crate::token::TokenFile;
+use crate::transparency::TransparencyCache;
+use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::types::Profile;
 
 /// The views the client subscribes to: every `my_*` view, which hold the rows of every
 /// organisation the caller is a member of (`spacetime-backend.ts:105-108`, `LEDGER_TABLES`, plus
-/// `my_member` for the organisation list). The TS client narrows each query to one organisation;
-/// the desktop shows all of them, so these do not.
-pub const VIEWS: [&str; 19] = [
+/// `my_member` for the organisation list), then the ten transparency views (MOD1,
+/// `crates/ledger-module/src/transparency/views.rs`). The TS client narrows each query to one
+/// organisation; the desktop shows all of them, so these do not.
+pub const VIEWS: [&str; 29] = [
     "my_ledger_org",
     "my_member",
     "my_journal_entry",
@@ -67,6 +74,16 @@ pub const VIEWS: [&str; 19] = [
     "my_statement_line",
     "my_audit_event",
     "my_command_result",
+    "my_organization_profile",
+    "my_profile",
+    "my_access_group",
+    "my_access_group_member",
+    "my_verification",
+    "my_verification_access_log",
+    "my_campaign",
+    "my_campaign_stat",
+    "my_donation",
+    "my_donor_update",
 ];
 
 /// Where to connect.
@@ -149,6 +166,7 @@ impl Hub {
 struct Shared {
     hub: Mutex<Hub>,
     cache: Mutex<RowCache>,
+    transparency: Mutex<TransparencyCache>,
     conn: Mutex<Option<Arc<DbConnection>>>,
     pending: Mutex<HashMap<String, TicketSender<CommandResult>>>,
     request_prefix: Mutex<String>,
@@ -190,6 +208,7 @@ impl SpacetimeClient {
                 subscribers: Vec::new(),
             }),
             cache: Mutex::new(RowCache::default()),
+            transparency: Mutex::new(TransparencyCache::default()),
             conn: Mutex::new(None),
             pending: Mutex::new(HashMap::new()),
             request_prefix: Mutex::new(String::new()),
@@ -352,6 +371,29 @@ impl SpacetimeClient {
         lock(&self.shared.cache).state(org_id)
     }
 
+    /// One organisation's transparency records as the caller may read them (proofs already cut
+    /// to their access groups), rebuilt from the cached rows through the module's codec; empty
+    /// when the organisation has none yet.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::InvalidOrgId`], or [`ClientError::Codec`] when a row does not read.
+    pub fn transparency(&self, org_id: &str) -> Result<OrgTransparency, ClientError> {
+        if !is_valid_org_id(org_id) {
+            return Err(ClientError::InvalidOrgId(org_id.to_owned()));
+        }
+        lock(&self.shared.transparency).transparency(org_id)
+    }
+
+    /// The person profiles the caller can read: their own and their co-members'.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Json`] when a profile does not read.
+    pub fn profiles(&self) -> Result<Vec<Profile>, ClientError> {
+        lock(&self.shared.transparency).profiles()
+    }
+
     /// A new receiver of change notifications. Its first event is the current
     /// [`ClientEvent::Status`]; after that it gets every event, one [`ClientEvent::Changed`] per
     /// applied message. Drop it to stop.
@@ -490,6 +532,16 @@ fn watch_all(conn: &DbConnection, tx: &InternalTx) {
     watch(&db.my_statement_line(), tx);
     watch(&db.my_audit_event(), tx);
     watch(&db.my_command_result(), tx);
+    watch(&db.my_organization_profile(), tx);
+    watch_without_key(&db.my_profile(), tx);
+    watch(&db.my_access_group(), tx);
+    watch(&db.my_access_group_member(), tx);
+    watch_without_key(&db.my_verification(), tx);
+    watch_without_key(&db.my_verification_access_log(), tx);
+    watch(&db.my_campaign(), tx);
+    watch(&db.my_campaign_stat(), tx);
+    watch(&db.my_donation(), tx);
+    watch(&db.my_donor_update(), tx);
 }
 
 fn subscribe_all(conn: &DbConnection, tx: &InternalTx) {
@@ -580,20 +632,35 @@ fn drain(
 
     // Rows first, so every ticket and status below sees the books they belong to.
     let mut results = Vec::new();
+    let mut transparency = Vec::new();
     let touched: BTreeSet<String> = {
         let mut cache = lock(&shared.cache);
         changes
             .into_iter()
-            .filter_map(|c| {
-                if let RowChange::Upsert(Row::Result(r)) = &c {
-                    results.push(r.clone());
+            .filter_map(|c| match c {
+                RowChange::Upsert(Row::Transparency(r)) => {
+                    transparency.push((r, true));
+                    None
                 }
-                cache.apply(c)
+                RowChange::Delete(Row::Transparency(r)) => {
+                    transparency.push((r, false));
+                    None
+                }
+                c => {
+                    if let RowChange::Upsert(Row::Result(r)) = &c {
+                        results.push(r.clone());
+                    }
+                    cache.apply(c)
+                }
             })
             .collect()
     };
     if !touched.is_empty() {
         lock(&shared.hub).broadcast(&ClientEvent::Changed { orgs: touched });
+    }
+    if !transparency.is_empty() {
+        let (orgs, profiles) = lock(&shared.transparency).apply_all(transparency);
+        lock(&shared.hub).broadcast(&ClientEvent::TransparencyChanged { orgs, profiles });
     }
     for r in results {
         if let Some(tx) = lock(&shared.pending).remove(&r.request_id) {

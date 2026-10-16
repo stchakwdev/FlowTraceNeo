@@ -6,6 +6,13 @@ column, the nineteen `my_*` views, `init`, `add_operator`, `remove_operator`,
 `create_org_ledger`, `add_member`, `remove_member`, `run_command` and `import_books`. Why the
 tables look the way they do: `../../docs/adr/0003-module-tables.md`.
 
+Next to the ledger it holds the transparency side (task MOD1, `src/transparency/`): ten more
+private tables (organisation and person profiles, access groups and members, proofs and their
+access log, campaigns and their figures, donations, donor updates), ten `my_*` views and
+nineteen reducers that mirror the demo API (`flowtrace/src/lib/demo/api.ts`) with the web's
+permission rules. Tables, views, reducers, rules and every point where the demo API and the
+Supabase backend disagree: `../../docs/adr/0004-transparency-tables.md`.
+
 ## The reducers that write books
 
 - `create_org_ledger(org_id, base_currency, fiscal_year, display_name)`: operator only. Seeds the
@@ -27,6 +34,36 @@ tables look the way they do: `../../docs/adr/0003-module-tables.md`.
   and writes the given `LedgerState` as new rows, numbered on from `next_seq`; members and
   command results stay. No TS counterpart: it loads the demo books for end-to-end checks.
 
+## The transparency reducers
+
+Record-shaped arguments are JSON in the module's shape (`src/transparency/types.rs`: money in
+minor units, files as R2 object keys and a SHA-256); unknown fields are refused. Who acted comes
+from the caller's member row, ids from `ctx.new_uuid_v4()`, time from the reducer clock.
+
+| Reducer | Who |
+|---|---|
+| `set_profile(display_name, email)` | anyone, for themselves (the email is kept as its hash) |
+| `update_organization_profile(org_id, patch_json)` | a member who can close periods |
+| `create_default_access_groups(org_id)`, `create_access_group(org_id, group_json)`, `update_access_group(org_id, group_id, patch_json)`, `delete_access_group(org_id, group_id)`, `add_access_group_member(org_id, member_json)`, `invite_access_group_member(org_id, group_id, email, valid_until)`, `remove_access_group_member(org_id, member_id)` | a member who can close periods |
+| `create_verification(org_id, verification_json)`, `create_campaign`, `update_campaign`, `delete_campaign` (drafts), `update_donation_status`, `post_donor_update`, `mark_donor_update_sent` | any member |
+| `log_verification_access(org_id, verification_id, "view" or "download")` | any member who can see the proof |
+| `record_donation(org_id, donation_json)` | any member; anyone else only a pending gift to an active public campaign that is open and not full |
+| `import_transparency(org_id, store_json)` | an operator (loads `fixtures/transparency-dataset.json#/store`) |
+
+A new organisation sees no proofs until someone is in an access group: run
+`create_default_access_groups` and add yourself to the Board with `add_access_group_member`.
+
+The local proof publishes `ft-mod1-<stamp>` (over a module built from main with
+`--base-wasm`, to show the schema change is additive), loads the fixtures, runs every reducer once
+through `spacetime call`, reads back through SQL as the owner, a Board member and a stranger and
+through ledger-client as a Donors member (`../ledger-client/tests/live_transparency.rs`), and
+deletes the database; about 3 s with the wasm built:
+
+```sh
+cd rust/tools
+~/.bun/bin/bun run transparency-proof [--base-wasm <main's ledger_module.wasm>] [--keep]
+```
+
 ## Checks
 
 The crate is a workspace member, so the workspace checks cover it on the host target:
@@ -34,7 +71,7 @@ The crate is a workspace member, so the workspace checks cover it on the host ta
 ```sh
 cd rust
 cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
-cargo test -p ledger-module          # the module's 103 host tests alone
+cargo test -p ledger-module          # the module's host tests alone (151 unit, 3 fixture replay)
 ```
 
 ## Build the wasm module

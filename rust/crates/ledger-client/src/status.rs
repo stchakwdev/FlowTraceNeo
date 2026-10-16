@@ -62,6 +62,16 @@ pub enum ClientEvent {
         /// The organisation ids.
         orgs: BTreeSet<String>,
     },
+    /// Transparency rows changed (MOD1 views); re-read
+    /// [`crate::SpacetimeClient::transparency`] of these organisations, and
+    /// [`crate::SpacetimeClient::profiles`] when `profiles` is set. One per applied message, like
+    /// [`ClientEvent::Changed`], which it never replaces: a message that touches both sends both.
+    TransparencyChanged {
+        /// The organisation ids.
+        orgs: BTreeSet<String>,
+        /// Whether the person profiles changed.
+        profiles: bool,
+    },
     /// The subscription or the connection reported an error; the status event that follows
     /// says whether the connection survived.
     Error(String),
