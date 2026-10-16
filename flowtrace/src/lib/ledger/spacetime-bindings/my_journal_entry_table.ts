@@ -8,25 +8,25 @@ import {
   t as __t,
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
-} from "spacetimedb";
+} from 'spacetimedb'
 
 export default __t.row({
   key: __t.string().primaryKey(),
-  orgId: __t.string().name("org_id"),
+  orgId: __t.string().name('org_id'),
   id: __t.string(),
   seq: __t.u64(),
   number: __t.string(),
   date: __t.string(),
-  periodId: __t.string().name("period_id"),
+  periodId: __t.string().name('period_id'),
   memo: __t.string(),
-  sourceType: __t.string().name("source_type"),
-  sourceId: __t.option(__t.string()).name("source_id"),
+  sourceType: __t.string().name('source_type'),
+  sourceId: __t.option(__t.string()).name('source_id'),
   status: __t.string(),
-  reversalOf: __t.option(__t.string()).name("reversal_of"),
-  reversedBy: __t.option(__t.string()).name("reversed_by"),
-  overrideReason: __t.option(__t.string()).name("override_reason"),
-  createdBy: __t.string().name("created_by"),
-  createdAt: __t.string().name("created_at"),
-  postedBy: __t.option(__t.string()).name("posted_by"),
-  postedAt: __t.option(__t.string()).name("posted_at"),
-});
+  reversalOf: __t.option(__t.string()).name('reversal_of'),
+  reversedBy: __t.option(__t.string()).name('reversed_by'),
+  overrideReason: __t.option(__t.string()).name('override_reason'),
+  createdBy: __t.string().name('created_by'),
+  createdAt: __t.string().name('created_at'),
+  postedBy: __t.option(__t.string()).name('posted_by'),
+  postedAt: __t.option(__t.string()).name('posted_at'),
+})

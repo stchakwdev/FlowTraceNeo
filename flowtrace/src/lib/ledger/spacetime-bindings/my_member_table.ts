@@ -8,15 +8,15 @@ import {
   t as __t,
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
-} from "spacetimedb";
+} from 'spacetimedb'
 
 export default __t.row({
-  key: __t.string().primaryKey(),
+  key: __t.string(),
   identity: __t.identity(),
-  orgId: __t.string().name("org_id"),
-  userId: __t.string().name("user_id"),
+  orgId: __t.string().name('org_id'),
+  userId: __t.string().name('user_id'),
   name: __t.string(),
-  canPost: __t.bool().name("can_post"),
-  canApprove: __t.bool().name("can_approve"),
-  canClose: __t.bool().name("can_close"),
-});
+  canPost: __t.bool().name('can_post'),
+  canApprove: __t.bool().name('can_approve'),
+  canClose: __t.bool().name('can_close'),
+})

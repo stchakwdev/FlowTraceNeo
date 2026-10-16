@@ -8,23 +8,23 @@ import {
   t as __t,
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
-} from "spacetimedb";
+} from 'spacetimedb'
 
 export default __t.row({
   key: __t.string().primaryKey(),
-  orgId: __t.string().name("org_id"),
+  orgId: __t.string().name('org_id'),
   id: __t.string(),
   seq: __t.u64(),
-  entryId: __t.string().name("entry_id"),
-  accountId: __t.string().name("account_id"),
+  entryId: __t.string().name('entry_id'),
+  accountId: __t.string().name('account_id'),
   debit: __t.i64(),
   credit: __t.i64(),
   currency: __t.string(),
-  fxRate: __t.f64().name("fx_rate"),
-  baseAmount: __t.i64().name("base_amount"),
-  fundId: __t.string().name("fund_id"),
-  grantId: __t.option(__t.string()).name("grant_id"),
-  dimensionIds: __t.array(__t.string()).name("dimension_ids"),
-  flowNodeId: __t.option(__t.string()).name("flow_node_id"),
+  fxRate: __t.f64().name('fx_rate'),
+  baseAmount: __t.i64().name('base_amount'),
+  fundId: __t.string().name('fund_id'),
+  grantId: __t.option(__t.string()).name('grant_id'),
+  dimensionIds: __t.array(__t.string()).name('dimension_ids'),
+  flowNodeId: __t.option(__t.string()).name('flow_node_id'),
   memo: __t.option(__t.string()),
-});
+})

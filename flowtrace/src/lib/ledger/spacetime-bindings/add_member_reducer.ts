@@ -8,7 +8,7 @@ import {
   t as __t,
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
-} from "spacetimedb";
+} from 'spacetimedb'
 
 export default {
   orgId: __t.string(),
@@ -18,4 +18,4 @@ export default {
   canPost: __t.bool(),
   canApprove: __t.bool(),
   canClose: __t.bool(),
-};
+}
