@@ -25,6 +25,7 @@ use crate::panels;
 use crate::panels::accounts::AccountsPanel;
 use crate::panels::general_ledger::GeneralLedgerPanel;
 use crate::panels::reports::ReportsPanel;
+use crate::panels::spend::SpendPanel;
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
 use crate::theme::{self, palette, space, text};
@@ -44,6 +45,7 @@ pub struct Shell {
     token_path: Entity<InputState>,
     connect_error: Option<SharedString>,
     reports: Entity<ReportsPanel>,
+    spend: Entity<SpendPanel>,
     scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -79,6 +81,7 @@ impl Shell {
         let accounts = cx.new(|cx| AccountsPanel::new(store.clone(), window, cx));
         let reports = cx.new(|cx| ReportsPanel::new(store.clone(), window, cx));
         let general_ledger = cx.new(|cx| GeneralLedgerPanel::new(store.clone(), window, cx));
+        let spend = cx.new(|cx| SpendPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
@@ -99,6 +102,7 @@ impl Shell {
             token_path,
             connect_error: None,
             reports,
+            spend,
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
@@ -151,11 +155,17 @@ impl Shell {
             cx.notify();
             return;
         }
+        let books = self.nav.screen == Screen::Books;
         let handled = self.nav.press_key(key)
-            || (self.nav.screen == Screen::Books
+            || (books
                 && self.nav.entry == NavEntry::Accounts
                 && self
                     .accounts
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Spend
+                && self
+                    .spend
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)));
         if handled {
             cx.stop_propagation();
@@ -230,9 +240,10 @@ impl Shell {
         match entry {
             NavEntry::Accounts => self.accounts.clone().into_any_element(),
             NavEntry::GeneralLedger => self.general_ledger.clone().into_any_element(),
-            NavEntry::Journal | NavEntry::Spend | NavEntry::Grants | NavEntry::Reconcile => {
+            NavEntry::Journal | NavEntry::Grants | NavEntry::Reconcile => {
                 panels::placeholder(entry, view, demo, cx).into_any_element()
             }
+            NavEntry::Spend => self.spend.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),
         }
     }

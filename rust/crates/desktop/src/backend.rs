@@ -137,6 +137,10 @@ pub trait LedgerBackend {
         command: LedgerCommand,
     ) -> Result<CommandResult, BackendError>;
 
+    /// Who the backend acts as in `org`: the claimant of a new claim and the approver of
+    /// others' (`claims.$id.tsx:96`, `useLedgerActor`). `None` when it holds no books there.
+    fn actor(&self, org: &OrganizationId) -> Option<Actor>;
+
     /// The connection status now.
     fn status(&self) -> ConnectionStatus;
 
@@ -291,6 +295,13 @@ impl LedgerBackend for InProcessBackend {
         };
         self.broadcast(&event);
         Ok(result)
+    }
+
+    fn actor(&self, org: &OrganizationId) -> Option<Actor> {
+        self.books
+            .iter()
+            .find(|b| &b.org.id == org)
+            .map(|b| b.actor.clone())
     }
 
     fn status(&self) -> ConnectionStatus {
@@ -461,6 +472,15 @@ mod tests {
 
     fn all_strings(state: &LedgerState) -> String {
         serde_json::to_string(state).unwrap()
+    }
+
+    #[test]
+    fn each_organisation_has_its_actor() {
+        let backend = backend();
+        let orgs = backend.organisations();
+        assert_eq!(backend.actor(&demo()), Some(demo_actor()));
+        assert_eq!(backend.actor(&orgs[1].id), Some(local_actor()));
+        assert_eq!(backend.actor(&OrganizationId::from("nobody")), None);
     }
 
     #[test]

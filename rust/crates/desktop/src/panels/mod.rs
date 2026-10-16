@@ -5,11 +5,17 @@
 pub mod accounts;
 pub mod general_ledger;
 pub mod reports;
+pub mod spend;
 
-use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
+use gpui_kit::component::button::{Button, ButtonVariants as _};
+use gpui_kit::component::{ActiveTheme as _, Sizable as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
-use gpui_kit::{App, FontWeight, IntoElement, ParentElement as _, Styled as _, div, px};
+use gpui_kit::{
+    App, ClickEvent, Context, Div, FontWeight, IntoElement, ParentElement as _, SharedString,
+    Styled as _, Window, div, px,
+};
 
+use crate::accounts::Failure;
 use crate::model::{LedgerView, NavEntry};
 use crate::theme::{palette, space, text};
 
@@ -121,6 +127,112 @@ pub fn placeholder(entry: NavEntry, view: &LedgerView, demo: bool, cx: &App) -> 
                                 .child(books_line(view)),
                         ),
                 ),
+        )
+}
+
+/// A one-of-many choice as a button: the chosen one filled, the others outlined.
+#[must_use]
+pub fn choice(id: String, label: &'static str, chosen: bool) -> Button {
+    let button = Button::new(SharedString::from(id)).small().label(label);
+    if chosen {
+        button.primary()
+    } else {
+        button.outline()
+    }
+}
+
+/// A labelled field: the label, the control, and the error under it in `rejection_red`.
+pub fn field(label: &str, control: impl IntoElement, error: Option<String>, cx: &App) -> Div {
+    let p = palette(cx.theme().mode);
+    v_flex()
+        .gap(px(6.0))
+        .child(
+            div()
+                .text_size(px(text::BODY))
+                .font_weight(FontWeight::SEMIBOLD)
+                .child(label.to_owned()),
+        )
+        .child(control)
+        .when_some(error, |f, e| {
+            f.child(
+                div()
+                    .text_size(px(12.0))
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .text_color(p.rejection_red.to_hsla())
+                    .child(e),
+            )
+        })
+}
+
+/// A muted hint under a field.
+pub fn hint(text_: &str, cx: &App) -> impl IntoElement {
+    div()
+        .text_size(px(12.0))
+        .text_color(palette(cx.theme().mode).ink_muted.to_hsla())
+        .child(text_.to_owned())
+}
+
+/// `Tag` (`accounts.tsx:218-224`): a hairline box in small muted capitals.
+pub fn tag(label: &str, cx: &App) -> impl IntoElement {
+    let p = palette(cx.theme().mode);
+    div()
+        .px(px(6.0))
+        .h(px(20.0))
+        .flex()
+        .items_center()
+        .border_1()
+        .border_color(p.hairline.to_hsla())
+        .text_size(px(text::LABEL))
+        .font_weight(FontWeight::SEMIBOLD)
+        .text_color(p.ink_muted.to_hsla())
+        .child(label.to_uppercase())
+}
+
+/// `IssueSummary` (`flowtrace/src/components/ledger/page.tsx:156-190`): a red-ruled box with the
+/// title and each engine message as given.
+pub fn failure_box(f: &Failure, cx: &App) -> impl IntoElement {
+    let p = palette(cx.theme().mode);
+    v_flex()
+        .p(px(16.0))
+        .gap(px(6.0))
+        .border_1()
+        .border_color(p.rejection_red.to_hsla())
+        .child(
+            div()
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(p.rejection_red.to_hsla())
+                .child(f.title.clone()),
+        )
+        .children(f.messages.iter().map(|m| div().child(m.clone())))
+}
+
+/// A form's primary button and its Cancel: `submit` on the first, `cancel` then a redraw on
+/// the second.
+pub fn form_buttons<T: 'static>(
+    id: &'static str,
+    label: impl Into<SharedString>,
+    submit: impl Fn(&mut T, &mut Window, &mut Context<T>) + 'static,
+    cancel: impl Fn(&mut T) + 'static,
+    cx: &mut Context<T>,
+) -> Div {
+    h_flex()
+        .gap(px(8.0))
+        .child(
+            Button::new(SharedString::from(format!("{id}-submit")))
+                .primary()
+                .label(label)
+                .on_click(cx.listener(move |panel, _: &ClickEvent, window, cx| {
+                    submit(panel, window, cx);
+                })),
+        )
+        .child(
+            Button::new(SharedString::from(format!("{id}-cancel")))
+                .ghost()
+                .label("Cancel")
+                .on_click(cx.listener(move |panel, _: &ClickEvent, _, cx| {
+                    cancel(panel);
+                    cx.notify();
+                })),
         )
 }
 
