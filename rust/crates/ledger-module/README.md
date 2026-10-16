@@ -37,7 +37,7 @@ Measured on Omarchy (16 threads, Rust 1.99.0), 2026-10-16:
 | Release wasm build, cold for the wasm target (host deps already built) | 11.4 s |
 | Same, after touching `src/lib.rs` | 1.4 s |
 | `spacetime build -p crates/ledger-module` with the build already done | 0.2 s |
-| `ledger_module.wasm`, release, no `wasm-opt` | 558,411 bytes (545 KiB) |
+| `ledger_module.wasm`, release, no `wasm-opt`, on main at 4e75c69 | 558,973 bytes (546 KiB) |
 
 ## Publish, call, inspect and delete (local server only)
 
