@@ -40,7 +40,8 @@ when the app closes.
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
 | `store` | `LedgerStore`, the one store entity: owns the backend and the `LedgerView`, drains the change channel in batches | yes |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`; `panels::accounts::AccountsPanel` (U2) | yes |
+| `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) | yes |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
@@ -183,3 +184,20 @@ filters on an account code; `--gl-row 25000` scrolls to a row and opens its entr
 `--gl-scroll-bench on` scrolls the whole table 25 rows a frame and logs frame times to stderr.
 Shots: `docs/screens/u4-general-ledger.png` (demo books, account 1110, an entry open) and
 `docs/screens/u4-general-ledger-50k.png` (50,000 lines, mid-scroll).
+
+## Spend: expense claims (U5)
+
+The Spend entry has two tabs: Expense claims (`c`) and Bills (`b`, a placeholder that U6 fills
+by replacing the `SpendTab::Bills` arms in `panels::spend`). The claims tab shows the list, a new
+claim, or one claim (`ClaimsView`). Keys while no field has focus: `n` new claim, `f` next status
+filter, `j`/`k` or the arrows move the highlighted row, Enter opens it; on a claim `s` submits,
+`a` approves, `r` rejects (the reason field takes focus), `p` records the reimbursement, Enter
+confirms the open box and Escape steps back. The backend trait gained `actor(org)`, the person
+the app acts as (pre-decision P7), so the screen knows who may submit or approve: the demo user
+cannot approve their own claims, as the engine rules.
+
+After an approval the detail shows the posted entry and each grant its expense lines charged,
+with the grant's spend so far (`claims::Posting`). Shots: `docs/screens/u5-claims.png`,
+`u5-claim-new.png` (keys `n`, typing, Enter between fields) and `u5-claim-detail.png` (Enter on
+EC-0002, `a`, Enter).
+

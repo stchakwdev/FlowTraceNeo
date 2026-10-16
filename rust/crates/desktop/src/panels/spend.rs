@@ -1758,7 +1758,7 @@ fn col_amount() -> Div {
 }
 
 fn col_status() -> Div {
-    div().w(px(176.0)).flex_shrink_0().px(px(8.0))
+    div().w(px(176.0)).flex_shrink_0().px(px(8.0)).flex()
 }
 
 impl Render for SpendPanel {
