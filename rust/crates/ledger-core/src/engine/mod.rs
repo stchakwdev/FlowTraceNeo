@@ -180,6 +180,20 @@ impl<'a> Ledger<'a> {
         self.state
     }
 
+    /// Runs `write` as one write of several engine calls: when it fails, the books are put back
+    /// as they were, as the TS callers discard them (`commands.ts:88-91`). Ids drawn stay drawn.
+    pub(crate) fn atomically<T>(
+        &mut self,
+        write: impl FnOnce(&mut Self) -> Result<T, Error>,
+    ) -> Result<T, Error> {
+        let before = self.state.clone();
+        let result = write(self);
+        if result.is_err() {
+            *self.state = before;
+        }
+        result
+    }
+
     /// `nextNumber(prefix)` (`engine.ts:137-141`): bumps the counter and formats `JE-0001`.
     fn next_number(&mut self, prefix: &str) -> String {
         let n = self.state.counters.get(prefix).copied().unwrap_or(0) + 1;

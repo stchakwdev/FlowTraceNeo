@@ -178,7 +178,7 @@ fn caller_chosen_ids_are_dropped() {
         let cmd = to_json(&sanitize_command(&raw).unwrap());
         assert_eq!(cmd["input"].get("id"), None, "{kind}");
     }
-    // A claim keeps its client id, so an offline resend is idempotent (`commands.ts:91-93`).
+    // A claim keeps its client id, so an offline resend is idempotent (`commands.ts:101-106`).
     let raw = json!({
         "type": "claim.create",
         "input": {
@@ -236,7 +236,7 @@ fn a_malformed_command_is_invalid_input() {
 #[test]
 fn a_failed_import_leaves_the_books_unchanged() {
     // The second draft is in USD with no rate, which `convert` refuses (`money.ts:36-39`);
-    // TS discards the first draft with the books (`commands.ts:86-89`), Rust restores them.
+    // TS discards the first draft with the books (`commands.ts:88-91`), Rust restores them.
     let mut state: LedgerState =
         serde_json::from_value(fixture("setup")["createOrgLedger"]["state"].clone()).unwrap();
     let before = to_json(&state);

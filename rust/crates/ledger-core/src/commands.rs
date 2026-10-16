@@ -7,7 +7,7 @@
 //! [`CommandResult`].
 //!
 //! The JSON shape is the TS union's: a `type` field with the TS literal (`entry.post`), payload
-//! fields in camelCase (`entryId`), inputs in the engine's snake_case (`commands.ts:25-79`).
+//! fields in camelCase (`entryId`), inputs in the engine's `snake_case` (`commands.ts:25-79`).
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -19,7 +19,7 @@ use crate::engine::{
 use crate::errors::{IssueCode, LedgerError};
 use crate::types::{
     AccountId, Actor, BankAccountId, BankAccountKind, BillId, ClaimId, EntryId, EntryInput, FundId,
-    GrantId, JournalEntry, JournalLine, LineId, Nullish, PeriodId, SourceType, StatementLineId,
+    GrantId, JournalEntry, JournalLine, LineId, Nullish, PeriodId, StatementLineId,
 };
 
 /// A ledger write (`LedgerCommand`, `commands.ts:25-79`), tagged by `type` as in TS.
@@ -163,7 +163,7 @@ pub enum LedgerCommand {
         override_reason: Option<String>,
     },
     /// `bill.pay`: pay a posted bill, wholly or in part. It takes no rate: a foreign bill is paid
-    /// at its own rate (`commands.ts:180-188`).
+    /// at its own rate (`commands.ts:184-191`).
     #[serde(rename = "bill.pay", rename_all = "camelCase")]
     BillPay {
         /// The bill.
@@ -401,28 +401,275 @@ pub enum CommandError {
     NotImplemented(&'static str),
 }
 
-/// `sanitizeCommand(raw)` (`commands.ts:94-131`).
-///
-/// # Errors
-///
-/// `INVALID_INPUT` when the command is unknown or malformed.
-pub fn sanitize_command(raw: &Value) -> Result<LedgerCommand, LedgerError> {
-    let _ = raw;
-    Err(LedgerError::fail(IssueCode::InvalidInput, "Not yet."))
+/// The `type` of every command (`COMMAND_TYPES`, `commands.ts:92-98`).
+pub const COMMAND_TYPES: [&str; 32] = [
+    "entry.post",
+    "entry.saveDraft",
+    "entry.updateDraft",
+    "entry.postDraft",
+    "entry.deleteDraft",
+    "entry.reverse",
+    "entry.import",
+    "account.add",
+    "account.update",
+    "grant.add",
+    "budgetLine.set",
+    "period.close",
+    "period.reopen",
+    "period.lock",
+    "year.close",
+    "year.open",
+    "vendor.add",
+    "bill.create",
+    "bill.approve",
+    "bill.post",
+    "bill.pay",
+    "claim.create",
+    "claim.submit",
+    "claim.approve",
+    "claim.reject",
+    "claim.reimburse",
+    "bank.add",
+    "statement.import",
+    "statement.autoMatch",
+    "statement.match",
+    "statement.unmatch",
+    "statement.post",
+];
+
+/// `INVALID_INPUT` with `message`.
+fn invalid(message: impl Into<String>) -> LedgerError {
+    LedgerError::fail(IssueCode::InvalidInput, message)
 }
 
-/// `applyCommand(ledger, actor, cmd)` (`commands.ts:133-222`).
+/// `asManual(value, source)` (`commands.ts:112-117`): an entry needs a date, a memo and lines,
+/// and whatever a client says, it is `source` (`manual` or `import`) with no source record.
+///
+/// A line's `fx_rate` that is not a JSON number is dropped. TS keeps it and the posting refuses
+/// it with `FX_RATE_REQUIRED` when the line is in a foreign currency (`typeof rate !== 'number'`,
+/// `engine.ts:373-375`) and uses 1 when it is not, which is what the engine does with no rate,
+/// so a post gives the same outcome; the typed [`EntryInput`] cannot hold a string.
+fn as_manual(value: Option<&mut Value>, source: &str) -> Result<(), LedgerError> {
+    let is = |o: &serde_json::Map<String, Value>, key: &str, test: fn(&Value) -> bool| {
+        o.get(key).is_some_and(test)
+    };
+    let Some(input) = value.and_then(Value::as_object_mut).filter(|o| {
+        is(o, "lines", Value::is_array)
+            && is(o, "memo", Value::is_string)
+            && is(o, "date", Value::is_string)
+    }) else {
+        return Err(invalid("An entry needs a date, a memo and lines."));
+    };
+    input.insert("source_type".to_owned(), Value::from(source));
+    input.insert("source_id".to_owned(), Value::Null);
+    for line in input
+        .get_mut("lines")
+        .and_then(Value::as_array_mut)
+        .into_iter()
+        .flatten()
+    {
+        if let Some(line) = line.as_object_mut()
+            && line.get("fx_rate").is_some_and(|r| !r.is_number())
+        {
+            line.remove("fx_rate");
+        }
+    }
+    Ok(())
+}
+
+/// `sanitizeCommand(raw)` (`commands.ts:100-138`). Commands arrive as JSON from a client, so
+/// nothing in them is trusted: an entry a person writes is always `manual` (or `import`), never a
+/// system source such as a bill or the year-end close, and new records never choose their own
+/// ids, except claims, whose client id makes an offline resend idempotent.
+///
+/// Where TS goes on with JSON that does not fit the command's type and lets the engine stumble
+/// on it, Rust stops here: a missing or wrong-typed field is `INVALID_INPUT` naming it.
 ///
 /// # Errors
 ///
-/// [`CommandError::Engine`] when a rule blocks the command, [`CommandError::NotImplemented`] for
-/// the bank and statement commands until task C6.
+/// `INVALID_INPUT`: `Unknown command.` for anything but an object with a known `type`
+/// (`commands.ts:108-109`); `An entry needs a date, a memo and lines.` (`commands.ts:113-115`);
+/// `Nothing to import.` when `inputs` is not a list (`commands.ts:125`); and a malformed
+/// command.
+pub fn sanitize_command(raw: &Value) -> Result<LedgerCommand, LedgerError> {
+    let kind = raw
+        .as_object()
+        .and_then(|o| o.get("type"))
+        .and_then(Value::as_str)
+        .filter(|k| COMMAND_TYPES.contains(k))
+        .ok_or_else(|| invalid("Unknown command."))?;
+    let mut cmd = raw.clone();
+    match kind {
+        // commands.ts:119-123
+        "entry.post" | "entry.saveDraft" | "entry.updateDraft" => {
+            as_manual(cmd.get_mut("input"), "manual")?;
+        }
+        // commands.ts:124-127
+        "entry.import" => {
+            let inputs = cmd
+                .get_mut("inputs")
+                .and_then(Value::as_array_mut)
+                .ok_or_else(|| invalid("Nothing to import."))?;
+            for input in inputs {
+                as_manual(Some(input), "import")?;
+            }
+        }
+        // commands.ts:128-134
+        "account.add" | "grant.add" | "vendor.add" | "bank.add" | "bill.create" => {
+            if let Some(input) = cmd.get_mut("input").and_then(Value::as_object_mut) {
+                input.remove("id");
+            }
+        }
+        _ => {}
+    }
+    serde_json::from_value(cmd)
+        .map_err(|e| invalid(format!("The {kind} command is malformed: {e}.")))
+}
+
+/// `id(x)` of `applyCommand` (`commands.ts:140`): the id of what was written.
+fn id(x: impl AsRef<str>) -> CommandResult {
+    CommandResult::Id {
+        id: x.as_ref().to_owned(),
+    }
+}
+
+/// `applyCommand(ledger, actor, cmd)` (`commands.ts:139-222`): runs the command through the
+/// engine method it names.
+///
+/// A rejected command leaves the books as they were. TS has the caller discard them
+/// (`commands.ts:88-91`); the engine checks every rule before its first change, and
+/// `entry.import`, the one command of several writes, puts the books back itself. Ids drawn
+/// before a failure stay drawn, as in TS.
+///
+/// # Errors
+///
+/// [`CommandError::Engine`] when a rule blocks the command; [`CommandError::NotImplemented`] for
+/// `bank.add` and the five `statement.*` commands until task C6 ports their engine methods.
+#[expect(
+    clippy::too_many_lines,
+    reason = "one arm per command, as the applyCommand switch (commands.ts:141-221)"
+)]
 pub fn apply_command(
     ledger: &mut Ledger<'_>,
     actor: &Actor,
     cmd: LedgerCommand,
 ) -> Result<CommandResult, CommandError> {
-    let _ = (ledger, actor, cmd, EntryOptions::default());
-    let _: Option<(PaymentInput, ReimburseInput, SourceType)> = None;
-    Err(CommandError::NotImplemented("any"))
+    use LedgerCommand as C;
+    Ok(match cmd {
+        C::EntryPost { input } => id(ledger.post(actor, &input, EntryOptions::default())?.id),
+        C::EntrySaveDraft { input } => id(ledger.save_draft(actor, &input)?.id),
+        C::EntryUpdateDraft { entry_id, input } => {
+            id(ledger.update_draft(actor, &entry_id, &input)?.id)
+        }
+        C::EntryPostDraft {
+            entry_id,
+            override_reason,
+        } => id(ledger
+            .post_draft(actor, &entry_id, override_reason.as_deref())?
+            .id),
+        C::EntryDeleteDraft { entry_id } => {
+            ledger.delete_draft(actor, &entry_id)?;
+            CommandResult::None
+        }
+        C::EntryReverse {
+            entry_id,
+            date,
+            reason,
+        } => id(ledger.reverse(actor, &entry_id, &date, &reason)?.id),
+        // commands.ts:155-156
+        C::EntryImport { inputs } => {
+            let ids = ledger.atomically(|l| {
+                inputs
+                    .iter()
+                    .map(|input| Ok(l.save_draft(actor, input)?.id.as_str().to_owned()))
+                    .collect()
+            })?;
+            CommandResult::Ids { ids }
+        }
+        C::AccountAdd { input } => id(ledger.add_account(actor, input)?.id),
+        C::AccountUpdate { account_id, patch } => {
+            id(ledger.update_account(actor, &account_id, &patch)?.id)
+        }
+        C::GrantAdd { input } => id(ledger.add_grant(actor, input)?.id),
+        C::BudgetLineSet { input } => id(ledger.set_budget_line(actor, input)?.id),
+        C::PeriodClose { period_id } => id(ledger.close_period(actor, &period_id)?.id),
+        C::PeriodReopen { period_id, reason } => {
+            id(ledger.reopen_period(actor, &period_id, &reason)?.id)
+        }
+        C::PeriodLock { period_id } => id(ledger.lock_period(actor, &period_id)?.id),
+        // commands.ts:171-172: no closing entry when there is nothing to close.
+        C::YearClose { year } => match ledger.close_year(actor, year)? {
+            Some(entry) => id(entry.id),
+            None => CommandResult::None,
+        },
+        C::YearOpen { year } => {
+            ledger.open_fiscal_year(actor, year)?;
+            CommandResult::None
+        }
+        C::VendorAdd { input } => id(ledger.add_vendor(actor, input)?.id),
+        C::BillCreate { input } => id(ledger.create_bill(actor, input)?.id),
+        C::BillApprove { bill_id } => id(ledger.approve_bill(actor, &bill_id)?.id),
+        C::BillPost {
+            bill_id,
+            override_reason,
+        } => id(ledger
+            .post_bill(actor, &bill_id, override_reason.as_deref())?
+            .id),
+        // commands.ts:184-191: no rate is passed.
+        C::BillPay {
+            bill_id,
+            date,
+            cash_account_id,
+            amount,
+            reference,
+        } => {
+            let input = PaymentInput {
+                date,
+                cash_account_id,
+                amount,
+                reference,
+                fx_rate: None,
+            };
+            id(ledger.pay_bill(actor, &bill_id, &input)?.id)
+        }
+        C::ClaimCreate { input } => id(ledger.create_claim(actor, input)?.id),
+        C::ClaimSubmit { claim_id } => id(ledger.submit_claim(actor, &claim_id)?.id),
+        C::ClaimApprove {
+            claim_id,
+            note,
+            override_reason,
+        } => id(ledger
+            .approve_claim(
+                actor,
+                &claim_id,
+                note.as_deref(),
+                override_reason.as_deref(),
+            )?
+            .id),
+        C::ClaimReject { claim_id, note } => id(ledger.reject_claim(actor, &claim_id, &note)?.id),
+        C::ClaimReimburse {
+            claim_id,
+            date,
+            cash_account_id,
+            reference,
+        } => {
+            let input = ReimburseInput {
+                date,
+                cash_account_id,
+                reference,
+            };
+            id(ledger.reimburse_claim(actor, &claim_id, &input)?.id)
+        }
+        // commands.ts:209-220: C6 replaces each arm with its engine call.
+        C::BankAdd { .. } => return Err(CommandError::NotImplemented("bank.add")),
+        C::StatementImport { .. } => return Err(CommandError::NotImplemented("statement.import")),
+        C::StatementAutoMatch { .. } => {
+            return Err(CommandError::NotImplemented("statement.autoMatch"));
+        }
+        C::StatementMatch { .. } => return Err(CommandError::NotImplemented("statement.match")),
+        C::StatementUnmatch { .. } => {
+            return Err(CommandError::NotImplemented("statement.unmatch"));
+        }
+        C::StatementPost { .. } => return Err(CommandError::NotImplemented("statement.post")),
+    })
 }
