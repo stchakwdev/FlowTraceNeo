@@ -9,10 +9,16 @@ on:
     paths:
       - 'rust/**'
       - '.github/workflows/rust.yml'
+      # rust/fixtures are exported from these; the fixtures job below catches a missed re-export.
+      - 'flowtrace/src/lib/ledger/**'
+      - 'flowtrace/src/lib/demo/**'
   pull_request:
     paths:
       - 'rust/**'
       - '.github/workflows/rust.yml'
+      # rust/fixtures are exported from these; the fixtures job below catches a missed re-export.
+      - 'flowtrace/src/lib/ledger/**'
+      - 'flowtrace/src/lib/demo/**'
   workflow_dispatch:
 
 concurrency:
@@ -50,6 +56,29 @@ jobs:
 
       - name: Format, lint and test
         run: cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
+
+  # rust/fixtures must equal a fresh export from the TS engine in flowtrace/src/lib/ledger
+  # (rust/fixtures/README.md). Needs no GPUI libraries and no flowtrace/ install: the exporter
+  # imports flowtrace/src by relative path and its one npm package from rust/tools/node_modules.
+  fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: rust/tools
+    steps:
+      - uses: actions/checkout@v5
+
+      # bun.lock records no bun version; 1.4.2 is the version that wrote it.
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.4.2
+
+      - name: Install the fixture tools
+        run: bun install --frozen-lockfile
+
+      - name: Export twice and compare with rust/fixtures
+        run: bun run check
 
   # Release archives for a v* tag: rust/tools/release.sh on Linux and macOS, uploaded as workflow
   # artifacts only. No GitHub Release, no publish to maincloud (rust/docs/module-release.md).

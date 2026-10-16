@@ -21,6 +21,8 @@ requires the two runs and this folder to be byte-identical, then runs the covera
 some fixture's `covers`, every rejection asserted in the TS tests is present case for case,
 replaying the recorded deltas rebuilds `demo-books.json#/state` and the commands' `final_state`,
 and this table has one row per file. Stale fixtures fail the check.
+CI runs it in the `fixtures` job of `.github/workflows/rust.yml`; to fix a drift, run
+`bun run export` in `rust/tools` and commit the changed fixtures.
 
 The exporter runs in a child process with `TZ=UTC`, `LC_ALL=C.UTF-8`, no `VITE_*` variables and
 `NODE_PATH` set to `rust/tools/node_modules`: the demo module's import chain
