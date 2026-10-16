@@ -17,6 +17,7 @@ crate-type = ["cdylib", "rlib"]
 ledger-core = { path = "../ledger-core" }
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 spacetimedb.workspace = true
 thiserror.workspace = true
 

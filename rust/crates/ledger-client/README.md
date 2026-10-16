@@ -21,8 +21,18 @@ client.submit(org_id, &command)?;                      // blocking: Result<Comma
 client.send(org_id, &command);                         // CommandTicket: .result().await or .wait()
 client.create_org_ledger(org_id, "KES", 2026, name);   // Ticket<()>, operator only
 client.import_books(org_id, &state);                   // Ticket<()>, operator only
+client.transparency(org_id)?;                          // OrgTransparency: profile, groups, proofs, campaigns, ...
+client.profiles()?;                                    // Vec<Profile>: own and co-members'
 client.disconnect();
 ```
+
+The transparency views (MOD1) take the same path as the books (pre-decision P7): their rows go
+into their own cache (`src/transparency.rs`), `transparency` rebuilds the module's
+`ledger_module::transparency::OrgTransparency` through the module's own row codec, and each
+applied message that touched them sends one `ClientEvent::TransparencyChanged { orgs, profiles }`
+next to the ledger's `Changed`. Proofs arrive already cut to what the caller's access groups
+allow (`visible_as` on each). The client has no write calls for them yet; DT1 to DT4 add what
+their screens need.
 
 A subscriber's first event is the current `ClientEvent::Status`. After that it gets one
 `ClientEvent::Changed { orgs }` per applied message (initial subscription or transaction).
@@ -80,6 +90,9 @@ regenerate stops tripping one of them).
 cd rust
 cargo test -p ledger-client     # unit tests: rebuild, decoding, cache, token, tickets; offline
 ```
+
+`tests/live_transparency.rs` is step 5 of the MOD1 local proof and only runs from
+`rust/tools/transparency-proof.ts`, which sets `FT_MOD1_DB` and `FT_MOD1_EXPECTED`.
 
 The live test (`tests/live.rs`) is `#[ignore]`d and also needs `LEDGER_CLIENT_LIVE=1`. It
 publishes the module to the local server only (`http://127.0.0.1:3100`) as `ft-s3-test`

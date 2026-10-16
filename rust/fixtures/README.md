@@ -42,11 +42,13 @@ and `crypto.randomUUID`; no fixture uses it. Three frozen envs appear:
 | demo | `2026-02-04T09:00:00.000Z` | `demo-` + n in base 36, padded to 4 (`demo-0001`, ..., `demo-000a`) | `flowtrace/src/lib/demo/ledger.ts:118-124` (`seedEnv`) | demo-books, demo-backfill |
 | fixture | `2026-02-04T09:00:00.000Z` | `fx-` + n in decimal, padded to 4 (`fx-0001`) | `rust/tools/src/commands.ts#commandsEnv` | commands-accepted |
 | test | `2026-03-01T00:00:00.000Z` | `id-` + n in decimal (`id-1`) | `engine.test.ts:16-19`, `review-regressions.test.ts:16-19` | rejected-cases, reconcile-auto-match, setup |
+| transparency | `2026-02-04T09:00:00.000Z` | `00000000-0000-4000-8000-` + n left-padded to 12 digits (a UUID shape), one per `crypto.randomUUID()` | `rust/tools/src/transparency.ts#withFrozenClock` (the demo API has no env: it reads `new Date()` and `crypto.randomUUID()`, `flowtrace/src/lib/demo/api.ts:82-83`, so both are replaced while it runs) | transparency-calls |
 
-Every counter starts at 1 for each new ledger. Each audit event, journal line, statement line,
+Every counter starts at 1 for each new ledger (and for the transparency run). Each audit event, journal line, statement line,
 import batch, coded line and record created without an id draws one id, in call order. No
-timestamp other than these two values appears in any fixture (the exporter checks every `at`,
-`created_at`, `posted_at` and `now`).
+timestamp other than these two values appears in any ledger fixture (the exporter checks every
+`at`, `created_at`, `posted_at` and `now`); the two `transparency-*` files also carry the demo
+dataset's own timestamps, and every timestamp the demo API writes in them is the frozen now.
 
 ## Files
 
@@ -83,6 +85,8 @@ and function), `covers` (index exports and `Ledger.<method>` names it exercises)
 | `money.json` | `parseMoney`, `convert`, `fromMajor`, `toMajor`, `sum`, `assertMinor`, including errors | `money.ts` | none |
 | `csv.json` | `parseCsv`, `parseCsvRecords`, `toCsv`, `parseStatementDate` | `csv.ts` | none |
 | `setup.json` | `createOrgLedger('org', 'KES', 2026)` state (the base of every test scenario), `ngoChartOfAccounts`, `defaultSettings`, `emptyLedger`, `accountId`, `normalBalanceOf`, `actorFromPermissions`, `SYSTEM_ACTOR`, `UNRESTRICTED_FUND_ID` | `setup.ts`, `coa-template.ts`, `engine.ts#emptyLedger` | test |
+| `transparency-dataset.json` | The demo dataset for the module's transparency tables (MOD1): organisations, the demo profile, the five access groups and eight members, 21 verifications, 4 campaigns, 25 donations, 3 donor updates (`store`, amounts in major units as the TS types), the public embed config for MOD2, and `VERIFICATION_TRUST_POINTS` | `demo/dataset.ts`, `supabase.ts#VERIFICATION_TRUST_POINTS` | none |
+| `transparency-calls.json` | 47 demo API calls over that store, in order: function, arguments, `ok` with the result or `error` with the message, and the store delta (`added` records, `removed` ids, `changed` whole records); every MOD1 write the demo API has (organisation, access groups and members, verifications, campaigns, donations, donor updates), refusals, and the reads the module mirrors (`getCampaignStats`, `getUserPermissions`, `getVerificationVisibility`) | `demo/api.ts`, `supabase.ts#getVerificationVisibility` | transparency |
 
 ## Shapes
 
@@ -171,6 +175,16 @@ reformatted. Where JSON forces a representation, it is listed here.
   the same digits. Reading the fixtures needs a correctly rounded float parser: `serde_json`
   without its `float_roundtrip` feature reads some 17-digit values one ulp off (it fails three of
   the fifteen files), so ledger-core's tests turn that feature on.
+
+- **Transparency amounts** (task MOD1, pre-decision P4): the TS transparency types hold major
+  units (whole shillings in the demo dataset); the module stores minor units, converted with
+  `fromMajor` (`money.ts:26-31`). `crates/ledger-module/tests/transparency_fixtures.rs` compares
+  every amount after that conversion, exactly. One figure differs only through rounding:
+  `getCampaignStats` `avg_donation` (`demo/api.ts:1130-1165`) is `Math.round(raised / count)` in
+  major units, so rounded to the shilling; the module rounds the same mean to the minor unit. The
+  test compares `Math.round(module / 100)` with the TS value. `funding_percentage` is a ratio and
+  equal as a double; `days_remaining` and `days_active` depend on the reading day and are computed
+  by readers (`ledger_module::transparency::stats`) at the frozen now.
 
 ## Not covered here
 

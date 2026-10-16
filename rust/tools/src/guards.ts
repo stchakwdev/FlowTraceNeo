@@ -24,4 +24,6 @@ Object.defineProperty(globalThis.crypto, 'randomUUID', {
   value: () => {
     throw new Error('determinism guard: crypto.randomUUID() is not deterministic; inject a LedgerEnv')
   },
+  // transparency.ts swaps in a counter while the demo API runs, then puts this guard back.
+  configurable: true,
 })

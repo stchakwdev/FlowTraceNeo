@@ -8,6 +8,8 @@
 //!   books).
 //! - [`rules`], [`codec`], [`clock`], [`seed`], [`command`], [`write_back`]: the pure logic the
 //!   reducers and views use, which the host tests cover.
+//! - [`transparency`]: the transparency side (organisation and person profiles, access groups,
+//!   proofs, campaigns, donations, donor updates): its tables, views, reducers and rules.
 //!
 //! Publish, call and delete commands for the local server: `README.md`. Table shape decisions:
 //! `docs/adr/0003-module-tables.md`.
@@ -23,6 +25,7 @@ pub mod reducers;
 pub mod rules;
 pub mod seed;
 pub mod tables;
+pub mod transparency;
 pub mod views;
 pub mod write_back;
 

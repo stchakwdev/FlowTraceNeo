@@ -8,7 +8,8 @@
     "coverage": "\"$npm_execpath\" --no-install coverage.ts",
     "check": "\"$npm_execpath\" --no-install check.ts",
     "module-replay": "\"$npm_execpath\" --no-install module-replay.ts",
-    "integration": "\"$npm_execpath\" --no-install module-integration.ts"
+    "integration": "\"$npm_execpath\" --no-install module-integration.ts",
+    "transparency-proof": "\"$npm_execpath\" --no-install transparency-proof.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.89.0"

@@ -11,6 +11,7 @@ use ledger_module::tables;
 use crate::cache::{DocColumns, DocTable, MemberRow, OrgHeader, ResultRow, Row};
 use crate::module_bindings as b;
 use crate::status::MemberInfo;
+use crate::transparency::{TransparencyRow, TransparencyTable};
 
 /// Moves every listed field of `$from` into a `$to` of the same field names.
 macro_rules! same_fields {
@@ -107,6 +108,49 @@ doc_rows! {
     AuditEventRow => AuditEvent;
 }
 
+/// `From` for each transparency doc view's binding row.
+macro_rules! transparency_rows {
+    ($($row:ident => $table:ident;)+) => {$(
+        impl From<b::$row> for Row {
+            fn from(r: b::$row) -> Self {
+                Self::Transparency(TransparencyRow::Doc(
+                    TransparencyTable::$table,
+                    same_fields!(r => DocColumns { key, org_id, id, seq, data }),
+                ))
+            }
+        }
+    )+};
+}
+
+transparency_rows! {
+    AccessGroupRow => AccessGroup;
+    AccessGroupMemberRow => AccessGroupMember;
+    VerificationRow => Verification;
+    VerificationAccessRow => AccessLog;
+    CampaignRow => Campaign;
+    CampaignStatRow => CampaignStat;
+    DonationRow => Donation;
+    DonorUpdateRow => DonorUpdate;
+}
+
+impl From<b::OrganizationProfileRow> for Row {
+    fn from(r: b::OrganizationProfileRow) -> Self {
+        Self::Transparency(TransparencyRow::OrgProfile {
+            org_id: r.org_id,
+            data: r.data,
+        })
+    }
+}
+
+impl From<b::ProfileRow> for Row {
+    fn from(r: b::ProfileRow) -> Self {
+        Self::Transparency(TransparencyRow::Profile {
+            identity: r.identity.to_hex().to_string(),
+            data: r.data,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
@@ -139,6 +183,45 @@ mod tests {
             base_amount, fund_id, grant_id, dimension_ids, flow_node_id, memo,
         });
         assert_eq!(Row::from(binding), Row::Line(m));
+    }
+
+    #[test]
+    fn a_binding_campaign_row_becomes_a_transparency_doc_row() {
+        let binding = b::CampaignRow {
+            key: "demo:c-1".to_owned(),
+            org_id: "demo".to_owned(),
+            id: "c-1".to_owned(),
+            seq: 3,
+            data: "{}".to_owned(),
+        };
+        assert_eq!(
+            Row::from(binding),
+            Row::Transparency(TransparencyRow::Doc(
+                TransparencyTable::Campaign,
+                DocColumns {
+                    key: "demo:c-1".to_owned(),
+                    org_id: "demo".to_owned(),
+                    id: "c-1".to_owned(),
+                    seq: 3,
+                    data: "{}".to_owned(),
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn a_profile_row_carries_the_identity_as_hex() {
+        let row = Row::from(b::ProfileRow {
+            identity: Identity::from_byte_array([0xcd; 32]),
+            data: "{}".to_owned(),
+        });
+        assert_eq!(
+            row,
+            Row::Transparency(TransparencyRow::Profile {
+                identity: "cd".repeat(32),
+                data: "{}".to_owned(),
+            })
+        );
     }
 
     #[test]
