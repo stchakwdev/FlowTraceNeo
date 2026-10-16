@@ -8,6 +8,7 @@
 pub mod accounts;
 pub mod app;
 pub mod backend;
+pub mod claims;
 pub mod general_ledger;
 pub mod large_books;
 pub mod model;
