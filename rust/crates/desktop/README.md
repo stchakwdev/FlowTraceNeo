@@ -113,7 +113,8 @@ token_file = "/path/to/token"                   # optional, see below
 
 Unknown keys are refused (the app says so on stderr and starts without the file). A connect on
 the Connection screen writes `server` and `database` back, so the next start reconnects; a
-`token_file` set by hand is kept.
+`token_file` set by hand is kept. `release/config.toml` is the file release archives ship: it
+names `flowtrace-ledger`, the production database (`../../docs/module-release.md`, section 4).
 
 **Token file.** The identity is a token the server issues on the first connect. It is kept in
 `token-<server host>` next to `config.toml` (for maincloud

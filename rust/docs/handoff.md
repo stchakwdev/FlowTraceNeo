@@ -12,7 +12,13 @@ root.
   commands, 37 rejected cases, 108 demo backfill steps, 64 queries, 15 property tests.
   `parity.md` maps each of the 94 TS exports to its Rust counterpart and proving test.
 - **ledger-module** is published to maincloud as `flowtrace-ledger-dev` (by the user,
-  2026-10-16) and passed the end-to-end checks there (`module-release.md`).
+  2026-10-16) and passed the end-to-end checks there (`module-release.md`). The production
+  database `flowtrace-ledger` was published on 2026-10-16 at 20:25 UTC from main `d65f3ba`, by
+  the coordinator on the user's explicit instruction (database identity
+  `c200b4b1041fce8318a0027f02f44cf0517c52599a8b10b4b629476899750b4b`; sole operator the
+  publisher, `c200a773ad0003c4f82fac12ada53ff076d83fec49a6d827149d813527431630`; no
+  organisations at publish). Publishing, resetting or deleting production remains the user's
+  call; a module update is the user-run command in `module-release.md`, section 4.
 - **ledger-client** connects, keeps its own cache, rebuilds the books and submits commands; its
   live test passed against maincloud dev.
 - **desktop** (FlowTrace Books) has all seven screens (Accounts, Journal, General ledger,
@@ -22,7 +28,9 @@ root.
   user's MacBook, 2026-10-16).
 - **Packaging**: `rust/tools/release.sh` builds a stripped release archive for the current OS
   (`../README.md`, "Release build"); a tag `v*` builds Linux and macOS archives in CI as
-  workflow artifacts. Nothing is signed, and no GitHub Release is made.
+  workflow artifacts. Nothing is signed, and no GitHub Release is made. Each archive ships a
+  `config.toml` naming `flowtrace-ledger` on maincloud; copied into the app's config dir it opens
+  production, and without it the app opens the demo (INSTALL.txt in the archive).
 
 ## Decisions confirmed by the user (2026-10-16)
 
@@ -125,8 +133,10 @@ changing either once production books exist means a migration.
 
 ## Next steps for a maintainer
 
-1. Publish the production database `flowtrace-ledger` to maincloud. This is the user's step,
-   never an agent's (`module-release.md`, section 4).
+1. Production `flowtrace-ledger` is published (once, by the coordinator on the user's explicit
+   instruction). Next there: open the first organisation and add its members, and decide which
+   account should be the operator (`module-release.md`, section 4). Writes on production are
+   the user's step.
 2. Add the bun fixture check to `.github/workflows/rust.yml` so TS engine changes that move a
    fixture fail CI.
 3. Give the desktop the organisation and member calls (`ledger-client` first, with a test, as
