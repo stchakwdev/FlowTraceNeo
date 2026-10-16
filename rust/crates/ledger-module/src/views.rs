@@ -28,7 +28,11 @@ macro_rules! member_views {
         $(#[$doc])*
         #[spacetimedb::view(accessor = $view, public)]
         pub fn $view(ctx: &ViewContext) -> impl Query<$row> {
-            ctx.from.$table().build()
+            ctx.from
+                .member()
+                .r#where(|m| m.identity.eq(ctx.sender()))
+                .right_semijoin(ctx.from.$table(), |m, r| m.org_id.eq(r.org_id))
+                .build()
         }
     )+};
 }
@@ -77,6 +81,7 @@ member_views! {
 /// a self-join would come out as the ambiguous `FROM "member" JOIN "member"`. This view reads
 /// the two btree indexes instead, through [`members_visible_to`].
 #[spacetimedb::view(accessor = my_member, public)]
+#[must_use]
 pub fn my_member(ctx: &ViewContext) -> Vec<Member> {
     members_visible_to(
         ctx.sender(),
@@ -88,22 +93,25 @@ pub fn my_member(ctx: &ViewContext) -> Vec<Member> {
 /// The caller's latest command result (`index.ts:341-345`).
 #[spacetimedb::view(accessor = my_command_result, public)]
 pub fn my_command_result(ctx: &ViewContext) -> impl Query<CommandResult> {
-    ctx.from.command_result().build()
+    ctx.from
+        .command_result()
+        .r#where(|r| r.identity.eq(ctx.sender()))
+        .build()
 }
 
 /// The members `sender` may see: every member of each organisation `sender` belongs to, in the
 /// order of `sender`'s own member rows. The member key makes one row per identity and
 /// organisation, so no organisation comes twice.
+#[must_use]
 pub fn members_visible_to(
     sender: Identity,
     members_of_identity: impl Fn(Identity) -> Vec<Member>,
     members_of_org: impl Fn(&str) -> Vec<Member>,
 ) -> Vec<Member> {
-    unimplemented!(
-        "{sender}{}{}",
-        members_of_identity(sender).len(),
-        members_of_org("").len()
-    )
+    members_of_identity(sender)
+        .iter()
+        .flat_map(|mine| members_of_org(&mine.org_id))
+        .collect()
 }
 
 #[cfg(test)]
@@ -215,6 +223,9 @@ mod tests {
 
     #[test]
     fn a_stranger_sees_no_member() {
-        assert!(visible(Identity::from_byte_array([9; 32])).is_empty());
+        assert_eq!(
+            visible(Identity::from_byte_array([9; 32])),
+            Vec::<String>::new()
+        );
     }
 }

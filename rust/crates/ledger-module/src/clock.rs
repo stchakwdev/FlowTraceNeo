@@ -16,7 +16,35 @@ use ledger_core::types::Timestamp;
 ///
 /// For an instant outside years 0000 to 9999, which has no `toISOString` four-digit year.
 pub fn iso_millis(micros_since_epoch: i64) -> Result<Timestamp, TimestampError> {
-    unimplemented!("{micros_since_epoch}")
+    const MILLIS_PER_DAY: i64 = 86_400_000;
+    // `micros / 1000n` in the TS SDK truncates toward zero, as Rust's `/` does.
+    let millis = micros_since_epoch / 1000;
+    let (year, month, day) = civil_from_days(millis.div_euclid(MILLIS_PER_DAY));
+    let in_day = millis.rem_euclid(MILLIS_PER_DAY);
+    let text = format!(
+        "{year:04}-{month:02}-{day:02}T{:02}:{:02}:{:02}.{:03}Z",
+        in_day / 3_600_000,
+        in_day / 60_000 % 60,
+        in_day / 1000 % 60,
+        in_day % 1000
+    );
+    Timestamp::parse(&text)
+}
+
+/// Year, month and day of a day count since 1970-01-01 in the proleptic Gregorian calendar
+/// (H. Hinnant, "chrono-Compatible Low-Level Date Algorithms", `civil_from_days`:
+/// <https://howardhinnant.github.io/date_algorithms.html#civil_from_days>).
+fn civil_from_days(days: i64) -> (i64, i64, i64) {
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    (year, month, day)
 }
 
 /// [`iso_millis`] of a reducer's timestamp.

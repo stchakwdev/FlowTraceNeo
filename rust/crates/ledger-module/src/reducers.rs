@@ -211,7 +211,11 @@ pub fn add_member(
     clippy::needless_pass_by_value,
     reason = "reducer arguments arrive by value from the SpacetimeDB host"
 )]
-pub fn remove_member(ctx: &ReducerContext, org_id: String, identity: Identity) -> Result<(), String> {
+pub fn remove_member(
+    ctx: &ReducerContext,
+    org_id: String,
+    identity: Identity,
+) -> Result<(), String> {
     let org_members: Vec<Member> = ctx.db.member().org_id().filter(&org_id).collect();
     let removal = rules::plan_remove_member(&org_id, ctx.sender(), &org_members, identity)?;
     ctx.db.member().key().delete(&removal.key);

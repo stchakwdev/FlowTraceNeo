@@ -15,7 +15,7 @@ use crate::tables::Member;
 /// `memberKey` (`index.ts:359`): `{org_id}:{identity as lowercase hex}`.
 #[must_use]
 pub fn member_key(org_id: &str, identity: Identity) -> String {
-    unimplemented!("{org_id}{identity}")
+    row_key(org_id, identity.to_hex().as_ref())
 }
 
 /// `String.prototype.trim`: strips ECMAScript white space and line terminators
@@ -23,7 +23,28 @@ pub fn member_key(org_id: &str, identity: Identity) -> String {
 /// keeps U+0085.
 #[must_use]
 pub fn js_trim(s: &str) -> &str {
-    unimplemented!("{s}")
+    s.trim_matches(|c: char| (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}')
+}
+
+/// `/^[A-Za-z0-9_-]{1,128}$/` (`index.ts:533`).
+fn is_org_id(s: &str) -> bool {
+    (1..=128).contains(&s.len())
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+}
+
+/// `/^[A-Z]{3}$/` (`index.ts:560`).
+fn is_currency_code(s: &str) -> bool {
+    s.len() == 3 && s.bytes().all(|b| b.is_ascii_uppercase())
+}
+
+/// The `can_close` check of `addMember` and `removeMember` (`index.ts:610`, `index.ts:645`).
+fn require_close(actor: &Actor) -> Result<(), String> {
+    if actor.can_close {
+        Ok(())
+    } else {
+        Err("Only members who can close periods can manage members.".to_owned())
+    }
 }
 
 /// The checks `createOrgLedger` runs before it seeds anything (`index.ts:557-562`), in TS order.
@@ -38,7 +59,22 @@ pub fn check_new_org(
     fiscal_year: u32,
     org_exists: bool,
 ) -> Result<(), String> {
-    unimplemented!("{sender_is_operator}{org_id}{base_currency}{fiscal_year}{org_exists}")
+    if !sender_is_operator {
+        return Err("Only an operator can open books for a new organisation.".to_owned());
+    }
+    if !is_org_id(org_id) {
+        return Err("Organisation id must be 1-128 letters, digits, _ or -.".to_owned());
+    }
+    if !is_currency_code(base_currency) {
+        return Err("Base currency must be an ISO 4217 code, like KES.".to_owned());
+    }
+    if !(2000..=2100).contains(&fiscal_year) {
+        return Err("Fiscal year must be between 2000 and 2100.".to_owned());
+    }
+    if org_exists {
+        return Err(format!("Organisation {org_id} already has a ledger."));
+    }
+    Ok(())
 }
 
 /// `addOperator` (`index.ts:546-552`): only an operator adds operators.
@@ -47,7 +83,11 @@ pub fn check_new_org(
 ///
 /// When the sender is not an operator.
 pub fn check_add_operator(sender_is_operator: bool) -> Result<(), String> {
-    unimplemented!("{sender_is_operator}")
+    if sender_is_operator {
+        Ok(())
+    } else {
+        Err("Only an operator can add operators.".to_owned())
+    }
 }
 
 /// `remove_operator` has no TS counterpart (`index.ts` only adds operators). It follows
@@ -62,7 +102,16 @@ pub fn check_remove_operator(
     target_is_operator: bool,
     operator_count: u64,
 ) -> Result<(), String> {
-    unimplemented!("{sender_is_operator}{target_is_operator}{operator_count}")
+    if !sender_is_operator {
+        return Err("Only an operator can remove operators.".to_owned());
+    }
+    if !target_is_operator {
+        return Err("No such operator.".to_owned());
+    }
+    if operator_count <= 1 {
+        return Err("The last operator cannot be removed.".to_owned());
+    }
+    Ok(())
 }
 
 /// `actorOf` (`index.ts:507-511`): the caller's member row as the engine's actor.
@@ -71,7 +120,14 @@ pub fn check_remove_operator(
 ///
 /// When the caller is not a member of the organisation.
 pub fn actor_of(org_id: &str, member: Option<&Member>) -> Result<Actor, String> {
-    unimplemented!("{org_id}{}", member.is_some())
+    let m = member.ok_or_else(|| format!("You are not a member of organisation {org_id}."))?;
+    Ok(Actor {
+        id: ActorId::from(m.user_id.as_str()),
+        name: m.name.clone(),
+        can_post: m.can_post,
+        can_approve: m.can_approve,
+        can_close: m.can_close,
+    })
 }
 
 /// One audit event to append (`appendAudit`, `index.ts:521-527`); the reducer adds id and time.
@@ -108,9 +164,29 @@ pub fn new_org(
     fiscal_year: u32,
     display_name: &str,
 ) -> NewOrg {
-    unimplemented!(
-        "{org_id}{sender}{jwt_subject:?}{base_currency}{fiscal_year}{display_name}"
-    )
+    let user_id = jwt_subject.map_or_else(|| sender.to_hex().to_string(), str::to_owned);
+    let name = match js_trim(display_name) {
+        "" => "Owner",
+        trimmed => trimmed,
+    };
+    NewOrg {
+        owner: Member {
+            key: member_key(org_id, sender),
+            identity: sender,
+            org_id: org_id.to_owned(),
+            user_id: user_id.clone(),
+            name: name.to_owned(),
+            can_post: true,
+            can_approve: true,
+            can_close: true,
+        },
+        audit: AuditNote {
+            by: ActorId::from(user_id),
+            action: "ledger.create",
+            subject: org_id.to_owned(),
+            detail: format!("Opened books in {base_currency} for {fiscal_year}."),
+        },
+    }
 }
 
 /// The arguments of `add_member` (`index.ts:599-607`), less the organisation.
@@ -152,7 +228,65 @@ pub fn plan_add_member(
     org_members: &[Member],
     args: &MemberArgs<'_>,
 ) -> Result<MemberChange, String> {
-    unimplemented!("{org_id}{sender}{}{args:?}", org_members.len())
+    let actor = actor_of(org_id, org_members.iter().find(|m| m.identity == sender))?;
+    require_close(&actor)?;
+    let given = js_trim(args.user_id);
+    if given.is_empty() {
+        return Err("A member needs a user id.".to_owned());
+    }
+    let existing = org_members.iter().find(|m| m.identity == args.identity);
+    // A user id is the person behind approvals and the audit trail, so it is fixed once given
+    // and can never be borrowed from another member (index.ts:614-616).
+    let user_id = existing.map_or(given, |m| m.user_id.as_str());
+    if org_members
+        .iter()
+        .any(|m| m.user_id == user_id && m.identity != args.identity)
+    {
+        return Err("That user id belongs to another member.".to_owned());
+    }
+    if args.identity == sender && !args.can_close {
+        return Err("You cannot remove your own close permission.".to_owned());
+    }
+    let name = match js_trim(args.name) {
+        "" => user_id,
+        trimmed => trimmed,
+    };
+    let perms: Vec<&str> = [
+        (args.can_post, "post"),
+        (args.can_approve, "approve"),
+        (args.can_close, "close"),
+    ]
+    .into_iter()
+    .filter_map(|(granted, perm)| granted.then_some(perm))
+    .collect();
+    let perms = if perms.is_empty() {
+        "read only".to_owned()
+    } else {
+        perms.join(", ")
+    };
+    Ok(MemberChange {
+        row: Member {
+            key: member_key(org_id, args.identity),
+            identity: args.identity,
+            org_id: org_id.to_owned(),
+            user_id: user_id.to_owned(),
+            name: name.to_owned(),
+            can_post: args.can_post,
+            can_approve: args.can_approve,
+            can_close: args.can_close,
+        },
+        replaces: existing.is_some(),
+        audit: AuditNote {
+            by: actor.id,
+            action: if existing.is_some() {
+                "member.update"
+            } else {
+                "member.add"
+            },
+            subject: user_id.to_owned(),
+            detail: format!("{name}: {perms}"),
+        },
+    })
 }
 
 /// What `remove_member` deletes and the event it appends.
@@ -175,7 +309,24 @@ pub fn plan_remove_member(
     org_members: &[Member],
     identity: Identity,
 ) -> Result<MemberRemoval, String> {
-    unimplemented!("{org_id}{sender}{}{identity}", org_members.len())
+    let actor = actor_of(org_id, org_members.iter().find(|m| m.identity == sender))?;
+    require_close(&actor)?;
+    if identity == sender {
+        return Err("You cannot remove yourself.".to_owned());
+    }
+    let existing = org_members
+        .iter()
+        .find(|m| m.identity == identity)
+        .ok_or_else(|| "No such member.".to_owned())?;
+    Ok(MemberRemoval {
+        key: existing.key.clone(),
+        audit: AuditNote {
+            by: actor.id,
+            action: "member.remove",
+            subject: existing.user_id.clone(),
+            detail: existing.name.clone(),
+        },
+    })
 }
 
 /// The outline of a command sent to `run_command`: its `type` and its top-level field names.
@@ -193,13 +344,37 @@ pub struct CommandShape {
 ///
 /// When the text is not JSON.
 pub fn command_shape(command_json: &str) -> Result<CommandShape, String> {
-    unimplemented!("{command_json}")
+    let value: serde_json::Value = serde_json::from_str(command_json)
+        .map_err(|_| "The command is not valid JSON.".to_owned())?;
+    Ok(match value {
+        serde_json::Value::Object(fields) => CommandShape {
+            kind: fields
+                .get("type")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned),
+            // Sorted here: the map's own order depends on serde_json's `preserve_order`.
+            fields: {
+                let mut names: Vec<String> = fields.keys().cloned().collect();
+                names.sort();
+                names
+            },
+        },
+        _ => CommandShape {
+            kind: None,
+            fields: Vec::new(),
+        },
+    })
 }
 
 /// The error `run_command` returns until task S4 runs the command through ledger-core.
 #[must_use]
 pub fn not_implemented(org_id: &str, request_id: &str, shape: &CommandShape) -> String {
-    unimplemented!("{org_id}{request_id}{shape:?}")
+    format!(
+        "run_command is not implemented yet (task S4): command type {} with fields [{}], \
+         organisation {org_id}, request {request_id}.",
+        shape.kind.as_deref().unwrap_or("(none)"),
+        shape.fields.join(", ")
+    )
 }
 
 #[cfg(test)]
@@ -244,7 +419,10 @@ mod tests {
 
     #[test]
     fn member_key_is_org_colon_lowercase_identity_hex() {
-        assert_eq!(member_key("org-1", OWNER), format!("org-1:{}", "01".repeat(32)));
+        assert_eq!(
+            member_key("org-1", OWNER),
+            format!("org-1:{}", "01".repeat(32))
+        );
     }
 
     #[test]
@@ -277,10 +455,7 @@ mod tests {
 
     #[test]
     fn new_org_accepts_letters_digits_underscore_and_dash() {
-        assert_eq!(
-            check_new_org(true, "Org_1-a", "KES", 2026, false),
-            Ok(())
-        );
+        assert_eq!(check_new_org(true, "Org_1-a", "KES", 2026, false), Ok(()));
     }
 
     #[test]
@@ -574,7 +749,11 @@ mod tests {
     fn add_member_keeps_an_existing_members_user_id() {
         let change = plan_add_member("org-1", OWNER, &org(), &args(CLERK, "renamed")).unwrap();
         assert_eq!(
-            (change.row.user_id.as_str(), change.replaces, change.audit.action),
+            (
+                change.row.user_id.as_str(),
+                change.replaces,
+                change.audit.action
+            ),
             ("clerk", true, "member.update")
         );
     }

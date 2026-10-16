@@ -18,7 +18,22 @@ pub fn default_settings(
     organization_id: &str,
     base_currency: &str,
 ) -> Result<OrgLedgerSettings, serde_json::Error> {
-    unimplemented!("{organization_id}{base_currency}")
+    // Through the serde shape, so the enum literals stay the TS ones (`ledger_core::types`).
+    serde_json::from_value(serde_json::json!({
+        "organization_id": organization_id,
+        "base_currency": base_currency,
+        "fiscal_year_start_month": 1,
+        "basis": "accrual",
+        "reporting_standard": "ifrs_sme",
+        "system_accounts": {
+            "accounts_payable": "acc-2100",
+            "claims_payable": "acc-2110",
+            "suspense": "acc-1400",
+            "net_assets_unrestricted": "acc-3100",
+            "net_assets_restricted": "acc-3200",
+            "fx_gain_loss": "acc-4400",
+        },
+    }))
 }
 
 #[cfg(test)]
