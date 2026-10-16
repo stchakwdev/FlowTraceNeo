@@ -79,5 +79,7 @@ counters) has no SATS type either.
   accept six fractional digits; that is a ledger-core decision, not taken here.
 - `create_org_ledger` stores the default settings only: ledger-core has no chart-of-accounts
   template or `ensureFiscalYear` yet (C2, C6). S4 seeds the full state (`src/seed.rs`).
+  Done in S4: `create_org_ledger` seeds through `ledger_core::setup::create_org_ledger` and
+  `run_command` loads and writes back through `codec` (`src/write_back.rs`).
 - `remove_operator` has no TS counterpart; it refuses non-operators, unknown identities and
   removing the last operator.

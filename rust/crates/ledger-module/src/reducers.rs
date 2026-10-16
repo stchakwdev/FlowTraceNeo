@@ -4,18 +4,17 @@
 //! (<https://docs.rs/spacetimedb/2.12.0/spacetimedb/attr.reducer.html>), as a `SenderError` does in
 //! TS. Arguments arrive by value from the host, hence the `needless_pass_by_value` expectations.
 
-use std::collections::BTreeMap;
 use std::fmt::Display;
 
 use ledger_core::types::{AuditEvent, AuditEventId};
 use spacetimedb::{Identity, ReducerContext, Table};
 
 use crate::clock::reducer_time;
-use crate::codec::{OrgRows, assemble_state, counters_json, doc_to_row, settings_json};
+use crate::codec::{OrgRows, assemble_state, doc_to_row};
 use crate::command::{self, ModuleEnv};
 use crate::rules::{self, AuditNote, MemberArgs};
-use crate::seed::default_settings;
-use crate::write_back::{self, TableOps, WriteBack};
+use crate::seed::seed_books;
+use crate::write_back::{self, NewRows, TableOps, WriteBack};
 // The table handle traits the table macro generates.
 use crate::tables::{
     AuditEventRow, CommandResult, LedgerOrg, Member, Operator, account, audit_event, bank_account,
@@ -114,14 +113,13 @@ pub fn remove_operator(ctx: &ReducerContext, identity: Identity) -> Result<(), S
     Ok(())
 }
 
-/// Opens books for a new organisation and makes the caller its owner (`index.ts:554-595`).
-///
-/// The scaffold stores the default settings and no ledger rows yet; [`crate::seed`] says why
-/// and what task S4 adds.
+/// Opens books for a new organisation and makes the caller its owner (`index.ts:554-595`):
+/// ledger-core's `createOrgLedger` with the reducer env ([`seed_books`]), written as new rows
+/// numbered from 0, then the owner and the `ledger.create` audit event.
 ///
 /// # Errors
 ///
-/// The TS messages of [`rules::check_new_org`].
+/// The TS messages of [`rules::check_new_org`], and an engine refusal as `run_command` reports it.
 #[spacetimedb::reducer]
 #[expect(
     clippy::needless_pass_by_value,
@@ -142,18 +140,23 @@ pub fn create_org_ledger(
         fiscal_year,
         exists,
     )?;
-    let settings = default_settings(&org_id, &base_currency).map_err(text)?;
-    ctx.db
+    let mut env = reducer_env(ctx)?;
+    let books = seed_books(&org_id, &base_currency, fiscal_year, &mut env)?;
+    env.finish()?;
+    let new_rows = write_back::books_to_rows(&org_id, &books, 0)?;
+    let org = ctx
+        .db
         .ledger_org()
         .try_insert(LedgerOrg {
             org_id: org_id.clone(),
-            settings_json: settings_json(&settings).map_err(text)?,
-            counters_json: counters_json(&BTreeMap::new()).map_err(text)?,
+            settings_json: new_rows.settings_json.clone(),
+            counters_json: new_rows.counters_json.clone(),
             next_seq: 0,
             created_by: ctx.sender(),
             created_at: ctx.timestamp,
         })
         .map_err(text)?;
+    write_all(ctx, org, new_rows)?;
     let jwt_subject = ctx.sender_auth().jwt().map(|jwt| jwt.subject().to_owned());
     let made = rules::new_org(
         &org_id,
@@ -302,6 +305,17 @@ fn write_back(ctx: &ReducerContext, org: LedgerOrg, plan: WriteBack) -> Result<(
     Ok(())
 }
 
+/// `envFor(ctx)` (`index.ts:361-365`): the reducer time in milliseconds ([`crate::clock`]) and
+/// a fresh `ctx.new_uuid_v4()` per id.
+fn reducer_env(
+    ctx: &ReducerContext,
+) -> Result<ModuleEnv<impl FnMut() -> Result<String, String> + '_>, String> {
+    let now = reducer_time(ctx.timestamp).map_err(text)?;
+    Ok(ModuleEnv::new(now, move || {
+        ctx.new_uuid_v4().map(|id| id.to_string()).map_err(text)
+    }))
+}
+
 /// The single ledger write path (`runCommand`, `index.ts:655-691`): applies one `LedgerCommand`
 /// (JSON) with the caller's member permissions through ledger-core, writes back what changed,
 /// and stores the result in `command_result` under the caller's identity.
@@ -342,9 +356,7 @@ pub fn run_command(
     let (org, rows) = load_org(ctx, &org_id)?;
     let before = assemble_state(&org.settings_json, &org.counters_json, &rows).map_err(text)?;
     let mut after = before.clone();
-    let mut env = ModuleEnv::new(reducer_time(ctx.timestamp).map_err(text)?, || {
-        ctx.new_uuid_v4().map(|id| id.to_string()).map_err(text)
-    });
+    let mut env = reducer_env(ctx)?;
     let result = command::apply(&mut after, &mut env, &actor, cmd)?;
     env.finish()?;
     let plan = write_back::plan(&org_id, &rows, org.next_seq, &before, &after)?;
@@ -411,7 +423,13 @@ pub fn import_books(
     ctx.db.bank_account().org_id().delete(&org_id);
     ctx.db.statement_line().org_id().delete(&org_id);
     ctx.db.audit_event().org_id().delete(&org_id);
-    let rows = import.rows;
+    write_all(ctx, org, import)
+}
+
+/// Writes a whole set of books into tables that hold none of the organisation's rows, and the
+/// organisation's settings, counters and next `seq`.
+fn write_all(ctx: &ReducerContext, org: LedgerOrg, new_rows: NewRows) -> Result<(), String> {
+    let rows = new_rows.rows;
     write_back(
         ctx,
         org,
@@ -432,9 +450,9 @@ pub fn import_books(
             bank_accounts: inserted(rows.bank_accounts),
             statement_lines: inserted(rows.statement_lines),
             audit: inserted(rows.audit),
-            settings_json: import.settings_json,
-            counters_json: import.counters_json,
-            next_seq: import.next_seq,
+            settings_json: new_rows.settings_json,
+            counters_json: new_rows.counters_json,
+            next_seq: new_rows.next_seq,
         },
     )
 }

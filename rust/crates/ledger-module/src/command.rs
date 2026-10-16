@@ -88,8 +88,7 @@ pub fn parse_command(command_json: &str) -> Result<LedgerCommand, String> {
 ///
 /// # Errors
 ///
-/// A ledger rule as [`ledger_error_text`]; a `money.ts` range error by its message, as TS rethrows
-/// it unchanged; a command ledger-core cannot run yet by its message.
+/// The engine's refusal as [`engine_error_text`].
 pub fn apply(
     state: &mut LedgerState,
     env: &mut dyn LedgerEnv,
@@ -97,10 +96,18 @@ pub fn apply(
     cmd: LedgerCommand,
 ) -> Result<CommandResult, String> {
     let mut ledger = Ledger::new(state, env);
-    ledger_core::apply_command(&mut ledger, actor, cmd).map_err(|e| match e {
-        CommandError::Engine(ledger_core::engine::Error::Ledger(e)) => ledger_error_text(&e),
-        other => other.to_string(),
-    })
+    ledger_core::apply_command(&mut ledger, actor, cmd)
+        .map_err(|CommandError::Engine(e)| engine_error_text(&e))
+}
+
+/// `rethrow` (`index.ts:512-518`) of an engine error: a broken rule as [`ledger_error_text`], a
+/// `money.ts` range error by its message, which TS rethrows unchanged.
+#[must_use]
+pub fn engine_error_text(error: &ledger_core::engine::Error) -> String {
+    match error {
+        ledger_core::engine::Error::Ledger(e) => ledger_error_text(e),
+        ledger_core::engine::Error::Money(e) => e.to_string(),
+    }
 }
 
 /// `resultJson`, `JSON.stringify(result)` (`index.ts:687`).

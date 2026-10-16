@@ -6,14 +6,10 @@
 //! times compare exactly here; the local-server replay (`rust/tools/module-replay.ts`) covers the
 //! real env.
 //!
-//! A command ledger-core cannot run yet (task C6) is replaced by its recorded delta, applied to
-//! the books before the write-back, so the diff is still exercised and later steps stay in step
-//! with the TS run.
 #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
 use std::collections::HashMap;
 
-use ledger_core::env::LedgerEnv;
 use ledger_core::env::fixed::{self, FixedEnv};
 use ledger_core::types::{Actor, LedgerState};
 use serde_json::Value;
@@ -29,16 +25,6 @@ use crate::write_back::{TableOps, WriteBack, plan};
 
 /// The demo books' organisation (`demo-books.json#/state/settings/organization_id`).
 const ORG: &str = "550e8400-e29b-41d4-a716-446655440000";
-
-/// The commands ledger-core leaves to task C6 (`ledger_core::commands::apply_command`).
-const C6_COMMANDS: [&str; 6] = [
-    "bank.add",
-    "statement.import",
-    "statement.autoMatch",
-    "statement.match",
-    "statement.unmatch",
-    "statement.post",
-];
 
 fn fixture(name: &str) -> Value {
     let path = format!("{}/../../fixtures/{name}.json", env!("CARGO_MANIFEST_DIR"));
@@ -170,65 +156,6 @@ fn delta_counts(delta: &Value, name: &str) -> (usize, usize, usize) {
     (len("added"), len("changed"), len("removed"))
 }
 
-/// A recorded delta applied to the books (`apply_delta`,
-/// `rust/crates/ledger-core/tests/common/replay.rs`), for the shapes this fixture uses.
-fn apply_delta(state: &LedgerState, delta: &Value) -> LedgerState {
-    let mut books = serde_json::to_value(state).unwrap();
-    for (name, d) in delta.as_object().unwrap() {
-        if name == "counters" {
-            for (k, v) in d.as_object().unwrap() {
-                books["counters"][k] = v.clone();
-            }
-            continue;
-        }
-        assert!(
-            d.get("order").is_none() && d.get("replaced").is_none(),
-            "{name}"
-        );
-        let list = books[name].as_array_mut().unwrap();
-        if let Some(removed) = d.get("removed").and_then(Value::as_array) {
-            list.retain(|x| !removed.contains(&x["id"]));
-        }
-        for new in d
-            .get("changed")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-        {
-            let old = list.iter_mut().find(|x| x["id"] == new["id"]).unwrap();
-            *old = new.clone();
-        }
-        list.extend(
-            d.get("added")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-                .cloned(),
-        );
-    }
-    serde_json::from_value(books).unwrap()
-}
-
-/// Moves the fixture env past every `fx-` id in `delta`, as the TS run drew them.
-fn sync_env(env: &mut FixedEnv, delta: &Value) {
-    fn highest(v: &Value) -> u64 {
-        match v {
-            Value::String(s) => s
-                .strip_prefix("fx-")
-                .filter(|d| d.len() == 4)
-                .and_then(|d| d.parse().ok())
-                .unwrap_or(0),
-            Value::Array(xs) => xs.iter().map(highest).max().unwrap_or(0),
-            Value::Object(m) => m.values().map(highest).max().unwrap_or(0),
-            _ => 0,
-        }
-    }
-    let top = highest(delta);
-    while env.drawn() < top {
-        env.new_id();
-    }
-}
-
 /// The step's command text, as the client sends it (`JSON.stringify(cmd)`,
 /// `flowtrace/src/lib/ledger/spacetime-backend.ts:212`).
 fn command_text(step: &Value) -> String {
@@ -237,9 +164,9 @@ fn command_text(step: &Value) -> String {
 
 /// What one step did.
 struct Ran {
-    /// The command's result as JSON, or `None` when the step was its recorded delta.
-    result: Option<Value>,
-    /// The books the engine (or the delta) left.
+    /// The command's result as JSON.
+    result: Value,
+    /// The books the engine left.
     after: LedgerState,
     /// Rows written per collection, as `(inserted, updated, deleted)`.
     written: HashMap<&'static str, (usize, usize, usize)>,
@@ -254,12 +181,7 @@ fn run_step(org: &mut Org, env: &mut FixedEnv, i: usize, step: &Value) -> Ran {
     let mut after = before.clone();
     let cmd = parse_command(&command_text(step)).unwrap();
     let result = match apply(&mut after, env, &actor, cmd) {
-        Ok(result) => Some(serde_json::from_str(&result_json(&result).unwrap()).unwrap()),
-        Err(text) if C6_COMMANDS.contains(&kind) && text.ends_with("not implemented yet.") => {
-            after = apply_delta(&before, &step["delta"]);
-            sync_env(env, &step["delta"]);
-            None
-        }
+        Ok(result) => serde_json::from_str(&result_json(&result).unwrap()).unwrap(),
         Err(text) => panic!("step {i} {kind}: {text}"),
     };
     let wb = plan(ORG, &org.rows, org.next_seq, &before, &after).unwrap();
@@ -281,17 +203,13 @@ fn every_accepted_command_writes_exactly_the_fixture_books_back_to_the_rows() {
     let fx = fixture("commands-accepted");
     let mut org = demo_org();
     let mut env = fixed::fixture();
-    let (mut live, mut delta_steps) = (Vec::new(), Vec::new());
+    let steps = fx["steps"].as_array().unwrap();
+    assert_eq!(steps.len(), 37);
 
-    for (i, step) in fx["steps"].as_array().unwrap().iter().enumerate() {
+    for (i, step) in steps.iter().enumerate() {
         let kind = step["command"]["type"].as_str().unwrap();
         let ran = run_step(&mut org, &mut env, i, step);
-        if let Some(result) = &ran.result {
-            assert_eq!(result, &step["result"], "step {i} {kind}: result");
-            live.push(kind);
-        } else {
-            delta_steps.push(kind);
-        }
+        assert_eq!(ran.result, step["result"], "step {i} {kind}: result");
         for (name, written) in &ran.written {
             assert_eq!(
                 *written,
@@ -304,8 +222,6 @@ fn every_accepted_command_writes_exactly_the_fixture_books_back_to_the_rows() {
 
     let books = serde_json::to_value(org.books()).unwrap();
     assert_eq!(books, fx["final_state"], "final books");
-    assert_eq!(live.len() + delta_steps.len(), 37);
-    assert!(delta_steps.iter().all(|k| C6_COMMANDS.contains(k)));
 }
 
 #[test]

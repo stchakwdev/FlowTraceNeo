@@ -431,40 +431,51 @@ pub fn plan(
     })
 }
 
-/// The rows `import_books` writes in place of an organisation's books.
-pub struct Import {
-    /// Every ledger row of the books, numbered from the organisation's `next_seq`.
+/// Every row of a whole set of books: what `create_org_ledger` writes for new books and
+/// `import_books` writes in place of an organisation's books.
+pub struct NewRows {
+    /// Every ledger row of the books.
     pub rows: OrgRows,
     /// `ledger_org.settings_json`.
     pub settings_json: String,
     /// `ledger_org.counters_json`.
     pub counters_json: String,
-    /// `ledger_org.next_seq` after the import.
+    /// `ledger_org.next_seq` after the rows.
     pub next_seq: u64,
 }
 
-/// The books in `state_json` as rows of `org_id`, numbered on from `next_seq` so no `seq` is
-/// used twice, in the order `writeBack` inserts a new organisation's rows
-/// ([`state_to_rows`]). No TS counterpart: TS loads demo books in the browser only.
+/// The books as rows of `org_id`, numbered on from `next_seq`, in the order `writeBack` inserts
+/// a new organisation's rows ([`state_to_rows`], `index.ts:571-572`).
 ///
 /// # Errors
 ///
-/// `state_json` is not a `LedgerState`; its settings name another organisation (the
-/// `writeBack` check, `index.ts:429`); a record does not convert to its row.
-pub fn import(org_id: &str, state_json: &str, next_seq: u64) -> Result<Import, String> {
-    let state: LedgerState = serde_json::from_str(state_json)
-        .map_err(|e| format!("The books are not a valid ledger state: {e}."))?;
-    if state.settings.organization_id.as_str() != org_id {
+/// The settings name another organisation (the `writeBack` check, `index.ts:429`); a record
+/// does not convert to its row.
+pub fn books_to_rows(org_id: &str, books: &LedgerState, next_seq: u64) -> Result<NewRows, String> {
+    if books.settings.organization_id.as_str() != org_id {
         return Err("Settings belong to another organisation.".to_owned());
     }
     let mut next_seq = next_seq;
-    let rows = state_to_rows(org_id, &state, &mut next_seq).map_err(text)?;
-    Ok(Import {
+    let rows = state_to_rows(org_id, books, &mut next_seq).map_err(text)?;
+    Ok(NewRows {
         rows,
-        settings_json: settings_json(&state.settings).map_err(text)?,
-        counters_json: counters_json(&state.counters).map_err(text)?,
+        settings_json: settings_json(&books.settings).map_err(text)?,
+        counters_json: counters_json(&books.counters).map_err(text)?,
         next_seq,
     })
+}
+
+/// The books in `state_json` as rows of `org_id` ([`books_to_rows`]), numbered on from the
+/// organisation's `next_seq` so no `seq` is used twice. No TS counterpart: TS loads demo books in
+/// the browser only.
+///
+/// # Errors
+///
+/// `state_json` is not a `LedgerState`, or [`books_to_rows`] refuses it.
+pub fn import(org_id: &str, state_json: &str, next_seq: u64) -> Result<NewRows, String> {
+    let books: LedgerState = serde_json::from_str(state_json)
+        .map_err(|e| format!("The books are not a valid ledger state: {e}."))?;
+    books_to_rows(org_id, &books, next_seq)
 }
 
 #[cfg(test)]

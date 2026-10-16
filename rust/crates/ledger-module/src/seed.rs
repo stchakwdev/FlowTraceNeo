@@ -1,39 +1,31 @@
-//! What `create_org_ledger` seeds until ledger-core can open books itself.
-//!
-//! TS seeds a new organisation with `createOrgLedger` (`flowtrace/src/lib/ledger/setup.ts:11-25`):
-//! default settings, the NGO chart of accounts, the unrestricted fund and twelve periods through
-//! the engine. ledger-core has neither the template nor `ensureFiscalYear` yet (tasks C2 and C6),
-//! so the scaffold stores the default settings alone and no ledger rows. Task S4 replaces this
-//! module with the ledger-core call and writes the seeded state back through
-//! [`crate::codec::state_to_rows`].
+//! The books `create_org_ledger` opens: ledger-core's `createOrgLedger`
+//! (`flowtrace/src/lib/ledger/setup.ts:11-25`, `ledger_core::setup::create_org_ledger`) with the
+//! reducer's env, as the TS module calls `seedOrgLedger(orgId, baseCurrency, fiscalYear,
+//! envFor(ctx))` (`spacetimedb/src/index.ts:564-569`): default settings, the NGO chart of
+//! accounts, the unrestricted fund and the twelve periods of the fiscal year.
 
-use ledger_core::types::OrgLedgerSettings;
+use ledger_core::LedgerEnv;
+use ledger_core::types::LedgerState;
 
-/// `defaultSettings` (`flowtrace/src/lib/ledger/coa-template.ts:123-142`).
+use crate::command::engine_error_text;
+
+/// A new organisation's books.
 ///
 /// # Errors
 ///
-/// Never in practice: the settings literal does not parse.
-pub fn default_settings(
-    organization_id: &str,
+/// The engine's error as `run_command` reports it ([`engine_error_text`]), as TS rethrows it
+/// (`index.ts:567-569`); a fiscal year past `i32` cannot reach the engine, as the reducer checks
+/// 2000 to 2100 first.
+pub fn seed_books(
+    org_id: &str,
     base_currency: &str,
-) -> Result<OrgLedgerSettings, serde_json::Error> {
-    // Through the serde shape, so the enum literals stay the TS ones (`ledger_core::types`).
-    serde_json::from_value(serde_json::json!({
-        "organization_id": organization_id,
-        "base_currency": base_currency,
-        "fiscal_year_start_month": 1,
-        "basis": "accrual",
-        "reporting_standard": "ifrs_sme",
-        "system_accounts": {
-            "accounts_payable": "acc-2100",
-            "claims_payable": "acc-2110",
-            "suspense": "acc-1400",
-            "net_assets_unrestricted": "acc-3100",
-            "net_assets_restricted": "acc-3200",
-            "fx_gain_loss": "acc-4400",
-        },
-    }))
+    fiscal_year: u32,
+    env: &mut dyn LedgerEnv,
+) -> Result<LedgerState, String> {
+    let year = i32::try_from(fiscal_year)
+        .map_err(|_| "Fiscal year must be between 2000 and 2100.".to_owned())?;
+    ledger_core::setup::create_org_ledger(org_id, base_currency, year, env)
+        .map_err(|e| engine_error_text(&e))
 }
 
 #[cfg(test)]
@@ -42,18 +34,37 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn default_settings_match_every_ts_case() {
+    use ledger_core::env::fixed;
+
+    use crate::codec::assemble_state;
+    use crate::write_back::books_to_rows;
+
+    fn setup_fixture() -> serde_json::Value {
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../fixtures/setup.json");
-        let fixture: serde_json::Value =
-            serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-        for case in fixture["defaultSettings"].as_array().unwrap() {
-            let args = case["args"].as_array().unwrap();
-            let org = args[0].as_str().unwrap();
-            // TS defaults the currency to KES (coa-template.ts:125).
-            let currency = args.get(1).map_or("KES", |c| c.as_str().unwrap());
-            let want: OrgLedgerSettings = serde_json::from_value(case["result"].clone()).unwrap();
-            assert_eq!(default_settings(org, currency).unwrap(), want, "{case}");
-        }
+        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn the_seeded_books_are_the_ts_create_org_ledger_books() {
+        let case = &setup_fixture()["createOrgLedger"];
+        assert_eq!(case["args"], serde_json::json!(["org", "KES", 2026]));
+        let books = seed_books("org", "KES", 2026, &mut fixed::test()).unwrap();
+        assert_eq!(serde_json::to_value(&books).unwrap(), case["state"]);
+    }
+
+    #[test]
+    fn the_seeded_books_survive_their_rows() {
+        let books = seed_books("org", "KES", 2026, &mut fixed::test()).unwrap();
+        let rows = books_to_rows("org", &books, 0).unwrap();
+        let back = assemble_state(&rows.settings_json, &rows.counters_json, &rows.rows).unwrap();
+        // 54 accounts, 1 fund, 12 periods and nothing else (`setup.json#/createOrgLedger`).
+        assert_eq!((back, rows.next_seq), (books, 54 + 1 + 12));
+    }
+
+    #[test]
+    fn seeding_draws_no_ids() {
+        let mut env = fixed::test();
+        seed_books("org", "UGX", 2027, &mut env).unwrap();
+        assert_eq!(env.drawn(), 0);
     }
 }

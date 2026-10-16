@@ -1,7 +1,7 @@
 //! `LedgerState` to rows and back: the Rust form of `flowtrace/src/lib/ledger/spacetime-codec.ts`.
 //!
 //! Pure functions over the row structs of [`crate::tables`], so the host tests cover them and
-//! `run_command` (task S4) can load and write back one organisation with them. Journal entries
+//! `run_command` can load and write back one organisation with them. Journal entries
 //! and lines map field by field; every other collection goes through the ledger-core serde shape,
 //! which is the TS JSON (`ledger_core::types`).
 

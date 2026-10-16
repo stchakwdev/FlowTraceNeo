@@ -10,7 +10,7 @@
 // 2. Makes five identities over HTTP (POST /v1/identity): an operator, the
 //    fixture's three actors and a stranger. The CLI identity that published
 //    the module adds the operator; the operator opens the books
-//    (create_org_ledger), adds the three actors as members with the fixture's
+//    (create_org_ledger, checked against setup.json#/createOrgLedger), adds the three actors as members with the fixture's
 //    user ids and permissions, and loads demo-books.json#/state (import_books,
 //    which also replaces the member.add audit events).
 // 3. Sends each step's command as its actor (run_command, request id
@@ -24,11 +24,7 @@
 //    are sent with mapped ids, and the comparison treats ids through that map
 //    and a reducer timestamp in place of the frozen one as equal. Everything
 //    else must be equal exactly.
-// 5. A command ledger-core cannot run yet answers "... is not implemented
-//    yet." (task C6); its recorded delta is then applied to the books read
-//    back and loaded with import_books, so later steps stay in step with the
-//    TS run, as rust/crates/ledger-module/src/pipeline_tests.rs does on the host.
-// 6. Checks refusals and a repeated request id, deletes the database (unless
+// 5. Checks refusals and a repeated request id, deletes the database (unless
 //    --keep) and prints `spacetime list -s local`.
 //
 // Only ever the local server (http://127.0.0.1:3100); the script refuses any
@@ -242,16 +238,6 @@ function learn(expected: Json, actual: unknown, where: string) {
   }
 }
 
-/** Maps every fixture id in `v` that the module never drew to itself. */
-function adopt(v: Json) {
-  for (const t of JSON.stringify(v).match(FX_TOKEN) ?? []) {
-    if (!ids.has(t)) {
-      ids.set(t, t)
-      taken.set(t, t)
-    }
-  }
-}
-
 /** A fixture value with every fixture id replaced by the module's (unknown ones kept). */
 function translate(v: Json): Json {
   if (typeof v === 'string') return v.replace(FX_TOKEN, (t) => ids.get(t) ?? t)
@@ -300,28 +286,6 @@ function compare(expected: Json, actual: unknown, where: string, frozenNow: stri
   if (expected !== actual) mismatches.push(`${where}: want ${JSON.stringify(expected)} got ${JSON.stringify(actual)}`)
 }
 
-/** A fixture delta applied to the books (rust/crates/ledger-module/src/pipeline_tests.rs#apply_delta). */
-function applyDelta(books: Obj, delta: Obj): Obj {
-  const out = JSON.parse(JSON.stringify(books)) as Obj
-  for (const [name, d] of Object.entries(delta)) {
-    if (name === 'counters') {
-      Object.assign(out.counters as Obj, d)
-      continue
-    }
-    const dd = d as Obj
-    if (dd.order || dd.replaced) throw new Error(`delta ${name} uses order or replaced`)
-    let list = out[name] as Array<Obj>
-    const removed = (dd.removed ?? []) as Array<string>
-    list = list.filter((x) => !removed.includes(x.id as string))
-    for (const changed of (dd.changed ?? []) as Array<Obj>) {
-      const at = list.findIndex((x) => x.id === changed.id)
-      list[at] = changed
-    }
-    out[name] = [...list, ...((dd.added ?? []) as Array<Obj>)]
-  }
-  return out
-}
-
 // ---------------------------------------------------------------------------
 // The replay
 // ---------------------------------------------------------------------------
@@ -348,6 +312,25 @@ const actorKey = (id: string) => Object.keys(actors).find((k) => actors[k].id ==
 
 cli(['call', '-s', 'local', DB, 'add_operator', JSON.stringify(`0x${operator.identity}`)])
 await mustCall(operator, 'create_org_ledger', [ORG, settings.base_currency as string, 2026, 'Replay Operator'])
+{
+  // The seeded books are TS createOrgLedger's for the same arguments, plus the ledger.create
+  // audit event the reducer appends (index.ts:593).
+  const setup = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, 'setup.json'), 'utf8')) as Obj
+  const want = setup.createOrgLedger as Obj
+  const [org, currency, year] = want.args as [string, string, number]
+  const seeded = await readBooks(operator, ORG)
+  const audit = seeded.audit as Array<Obj>
+  const seedMismatches = mismatches.length
+  if (currency !== settings.base_currency || year !== 2026) mismatches.push(`seed: fixture args ${JSON.stringify(want.args)}`)
+  const expected = JSON.parse(JSON.stringify(want.state).replaceAll(JSON.stringify(org), JSON.stringify(ORG))) as Obj
+  compare({ ...expected, audit: [] }, { ...seeded, audit: [] }, 'create_org_ledger', FROZEN_NOW)
+  if (audit.length !== 1 || audit[0].action !== 'ledger.create') mismatches.push(`seed: audit ${JSON.stringify(audit)}`)
+  const records = Object.values(seeded).filter(Array.isArray).reduce((n, c) => n + c.length, 0)
+  log(
+    `create_org_ledger: ${records} records, ${mismatches.length === seedMismatches ? 'equal to' : 'DIFFERENT from'} ` +
+      `setup.json#/createOrgLedger (org id ${org} -> ${ORG}) plus ${audit.map((e) => e.action).join(', ')}`,
+  )
+}
 for (const [key, a] of Object.entries(actors)) {
   await mustCall(operator, 'add_member', [
     ORG,
@@ -370,7 +353,7 @@ log(`import_books: demo books read back ${mismatches.length === 0 ? 'equal' : 'D
 for (const m of mismatches.slice(0, 10)) log(`mismatch: ${m}`)
 
 const COLLECTIONS = Object.keys(demoState).filter((k) => Array.isArray(demoState[k]))
-const outcome = { live: 0, delta: 0, failed: 0, resultsEqual: 0 }
+const outcome = { live: 0, failed: 0, resultsEqual: 0 }
 
 for (const [i, step] of steps.entries()) {
   const cmd = step.command as Obj
@@ -383,16 +366,6 @@ for (const [i, step] of steps.entries()) {
   const r = await call(caller, 'run_command', [ORG, requestId, JSON.stringify(sent)])
   const delta = step.delta as Obj
 
-  if (!r.ok && r.text.endsWith('is not implemented yet.')) {
-    // Ids the step draws keep their fixture spelling; ids drawn earlier are the module's.
-    adopt(delta)
-    const next = applyDelta(books, translate(delta) as Obj)
-    await mustCall(operator, 'import_books', [ORG, JSON.stringify(next)])
-    books = await readBooks(admin, ORG)
-    outcome.delta += 1
-    log(`step ${String(i).padStart(2)} ${kind.padEnd(20)} ${key.padEnd(8)} delta via import_books (${r.text})`)
-    continue
-  }
   if (!r.ok) {
     outcome.failed += 1
     mismatches.push(`step ${i} ${kind}: refused: ${r.text}`)
@@ -426,7 +399,7 @@ log(
     `(${ids.size} fixture ids mapped, ${stats.idsMapped} id fields and ${stats.stringsWithIds - stats.idsMapped} texts compared through the map, ` +
     `${stats.timestampsNormalised} reducer timestamps in place of ${FROZEN_NOW})`,
 )
-log(`steps: ${outcome.live} live (${outcome.resultsEqual} results equal), ${outcome.delta} as deltas, ${outcome.failed} refused`)
+log(`steps: ${outcome.live} run (${outcome.resultsEqual} results equal), ${outcome.failed} refused`)
 
 // ---------------------------------------------------------------------------
 // Refusals and a repeated request id
