@@ -27,6 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # GPUI (desktop crate) builds against these; the list is the Ubuntu 24.04 one at
+      # https://gpui-kit.com/docs/installation without WebKit and ALSA, which only
+      # gpui-shell and the speech feature need. See rust/docs/adr/0002-gpui-spacetime.md.
+      - name: Install GPUI system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libfontconfig-dev \
+            libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev
+
       # Reads rust/rust-toolchain.toml. Caching is left to rust-cache below.
       - uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
         with:
