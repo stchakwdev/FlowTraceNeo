@@ -389,11 +389,13 @@ impl SpendPanel {
     }
 
     fn submit(
-        &self,
+        &mut self,
         command: LedgerCommand,
         cx: &mut Context<Self>,
-    ) -> Result<CommandResult, BackendError> {
-        self.store.update(cx, |store, _| store.submit(command))
+        then: impl FnOnce(&mut Self, Result<CommandResult, BackendError>, &mut Context<Self>) + 'static,
+    ) {
+        let store = self.store.clone();
+        crate::panels::submit(self, &store, command, cx, then);
     }
 
     fn set_filter(&mut self, filter: Option<ClaimStatus>) {
@@ -659,24 +661,24 @@ impl SpendPanel {
             }
             Ok(command) => {
                 self.form_errors = None;
-                match self.submit(command, cx) {
+                self.submit(command, cx, move |this, result, _| match result {
                     Ok(CommandResult::Id { id }) => {
-                        self.form = None;
-                        self.lines.clear();
-                        self.open_detail(ClaimId::from(id.as_str()));
-                        self.done = Some(if submit {
+                        this.form = None;
+                        this.lines.clear();
+                        this.open_detail(ClaimId::from(id.as_str()));
+                        this.done = Some(if submit {
                             "Submitted. A manager who is not you approves it.".to_owned()
                         } else {
                             "Saved as a draft.".to_owned()
                         });
                     }
                     Ok(_) => {
-                        self.form = None;
-                        self.view = ClaimsView::List;
-                        self.derive();
+                        this.form = None;
+                        this.view = ClaimsView::List;
+                        this.derive();
                     }
-                    Err(err) => self.form_failure = Some(Failure::new("Not saved", &err)),
-                }
+                    Err(err) => this.form_failure = Some(Failure::new("Not saved", &err)),
+                });
             }
         }
         cx.notify();
@@ -692,10 +694,10 @@ impl SpendPanel {
         };
         if action == ClaimAction::Submit {
             let command = detail.submit_command();
-            match self.submit(command, cx) {
-                Ok(_) => self.done = Some(action.done_notice().to_owned()),
-                Err(err) => self.action_failure = Some(Failure::new("Not submitted", &err)),
-            }
+            self.submit(command, cx, move |this, result, _| match result {
+                Ok(_) => this.done = Some(action.done_notice().to_owned()),
+                Err(err) => this.action_failure = Some(Failure::new("Not submitted", &err)),
+            });
             return;
         }
         self.dialog = detail.dialog(action);
@@ -776,21 +778,21 @@ impl SpendPanel {
             }
             ClaimAction::Submit => detail.submit_command(),
         };
-        match self.submit(command, cx) {
+        self.submit(command, cx, move |this, result, _| match result {
             Ok(_) => {
-                self.dialog = None;
-                self.done = Some(dialog.action.done_notice().to_owned());
+                this.dialog = None;
+                this.done = Some(dialog.action.done_notice().to_owned());
             }
             Err(err) => {
-                self.overriding = dialog.action == ClaimAction::Approve && has_overridable(&err);
-                let title = if self.overriding {
+                this.overriding = dialog.action == ClaimAction::Approve && has_overridable(&err);
+                let title = if this.overriding {
                     "The ledger flagged this"
                 } else {
                     "Not done"
                 };
-                self.dialog_failure = Some(Failure::new(title, &err));
+                this.dialog_failure = Some(Failure::new(title, &err));
             }
-        }
+        });
         cx.notify();
     }
 

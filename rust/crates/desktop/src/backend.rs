@@ -5,9 +5,17 @@
 //! ("Pattern for U1 to U10"): a backend hands out a channel of [`BackendEvent`]s, one store
 //! entity drains it in batches, and screens re-derive what they show from the store. Writes are
 //! [`LedgerCommand`]s, the same commands the SpacetimeDB module's `run_command` reducer takes
-//! (`spacetimedb/src/index.ts`, `run_command`), so the live client of U10 slots in behind the
-//! same trait.
+//! (`spacetimedb/src/index.ts`, `run_command`), so the live client of U10,
+//! [`SpacetimeBackend`], slots in behind the same trait.
 
+mod spacetime;
+
+#[cfg(test)]
+pub(crate) use spacetime::fake as spacetime_fake;
+pub use spacetime::{LiveClient, SpacetimeBackend, actor_for, backend_error, status_of};
+
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -109,11 +117,75 @@ pub enum BackendError {
     /// The server could not be reached or refused the connection.
     #[error("{0}")]
     Connection(String),
+    /// The books are only the last ones seen: the app is not connected, so it refuses writes.
+    #[error(
+        "You are offline, so nothing was saved. Reconnect on the Connection screen, then try again."
+    )]
+    Offline,
+}
+
+/// What a submitted command comes to.
+pub type SubmitResult = Result<CommandResult, BackendError>;
+
+/// A submitted command's result: known at once ([`InProcessBackend`]) or once the server answers
+/// ([`SpacetimeBackend`]). The store awaits a pending one in a task, never on the UI thread.
+pub struct Submission(Outcome);
+
+enum Outcome {
+    Ready(SubmitResult),
+    Pending(Pin<Box<dyn Future<Output = SubmitResult> + Send>>),
+}
+
+impl Submission {
+    /// A result known now.
+    #[must_use]
+    pub fn ready(result: SubmitResult) -> Self {
+        Self(Outcome::Ready(result))
+    }
+
+    /// A result `future` resolves to.
+    pub fn pending(future: impl Future<Output = SubmitResult> + Send + 'static) -> Self {
+        Self(Outcome::Pending(Box::pin(future)))
+    }
+
+    /// The result when it is known now; else the submission back, to await.
+    ///
+    /// # Errors
+    ///
+    /// The submission itself while the result is still pending.
+    pub fn now(self) -> Result<SubmitResult, Self> {
+        match self.0 {
+            Outcome::Ready(result) => Ok(result),
+            pending @ Outcome::Pending(_) => Err(Self(pending)),
+        }
+    }
+
+    /// The result, once it is known.
+    ///
+    /// # Errors
+    ///
+    /// The refusal the backend reports.
+    pub async fn result(self) -> SubmitResult {
+        match self.0 {
+            Outcome::Ready(result) => result,
+            Outcome::Pending(future) => future.await,
+        }
+    }
+}
+
+impl std::fmt::Debug for Submission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            Outcome::Ready(result) => f.debug_tuple("Ready").field(result).finish(),
+            Outcome::Pending(_) => f.write_str("Pending"),
+        }
+    }
 }
 
 /// The books behind the desktop: read a snapshot, watch for changes, submit commands.
 ///
-/// Implementations: [`InProcessBackend`] (U1) and the SpacetimeDB client (U10).
+/// Implementations: [`InProcessBackend`] (U1) and [`SpacetimeBackend`] (U10). Screens never
+/// ask which one they have: both hand out the same events, snapshots and errors.
 pub trait LedgerBackend {
     /// Every organisation the backend holds books for, in a stable order.
     fn organisations(&self) -> Vec<Organisation>;
@@ -137,6 +209,12 @@ pub trait LedgerBackend {
         command: LedgerCommand,
     ) -> Result<CommandResult, BackendError>;
 
+    /// [`LedgerBackend::submit`] without waiting: what the store calls. The default answers at
+    /// once through `submit`, which suits a backend whose `submit` never blocks.
+    fn send(&mut self, org: &OrganizationId, command: LedgerCommand) -> Submission {
+        Submission::ready(self.submit(org, command))
+    }
+
     /// Who the backend acts as in `org`: the claimant of a new claim and the approver of
     /// others' (`claims.$id.tsx:96`, `useLedgerActor`). `None` when it holds no books there.
     fn actor(&self, org: &OrganizationId) -> Option<Actor>;
@@ -151,6 +229,15 @@ pub trait LedgerBackend {
     ///
     /// [`BackendError::Connection`] when the connection cannot be started.
     fn connect(&mut self, settings: ConnectSettings) -> Result<(), BackendError>;
+
+    /// Closes the connection, keeping the last books seen. Does nothing for a backend with no
+    /// server.
+    fn disconnect(&mut self) {}
+
+    /// Whether the books live on a server, so that being disconnected means being offline.
+    fn is_remote(&self) -> bool {
+        false
+    }
 }
 
 /// One organisation's books in the in-process backend.

@@ -18,8 +18,8 @@ use gpui_kit::{
     ParentElement as _, PathPromptOptions, SharedString, Styled as _, Subscription, Window, div,
     px,
 };
-use ledger_core::LedgerState;
 use ledger_core::types::{EntryId, GrantId};
+use ledger_core::{LedgerCommand, LedgerState};
 
 use super::{Items, JournalPanel, JournalView};
 use crate::accounts::{Failure, format_minor};
@@ -480,17 +480,17 @@ impl JournalPanel {
             cx.notify();
             return;
         };
-        match self.submit(command, cx) {
+        self.submit(command, cx, move |this, result, cx| match result {
             Ok(result) => {
                 let id = created_entry(&result).or(form.draft);
-                self.finish_form(
+                this.finish_form(
                     id,
                     "Saved as a draft. It is not in the books until posted.",
                     cx,
                 );
             }
-            Err(err) => self.form_failure = Some(Failure::new(self.save_failure_title(), &err)),
-        }
+            Err(err) => this.form_failure = Some(Failure::new(this.save_failure_title(), &err)),
+        });
         cx.notify();
     }
 
@@ -514,22 +514,32 @@ impl JournalPanel {
             }
             Ok(commands) => {
                 self.form_override_error = None;
-                let mut id = form.draft.clone();
-                for command in commands {
-                    match self.submit(command, cx) {
-                        Ok(result) => id = created_entry(&result).or(id),
-                        Err(err) => {
-                            self.form_needs_override |= has_overridable(&err);
-                            self.form_failure = Some(Failure::new(self.save_failure_title(), &err));
-                            cx.notify();
-                            return;
-                        }
-                    }
-                }
-                self.finish_form(id, "Posted. The entry is in the books.", cx);
+                self.post_in_turn(commands.into(), form.draft.clone(), cx);
             }
         }
         cx.notify();
+    }
+
+    /// Sends `commands` one after the other, each once the one before went through (a draft
+    /// is saved, then posted; the post names the draft `id` the save returned). The first
+    /// refusal stops the run and shows on the form.
+    fn post_in_turn(
+        &mut self,
+        mut commands: std::collections::VecDeque<LedgerCommand>,
+        id: Option<EntryId>,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(command) = commands.pop_front() else {
+            self.finish_form(id, "Posted. The entry is in the books.", cx);
+            return;
+        };
+        self.submit(command, cx, move |this, result, cx| match result {
+            Ok(result) => this.post_in_turn(commands, created_entry(&result).or(id), cx),
+            Err(err) => {
+                this.form_needs_override |= has_overridable(&err);
+                this.form_failure = Some(Failure::new(this.save_failure_title(), &err));
+            }
+        });
     }
 
     fn finish_form(&mut self, id: Option<EntryId>, notice: &str, cx: &mut Context<Self>) {
@@ -647,14 +657,14 @@ impl JournalPanel {
         };
         let n = preview.entries.len();
         self.import_failure = None;
-        match self.submit(command, cx) {
+        self.submit(command, cx, move |this, result, _| match result {
             Ok(_) => {
-                self.import_created = Some(n);
-                self.import_text = None;
-                self.import_preview = None;
+                this.import_created = Some(n);
+                this.import_text = None;
+                this.import_preview = None;
             }
-            Err(err) => self.import_failure = Some(Failure::new("No drafts created", &err)),
-        }
+            Err(err) => this.import_failure = Some(Failure::new("No drafts created", &err)),
+        });
         cx.notify();
     }
 

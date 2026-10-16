@@ -20,8 +20,12 @@ use gpui_kit::{
     SharedString, Styled as _, Window, div, px,
 };
 
+use ledger_core::LedgerCommand;
+
 use crate::accounts::Failure;
+use crate::backend::SubmitResult;
 use crate::model::{LedgerView, NavEntry};
+use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
 
 /// The task that replaces `entry`'s placeholder (`PRIMER.md` section 8).
@@ -35,6 +39,57 @@ pub fn task_of(entry: NavEntry) -> &'static str {
         NavEntry::Grants => "U7",
         NavEntry::Reconcile => "U8",
         NavEntry::Reports => "U9",
+    }
+}
+
+/// Submits `command` through the store and hands the result to `then`: at once when the
+/// backend answers at once (the in-process books), else from a task once the server has
+/// answered and the changed books are readable (`ledger_client::Ticket`), followed by a
+/// `cx.notify()`. Screens never wait on the UI thread and never ask which backend they have.
+pub(crate) fn submit<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    command: LedgerCommand,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.submit(command));
+    match submission.now() {
+        Ok(result) => then(this, result, cx),
+        Err(pending) => cx
+            .spawn(async move |view, cx| {
+                let result = pending.result().await;
+                // A closed screen has nobody left to tell.
+                let _ = view.update(cx, |this, cx| {
+                    then(this, result, cx);
+                    cx.notify();
+                });
+            })
+            .detach(),
+    }
+}
+
+/// [`submit`] for a `then` that needs the window (to focus or fill a field).
+pub(crate) fn submit_in<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    command: LedgerCommand,
+    window: &mut Window,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Window, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.submit(command));
+    match submission.now() {
+        Ok(result) => then(this, result, window, cx),
+        Err(pending) => cx
+            .spawn_in(window, async move |view, cx| {
+                let result = pending.result().await;
+                let _ = view.update_in(cx, |this, window, cx| {
+                    then(this, result, window, cx);
+                    cx.notify();
+                });
+            })
+            .detach(),
     }
 }
 

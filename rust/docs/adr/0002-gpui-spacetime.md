@@ -255,3 +255,31 @@ Subscription rows map back to engine state one to one: the `my_*` views return t
 table rows unchanged, the generated binding structs have the same fields as
 `ledger_module::tables`, and the rebuild is the module's own `codec::assemble_state`.
 Pre-decision P6 did not fire.
+
+## 2026-10-16: the desktop on the live client (U10)
+
+`desktop::backend::SpacetimeBackend` puts `SpacetimeClient` behind the desktop's
+`LedgerBackend` trait. Two things differ from the sketch in the S3 section above.
+
+1. **Books are rebuilt off the UI thread.** The store does not call `client.state(org)` in its
+   pump. One forwarder thread per connection owns `client.subscribe()`, re-reads
+   `organisations()` and `state(org)` for each org a `Changed` names (all of them on `Ready`),
+   keeps the snapshots as `Arc<LedgerState>` and sends plain `BackendEvent`s (`Organisations`
+   first, then one `Ledger` per org, then `Status`). The store entity drains those exactly as it
+   drains the in-process backend's, so the pattern above holds unchanged on the GPUI side. The
+   snapshots outlive the connection: offline, screens keep the last books seen.
+2. **Writes are asynchronous.** The trait gained `send(org, command) -> Submission`; a
+   `Submission` is either ready (the in-process books answer at once, through `submit`) or a
+   future over the client's `CommandTicket`. Screens call `panels::submit(this, store, command,
+   cx, then)`: a ready result runs `then` at once, a pending one runs it from a `cx.spawn` task
+   and notifies, so nothing waits on the UI thread and no screen asks which backend it has. The
+   ticket resolves after the changed rows are in the client cache, and the forwarder's `Ledger`
+   event for the same change follows within the same client message. The blocking `submit`
+   stays on the trait for tests and worker threads.
+
+The store's transitions moved into `store::StoreCore` (no GPUI types) so they are tested without
+a window. A connect from the Connection screen swaps in a new backend from a `Connector` and
+re-subscribes; `LedgerView::offline_notice` drives the notice above every screen while a remote
+backend is not connected, and `SpacetimeBackend::send` refuses writes then with
+`BackendError::Offline`. Ledger refusals map onto the same `BackendError::Command` the
+in-process books raise, so override boxes and issue lists work alike.

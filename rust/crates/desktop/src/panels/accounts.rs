@@ -219,10 +219,17 @@ impl AccountsPanel {
         true
     }
 
-    fn submit(&self, command: LedgerCommand, cx: &mut Context<Self>) -> Result<(), BackendError> {
-        self.store
-            .update(cx, |store, _| store.submit(command))
-            .map(|_| ())
+    /// [`crate::panels::submit`] with the result reduced to whether it went through.
+    fn submit(
+        &mut self,
+        command: LedgerCommand,
+        cx: &mut Context<Self>,
+        then: impl FnOnce(&mut Self, Result<(), BackendError>, &mut Context<Self>) + 'static,
+    ) {
+        let store = self.store.clone();
+        crate::panels::submit(self, &store, command, cx, move |this, result, cx| {
+            then(this, result.map(|_| ()), cx);
+        });
     }
 
     // Accounts tab.
@@ -301,13 +308,13 @@ impl AccountsPanel {
             }
             Ok(command) => {
                 self.add_errors = FieldErrors::default();
-                match self.submit(command, cx) {
+                self.submit(command, cx, |this, result, _| match result {
                     Ok(()) => {
-                        self.add = None;
-                        self.add_failure = None;
+                        this.add = None;
+                        this.add_failure = None;
                     }
-                    Err(err) => self.add_failure = Some(Failure::new("Not added", &err)),
-                }
+                    Err(err) => this.add_failure = Some(Failure::new("Not added", &err)),
+                });
             }
         }
         cx.notify();
@@ -334,10 +341,10 @@ impl AccountsPanel {
         form.name = self.edit_name.read(cx).value().to_string();
         match form.command() {
             None => self.edit = None,
-            Some(command) => match self.submit(command, cx) {
-                Ok(()) => self.edit = None,
-                Err(err) => self.edit_failure = Some(Failure::new("Not changed", &err)),
-            },
+            Some(command) => self.submit(command, cx, |this, result, _| match result {
+                Ok(()) => this.edit = None,
+                Err(err) => this.edit_failure = Some(Failure::new("Not changed", &err)),
+            }),
         }
         cx.notify();
     }
@@ -351,10 +358,9 @@ impl AccountsPanel {
         else {
             return;
         };
-        self.failure = self
-            .submit(command, cx)
-            .err()
-            .map(|err| Failure::new("Not changed", &err));
+        self.submit(command, cx, |this, result, _| {
+            this.failure = result.err().map(|err| Failure::new("Not changed", &err));
+        });
         cx.notify();
     }
 
@@ -370,10 +376,13 @@ impl AccountsPanel {
         self.done = None;
         self.period_failure = None;
         match Pending::of(action, row) {
-            None => match self.submit(row.close_command(), cx) {
-                Ok(()) => self.done = Some(row.closed_notice()),
-                Err(err) => self.period_failure = Some(Failure::new("Not closed", &err)),
-            },
+            None => {
+                let notice = row.closed_notice();
+                self.submit(row.close_command(), cx, |this, result, _| match result {
+                    Ok(()) => this.done = Some(notice),
+                    Err(err) => this.period_failure = Some(Failure::new("Not closed", &err)),
+                });
+            }
             Some(pending) => self.open_pending(pending, window, cx),
         }
         cx.notify();
@@ -398,13 +407,13 @@ impl AccountsPanel {
         let reason = self.reason.read(cx).value().to_string();
         match pending.command(&reason) {
             Err(message) => self.reason_error = Some(message),
-            Ok((command, notice)) => match self.submit(command, cx) {
+            Ok((command, notice)) => self.submit(command, cx, |this, result, _| match result {
                 Ok(()) => {
-                    self.pending = None;
-                    self.done = Some(notice);
+                    this.pending = None;
+                    this.done = Some(notice);
                 }
-                Err(err) => self.pending_failure = Some(Failure::new("Not done", &err)),
-            },
+                Err(err) => this.pending_failure = Some(Failure::new("Not done", &err)),
+            }),
         }
         cx.notify();
     }
@@ -416,10 +425,10 @@ impl AccountsPanel {
         let (command, notice) = open_year(year);
         self.period_failure = None;
         self.done = None;
-        match self.submit(command, cx) {
-            Ok(()) => self.done = Some(notice),
-            Err(err) => self.period_failure = Some(Failure::new("Not opened", &err)),
-        }
+        self.submit(command, cx, |this, result, _| match result {
+            Ok(()) => this.done = Some(notice),
+            Err(err) => this.period_failure = Some(Failure::new("Not opened", &err)),
+        });
         cx.notify();
     }
 

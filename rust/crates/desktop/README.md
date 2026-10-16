@@ -3,7 +3,8 @@
 The GPUI desktop app on gpui-kit 0.7.3. U1 built the shell: a masthead, a nav rail with the
 organisation picker and seven entries, one placeholder panel per entry, a connect screen and a
 status bar, over an in-process backend that runs `ledger-core` in the app. Each screen task
-(U2 to U9) replaces one placeholder; U10 adds the SpacetimeDB backend behind the same trait.
+(U2 to U9) replaces one placeholder; U10 added the SpacetimeDB backend behind the same trait
+(Configuration, below).
 
 ## Run
 
@@ -13,6 +14,8 @@ cargo run -p desktop                               # follows the system light or
 cargo run -p desktop -- --theme dark --entry 3     # dark, General ledger open
 cargo run -p desktop -- --screen connect           # opens on the connect screen
 cargo run -p desktop -- --report activities        # Reports, on the statement of activities
+cargo run -p desktop -- --server https://maincloud.spacetimedb.com --database flowtrace-ledger-dev
+cargo run -p desktop -- --server http://127.0.0.1:9 --timings on   # offline at once, times on stderr
 ```
 
 Keys `1` to `7` open the nav entries (Accounts, Journal, General ledger, Spend, Grants,
@@ -34,11 +37,12 @@ when the app closes.
 
 | Module | Holds | GPUI? |
 |---|---|---|
-| `backend` | `LedgerBackend` trait, `InProcessBackend`, `SystemEnv`, `BackendEvent`, `ConnectionStatus` | no |
+| `backend` | `LedgerBackend` trait, `Submission`, `InProcessBackend`, `SystemEnv`, `BackendEvent`, `ConnectionStatus`; `backend::spacetime`: `SpacetimeBackend` over `ledger_client::SpacetimeClient` (through the `LiveClient` trait), `status_of`, `actor_for`, `backend_error` | no |
+| `config` | `Config` (`flowtrace-books/config.toml`), `config_dir`, `token_path`, `with_token` | no |
 | `model` | `NavEntry`, `Navigation` (entry, screen, keys), `LedgerView` (orgs, selection, status, snapshot, revision), `ConnectForm` | no |
 | `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
-| `store` | `LedgerStore`, the one store entity: owns the backend and the `LedgerView`, drains the change channel in batches | yes |
+| `store` | `StoreCore` (backend, `LedgerView`, connect, disconnect, submit; no GPUI) and `LedgerStore`, the one store entity that drains the change channel in batches | `LedgerStore` only |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
 | `bills` | Bills, payments and vendors view models: `bill_rows`, `filtered`, `filter_count`, `vendor_rows`, `NewVendorForm`, `NewBillForm` (lines, `total`, `command`), `next_step` (status to actions), `bill_detail` (coded lines, accrual and payment entries, fund split, status trail), `PayForm` | no |
 | `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
@@ -60,9 +64,13 @@ pub trait LedgerBackend {
     fn state(&self, org: &OrganizationId) -> Option<Arc<LedgerState>>;
     fn subscribe(&mut self) -> Receiver<BackendEvent>;          // async_channel, one per call
     fn submit(&mut self, org: &OrganizationId, command: LedgerCommand)
-        -> Result<CommandResult, BackendError>;
+        -> Result<CommandResult, BackendError>;               // blocking; tests and workers
+    fn send(&mut self, org: &OrganizationId, command: LedgerCommand) -> Submission; // the store's
+    fn actor(&self, org: &OrganizationId) -> Option<Actor>;
     fn status(&self) -> ConnectionStatus;  // Disconnected | Connecting | Connected { identity } | Error { message }
     fn connect(&mut self, settings: ConnectSettings) -> Result<(), BackendError>;
+    fn disconnect(&mut self) {}
+    fn is_remote(&self) -> bool { false }
 }
 
 pub enum BackendEvent {
@@ -74,10 +82,72 @@ pub enum BackendEvent {
 
 A successful `submit` sends one `BackendEvent::Ledger` with the new books; a refused one sends
 nothing and changes nothing. Snapshots are immutable `Arc`s: the backend applies a command to a
-copy, so a screen holding the old snapshot never sees it change. For U10, `ledger-client`'s
-`SpacetimeClient` maps on directly: its blocking `submit` returns the same
-`Result<CommandResult, _>`, and its `ClientEvent::Changed { orgs }` becomes one
-`BackendEvent::Ledger` per org after re-reading `state(org)`.
+copy, so a screen holding the old snapshot never sees it change. `SpacetimeBackend` (U10)
+re-reads `state(org)` on its own forwarder thread for each `ClientEvent::Changed { orgs }` and
+sends one `BackendEvent::Ledger` per org; `ClientEvent::Status` becomes `BackendEvent::Status`
+(the client's `Connected` still reads as `Connecting` until `Ready`, when the books are
+readable) and `ClientEvent::Error` becomes `Status(Error { message })`.
+
+Screens write through `panels::submit(this, &store, command, cx, then)` (or `submit_in` when
+`then` needs the window): the in-process books answer at once and `then` runs before the call
+returns, as before; the live books answer once the server has, and `then` runs from a task that
+notifies after it. There is no `if live` anywhere in the screens: both backends hand out the
+same events, snapshots and errors (a broken ledger rule is `BackendError::Command` from
+either).
+
+## Configuration, token file and offline behaviour (U10)
+
+The app opens the books on a SpacetimeDB server when one is named, else the in-process demo
+books (the default with no flags and no config file). The server comes from, in order:
+
+1. `--server <url>` and `--database <name>`;
+2. `flowtrace-books/config.toml` under the platform config dir (`dirs::config_dir`:
+   `~/.config/flowtrace-books/config.toml` on Linux,
+   `~/Library/Application Support/flowtrace-books/config.toml` on macOS).
+
+```toml
+server = "https://maincloud.spacetimedb.com"   # without it: the demo books
+database = "flowtrace-ledger-dev"               # default flowtrace-ledger-dev
+token_file = "/path/to/token"                   # optional, see below
+```
+
+Unknown keys are refused (the app says so on stderr and starts without the file). A connect on
+the Connection screen writes `server` and `database` back, so the next start reconnects; a
+`token_file` set by hand is kept.
+
+**Token file.** The identity is a token the server issues on the first connect. It is kept in
+`token-<server host>` next to `config.toml` (for maincloud
+`~/.config/flowtrace-books/token-maincloud.spacetimedb.com`), or in `token_file`, or in the path
+typed into the Connection screen's token field. `ledger_client::TokenFile` writes it with mode
+0600 through a temporary file; the app never prints it. Restarting with the same file is the
+same identity; delete the file to become a new one. A different file per server host keeps a
+local server's identity apart from maincloud's.
+
+**Connection screen** (`Connection` on the rail, or `--screen connect`): the status
+(Disconnected, Connecting, Connected with the identity's first eight hex digits, or the error),
+the server, database and token fields, Connect (Reconnect once live) and Disconnect, and the
+organisations this identity is a member of; a click on one opens its books. The module keeps no
+organisation name, so the list and the rail picker show the organisation id. A new identity is a
+member of nothing: an operator adds it with `add_member` (`crates/ledger-module/README.md`).
+
+**Offline.** While the server's books are not live (connecting, disconnected or after an error)
+every screen shows the last books seen, if any, under a notice saying so, and every write is
+refused with "You are offline, so nothing was saved. Reconnect on the Connection screen, then
+try again." (`BackendError::Offline`) instead of waiting. A wrong or unreachable server starts
+the app at once on that notice; connecting runs on the client's own thread and never blocks the
+window. `--timings on` writes the status changes, the time from launch to the first books and
+each write's time from submit to the changed books to stderr.
+
+Shots against maincloud dev (`flowtrace-ledger-dev`, release build):
+`docs/screens/u10-connect-new-identity.png` (first start, a new identity that is a member of
+nothing), `u10-connect-member.png` (the same running window after an operator added it to an
+organisation), `u10-accounts-live.png` and `u10-reports-live.png` (a restart with the saved
+token, keys `1` and `7`), `u10-entry-form-live.png` and `u10-entry-posted-live.png` (key `2`,
+`n`, a memo, Enter, 1500, Shift+Tab, Enter, Down six times, Enter for 1160 Petty cash, Tab
+seven times to line 2's account, Enter, Down, Enter for 1110, Tab twice, 1500, then Enter
+posts and the new entry opens), and `u10-offline.png` (`--server http://127.0.0.1:9`).
+Before each `wtype` step check `hyprctl activewindow` is the app: if focus moves to another
+window mid-script, the keys land there.
 
 ## How a screen replaces its placeholder
 
@@ -95,9 +165,10 @@ directly, and never patch rows after a write.
    `cx.new(|cx| AccountsPanel::new(store.clone(), window, cx))`, and replace that entry's arm in
    `Shell::panel` with `NavEntry::Accounts => self.accounts.clone().into_any_element()`.
 4. Writes: build a `ledger_core::LedgerCommand` and call
-   `self.store.update(cx, |store, _| store.submit(command))`. Show the `BackendError` on failure;
-   on success do nothing, because the new books arrive through the store's change channel and
-   the observer re-derives the rows.
+   `crate::panels::submit(self, &store, command, cx, |this, result, cx| ...)` (clone
+   `self.store` first). Show the `BackendError` on failure; on success do nothing to the rows,
+   because the new books arrive through the store's change channel and the observer re-derives
+   them. `then` may run later (live books), so move what it needs into the closure.
 5. Use the `theme` tokens and the `panels` pieces (`page_title`, `section_header`, `demo_tag`)
    rather than literal colours or sizes; tag every block of demo figures with `demo_tag`.
 6. Save a screenshot of the screen to `rust/docs/screens/<task>-<screen>.png`.

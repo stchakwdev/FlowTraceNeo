@@ -10,6 +10,7 @@ pub mod app;
 pub mod backend;
 pub mod bills;
 pub mod claims;
+pub mod config;
 pub mod entry_form;
 pub mod general_ledger;
 pub mod grants;
