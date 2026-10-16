@@ -526,6 +526,15 @@ pub fn count(rows: &[LineRow], status: Option<LineStatus>) -> usize {
         .count()
 }
 
+/// The share of `rows` matched in any way, as `NN%` (`Summary`, `$bankId.tsx:418-419`).
+#[must_use]
+pub fn matched_percent(rows: &[LineRow]) -> String {
+    percent(share(
+        rows.iter().filter(|r| r.status.matched()).count(),
+        rows.len(),
+    ))
+}
+
 /// One candidate journal line for an open statement line (`MatchDialog`, `$bankId.tsx:719-800`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CandidateRow {
@@ -1013,7 +1022,7 @@ mod tests {
         assert_eq!((again.repeats, again.to_add()), (3, 0));
 
         let empty = ImportPreview::of(&state, &bank("mpesa-till"), "Date,Amount\n,\n").unwrap();
-        assert!(empty.rows.is_empty());
+        assert_eq!(empty.rows, []);
         assert_eq!(empty.button_label(), "Import");
         assert_eq!(empty.command(&bank("mpesa-till")), None);
     }
@@ -1051,6 +1060,8 @@ mod tests {
         assert_eq!(count(&rows, Some(LineStatus::Auto)), 6);
         assert_eq!(count(&rows, Some(LineStatus::Posted)), 1);
         assert_eq!(count(&rows, Some(LineStatus::Manual)), 0);
+        assert_eq!(matched_percent(&rows), "88%");
+        assert_eq!(matched_percent(&[]), "0%");
 
         // A manual match of an existing entry is By hand, not Posted.
         let mut books = state.clone();
@@ -1157,7 +1168,7 @@ mod tests {
         assert_eq!(far.gap_text(), "1 day apart");
         let farther = CandidateRow { day_gap: 3, ..far };
         assert_eq!(farther.gap_text(), "3 days apart");
-        assert!(candidates(&books, &line("nope"), 3).is_empty());
+        assert_eq!(candidates(&books, &line("nope"), 3), []);
     }
 
     #[test]

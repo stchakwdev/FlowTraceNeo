@@ -66,7 +66,7 @@ fn expected(list: &Value) -> Value {
                 json!([
                     c["line"]["id"],
                     c["entry"]["id"],
-                    c["dayGap"].as_f64().unwrap() as i64,
+                    c["dayGap"].as_i64().unwrap(),
                     c["referenceMatch"]
                 ])
             })

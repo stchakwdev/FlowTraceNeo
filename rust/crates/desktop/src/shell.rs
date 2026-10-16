@@ -26,6 +26,7 @@ use crate::panels::accounts::AccountsPanel;
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
 use crate::panels::grants::GrantsPanel;
 use crate::panels::journal::JournalPanel;
+use crate::panels::reconcile::ReconcilePanel;
 use crate::panels::reports::ReportsPanel;
 use crate::panels::spend::SpendPanel;
 use crate::statements::ReportKind;
@@ -50,6 +51,7 @@ pub struct Shell {
     reports: Entity<ReportsPanel>,
     spend: Entity<SpendPanel>,
     grants: Entity<GrantsPanel>,
+    reconcile: Entity<ReconcilePanel>,
     scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -88,6 +90,7 @@ impl Shell {
         let spend = cx.new(|cx| SpendPanel::new(store.clone(), window, cx));
         let grants = cx.new(|cx| GrantsPanel::new(store.clone(), window, cx));
         let journal = cx.new(|cx| JournalPanel::new(store.clone(), window, cx));
+        let reconcile = cx.new(|cx| ReconcilePanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
@@ -112,6 +115,7 @@ impl Shell {
             reports,
             spend,
             grants,
+            reconcile,
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
@@ -205,6 +209,11 @@ impl Shell {
                 && self.nav.entry == NavEntry::Grants
                 && self
                     .grants
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Reconcile
+                && self
+                    .reconcile
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)));
         if handled {
             cx.stop_propagation();
@@ -271,16 +280,12 @@ impl Shell {
 
     /// The content of `entry`. A screen task replaces its arm with its own entity, for example
     /// `NavEntry::Accounts => self.accounts.clone().into_any_element()`.
-    fn panel(&self, entry: NavEntry, cx: &App) -> AnyElement {
-        let view = self.store.read(cx).view();
-        let demo = view
-            .selected()
-            .is_some_and(|org| org.id.as_str() == ledger_core::demo::DEMO_ORG_ID);
+    fn panel(&self, entry: NavEntry) -> AnyElement {
         match entry {
             NavEntry::Accounts => self.accounts.clone().into_any_element(),
             NavEntry::GeneralLedger => self.general_ledger.clone().into_any_element(),
             NavEntry::Journal => self.journal.clone().into_any_element(),
-            NavEntry::Reconcile => panels::placeholder(entry, view, demo, cx).into_any_element(),
+            NavEntry::Reconcile => self.reconcile.clone().into_any_element(),
             NavEntry::Spend => self.spend.clone().into_any_element(),
             NavEntry::Grants => self.grants.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),
@@ -520,7 +525,7 @@ impl Render for Shell {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let p = palette(cx.theme().mode);
         let content: AnyElement = match self.nav.screen {
-            Screen::Books => self.panel(self.nav.entry, cx),
+            Screen::Books => self.panel(self.nav.entry),
             Screen::Connect => self.connect_screen(cx).into_any_element(),
         };
         v_flex()
