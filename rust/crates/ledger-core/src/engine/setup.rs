@@ -1,5 +1,5 @@
-//! Setup writes: the chart of accounts, funds, dimensions and fiscal years
-//! (`engine.ts:165-289`). Grants are task C3.
+//! Setup writes: the chart of accounts, funds, grants, dimensions and fiscal years
+//! (`engine.ts:165-289`).
 
 use serde::Deserialize;
 
@@ -7,10 +7,11 @@ use super::{
     Error, Ledger, Permission, fail, has_text, js_trim, json_string, normal_balance_of, require,
 };
 use crate::errors::IssueCode;
+use crate::money::assert_minor;
 use crate::types::{
     Account, AccountId, AccountType, Actor, CashFlowClass, DimensionId, DimensionKind,
     DimensionValue, ExpenseFunction, FiscalPeriod, FlowNodeId, Fund, FundId, FundRestriction,
-    IsoDate, Nullish, PeriodId, PeriodStatus, SystemAccounts,
+    Grant, GrantId, IsoDate, Nullish, PeriodId, PeriodStatus, SystemAccounts,
 };
 
 /// The input of `addAccount` (`engine.ts:169-175`): an [`Account`] without `normal_balance`,
@@ -73,6 +74,33 @@ pub struct NewFund {
     pub restriction: FundRestriction,
 }
 
+/// The input of `addGrant` (`engine.ts:239`): a [`Grant`] with `id` optional and the award as the
+/// raw JS number the caller sent, checked by `assertMinor` (`engine.ts:243`).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct NewGrant {
+    /// Id; drawn from the env when absent.
+    #[serde(default)]
+    pub id: Option<GrantId>,
+    /// Display name.
+    pub name: String,
+    /// The donor flow node, so the flow map and the ledger meet.
+    pub donor_node_id: Option<FlowNodeId>,
+    /// Donor display name.
+    pub donor_name: String,
+    /// The restricted fund the grant sits in; it must exist.
+    pub fund_id: FundId,
+    /// Award in minor units of `currency`; a positive whole number.
+    pub award: f64,
+    /// Award currency.
+    pub currency: String,
+    /// First day spend may be charged.
+    pub start_date: IsoDate,
+    /// Last day spend may be charged; not before `start_date`.
+    pub end_date: IsoDate,
+    /// Free-text terms.
+    pub terms: String,
+}
+
 /// The input of `addDimension` (`engine.ts:253-256`): a [`DimensionValue`] with `id` optional.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct NewDimension {
@@ -106,7 +134,7 @@ fn days_in_month(year: i32, month: i32) -> i32 {
 }
 
 /// A truthy id: TS tests `input.id &&` and `if (input.parent_id)`, so an empty string is false.
-fn truthy<T: AsRef<str>>(id: Option<&T>) -> Option<&T> {
+pub(super) fn truthy<T: AsRef<str>>(id: Option<&T>) -> Option<&T> {
     id.filter(|id| !id.as_ref().is_empty())
 }
 
@@ -317,6 +345,54 @@ impl Ledger<'_> {
         self.state.funds.push(fund.clone());
         self.audit(actor, "fund.create", fund.id.as_str(), &fund.name);
         Ok(fund)
+    }
+
+    /// `addGrant` (`engine.ts:239-251`): adds a grant to a fund. Needs `can_post`. The fund must
+    /// exist (`UNKNOWN_FUND`); a given id must be unused (`DUPLICATE`); the award must be whole
+    /// minor units ([`Error::Money`]) and positive, and the grant cannot end before it starts
+    /// (`INVALID_INPUT`, dates compared as strings). Fields are stored as given. Draws the grant
+    /// id (when none is given), then one audit id (`grant.create`, detail the name).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Ledger`] with the codes above, [`Error::Money`] for a fractional award.
+    pub fn add_grant(&mut self, actor: &Actor, input: NewGrant) -> Result<Grant, Error> {
+        require(actor, Permission::Post)?;
+        if self.state.fund(&input.fund_id).is_none() {
+            return fail(IssueCode::UnknownFund, "Fund not found.");
+        }
+        if truthy(input.id.as_ref()).is_some_and(|id| self.state.grant(id).is_some()) {
+            return fail(IssueCode::Duplicate, "A grant with this id already exists.");
+        }
+        let award = assert_minor(input.award, "Award")?;
+        if award <= 0 {
+            return fail(IssueCode::InvalidInput, "The award must be positive.");
+        }
+        if input.end_date < input.start_date {
+            return fail(
+                IssueCode::InvalidInput,
+                "A grant cannot end before it starts.",
+            );
+        }
+        let id = match input.id {
+            Some(id) => id,
+            None => GrantId::from(self.env.new_id()),
+        };
+        let grant = Grant {
+            id,
+            name: input.name,
+            donor_node_id: input.donor_node_id,
+            donor_name: input.donor_name,
+            fund_id: input.fund_id,
+            award,
+            currency: input.currency,
+            start_date: input.start_date,
+            end_date: input.end_date,
+            terms: input.terms,
+        };
+        self.state.grants.push(grant.clone());
+        self.audit(actor, "grant.create", grant.id.as_str(), &grant.name);
+        Ok(grant)
     }
 
     /// `addDimension` (`engine.ts:253-261`): adds a dimension value. Needs `can_post`. No
