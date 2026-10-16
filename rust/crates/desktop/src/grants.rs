@@ -744,7 +744,7 @@ pub fn budget_view(
     as_of: &IsoDate,
 ) -> Option<BudgetView> {
     let mut budgets = state.budgets.clone();
-    budgets.sort_by(|a, b| b.fiscal_year.cmp(&a.fiscal_year));
+    budgets.sort_by_key(|b| std::cmp::Reverse(b.fiscal_year));
     let year: i32 = as_of.as_str().get(..4)?.parse().ok()?;
     let budget = filter
         .budget
@@ -854,7 +854,7 @@ impl NewGrantForm {
     /// # Errors
     ///
     /// [`GrantErrors`] for blank or malformed fields.
-    pub fn command(&self) -> Result<LedgerCommand, GrantErrors> {
+    pub fn command(&self) -> Result<LedgerCommand, Box<GrantErrors>> {
         let blank = |s: &str, message: &str| s.trim().is_empty().then(|| message.to_owned());
         let date = |s: &str| IsoDate::parse(s.trim()).ok();
         let award = parse_money(&self.award);
@@ -883,10 +883,10 @@ impl NewGrantForm {
         let (Some(fund_id), Some(award), Some(start_date), Some(end_date)) =
             (self.fund.clone(), award, date(&self.start), date(&self.end))
         else {
-            return Err(errors);
+            return Err(Box::new(errors));
         };
         if errors != GrantErrors::default() {
-            return Err(errors);
+            return Err(Box::new(errors));
         }
         let currency = self.currency.trim();
         Ok(LedgerCommand::GrantAdd {

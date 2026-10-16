@@ -24,6 +24,7 @@ use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen, scroll
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
 use crate::panels::general_ledger::GeneralLedgerPanel;
+use crate::panels::grants::GrantsPanel;
 use crate::panels::reports::ReportsPanel;
 use crate::panels::spend::SpendPanel;
 use crate::statements::ReportKind;
@@ -46,6 +47,7 @@ pub struct Shell {
     connect_error: Option<SharedString>,
     reports: Entity<ReportsPanel>,
     spend: Entity<SpendPanel>,
+    grants: Entity<GrantsPanel>,
     scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -82,6 +84,7 @@ impl Shell {
         let reports = cx.new(|cx| ReportsPanel::new(store.clone(), window, cx));
         let general_ledger = cx.new(|cx| GeneralLedgerPanel::new(store.clone(), window, cx));
         let spend = cx.new(|cx| SpendPanel::new(store.clone(), window, cx));
+        let grants = cx.new(|cx| GrantsPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
@@ -103,10 +106,17 @@ impl Shell {
             connect_error: None,
             reports,
             spend,
+            grants,
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
         }
+    }
+
+    /// The Grants panel, for the launch flags (`app.rs`).
+    #[must_use]
+    pub fn grants(&self) -> &Entity<GrantsPanel> {
+        &self.grants
     }
 
     /// The General ledger panel, for the launch flags (`app.rs`).
@@ -166,6 +176,11 @@ impl Shell {
                 && self.nav.entry == NavEntry::Spend
                 && self
                     .spend
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Grants
+                && self
+                    .grants
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)));
         if handled {
             cx.stop_propagation();
@@ -240,10 +255,11 @@ impl Shell {
         match entry {
             NavEntry::Accounts => self.accounts.clone().into_any_element(),
             NavEntry::GeneralLedger => self.general_ledger.clone().into_any_element(),
-            NavEntry::Journal | NavEntry::Grants | NavEntry::Reconcile => {
+            NavEntry::Journal | NavEntry::Reconcile => {
                 panels::placeholder(entry, view, demo, cx).into_any_element()
             }
             NavEntry::Spend => self.spend.clone().into_any_element(),
+            NavEntry::Grants => self.grants.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),
         }
     }

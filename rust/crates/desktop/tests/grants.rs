@@ -142,18 +142,23 @@ fn no_grants_no_rows() {
     let backend = backend();
     let empty = &backend.organisations()[1].id;
     let books = backend.state(empty).unwrap();
-    assert!(grant_rows(&books, &as_of()).unwrap().is_empty());
+    assert_eq!(
+        grant_rows(&books, &as_of()).unwrap(),
+        [] as [desktop::grants::GrantRow; 0]
+    );
 }
 
 /// Adds a grant of 1,000.00 on the unrestricted fund to the demo books and returns its id.
 fn small_grant(backend: &mut InProcessBackend) -> GrantId {
-    let mut form = NewGrantForm::new(&books(backend));
-    form.name = "Threshold test".to_owned();
-    form.donor = "Test donor".to_owned();
-    form.fund = Some(FundId::from(UNRESTRICTED_FUND_ID));
-    form.award = "1000".to_owned();
-    form.start = "2026-01-01".to_owned();
-    form.end = "2026-12-31".to_owned();
+    let form = NewGrantForm {
+        name: "Threshold test".to_owned(),
+        donor: "Test donor".to_owned(),
+        fund: Some(FundId::from(UNRESTRICTED_FUND_ID)),
+        award: "1000".to_owned(),
+        start: "2026-01-01".to_owned(),
+        end: "2026-12-31".to_owned(),
+        ..NewGrantForm::new(&books(backend))
+    };
     let result = backend.submit(&demo(), form.command().unwrap()).unwrap();
     let CommandResult::Id { id } = result else {
         panic!("grant.add returns an id, got {result:?}");
@@ -289,7 +294,7 @@ fn the_detail_maps_the_grant_summary() {
     let lines: Vec<&str> = d.budget.iter().map(|r| r.line.id.as_str()).collect();
     assert_eq!(lines, ["demo-003b", "demo-003c"]);
     // Posted lines charged to it, newest first, closing entries left out.
-    assert!(!d.lines.is_empty());
+    assert_ne!(d.lines, [] as [desktop::grants::GrantLine; 0]);
     assert!(
         d.lines
             .windows(2)
@@ -497,8 +502,7 @@ fn zero_budgets_read_zero_or_infinity_as_the_web_shows_them() {
     let find = |code: &str| -> &BudgetRow {
         view.rows
             .iter()
-            .filter(|r| r.line.account_id == Some(account_id(code)) && r.line.amount == 0)
-            .last()
+            .rfind(|r| r.line.account_id == Some(account_id(code)) && r.line.amount == 0)
             .unwrap()
     };
     let quiet = find("7400");
@@ -729,7 +733,10 @@ fn choosing_a_fund_drops_a_grant_of_another_fund() {
 fn only_active_posting_expense_accounts_take_a_line() {
     let books = build_demo_ledger().unwrap();
     let choices = expense_choices(&books);
-    assert!(!choices.is_empty());
+    assert_ne!(
+        choices,
+        [] as [(ledger_core::ids::AccountId, std::string::String); 0]
+    );
     let codes: Vec<&str> = choices
         .iter()
         .map(|(_, label)| label.split(' ').next().unwrap())
@@ -791,7 +798,13 @@ fn changing_a_line_keeps_its_fields_and_sets_the_amount() {
     let LedgerCommand::BudgetLineSet { input } = &command else {
         panic!("budgetLine.set");
     };
-    assert_eq!(input.id.as_ref().map(|i| i.as_str()), Some("demo-0038"));
+    assert_eq!(
+        input
+            .id
+            .as_ref()
+            .map(ledger_core::ids::BudgetLineId::as_str),
+        Some("demo-0038")
+    );
     assert_eq!(input.grant_id, Nullish::Value(grant("grant-kisima-wash")));
     assert_eq!(input.fund_id, Nullish::Null);
     backend.submit(&demo(), command).unwrap();

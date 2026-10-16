@@ -3,6 +3,7 @@
 //! ```text
 //! desktop [--theme light|dark] [--screen books|connect] [--entry 1-7] [--report <id>]
 //!         [--large-books LINES] [--gl-account CODE] [--gl-row N] [--gl-scroll-bench on]
+//!         [--grants list|budgets|<grant id>]
 //! ```
 //!
 //! Without `--theme` the app follows the system appearance. `--screen` and `--entry` choose
@@ -10,7 +11,8 @@
 //! `trial-balance`, `position`, `activities`, `functional`, `cash-flow` or `grant`.
 //! `--large-books` adds synthetic books with that many posted lines, selected first; the
 //! `--gl-*` flags filter the General ledger on an account code, open a row, or scroll the whole
-//! table once and log the frame times.
+//! table once and log the frame times. `--grants` opens the Grants entry on its list, its
+//! budget tab or one grant (with `--entry 5`).
 
 use anyhow::{Context as _, bail};
 use desktop::app::{Launch, run};
@@ -63,6 +65,7 @@ fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
                         .with_context(|| format!("--gl-row is a row number, not {value}"))?,
                 );
             }
+            "--grants" => launch.grants = Some(value),
             "--gl-scroll-bench" => launch.general_ledger.scroll_bench = value == "on",
             other => bail!("unknown option {other}"),
         }
