@@ -1,12 +1,16 @@
 //! Ledger core: money, types, engine, commands, reports, reconcile, importers and demo books, with no I/O.
+//!
+//! Parity with the TS ledger engine in `flowtrace/src/lib/ledger/` is proven against the fixtures
+//! in `rust/fixtures/` (see its README).
 
-#[cfg(test)]
-mod tests {
-    #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
+pub mod env;
+pub mod errors;
+pub mod ids;
+pub mod js_number;
+pub mod money;
+pub mod types;
 
-    #[test]
-    fn test_module_should_compile_under_workspace_lints() {
-        let parsed: u32 = "42".parse().unwrap();
-        assert_eq!(parsed, 42);
-    }
-}
+pub use env::{LedgerEnv, Timestamp};
+pub use errors::{Issue, IssueCode, LedgerError};
+pub use money::{Minor, MoneyError};
+pub use types::LedgerState;

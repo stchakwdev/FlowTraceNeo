@@ -153,6 +153,15 @@ reformatted. Where JSON forces a representation, it is listed here.
   the `descendants` `Set` is an array in insertion order; `undefined` is omitted from objects and
   written as `null` in arrays (so an omitted optional argument appears as `null`); `-0` is written
   as `0`.
+- **Rust reprint** (task C1): `crates/ledger-core/tests/state_roundtrip.rs` loads the six ledger
+  states (`demo-books.json#/state`, `commands-accepted.json#/final_state`,
+  `demo-backfill.json#/initial_state`, `reconcile-auto-match.json#/state_before_demo_auto_match`,
+  `setup.json#/createOrgLedger/state` and `#/emptyLedger/0/result`) into `LedgerState`, and
+  reprints each whole file byte-equal (keys sorted, two-space indent, trailing newline). This
+  holds because `fx_rate` is written through `ledger_core::js_number` (a whole number without
+  `.0`, non-finite values as the strings above) and every other state number is an integer.
+  It would break on a float that ryu and ECMAScript print differently, such as `1e21` against
+  `1e+21`; no state fixture holds one.
 
 ## Not covered here
 

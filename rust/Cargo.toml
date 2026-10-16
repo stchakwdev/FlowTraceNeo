@@ -23,6 +23,7 @@ publish = false
 [workspace.dependencies]
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 thiserror = "2.0"
 # UI and backend stack chosen in docs/adr/0002-gpui-spacetime.md.
 # gpui-kit pins its GPUI snapshot itself (gpui-pre =0.3.9, wayland and x11 both on):
@@ -34,7 +35,7 @@ async-channel = "2.5"
 
 # Every crate inherits these with `[lints] workspace = true`.
 # Test modules opt out of unwrap_used / expect_used with a module-level
-# `#![expect(..., reason = "...")]`; see crates/ledger-core/src/lib.rs.
+# `#![expect(..., reason = "...")]`; see crates/ledger-core/tests/money.rs.
 [workspace.lints.rust]
 unsafe_code = "deny"
 missing_docs = "warn"
@@ -43,3 +44,8 @@ missing_docs = "warn"
 pedantic = { level = "warn", priority = -1 }
 unwrap_used = "deny"
 expect_used = "deny"
+
+# Line tables only in dev builds: ADR 0002 measured the GPUI desktop link peak at 3.3 GiB with
+# full debug info and 1.7 GiB with this, and the debug binary at 777 MiB versus 303 MiB.
+[profile.dev]
+debug = "line-tables-only"
