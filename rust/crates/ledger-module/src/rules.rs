@@ -90,6 +90,16 @@ pub fn check_add_operator(sender_is_operator: bool) -> Result<(), String> {
     }
 }
 
+/// `import_books` has no TS counterpart: it replaces an organisation's books, so like opening
+/// books (`index.ts:557-558`) only an operator may do it.
+///
+/// # Errors
+///
+/// When the sender is not an operator.
+pub fn check_import_books(sender_is_operator: bool) -> Result<(), String> {
+    unimplemented!("task S4")
+}
+
 /// `remove_operator` has no TS counterpart (`index.ts` only adds operators). It follows
 /// `addOperator` (`index.ts:549`) and keeps at least one operator, since only `init` makes one
 /// otherwise.
@@ -327,54 +337,6 @@ pub fn plan_remove_member(
             detail: existing.name.clone(),
         },
     })
-}
-
-/// The outline of a command sent to `run_command`: its `type` and its top-level field names.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CommandShape {
-    /// The `type` field, when the command is an object with a string `type`.
-    pub kind: Option<String>,
-    /// Top-level field names, sorted; empty for a non-object.
-    pub fields: Vec<String>,
-}
-
-/// Parses `commandJson` the way `runCommand` does first (`index.ts:664-669`).
-///
-/// # Errors
-///
-/// When the text is not JSON.
-pub fn command_shape(command_json: &str) -> Result<CommandShape, String> {
-    let value: serde_json::Value = serde_json::from_str(command_json)
-        .map_err(|_| "The command is not valid JSON.".to_owned())?;
-    Ok(match value {
-        serde_json::Value::Object(fields) => CommandShape {
-            kind: fields
-                .get("type")
-                .and_then(serde_json::Value::as_str)
-                .map(str::to_owned),
-            // Sorted here: the map's own order depends on serde_json's `preserve_order`.
-            fields: {
-                let mut names: Vec<String> = fields.keys().cloned().collect();
-                names.sort();
-                names
-            },
-        },
-        _ => CommandShape {
-            kind: None,
-            fields: Vec::new(),
-        },
-    })
-}
-
-/// The error `run_command` returns until task S4 runs the command through ledger-core.
-#[must_use]
-pub fn not_implemented(org_id: &str, request_id: &str, shape: &CommandShape) -> String {
-    format!(
-        "run_command is not implemented yet (task S4): command type {} with fields [{}], \
-         organisation {org_id}, request {request_id}.",
-        shape.kind.as_deref().unwrap_or("(none)"),
-        shape.fields.join(", ")
-    )
 }
 
 #[cfg(test)]
@@ -816,45 +778,18 @@ mod tests {
         );
     }
 
-    // runCommand (index.ts:660-691)
+    // import_books (no TS counterpart)
 
     #[test]
-    fn command_shape_refuses_text_that_is_not_json() {
+    fn import_books_needs_an_operator() {
         assert_eq!(
-            command_shape("{type:").unwrap_err(),
-            "The command is not valid JSON."
+            check_import_books(false).unwrap_err(),
+            "Only an operator can import books."
         );
     }
 
     #[test]
-    fn command_shape_reads_the_type_and_sorted_fields() {
-        assert_eq!(
-            command_shape(r#"{"type":"post_entry","entry":{},"actor":null}"#).unwrap(),
-            CommandShape {
-                kind: Some("post_entry".to_owned()),
-                fields: vec!["actor".to_owned(), "entry".to_owned(), "type".to_owned()],
-            }
-        );
-    }
-
-    #[test]
-    fn command_shape_of_a_non_object_has_no_type() {
-        assert_eq!(
-            command_shape("42").unwrap(),
-            CommandShape {
-                kind: None,
-                fields: Vec::new(),
-            }
-        );
-    }
-
-    #[test]
-    fn not_implemented_names_the_command_and_the_task_that_brings_it() {
-        let shape = command_shape(r#"{"type":"create_fund","fund":{}}"#).unwrap();
-        assert_eq!(
-            not_implemented("org-1", "req-7", &shape),
-            "run_command is not implemented yet (task S4): command type create_fund \
-             with fields [fund, type], organisation org-1, request req-7."
-        );
+    fn import_books_lets_an_operator_through() {
+        assert_eq!(check_import_books(true), Ok(()));
     }
 }
