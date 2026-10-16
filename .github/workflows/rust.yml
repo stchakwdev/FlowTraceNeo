@@ -4,6 +4,8 @@ name: Rust
 on:
   push:
     branches: [main]
+    # A v* tag also runs the release job below. GitHub does not apply path filters to tag pushes.
+    tags: ['v*']
     paths:
       - 'rust/**'
       - '.github/workflows/rust.yml'
@@ -48,3 +50,47 @@ jobs:
 
       - name: Format, lint and test
         run: cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
+
+  # Release archives for a v* tag: rust/tools/release.sh on Linux and macOS, uploaded as workflow
+  # artifacts only. No GitHub Release, no publish to maincloud (rust/docs/module-release.md).
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install GPUI system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libfontconfig-dev \
+            libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
+        with:
+          rust-src-dir: rust
+          cache: false
+
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: rust
+
+      - name: Build the release archive
+        run: tools/release.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flowtrace-books-${{ github.ref_name }}-${{ runner.os }}
+          path: rust/dist/
+          if-no-files-found: error
