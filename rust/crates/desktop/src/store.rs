@@ -71,6 +71,7 @@ impl StoreCore {
             books_seen: false,
             submitted: None,
         });
+        eprintln!("desktop: status {:?}", self.view.status());
         self.note_books();
     }
 
@@ -95,6 +96,14 @@ impl StoreCore {
         let touched_selected = batch.iter().any(|event| {
             matches!(event, BackendEvent::Ledger { org, .. } if Some(org) == selected.as_ref())
         });
+        if self.timings.is_some() {
+            // The identity is public (`spacetime sql` shows it in `member`); the token never is.
+            for event in &batch {
+                if let BackendEvent::Status(status) = event {
+                    eprintln!("desktop: status {status:?}");
+                }
+            }
+        }
         let mut changed = self.view.apply(batch);
         if self.view.snapshot().is_none()
             && let Some(org) = self.view.selected().map(|org| org.id.clone())
