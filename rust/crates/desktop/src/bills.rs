@@ -6,21 +6,38 @@
 //! Behaviour mirrors the web screens `flowtrace/src/routes/_authenticated/spend/bills.index.tsx`,
 //! `bills.new.tsx`, `bills.$id.tsx` and `-shared.tsx`; the rules themselves stay in
 //! `ledger-core` (`add_vendor`, `create_bill`, `approve_bill`, `post_bill`, `pay_bill`,
-//! `outstanding`), whose messages are shown as they come.
+//! `outstanding`), whose messages are shown as they come. The posting and payment entries are
+//! read back from the books, never recomputed here.
 
 use ledger_core::LedgerCommand;
 use ledger_core::Minor;
+use ledger_core::coa_template::UNRESTRICTED_FUND_ID;
 use ledger_core::engine::{NewBill, NewCodedLine, NewVendor};
 use ledger_core::money::parse_money;
 use ledger_core::types::{
-    AccountId, Actor, AppliesTo, Bill, BillId, BillStatus, DimensionId, EntryId, FundId, GrantId,
-    IsoDate, LedgerState, VendorId,
+    AccountId, AccountType, Actor, AppliesTo, Bill, BillId, BillStatus, DimensionId, EntryId,
+    FundId, FundRestriction, GrantId, IsoDate, LedgerState, Nullish, VendorId,
 };
+
+use crate::accounts::{ACCOUNT_TYPES, format_date, format_minor};
+use crate::general_ledger::EntryDetail;
+
+/// The en dash of an empty cell (`money.tsx:12`).
+const DASH: &str = "\u{2013}";
+
+/// The middle dot between parts of a label.
+const DOT: &str = " \u{b7} ";
 
 /// `BILL_STATUS_LABEL` (`-shared.tsx:60-66`).
 #[must_use]
-pub fn status_label(_status: BillStatus) -> &'static str {
-    ""
+pub fn status_label(status: BillStatus) -> &'static str {
+    match status {
+        BillStatus::Draft => "Draft",
+        BillStatus::Approved => "Approved",
+        BillStatus::Posted => "Posted, to pay",
+        BillStatus::Paid => "Paid",
+        BillStatus::Void => "Void",
+    }
 }
 
 /// The look of a status tag (`-shared.tsx:68-85`, `BILL_TONE`): dashed for drafts, outlined
@@ -41,8 +58,14 @@ pub enum Tone {
 
 /// `BILL_TONE` (`-shared.tsx:79-85`).
 #[must_use]
-pub fn status_tone(_status: BillStatus) -> Tone {
-    Tone::Quiet
+pub fn status_tone(status: BillStatus) -> Tone {
+    match status {
+        BillStatus::Draft => Tone::Quiet,
+        BillStatus::Approved => Tone::Open,
+        BillStatus::Posted => Tone::Booked,
+        BillStatus::Paid => Tone::Done,
+        BillStatus::Void => Tone::Rejected,
+    }
 }
 
 /// One choice of the list's status filter (`bills.index.tsx:15-22`).
@@ -68,21 +91,46 @@ impl BillFilter {
     /// The filter's label: `All`, `Draft`, `Approved`, `To pay`, `Paid`, `Void`.
     #[must_use]
     pub fn label(self) -> &'static str {
-        ""
+        match self {
+            Self::All => "All",
+            Self::Status(BillStatus::Posted) => "To pay",
+            Self::Status(s) => status_label(s),
+        }
     }
 
     /// Whether a bill in `status` shows under this filter.
     #[must_use]
-    pub fn matches(self, _status: BillStatus) -> bool {
-        false
+    pub fn matches(self, status: BillStatus) -> bool {
+        match self {
+            Self::All => true,
+            Self::Status(s) => s == status,
+        }
     }
+}
+
+/// Days since 1970-01-01 of a valid date (Howard Hinnant's `days_from_civil`,
+/// <https://howardhinnant.github.io/date_algorithms.html>).
+fn day_number(date: &IsoDate) -> i64 {
+    let s = date.as_str();
+    let part = |r: std::ops::Range<usize>| s.get(r).and_then(|p| p.parse::<i64>().ok());
+    let (y, m, d) = (
+        part(0..4).unwrap_or(1970),
+        part(5..7).unwrap_or(1),
+        part(8..10).unwrap_or(1),
+    );
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let doy = (153 * (m + if m > 2 { -3 } else { 9 }) + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
 }
 
 /// `daysBetween` (`-shared.tsx:130-134`): whole days from `a` to `b`, negative when `b` is
 /// earlier.
 #[must_use]
-pub fn days_between(_a: &IsoDate, _b: &IsoDate) -> i64 {
-    0
+pub fn days_between(a: &IsoDate, b: &IsoDate) -> i64 {
+    day_number(b) - day_number(a)
 }
 
 /// One row of the bills list (`bills.index.tsx:33-55`, `rowsFor`).
@@ -114,40 +162,103 @@ impl BillRow {
     /// The outstanding cell: `Not posted`, or the amount.
     #[must_use]
     pub fn outstanding_text(&self) -> String {
-        String::new()
+        self.outstanding
+            .map_or_else(|| "Not posted".to_owned(), format_minor)
     }
 }
 
 /// `OverdueFlag` (`-shared.tsx:121-128`): `Overdue 1 day`, `Overdue 5 days`.
 #[must_use]
-pub fn overdue_text(_days: i64) -> String {
-    String::new()
+pub fn overdue_text(days: i64) -> String {
+    format!("Overdue {days} {}", if days == 1 { "day" } else { "days" })
+}
+
+/// The outstanding amount of `bill`, as the web reads it: only once posted or paid
+/// (`bills.index.tsx:43`, `bills.$id.tsx:83`).
+#[must_use]
+pub fn outstanding_of(state: &LedgerState, bill: &Bill) -> Option<Minor> {
+    matches!(bill.status, BillStatus::Posted | BillStatus::Paid)
+        .then(|| state.outstanding(&AppliesTo::Bill(bill.id.clone())).ok())
+        .flatten()
+}
+
+/// Days late of a posted bill with money owed at `as_of` (`bills.index.tsx:44`).
+fn overdue_days(bill: &Bill, outstanding: Option<Minor>, as_of: &IsoDate) -> i64 {
+    if bill.status == BillStatus::Posted && outstanding.unwrap_or(0) > 0 {
+        days_between(&bill.due_date, as_of).max(0)
+    } else {
+        0
+    }
+}
+
+fn vendor_name(state: &LedgerState, id: &VendorId, missing: &str) -> String {
+    state
+        .vendors
+        .iter()
+        .find(|v| &v.id == id)
+        .map_or_else(|| missing.to_owned(), |v| v.name.clone())
+}
+
+/// `docTotal` (`-shared.tsx:136`).
+fn doc_total(bill: &Bill) -> Minor {
+    bill.lines.iter().map(|l| l.amount).sum()
 }
 
 /// `rowsFor` (`bills.index.tsx:41-55`): every bill in the books' order, with its total, what is
 /// still owed (posted and paid bills only) and how late it is at `as_of`.
 #[must_use]
-pub fn bill_rows(_state: &LedgerState, _as_of: &IsoDate) -> Vec<BillRow> {
-    Vec::new()
+pub fn bill_rows(state: &LedgerState, as_of: &IsoDate) -> Vec<BillRow> {
+    state
+        .bills
+        .iter()
+        .map(|bill| {
+            let outstanding = outstanding_of(state, bill);
+            BillRow {
+                id: bill.id.clone(),
+                vendor: vendor_name(state, &bill.vendor_id, "Vendor"),
+                number: bill.number.clone(),
+                bill_date: bill.bill_date.clone(),
+                due_date: bill.due_date.clone(),
+                currency: bill.currency.clone(),
+                total: doc_total(bill),
+                outstanding,
+                overdue_days: overdue_days(bill, outstanding, as_of),
+                status: bill.status,
+            }
+        })
+        .collect()
 }
 
 /// The rows `filter` shows, most overdue first, then the newest bill date first
-/// (`bills.index.tsx:66-73`).
+/// (`bills.index.tsx:66-73`; dates compare as strings, as `localeCompare` does for ISO dates).
 #[must_use]
-pub fn filtered(_rows: &[BillRow], _filter: BillFilter) -> Vec<BillRow> {
-    Vec::new()
+pub fn filtered(rows: &[BillRow], filter: BillFilter) -> Vec<BillRow> {
+    let mut out: Vec<BillRow> = rows
+        .iter()
+        .filter(|r| filter.matches(r.status))
+        .cloned()
+        .collect();
+    out.sort_by(|a, b| {
+        b.overdue_days
+            .cmp(&a.overdue_days)
+            .then_with(|| b.bill_date.as_str().cmp(a.bill_date.as_str()))
+    });
+    out
 }
 
 /// The count beside a filter (`bills.index.tsx:61-65`).
 #[must_use]
-pub fn filter_count(_rows: &[BillRow], _filter: BillFilter) -> usize {
-    0
+pub fn filter_count(rows: &[BillRow], filter: BillFilter) -> usize {
+    rows.iter().filter(|r| filter.matches(r.status)).count()
 }
 
 /// What the list says when a filter shows nothing (`bills.index.tsx:136-146`).
 #[must_use]
-pub fn no_match_text(_filter: BillFilter) -> String {
-    String::new()
+pub fn no_match_text(filter: BillFilter) -> String {
+    match filter {
+        BillFilter::All => "No bills are here.".to_owned(),
+        BillFilter::Status(s) => format!("No bills are {}.", status_label(s).to_lowercase()),
+    }
 }
 
 /// One row of the vendors list.
@@ -159,7 +270,7 @@ pub struct VendorRow {
     pub name: String,
     /// Payment details (paybill, till or bank account), the only contact the books keep.
     pub payment_details: Option<String>,
-    /// The flow node's name when the vendor stands for one.
+    /// The flow-map node id when the vendor stands for one (the books keep no node names).
     pub flow_node: Option<String>,
     /// How many bills the vendor has.
     pub bills: usize,
@@ -167,17 +278,61 @@ pub struct VendorRow {
     pub outstanding: Minor,
 }
 
+/// A bill's owed amount in base currency at its booked rate (`spend/index.tsx:859-860`,
+/// `inBase`: `Math.round(amount * rate)`).
+fn in_base(state: &LedgerState, bill: &Bill, amount: Minor) -> Minor {
+    if bill.currency == state.settings.base_currency {
+        return amount;
+    }
+    #[expect(clippy::cast_precision_loss, reason = "minor units stay below 2^53")]
+    let x = ledger_core::money::js_round(amount as f64 * bill.fx_rate);
+    #[expect(clippy::cast_possible_truncation, reason = "a whole number of minor units")]
+    let minor = x as Minor;
+    minor
+}
+
 /// The vendors in name order (`bills.new.tsx`, `vendorOptions`), each with its bill count and
 /// what is still owed on its posted bills.
 #[must_use]
-pub fn vendor_rows(_state: &LedgerState) -> Vec<VendorRow> {
-    Vec::new()
+pub fn vendor_rows(state: &LedgerState) -> Vec<VendorRow> {
+    let mut rows: Vec<VendorRow> = state
+        .vendors
+        .iter()
+        .map(|v| {
+            let bills: Vec<&Bill> = state.bills.iter().filter(|b| b.vendor_id == v.id).collect();
+            let outstanding = bills
+                .iter()
+                .filter(|b| b.status == BillStatus::Posted)
+                .map(|b| in_base(state, b, outstanding_of(state, b).unwrap_or(0)))
+                .sum();
+            let flow_node = v.node_id.as_ref().map(|id| id.as_str().to_owned());
+            VendorRow {
+                id: v.id.clone(),
+                name: v.name.clone(),
+                payment_details: v.payment_details.clone(),
+                flow_node,
+                bills: bills.len(),
+                outstanding,
+            }
+        })
+        .collect();
+    rows.sort_by(|a, b| a.name.cmp(&b.name));
+    rows
 }
 
 /// The vendors section meta: `5 suppliers · 39,800.00 owed`.
 #[must_use]
-pub fn vendors_meta(_rows: &[VendorRow]) -> String {
-    String::new()
+pub fn vendors_meta(rows: &[VendorRow]) -> String {
+    let owed: Minor = rows.iter().map(|r| r.outstanding).sum();
+    let count = match rows.len() {
+        1 => "1 supplier".to_owned(),
+        n => format!("{n} suppliers"),
+    };
+    if owed == 0 {
+        format!("{count}{DOT}nothing owed")
+    } else {
+        format!("{count}{DOT}{} owed", format_minor(owed))
+    }
 }
 
 /// The add-a-vendor form (`bills.new.tsx`, the "Add a new supplier" fields).
@@ -190,13 +345,51 @@ pub struct NewVendorForm {
 }
 
 impl NewVendorForm {
-    /// The `vendor.add` command, or the name field's error.
+    /// The `vendor.add` command (`bills.new.tsx`, `save`: name trimmed, empty details as
+    /// `null`), or the name field's error.
     ///
     /// # Errors
     ///
     /// The message shown under the name field when it is blank (`bills.new.tsx`, `check`).
     pub fn command(&self) -> Result<LedgerCommand, String> {
-        Err(String::new())
+        let name = self.name.trim();
+        if name.is_empty() {
+            return Err("Enter the supplier\u{2019}s name as it appears on the bill.".to_owned());
+        }
+        let details = self.payment_details.trim();
+        Ok(LedgerCommand::VendorAdd {
+            input: NewVendor {
+                id: None,
+                name: name.to_owned(),
+                node_id: None,
+                payment_details: (!details.is_empty()).then(|| details.to_owned()),
+            },
+        })
+    }
+}
+
+/// The month names of the date field's messages (`date-field.tsx:7-20`).
+const MONTHS: [&str; 12] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
+
+fn days_in_month(year: i64, month: i64) -> i64 {
+    match month {
+        2 if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
     }
 }
 
@@ -206,20 +399,64 @@ impl NewVendorForm {
 /// # Errors
 ///
 /// The message the web field shows for a malformed or impossible date.
-pub fn parse_day_month_year(_text: &str) -> Result<Option<IsoDate>, String> {
-    Ok(None)
+pub fn parse_day_month_year(text: &str) -> Result<Option<IsoDate>, String> {
+    let t = text.trim();
+    if t.is_empty() {
+        return Ok(None);
+    }
+    let malformed = || "Enter the date as day/month/year, for example 18/01/2026.".to_owned();
+    let parts: Vec<&str> = t.split(['/', '.', '-']).collect();
+    let digits = |p: &str| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit());
+    let [d, m, y] = parts.as_slice() else {
+        return Err(malformed());
+    };
+    if !(digits(d) && digits(m) && digits(y) && d.len() <= 2 && m.len() <= 2) {
+        return Err(malformed());
+    }
+    if y.len() != 4 {
+        return Err("Write the year in full, for example 2026.".to_owned());
+    }
+    let (day, month, year): (i64, i64, i64) = (
+        d.parse().map_err(|_| malformed())?,
+        m.parse().map_err(|_| malformed())?,
+        y.parse().map_err(|_| malformed())?,
+    );
+    if !(1..=12).contains(&month) {
+        return Err(format!(
+            "There is no month {month}. Put the day first, then the month: dd/mm/yyyy."
+        ));
+    }
+    let days = days_in_month(year, month);
+    if day < 1 {
+        return Err("There is no day 0. Enter a day from 1.".to_owned());
+    }
+    if day > days {
+        let name = usize::try_from(month - 1)
+            .ok()
+            .and_then(|i| MONTHS.get(i))
+            .copied()
+            .unwrap_or_default();
+        return Err(format!("{name} {year} has only {days} days."));
+    }
+    IsoDate::parse(&format!("{year:04}-{month:02}-{day:02}"))
+        .map(Some)
+        .map_err(|_| malformed())
 }
 
 /// `isoToDayMonthYear` (`date-field.tsx:36-39`): `2026-01-18` to `18/01/2026`.
 #[must_use]
-pub fn iso_to_day_month_year(_date: &IsoDate) -> String {
-    String::new()
+pub fn iso_to_day_month_year(date: &IsoDate) -> String {
+    let s = date.as_str();
+    match (s.get(0..4), s.get(5..7), s.get(8..10)) {
+        (Some(y), Some(m), Some(d)) => format!("{d}/{m}/{y}"),
+        _ => String::new(),
+    }
 }
 
 /// `addDays` (`bills.new.tsx:49-53`).
 #[must_use]
-pub fn add_days(date: &IsoDate, _n: i64) -> IsoDate {
-    date.clone()
+pub fn add_days(date: &IsoDate, n: i64) -> IsoDate {
+    crate::statements::date_from_days(day_number(date) + n)
 }
 
 /// `CURRENCIES` (`bills.new.tsx:27-34`): code and name.
@@ -253,49 +490,104 @@ impl LineDraft {
     /// `newLine(state)` (`-shared.tsx:301-320`): empty, on the unrestricted fund when the books
     /// have it, else the first fund.
     #[must_use]
-    pub fn new(_state: &LedgerState) -> Self {
-        Self::default()
+    pub fn new(state: &LedgerState) -> Self {
+        let fund = state
+            .funds
+            .iter()
+            .find(|f| f.id.as_str() == UNRESTRICTED_FUND_ID)
+            .or_else(|| state.funds.first())
+            .map(|f| f.id.clone());
+        Self {
+            fund_id: fund,
+            ..Self::default()
+        }
     }
 
     /// The line "Add another line" adds after this one: same account, fund, grant and
     /// dimension, empty description and amount (`-shared.tsx:551-568`).
     #[must_use]
     pub fn following(&self) -> Self {
-        Self::default()
+        Self {
+            description: String::new(),
+            amount: String::new(),
+            ..self.clone()
+        }
     }
 
     /// `withFund` (`-shared.tsx:373-378`): changing the fund drops a grant of another fund and
     /// picks the fund's only grant.
-    pub fn set_fund(&mut self, _state: &LedgerState, fund: FundId) {
+    pub fn set_fund(&mut self, state: &LedgerState, fund: FundId) {
+        let grants: Vec<&GrantId> = state
+            .grants
+            .iter()
+            .filter(|g| g.fund_id == fund)
+            .map(|g| &g.id)
+            .collect();
+        let keep = self.grant_id.as_ref().is_some_and(|g| grants.contains(&g));
+        if !keep {
+            self.grant_id = match grants.as_slice() {
+                [only] => Some((*only).clone()),
+                _ => None,
+            };
+        }
         self.fund_id = Some(fund);
     }
+}
+
+/// `code · name` of an account.
+fn account_label(code: &str, name: &str) -> String {
+    format!("{code}{DOT}{name}")
+}
+
+/// `AccountSelect` (`pickers.tsx:25-44`): active posting accounts of `types`, by type in
+/// `TYPE_LABEL` order, then by code.
+fn accounts_of(state: &LedgerState, types: &[AccountType], cash_only: bool) -> Vec<(AccountId, String)> {
+    let mut out = Vec::new();
+    for t in ACCOUNT_TYPES.into_iter().filter(|t| types.contains(t)) {
+        let mut of_type: Vec<_> = state
+            .accounts
+            .iter()
+            .filter(|a| a.account_type == t && !a.is_group && a.is_active && (!cash_only || a.is_cash))
+            .collect();
+        of_type.sort_by(|a, b| a.code.cmp(&b.code));
+        out.extend(of_type.into_iter().map(|a| (a.id.clone(), account_label(&a.code, &a.name))));
+    }
+    out
 }
 
 /// `AccountSelect` with `types={['expense', 'asset']}` (`pickers.tsx:25-44`,
 /// `bills.new.tsx`): active posting accounts of those types, by type in `TYPE_LABEL` order, then
 /// by code; labels `code · name`.
 #[must_use]
-pub fn line_accounts(_state: &LedgerState) -> Vec<(AccountId, String)> {
-    Vec::new()
+pub fn line_accounts(state: &LedgerState) -> Vec<(AccountId, String)> {
+    accounts_of(state, &[AccountType::Expense, AccountType::Asset], false)
 }
 
 /// `AccountSelect cashOnly` (`pickers.tsx:25-44`): the active cash accounts, by code.
 #[must_use]
-pub fn cash_accounts(_state: &LedgerState) -> Vec<(AccountId, String)> {
-    Vec::new()
+pub fn cash_accounts(state: &LedgerState) -> Vec<(AccountId, String)> {
+    accounts_of(state, &ACCOUNT_TYPES, true)
 }
 
 /// `GrantSelect fundId` (`pickers.tsx:57-69`): the grants on `fund`.
 #[must_use]
-pub fn grants_for(_state: &LedgerState, _fund: Option<&FundId>) -> Vec<(GrantId, String)> {
-    Vec::new()
+pub fn grants_for(state: &LedgerState, fund: Option<&FundId>) -> Vec<(GrantId, String)> {
+    state
+        .grants
+        .iter()
+        .filter(|g| fund.is_none_or(|f| &g.fund_id == f))
+        .map(|g| (g.id.clone(), g.name.clone()))
+        .collect()
 }
 
 /// `linesTotal` (`-shared.tsx:369-371`): the lines' amounts, a line that does not parse or is
 /// negative counting as zero.
 #[must_use]
-pub fn lines_total(_lines: &[LineDraft]) -> Minor {
-    0
+pub fn lines_total(lines: &[LineDraft]) -> Minor {
+    lines
+        .iter()
+        .map(|l| parse_money(&l.amount).unwrap_or(0).max(0))
+        .sum()
 }
 
 /// A field of the new-bill form (`bills.new.tsx`, `FieldName`).
@@ -394,15 +686,66 @@ impl BillErrors {
     /// `ErrorSummary`'s title (`-shared.tsx:612-614`).
     #[must_use]
     pub fn title(&self) -> &'static str {
-        ""
+        if self.fields.len() + self.lines.len() == 1 {
+            "Fix this before saving"
+        } else {
+            "Fix these before saving"
+        }
     }
 
     /// `ErrorSummary`'s items (`-shared.tsx:615-630`): `Bill number: Enter ...`,
     /// `Line 1 amount: Enter ...`.
     #[must_use]
     pub fn summary(&self) -> Vec<String> {
-        Vec::new()
+        self.fields
+            .iter()
+            .map(|(f, m)| format!("{}: {m}", f.label()))
+            .chain(
+                self.lines
+                    .iter()
+                    .map(|(i, f, m)| format!("Line {} {}: {m}", i + 1, f.label())),
+            )
+            .collect()
     }
+}
+
+/// `validateLines` (`-shared.tsx:334-356`).
+fn line_errors(state: &LedgerState, lines: &[LineDraft]) -> Vec<(usize, LineField, String)> {
+    let mut out = Vec::new();
+    for (n, l) in lines.iter().enumerate() {
+        let mut add = |f: LineField, m: &str| out.push((n, f, m.to_owned()));
+        if l.description.trim().is_empty() {
+            add(LineField::Description, "Say what this was for.");
+        }
+        let amount = parse_money(&l.amount);
+        if l.amount.trim().is_empty() {
+            add(LineField::Amount, "Enter the amount.");
+        } else if let Some(a) = amount {
+            if a <= 0 {
+                add(LineField::Amount, "The amount must be more than zero.");
+            }
+        } else {
+            add(LineField::Amount, "Enter a number, like 1250 or 1,250.50.");
+        }
+        if l.account_id.is_none() {
+            add(LineField::Account, "Choose what kind of cost this is.");
+        }
+        match l
+            .fund_id
+            .as_ref()
+            .and_then(|id| state.funds.iter().find(|f| &f.id == id))
+        {
+            None => add(LineField::Fund, "Choose the fund that pays for this."),
+            Some(f) if f.restriction != FundRestriction::Unrestricted && l.grant_id.is_none() => {
+                add(
+                    LineField::Grant,
+                    "Restricted money needs the grant it comes from.",
+                );
+            }
+            Some(_) => {}
+        }
+    }
+    out
 }
 
 /// The new-bill form (`bills.new.tsx`, `NewBill`), for an existing supplier.
@@ -430,15 +773,15 @@ impl NewBillForm {
     /// An empty form at `as_of`: dated that day, due 30 days later, in the base currency, one
     /// empty line (`bills.new.tsx:68-80`).
     #[must_use]
-    pub fn new(state: &LedgerState, _as_of: &IsoDate) -> Self {
+    pub fn new(state: &LedgerState, as_of: &IsoDate) -> Self {
         Self {
             vendor: None,
             number: String::new(),
-            bill_date: String::new(),
-            due_date: String::new(),
-            currency: String::new(),
+            bill_date: iso_to_day_month_year(as_of),
+            due_date: iso_to_day_month_year(&add_days(as_of, 30)),
+            currency: state.settings.base_currency.clone(),
             fx_rate: String::new(),
-            lines: Vec::new(),
+            lines: vec![LineDraft::new(state)],
             base: state.settings.base_currency.clone(),
         }
     }
@@ -446,28 +789,144 @@ impl NewBillForm {
     /// Whether the bill is in another currency than the books', so it needs a rate.
     #[must_use]
     pub fn foreign(&self) -> bool {
-        false
+        self.currency != self.base
     }
 
     /// The live total under the lines.
     #[must_use]
     pub fn total(&self) -> Minor {
-        0
+        lines_total(&self.lines)
     }
 
     /// "Add another line": a line following the last one.
-    pub fn add_line(&mut self, _state: &LedgerState) {}
+    pub fn add_line(&mut self, state: &LedgerState) {
+        let next = self
+            .lines
+            .last()
+            .map_or_else(|| LineDraft::new(state), LineDraft::following);
+        self.lines.push(next);
+    }
 
     /// Removes line `index`; the last line stays (`-shared.tsx:421-432`).
-    pub fn remove_line(&mut self, _index: usize) {}
+    pub fn remove_line(&mut self, index: usize) {
+        if self.lines.len() > 1 && index < self.lines.len() {
+            self.lines.remove(index);
+        }
+    }
+
+    /// The rate as typed, commas dropped (`Number(fxRate.replace(/,/g, ''))`).
+    fn rate(&self) -> Option<f64> {
+        let r: f64 = self.fx_rate.replace(',', "").trim().parse().ok()?;
+        (r > 0.0 && r.is_finite()).then_some(r)
+    }
 
     /// The `bill.create` command, or what to fix first (`bills.new.tsx`, `check` and `save`).
     ///
     /// # Errors
     ///
     /// [`BillErrors`] with every field and line problem, in the form's order.
-    pub fn command(&self, _state: &LedgerState) -> Result<LedgerCommand, BillErrors> {
-        Err(BillErrors::default())
+    pub fn command(&self, state: &LedgerState) -> Result<LedgerCommand, BillErrors> {
+        let mut fields = Vec::new();
+        let mut add = |f: BillField, m: String| fields.push((f, m));
+        if self.vendor.is_none() {
+            add(
+                BillField::Vendor,
+                "Choose the supplier, or add a new one.".to_owned(),
+            );
+        }
+        let number = self.number.trim();
+        if number.is_empty() {
+            add(
+                BillField::Number,
+                "Enter the invoice number printed on the bill.".to_owned(),
+            );
+        } else if state.bills.iter().any(|b| {
+            b.number.trim().to_lowercase() == number.to_lowercase()
+                && Some(&b.vendor_id) == self.vendor.as_ref()
+        }) {
+            add(
+                BillField::Number,
+                "This supplier already has a bill with this number.".to_owned(),
+            );
+        }
+        let bill_date = parse_day_month_year(&self.bill_date);
+        let due_date = parse_day_month_year(&self.due_date);
+        match &bill_date {
+            Ok(None) => add(BillField::BillDate, "Enter the date on the bill.".to_owned()),
+            Err(e) => add(BillField::BillDate, e.clone()),
+            Ok(Some(_)) => {}
+        }
+        match (&due_date, &bill_date) {
+            (Ok(None), _) => add(
+                BillField::DueDate,
+                "Enter when the bill must be paid.".to_owned(),
+            ),
+            (Err(e), _) => add(BillField::DueDate, e.clone()),
+            (Ok(Some(due)), Ok(Some(billed))) if due.as_str() < billed.as_str() => add(
+                BillField::DueDate,
+                "The due date cannot be before the bill date.".to_owned(),
+            ),
+            _ => {}
+        }
+        if self.foreign() {
+            if self.fx_rate.trim().is_empty() {
+                add(
+                    BillField::FxRate,
+                    format!("Enter how many {} one {} is worth.", self.base, self.currency),
+                );
+            } else if self.rate().is_none() {
+                add(
+                    BillField::FxRate,
+                    "Enter a positive number, like 129.45.".to_owned(),
+                );
+            }
+        }
+        let errors = BillErrors {
+            fields,
+            lines: line_errors(state, &self.lines),
+        };
+        let (Some(vendor), Ok(Some(bill_date)), Ok(Some(due_date)), true) = (
+            self.vendor.clone(),
+            bill_date,
+            due_date,
+            errors.is_empty(),
+        ) else {
+            return Err(errors);
+        };
+        // toCodedLines (`-shared.tsx:358-367`).
+        let lines = self
+            .lines
+            .iter()
+            .map(|l| {
+                #[expect(clippy::cast_precision_loss, reason = "minor units stay below 2^53")]
+                let amount = parse_money(&l.amount).unwrap_or(0) as f64;
+                NewCodedLine {
+                    description: l.description.trim().to_owned(),
+                    account_id: l.account_id.clone().unwrap_or_else(|| AccountId::from("")),
+                    amount,
+                    fund_id: l.fund_id.clone().unwrap_or_else(|| FundId::from("")),
+                    grant_id: l.grant_id.clone(),
+                    dimension_ids: l.dimension_id.iter().cloned().collect(),
+                }
+            })
+            .collect();
+        Ok(LedgerCommand::BillCreate {
+            input: NewBill {
+                id: None,
+                vendor_id: vendor,
+                number: number.to_owned(),
+                bill_date,
+                due_date,
+                currency: self.currency.clone(),
+                fx_rate: if self.foreign() {
+                    self.rate().unwrap_or(1.0)
+                } else {
+                    1.0
+                },
+                lines,
+                proof_ids: Vec::new(),
+            },
+        })
     }
 }
 
@@ -486,19 +945,46 @@ impl BillAction {
     /// The button label.
     #[must_use]
     pub fn label(self) -> &'static str {
-        ""
+        match self {
+            Self::Approve => "Approve bill",
+            Self::Post => "Post to the books",
+            Self::Pay => "Record a payment",
+        }
     }
 
     /// The notice after the command went through (`bills.$id.tsx`, each dialog's `setDone`).
     #[must_use]
     pub fn done(self) -> &'static str {
-        ""
+        match self {
+            Self::Approve => "Approved. Post it to record the amount owed.",
+            Self::Post => "Posted to the books.",
+            Self::Pay => "Payment recorded.",
+        }
     }
 
     /// The command of Approve or Post; Pay goes through [`PayForm::command`].
     #[must_use]
-    pub fn command(self, _bill: &BillId) -> Option<LedgerCommand> {
-        None
+    pub fn command(self, bill: &BillId) -> Option<LedgerCommand> {
+        match self {
+            Self::Approve => Some(LedgerCommand::BillApprove {
+                bill_id: bill.clone(),
+            }),
+            Self::Post => Some(LedgerCommand::BillPost {
+                bill_id: bill.clone(),
+                override_reason: None,
+            }),
+            Self::Pay => None,
+        }
+    }
+}
+
+/// `personName` (`-shared.tsx:143-151`): `Name (you)` for the actor, `FlowTrace` for the
+/// system, otherwise the id.
+fn person_name(id: &str, actor: Option<&Actor>) -> String {
+    match actor {
+        Some(a) if a.id.as_str() == id => format!("{} (you)", a.name),
+        _ if id == "system" => "FlowTrace".to_owned(),
+        _ => id.to_owned(),
     }
 }
 
@@ -507,11 +993,59 @@ impl BillAction {
 /// enter it; approved bills post; posted bills take payments; paid and void bills take nothing.
 #[must_use]
 pub fn next_step(
-    _bill: &Bill,
-    _actor: Option<&Actor>,
-    _outstanding: Option<Minor>,
+    bill: &Bill,
+    actor: Option<&Actor>,
+    outstanding: Option<Minor>,
 ) -> (String, Vec<BillAction>) {
-    (String::new(), Vec::new())
+    match bill.status {
+        BillStatus::Draft => {
+            if actor.is_some_and(|a| a.id == bill.created_by) {
+                (
+                    "You entered this bill, so someone else has to approve it. The person who \
+                     records a bill never approves it."
+                        .to_owned(),
+                    vec![],
+                )
+            } else if actor.is_some_and(|a| a.can_approve) {
+                (
+                    "Check the bill against the delivery, then approve it. Approval commits the \
+                     money against its grant and budget lines."
+                        .to_owned(),
+                    vec![BillAction::Approve],
+                )
+            } else {
+                (
+                    "Waiting for a manager with approval rights.".to_owned(),
+                    vec![],
+                )
+            }
+        }
+        BillStatus::Approved => {
+            let by = bill
+                .approved_by
+                .as_ref()
+                .map(|id| format!(" by {}", person_name(id.as_str(), actor)))
+                .unwrap_or_default();
+            (
+                format!(
+                    "Approved{by}. Posting records the costs and the amount owed to the supplier \
+                     in the books."
+                ),
+                vec![BillAction::Post],
+            )
+        }
+        BillStatus::Posted => (
+            format!(
+                "Posted. {} {} is still owed, due {}.",
+                bill.currency,
+                format_minor(outstanding.unwrap_or(0)),
+                format_date(&bill.due_date)
+            ),
+            vec![BillAction::Pay],
+        ),
+        BillStatus::Paid => ("Paid in full. Nothing more to do.".to_owned(), vec![]),
+        BillStatus::Void => ("This bill was voided.".to_owned(), vec![]),
+    }
 }
 
 /// A coded line as the detail shows it (`CodedLines`, `-shared.tsx:185-282`).
@@ -531,49 +1065,92 @@ pub struct CodedLineRow {
     pub amount: Minor,
 }
 
-/// One line of a journal entry under the bill.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EntryLineRow {
-    /// The account posted to, `code · name`.
-    pub account: AccountId,
-    /// The account's label.
-    pub account_label: String,
-    /// Fund name.
-    pub fund: String,
-    /// Debit in the line's currency.
-    pub debit: Minor,
-    /// Credit in the line's currency.
-    pub credit: Minor,
-    /// Signed debit-minus-credit in base currency.
-    pub base_amount: Minor,
+/// `CodedLines` (`-shared.tsx:196-241`).
+fn coded_rows(state: &LedgerState, bill: &Bill) -> Vec<CodedLineRow> {
+    bill.lines
+        .iter()
+        .map(|l| {
+            let dims: Vec<String> = l
+                .dimension_ids
+                .iter()
+                .map(|id| {
+                    state
+                        .dimensions
+                        .iter()
+                        .find(|d| &d.id == id)
+                        .map_or_else(|| id.as_str().to_owned(), |d| d.name.clone())
+                })
+                .collect();
+            CodedLineRow {
+                description: if l.description.is_empty() {
+                    "No description".to_owned()
+                } else {
+                    l.description.clone()
+                },
+                account: state.account(&l.account_id).map_or_else(
+                    || "Unknown account".to_owned(),
+                    |a| format!("{} {}", a.code, a.name),
+                ),
+                fund: state
+                    .funds
+                    .iter()
+                    .find(|f| f.id == l.fund_id)
+                    .map_or_else(|| "Fund".to_owned(), |f| f.name.clone()),
+                grant: l
+                    .grant_id
+                    .as_ref()
+                    .and_then(|g| state.grants.iter().find(|x| &x.id == g))
+                    .map_or_else(|| "No grant".to_owned(), |g| g.name.clone()),
+                dimensions: if dims.is_empty() {
+                    DASH.to_owned()
+                } else {
+                    dims.join(", ")
+                },
+                amount: l.amount,
+            }
+        })
+        .collect()
 }
 
-/// A journal entry the bill made: the accrual when posted, or a payment's entry.
+/// A journal entry the bill made: the accrual when posted, or a payment's entry. The lines
+/// come from U4's [`EntryDetail`]; the per-account movements let tests and the trail read what
+/// the entry did to the payable and the bank.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EntryView {
-    /// Entry id.
-    pub id: EntryId,
-    /// Entry number, `JE-0042`.
-    pub number: String,
-    /// Accounting date.
-    pub date: IsoDate,
-    /// Memo.
-    pub memo: String,
-    /// Lines in posting order.
-    pub lines: Vec<EntryLineRow>,
+    /// The entry as the general ledger's side panel shows it.
+    pub detail: EntryDetail,
+    /// Net base-currency movement per account, debit positive, in first-line order.
+    pub movements: Vec<(AccountId, Minor)>,
 }
 
 impl EntryView {
-    /// Whether the base amounts sum to zero.
+    /// The entry `id`, or `None` when the books do not hold it.
+    #[must_use]
+    pub fn of(state: &LedgerState, id: &EntryId) -> Option<Self> {
+        let detail = EntryDetail::of(state, id)?;
+        let mut movements: Vec<(AccountId, Minor)> = Vec::new();
+        for l in state.lines.iter().filter(|l| &l.entry_id == id) {
+            match movements.iter_mut().find(|(a, _)| a == &l.account_id) {
+                Some((_, m)) => *m += l.base_amount,
+                None => movements.push((l.account_id.clone(), l.base_amount)),
+            }
+        }
+        Some(Self { detail, movements })
+    }
+
+    /// Whether the debits equal the credits in base currency.
     #[must_use]
     pub fn balanced(&self) -> bool {
-        false
+        self.detail.debits == self.detail.credits && self.movements.iter().map(|m| m.1).sum::<Minor>() == 0
     }
 
     /// The net base-currency movement on `account` in this entry (debit positive).
     #[must_use]
-    pub fn movement(&self, _account: &AccountId) -> Minor {
-        0
+    pub fn movement(&self, account: &AccountId) -> Minor {
+        self.movements
+            .iter()
+            .find(|(a, _)| a == account)
+            .map_or(0, |m| m.1)
     }
 }
 
@@ -637,16 +1214,137 @@ pub struct BillDetail {
     pub trail: Vec<TrailRow>,
 }
 
+/// The date part of a timestamp, written as the books write dates.
+fn when(at: &str) -> String {
+    at.get(..10)
+        .and_then(|d| IsoDate::parse(d).ok())
+        .map_or_else(|| at.to_owned(), |d| format_date(&d))
+}
+
 /// The detail of bill `id` as `actor` sees it at `as_of`, or `None` when the books do not hold
 /// it.
 #[must_use]
 pub fn bill_detail(
-    _state: &LedgerState,
-    _id: &BillId,
-    _actor: Option<&Actor>,
-    _as_of: &IsoDate,
+    state: &LedgerState,
+    id: &BillId,
+    actor: Option<&Actor>,
+    as_of: &IsoDate,
 ) -> Option<BillDetail> {
-    None
+    let bill = state.bills.iter().find(|b| &b.id == id)?;
+    let total = doc_total(bill);
+    let outstanding = outstanding_of(state, bill);
+    let (next, actions) = next_step(bill, actor, outstanding);
+    let posting = bill
+        .entry_id
+        .as_ref()
+        .and_then(|e| EntryView::of(state, e));
+    let payable = &state.settings.system_accounts.accounts_payable;
+    let mut payments: Vec<_> = state
+        .payments
+        .iter()
+        .filter(|p| p.applies_to == AppliesTo::Bill(bill.id.clone()))
+        .collect();
+    payments.sort_by(|a, b| a.date.as_str().cmp(b.date.as_str()));
+
+    let mut trail: Vec<(String, TrailRow)> = state
+        .audit
+        .iter()
+        .filter(|e| e.subject == bill.id.as_str())
+        .map(|e| {
+            let what = match e.action.as_str() {
+                "bill.create" => format!("Entered bill {}", e.detail),
+                "bill.approve" => "Approved".to_owned(),
+                other => other.to_owned(),
+            };
+            (
+                e.at.as_str().to_owned(),
+                TrailRow {
+                    when: when(e.at.as_str()),
+                    who: person_name(e.by.as_str(), actor),
+                    what,
+                },
+            )
+        })
+        .collect();
+    if let Some(entry) = bill.entry_id.as_ref().and_then(|e| state.entry(e)) {
+        let at = entry.posted_at.as_ref().unwrap_or(&entry.created_at);
+        trail.push((
+            at.as_str().to_owned(),
+            TrailRow {
+                when: when(at.as_str()),
+                who: person_name(
+                    entry.posted_by.as_ref().unwrap_or(&entry.created_by).as_str(),
+                    actor,
+                ),
+                what: format!("Posted as {}", entry.number),
+            },
+        ));
+    }
+
+    let payment_views = payments
+        .iter()
+        .map(|p| {
+            let entry = EntryView::of(state, &p.entry_id);
+            let fund_split = state
+                .lines
+                .iter()
+                .filter(|l| l.entry_id == p.entry_id && &l.account_id == payable && l.debit > 0)
+                .map(|l| {
+                    let name = state
+                        .funds
+                        .iter()
+                        .find(|f| f.id == l.fund_id)
+                        .map_or_else(|| l.fund_id.as_str().to_owned(), |f| f.name.clone());
+                    (l.fund_id.clone(), name, l.debit)
+                })
+                .collect();
+            let cash = state.account(&p.cash_account_id).map_or_else(
+                || "cash account".to_owned(),
+                |a| account_label(&a.code, &a.name),
+            );
+            let source = match &p.reference {
+                Some(r) if !r.is_empty() => format!("From {cash}{DOT}{r}"),
+                _ => format!("From {cash}"),
+            };
+            if let Some(e) = state.entry(&p.entry_id) {
+                let at = e.posted_at.as_ref().unwrap_or(&e.created_at);
+                trail.push((
+                    at.as_str().to_owned(),
+                    TrailRow {
+                        when: when(at.as_str()),
+                        who: person_name(p.created_by.as_str(), actor),
+                        what: format!("Paid {} as {}", format_minor(p.amount), e.number),
+                    },
+                ));
+            }
+            PaymentView {
+                date: p.date.clone(),
+                amount: p.amount,
+                currency: p.currency.clone(),
+                source,
+                entry,
+                fund_split,
+            }
+        })
+        .collect();
+    // Stable: events at the same instant keep the order above.
+    trail.sort_by(|a, b| a.0.cmp(&b.0));
+
+    Some(BillDetail {
+        vendor: vendor_name(state, &bill.vendor_id, "Bill"),
+        total,
+        outstanding,
+        paid: total - outstanding.unwrap_or(total),
+        overdue_days: overdue_days(bill, outstanding, as_of),
+        days_until_due: days_between(as_of, &bill.due_date).max(0),
+        next,
+        actions,
+        lines: coded_rows(state, bill),
+        posting,
+        payments: payment_views,
+        trail: trail.into_iter().map(|t| t.1).collect(),
+        bill: bill.clone(),
+    })
 }
 
 /// The payment form (`bills.$id.tsx`, the "Record a payment" dialog).
@@ -674,12 +1372,20 @@ pub struct PayErrors {
 }
 
 impl PayForm {
-    /// The form as `openPay` fills it: the amount owed with two decimals, dated `as_of`.
+    /// The form as `openPay` fills it (`bills.$id.tsx:118-122`): the amount owed as
+    /// `(outstanding / 100).toFixed(2)`, empty when nothing is owed, dated `as_of`.
     #[must_use]
-    pub fn new(_outstanding: Option<Minor>, _as_of: &IsoDate) -> Self {
+    pub fn new(outstanding: Option<Minor>, as_of: &IsoDate) -> Self {
+        let amount = match outstanding {
+            Some(o) if o != 0 => {
+                let sign = if o < 0 { "-" } else { "" };
+                format!("{sign}{}.{:02}", o.unsigned_abs() / 100, o.unsigned_abs() % 100)
+            }
+            _ => String::new(),
+        };
         Self {
-            amount: String::new(),
-            date: String::new(),
+            amount,
+            date: iso_to_day_month_year(as_of),
             cash_account: None,
             reference: String::new(),
         }
@@ -691,15 +1397,65 @@ impl PayForm {
     /// # Errors
     ///
     /// [`PayErrors`] with the message under each field that is wrong.
-    pub fn command(&self, _bill: &BillId, _outstanding: Minor) -> Result<LedgerCommand, PayErrors> {
-        Err(PayErrors::default())
+    pub fn command(&self, bill: &BillId, outstanding: Minor) -> Result<LedgerCommand, PayErrors> {
+        let mut errors = PayErrors::default();
+        let date = match parse_day_month_year(&self.date) {
+            Ok(None) => {
+                errors.date = Some("Enter the date the money left.".to_owned());
+                None
+            }
+            Err(e) => {
+                errors.date = Some(e);
+                None
+            }
+            Ok(Some(d)) => Some(d),
+        };
+        if self.cash_account.is_none() {
+            errors.cash = Some("Choose the account the money left from.".to_owned());
+        }
+        let amount = parse_money(&self.amount);
+        if self.amount.trim().is_empty() {
+            errors.amount = Some("Enter the amount paid.".to_owned());
+        } else {
+            match amount {
+                None => {
+                    errors.amount = Some("Enter a number, like 39800 or 39,800.00.".to_owned());
+                }
+                Some(m) if m <= 0 => {
+                    errors.amount = Some("The amount must be more than zero.".to_owned());
+                }
+                Some(m) if m > outstanding => {
+                    errors.amount = Some(format!(
+                        "Only {} is outstanding.",
+                        format_minor(outstanding)
+                    ));
+                }
+                Some(_) => {}
+            }
+        }
+        let (Some(date), Some(cash), Some(amount), PayErrors {
+            amount: None,
+            date: None,
+            cash: None,
+        }) = (date, self.cash_account.clone(), amount, &errors)
+        else {
+            return Err(errors);
+        };
+        let reference = self.reference.trim();
+        #[expect(clippy::cast_precision_loss, reason = "minor units stay below 2^53")]
+        let amount = amount as f64;
+        Ok(LedgerCommand::BillPay {
+            bill_id: bill.clone(),
+            date: date.as_str().to_owned(),
+            cash_account_id: cash,
+            amount,
+            reference: if reference.is_empty() {
+                Nullish::Null
+            } else {
+                Nullish::Value(reference.to_owned())
+            },
+        })
     }
-}
-
-/// The outstanding amount of `bill`, as the web reads it: only once posted or paid.
-#[must_use]
-pub fn outstanding_of(_state: &LedgerState, _bill: &Bill) -> Option<Minor> {
-    None
 }
 
 #[cfg(test)]
@@ -958,8 +1714,18 @@ mod tests {
         let mut line = LineDraft::new(&state);
         line.set_fund(&state, restricted.id.clone());
         assert_eq!(line.grant_id.as_ref(), Some(&only.id));
-        line.set_fund(&state, FundId::from(UNRESTRICTED_FUND_ID));
+        // A fund with several grants or none drops the grant of another fund.
+        let mut state = state.clone();
+        state.funds.push(ledger_core::types::Fund {
+            id: FundId::from("fund-no-grants"),
+            name: "No grants".into(),
+            restriction: ledger_core::types::FundRestriction::TemporarilyRestricted,
+        });
+        line.set_fund(&state, FundId::from("fund-no-grants"));
         assert_eq!(line.grant_id, None);
+        // Choosing a grant then switching back to a one-grant fund picks that grant.
+        line.set_fund(&state, restricted.id.clone());
+        assert_eq!(line.grant_id.as_ref(), Some(&only.id));
         assert_eq!(
             grants_for(&state, Some(&restricted.id)),
             vec![(only.id.clone(), only.name.clone())]

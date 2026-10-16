@@ -74,7 +74,7 @@ fn post_and_pay_the_approved_demo_bill() {
         -total,
         "the payable moved by the bill total"
     );
-    assert!(d.trail.iter().any(|t| t.what == format!("Posted as {}", accrual.number)));
+    assert!(d.trail.iter().any(|t| t.what == format!("Posted as {}", accrual.detail.number)));
 
     // A part payment from the bank.
     let mut pay = PayForm::new(d.outstanding, &as_of());
