@@ -58,7 +58,7 @@ describe('release.sh --name', () => {
 describe('the shipped config.toml', () => {
   test('names the production database on maincloud and no token file', () => {
     expect(readFileSync(releaseConfig, 'utf8')).toBe(
-      'server = "https://maincloud.spacetimedb.com"\ndatabase = "flowtrace-ledger-flipped"\n',
+      'server = "https://maincloud.spacetimedb.com"\ndatabase = "flowtrace-ledger"\n',
     )
   })
 })
