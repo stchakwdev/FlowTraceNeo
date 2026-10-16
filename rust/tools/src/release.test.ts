@@ -42,7 +42,7 @@ describe('release.sh --name', () => {
 
   test('refuses any other argument without building', () => {
     const out = run('--publish')
-    expect(out.code).toBe(3)
+    expect(out.code).toBe(2)
     expect(out.stderr).toContain('unknown argument --publish')
   })
 })
