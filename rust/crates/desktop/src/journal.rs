@@ -17,7 +17,7 @@ use ledger_core::types::{
 };
 use ledger_core::{CommandResult, LedgerCommand, Minor};
 
-use crate::accounts::format_date;
+use crate::accounts::{format_date, format_minor};
 use crate::claims::{format_date_time, iso_to_day_month_year, parse_day_month_year};
 
 /// The en dash the web app shows for an empty cell (`money.tsx:12`).
@@ -78,6 +78,17 @@ pub const STATUS_FILTERS: [Option<EntryStatus>; 4] = [
 #[must_use]
 pub fn entry_total<'a>(lines: impl IntoIterator<Item = &'a JournalLine>) -> Minor {
     lines.into_iter().map(|l| l.base_amount.max(0)).sum()
+}
+
+/// `formatMinor(v, { signed: true, zero })` (`money.tsx:8-21`): negatives with a minus sign
+/// (U+2212) rather than parentheses, as the base column of the lines table shows them.
+#[must_use]
+pub fn format_signed(minor: Minor, zero: &str) -> String {
+    match minor {
+        0 => zero.to_owned(),
+        m if m < 0 => format!("\u{2212}{}", format_minor(-m)),
+        m => format_minor(m),
+    }
 }
 
 /// One row of the journal list (`index.tsx`, `Row`).
@@ -1067,6 +1078,16 @@ mod tests {
     }
 
     #[test]
+    fn base_amounts_are_signed() {
+        assert_eq!(
+            format_signed(-600_000_000, "\u{2013}"),
+            "\u{2212}6,000,000.00"
+        );
+        assert_eq!(format_signed(125_050, "\u{2013}"), "1,250.50");
+        assert_eq!(format_signed(0, "0.00"), "0.00");
+    }
+
+    #[test]
     fn status_maps_to_actions() {
         assert_eq!(
             actions_for(EntryStatus::Draft),
@@ -1225,7 +1246,11 @@ mod tests {
         assert!(has_overridable(&err), "{err:?}");
         let failure = Failure::new(view.failure_title(), &err);
         assert_eq!(failure.title, "Not posted");
-        assert!(!failure.messages.is_empty());
+        assert_eq!(failure.messages.len(), 1);
+        assert!(
+            failure.messages[0].ends_with("PAEF education grant starts on 2026-02-01."),
+            "{failure:?}"
+        );
 
         assert_eq!(
             override_reason("   "),
