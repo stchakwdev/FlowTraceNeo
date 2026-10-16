@@ -319,5 +319,5 @@ through the in-process backend: the candidates the view model lists equal the fi
 Auto-match gives the fixture's result and statement lines. Shots: `docs/screens/u8-bank-accounts.png`,
 `u8-reconcile.png` (keys `j j j` Enter, End), `u8-import.png` (then `i`, a path, Enter;
 the sample statement is `docs/screens/u8-mpesa-statement.csv`, synthetic) and
-`u8-reconcile-matched.png` (`a`, Page Down). `wtype` stops at the first `.` in typed text on
-this machine, so the shot typed a dot-free symlink to the sample.
+`u8-reconcile-matched.png` (`a`, Page Down). Typing the absolute path of the sample (under `~/.herdr/...`) with `wtype` was cut at
+`/home/tim0/`, so the shot typed a relative, dot-free symlink to it (`out/u8-statement`).
