@@ -707,7 +707,12 @@ fn statement_table(table: &Table, p: &Palette) -> impl IntoElement {
             .text_size(px(text::LABEL))
             .font_weight(FontWeight::SEMIBOLD)
             .text_color(p.ink_muted.to_hsla())
-            .child(div().flex_1().child(table.first_column.clone()))
+            .child(
+                div()
+                    .flex_1()
+                    .min_w(px(0.0))
+                    .child(table.first_column.clone()),
+            )
             .children(table.columns.iter().map(|c| figure_cell(c.clone())));
         v_flex()
             .child(head)
@@ -745,8 +750,11 @@ fn statement_row(row: &Row, p: &Palette) -> AnyElement {
         kind => {
             let label = v_flex()
                 .flex_1()
+                .min_w(px(0.0))
                 .child(
                     h_flex()
+                        .items_start()
+                        .min_w(px(0.0))
                         .gap(px(8.0))
                         .when_some(row.code.clone(), |line, code| {
                             line.child(
@@ -758,7 +766,7 @@ fn statement_row(row: &Row, p: &Palette) -> AnyElement {
                                     .child(code),
                             )
                         })
-                        .child(row.label.clone()),
+                        .child(div().flex_1().min_w(px(0.0)).child(row.label.clone())),
                 )
                 .when_some(row.detail.clone(), |col, detail| {
                     col.child(
@@ -817,11 +825,15 @@ fn footing_check(f: &Footing, p: &Palette) -> impl IntoElement {
         .text_size(px(text::BODY))
         .child(
             h_flex()
+                .flex_1()
+                .min_w(px(0.0))
                 .items_start()
                 .gap(px(12.0))
                 .child(div().mt(px(6.0)).w(px(22.0)).h(px(3.0)).bg(mark.to_hsla()))
                 .child(
                     v_flex()
+                        .flex_1()
+                        .min_w(px(0.0))
                         .child(
                             h_flex()
                                 .gap(px(6.0))
@@ -832,7 +844,7 @@ fn footing_check(f: &Footing, p: &Palette) -> impl IntoElement {
                                         .when(!ok, |d| d.text_color(p.signal_orange.to_hsla()))
                                         .child(if ok { "Foots." } else { "Does not foot." }),
                                 )
-                                .child(f.statement.clone()),
+                                .child(div().min_w(px(0.0)).child(f.statement.clone())),
                         )
                         .when_some(f.detail.clone(), |col, detail| {
                             col.child(

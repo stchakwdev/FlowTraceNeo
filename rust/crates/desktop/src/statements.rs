@@ -1,7 +1,8 @@
 //! The financial statements as plain rows, with no GPUI types, so they are unit-tested: which
 //! report and parameters are chosen ([`ReportForm`], [`ReportParams`]), the statement laid out
 //! as tables, key figures and footing checks ([`Statement`]), the CSV of each report
-//! ([`csv_rows`]) and the display formats ([`format_minor`], [`format_date`]).
+//! ([`csv_rows`]) and the display formats ([`format_compact`], [`to_fixed`]; [`format_minor`]
+//! and [`format_date`] are the Accounts screen's, re-exported).
 //!
 //! Figures come straight from `ledger_core::reports`; this module only sets them out. The layout
 //! and the CSV columns mirror the web screen, `ReportBody` and `reportCsv` in
@@ -15,6 +16,8 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use ledger_core::Minor;
+
+pub use crate::accounts::{format_date, format_minor};
 use ledger_core::csv::{CsvCell, to_csv};
 use ledger_core::money::{format_major, js_round};
 use ledger_core::reports::{self, Basis, LineFilter, ReportError, RestrictionTotals, WarningLevel};
@@ -1455,19 +1458,6 @@ pub fn resolve_export_path(text: &str, home: Option<&Path>) -> Option<PathBuf> {
     }
 }
 
-/// An amount for display (`formatMinor` in `flowtrace/src/components/ledger/money.tsx`): two
-/// decimals with `en-KE` thousands separators, negatives in parentheses, zero as an en dash.
-/// Worked in integers, so no amount rounds.
-#[must_use]
-pub fn format_minor(minor: Minor) -> String {
-    if minor == 0 {
-        return "\u{2013}".to_owned();
-    }
-    let abs = minor.unsigned_abs();
-    let text = format!("{}.{:02}", group(abs / 100), abs % 100);
-    if minor < 0 { format!("({text})") } else { text }
-}
-
 /// A whole number with commas every three digits.
 fn group(n: u64) -> String {
     let digits = n.to_string();
@@ -1497,24 +1487,6 @@ pub fn format_compact(minor: Minor) -> String {
     } else {
         format!("{sign}{}", group(rounded(a).unsigned_abs()))
     }
-}
-
-/// `en-GB` short month names as current ICU writes them (September is "Sept").
-const MONTHS: [&str; 12] = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec",
-];
-
-/// A date as the web app prints it (`formatDate` in `flowtrace/src/lib/format.ts`, `en-GB`
-/// day, short month, year, in UTC): `4 Feb 2026`.
-#[must_use]
-pub fn format_date(date: &IsoDate) -> String {
-    let (year, month, day) = parts(date);
-    let name = usize::try_from(month - 1)
-        .ok()
-        .and_then(|m| MONTHS.get(m))
-        .copied()
-        .unwrap_or("");
-    format!("{day} {name} {year}")
 }
 
 /// `Number.prototype.toFixed(digits)` for finite numbers below 1e21: rounded from the exact

@@ -479,6 +479,7 @@ impl Render for Shell {
                         .id("content")
                         .track_scroll(&self.scroll)
                         .flex_1()
+                        .min_w(px(0.0))
                         .h_full()
                         .overflow_y_scroll()
                         .px(px(space::GUTTER))
