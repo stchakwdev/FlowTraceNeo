@@ -66,6 +66,8 @@ fn fail<T>(code: IssueCode, message: impl Into<String>) -> Result<T, Error> {
 enum Permission {
     /// `can_post`
     Post,
+    /// `can_approve`
+    Approve,
     /// `can_close`
     Close,
 }
@@ -74,6 +76,7 @@ enum Permission {
 fn require(actor: &Actor, perm: Permission) -> Result<(), Error> {
     let (allowed, what) = match perm {
         Permission::Post => (actor.can_post, "post to the ledger"),
+        Permission::Approve => (actor.can_approve, "approve spend"),
         Permission::Close => (actor.can_close, "close periods"),
     };
     if allowed {

@@ -27,8 +27,9 @@ struct LineValues {
 }
 
 /// An entry checked and ready to store: its date and its lines.
-struct Prepared {
-    date: IsoDate,
+pub(super) struct Prepared {
+    /// The entry date, valid once the entry is checked.
+    pub(super) date: IsoDate,
     lines: Vec<LineValues>,
 }
 
@@ -223,7 +224,7 @@ impl Ledger<'_> {
 
     /// `post`'s checks (`engine.ts:528-530`): permission, then every blocking issue of
     /// `validateEntry` (overridable ones pass when the input carries an override reason).
-    fn check_post(
+    pub(super) fn check_post(
         &self,
         actor: &Actor,
         input: &EntryInput,
@@ -239,7 +240,7 @@ impl Ledger<'_> {
 
     /// `post` after its checks (`engine.ts:531-536`): stores the draft, then marks it posted by
     /// the actor now and draws the `entry.post` audit id (detail the number).
-    fn store_posted(
+    pub(super) fn store_posted(
         &mut self,
         actor: &Actor,
         input: &EntryInput,

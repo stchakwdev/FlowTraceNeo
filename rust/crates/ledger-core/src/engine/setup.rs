@@ -7,6 +7,7 @@ use super::{
     Error, Ledger, Permission, fail, has_text, js_trim, json_string, normal_balance_of, require,
 };
 use crate::errors::IssueCode;
+use crate::money::assert_minor;
 use crate::types::{
     Account, AccountId, AccountType, Actor, CashFlowClass, DimensionId, DimensionKind,
     DimensionValue, ExpenseFunction, FiscalPeriod, FlowNodeId, Fund, FundId, FundRestriction,
@@ -133,7 +134,7 @@ fn days_in_month(year: i32, month: i32) -> i32 {
 }
 
 /// A truthy id: TS tests `input.id &&` and `if (input.parent_id)`, so an empty string is false.
-fn truthy<T: AsRef<str>>(id: Option<&T>) -> Option<&T> {
+pub(super) fn truthy<T: AsRef<str>>(id: Option<&T>) -> Option<&T> {
     id.filter(|id| !id.as_ref().is_empty())
 }
 
@@ -356,8 +357,42 @@ impl Ledger<'_> {
     ///
     /// [`Error::Ledger`] with the codes above, [`Error::Money`] for a fractional award.
     pub fn add_grant(&mut self, actor: &Actor, input: NewGrant) -> Result<Grant, Error> {
-        let _ = (actor, input);
-        todo!()
+        require(actor, Permission::Post)?;
+        if self.state.fund(&input.fund_id).is_none() {
+            return fail(IssueCode::UnknownFund, "Fund not found.");
+        }
+        if truthy(input.id.as_ref()).is_some_and(|id| self.state.grant(id).is_some()) {
+            return fail(IssueCode::Duplicate, "A grant with this id already exists.");
+        }
+        let award = assert_minor(input.award, "Award")?;
+        if award <= 0 {
+            return fail(IssueCode::InvalidInput, "The award must be positive.");
+        }
+        if input.end_date < input.start_date {
+            return fail(
+                IssueCode::InvalidInput,
+                "A grant cannot end before it starts.",
+            );
+        }
+        let id = match input.id {
+            Some(id) => id,
+            None => GrantId::from(self.env.new_id()),
+        };
+        let grant = Grant {
+            id,
+            name: input.name,
+            donor_node_id: input.donor_node_id,
+            donor_name: input.donor_name,
+            fund_id: input.fund_id,
+            award,
+            currency: input.currency,
+            start_date: input.start_date,
+            end_date: input.end_date,
+            terms: input.terms,
+        };
+        self.state.grants.push(grant.clone());
+        self.audit(actor, "grant.create", grant.id.as_str(), &grant.name);
+        Ok(grant)
     }
 
     /// `addDimension` (`engine.ts:253-261`): adds a dimension value. Needs `can_post`. No

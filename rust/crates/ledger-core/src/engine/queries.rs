@@ -88,8 +88,23 @@ impl LedgerState {
     ///
     /// `NOT_FOUND` "Bill not found." or "Claim not found." when there is no such document.
     pub fn outstanding(&self, doc: &AppliesTo) -> Result<Minor, LedgerError> {
-        let _ = doc;
-        todo!()
+        let lines = match doc {
+            AppliesTo::Bill(id) => &self.bill(id)?.lines,
+            AppliesTo::ExpenseClaim(id) => &self.claim(id)?.lines,
+        };
+        let total: Minor = lines.iter().map(|l| l.amount).sum();
+        let paid: Minor = self
+            .payments
+            .iter()
+            .filter(|p| {
+                &p.applies_to == doc
+                    && self
+                        .entry(&p.entry_id)
+                        .is_some_and(|e| e.status == EntryStatus::Posted)
+            })
+            .map(|p| p.amount)
+            .sum();
+        Ok(total - paid)
     }
 
     /// The private `bill(id)` (`engine.ts:818-820`), for reversals of bill entries.

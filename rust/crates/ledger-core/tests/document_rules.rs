@@ -75,8 +75,11 @@ fn books() -> (LedgerState, FixedEnv) {
 
 fn with(base: Value, patch: Value) -> Value {
     let mut v = base;
-    for (k, x) in patch.as_object().unwrap() {
-        v[k] = x.clone();
+    let Value::Object(patch) = patch else {
+        panic!("a patch is an object")
+    };
+    for (k, x) in patch {
+        v[k] = x;
     }
     v
 }
@@ -93,10 +96,12 @@ fn grant(patch: Value) -> NewGrant {
 }
 
 fn coded(amount: Value, fund: &str, grant: Option<&str>) -> Value {
-    json!({
-        "description": "x", "account_id": "acc-5500", "amount": amount, "fund_id": fund,
-        "grant_id": grant, "dimension_ids": []
-    })
+    let mut line = json!({
+        "description": "x", "account_id": "acc-5500", "fund_id": fund, "grant_id": grant,
+        "dimension_ids": []
+    });
+    line["amount"] = amount;
+    line
 }
 
 fn bill(patch: Value) -> NewBill {
@@ -122,7 +127,9 @@ fn claim(patch: Value) -> NewClaim {
 }
 
 fn payment(amount: Value) -> PaymentInput {
-    from(json!({ "date": "2026-02-02", "cash_account_id": "acc-1110", "amount": amount }))
+    let mut input = json!({ "date": "2026-02-02", "cash_account_id": "acc-1110" });
+    input["amount"] = amount;
+    from(input)
 }
 
 fn reimbursement() -> ReimburseInput {
@@ -447,7 +454,11 @@ fn vendor_and_bill_rules() {
         Some(UnknownFund),
         "Line 1: choose a fund.",
     );
+}
 
+#[test]
+fn bill_approval_and_posting_rules() {
+    let b = books();
     let mut id = BillId::from("");
     let entered = after(&b, |l| id = entered_bill(l, bill(json!({})), false));
     // engine.ts:848 (require)
