@@ -6,6 +6,7 @@ pub mod accounts;
 pub mod bills;
 pub mod general_ledger;
 pub mod grants;
+pub mod journal;
 pub mod reports;
 pub mod spend;
 

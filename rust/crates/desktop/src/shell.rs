@@ -23,8 +23,9 @@ use gpui_kit::{
 use crate::model::{ConnectForm, LedgerView, NavEntry, Navigation, Screen, scroll_target};
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
-use crate::panels::general_ledger::GeneralLedgerPanel;
+use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
 use crate::panels::grants::GrantsPanel;
+use crate::panels::journal::JournalPanel;
 use crate::panels::reports::ReportsPanel;
 use crate::panels::spend::SpendPanel;
 use crate::statements::ReportKind;
@@ -40,6 +41,7 @@ pub struct Shell {
     nav: Navigation,
     accounts: Entity<AccountsPanel>,
     general_ledger: Entity<GeneralLedgerPanel>,
+    journal: Entity<JournalPanel>,
     org_select: Entity<SelectState<OrgItems>>,
     host: Entity<InputState>,
     database: Entity<InputState>,
@@ -85,10 +87,12 @@ impl Shell {
         let general_ledger = cx.new(|cx| GeneralLedgerPanel::new(store.clone(), window, cx));
         let spend = cx.new(|cx| SpendPanel::new(store.clone(), window, cx));
         let grants = cx.new(|cx| GrantsPanel::new(store.clone(), window, cx));
+        let journal = cx.new(|cx| JournalPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe(&store, |_, _, cx| cx.notify()),
             cx.subscribe_in(&org_select, window, Self::on_org_selected),
+            cx.subscribe_in(&general_ledger, window, Self::on_open_entry),
         ];
 
         let focus = cx.focus_handle();
@@ -99,6 +103,7 @@ impl Shell {
             nav,
             accounts,
             general_ledger,
+            journal,
             org_select,
             host,
             database,
@@ -123,6 +128,20 @@ impl Shell {
     #[must_use]
     pub fn general_ledger(&self) -> &Entity<GeneralLedgerPanel> {
         &self.general_ledger
+    }
+
+    /// A line clicked in the General ledger opens its entry on the Journal screen.
+    fn on_open_entry(
+        &mut self,
+        _: &Entity<GeneralLedgerPanel>,
+        event: &OpenEntry,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let id = event.0.clone();
+        self.journal
+            .update(cx, |journal, cx| journal.open_entry(id, cx));
+        self.select_entry(NavEntry::Journal, window, cx);
     }
 
     fn on_org_selected(
@@ -171,6 +190,11 @@ impl Shell {
                 && self.nav.entry == NavEntry::Accounts
                 && self
                     .accounts
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Journal
+                && self
+                    .journal
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)))
             || (books
                 && self.nav.entry == NavEntry::Spend
@@ -255,9 +279,8 @@ impl Shell {
         match entry {
             NavEntry::Accounts => self.accounts.clone().into_any_element(),
             NavEntry::GeneralLedger => self.general_ledger.clone().into_any_element(),
-            NavEntry::Journal | NavEntry::Reconcile => {
-                panels::placeholder(entry, view, demo, cx).into_any_element()
-            }
+            NavEntry::Journal => self.journal.clone().into_any_element(),
+            NavEntry::Reconcile => panels::placeholder(entry, view, demo, cx).into_any_element(),
             NavEntry::Spend => self.spend.clone().into_any_element(),
             NavEntry::Grants => self.grants.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),

@@ -1,0 +1,8 @@
+Date,Transaction Type,Num,Name,Memo/Description,Account,Debit,Credit
+01/15/2026,Journal Entry,12,,Office rent January,7500 Rent,"45,000.00",
+,,,,,Bank: Main operating account,,"45,000.00"
+01/20/2026,Journal Entry,13,,Fuel for the Lodwar field visit,7200,"1,000.00",
+,,,,,1110 Bank: Main operating account,,"1,000.00"
+01/28/2026,Journal Entry,14,,Audit fee accrual,7600,"25,000.00",
+,,,,,2200,,"20,000.00"
+01/30/2026,Journal Entry,15,,Unknown,9999 Mystery,100,
