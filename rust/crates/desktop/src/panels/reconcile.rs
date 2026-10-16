@@ -1506,7 +1506,7 @@ impl ReconcilePanel {
                 .justify_end()
                 .gap(px(8.0))
                 .when_some(r.entry.clone(), |v, (_, number)| {
-                    v.child(div().text_color(p.report_blue_ink.to_hsla()).child(number))
+                    v.child(div().text_color(p.report_blue.to_hsla()).child(number))
                 })
                 .child(
                     Button::new(SharedString::from(format!("unmatch-{}", id.as_str())))
