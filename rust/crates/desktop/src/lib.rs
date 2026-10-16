@@ -11,6 +11,7 @@ pub mod backend;
 pub mod bills;
 pub mod claims;
 pub mod general_ledger;
+pub mod grants;
 pub mod large_books;
 pub mod model;
 pub mod panels;

@@ -11,6 +11,7 @@ use gpui_kit::{
 use crate::backend::InProcessBackend;
 use crate::model::Navigation;
 use crate::panels::general_ledger::GlLaunch;
+use crate::panels::grants::GrantsView;
 use crate::shell::Shell;
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
@@ -35,6 +36,8 @@ pub struct Launch {
     pub large_books: Option<usize>,
     /// What the General ledger shows first.
     pub general_ledger: GlLaunch,
+    /// What the Grants entry shows first: `list`, `budgets` or a grant id.
+    pub grants: Option<String>,
 }
 
 /// Opens the window and runs until it closes.
@@ -87,6 +90,12 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
                 let shell = cx.new(|cx| Shell::new(store, launch.nav, window, cx));
                 if let Some(kind) = launch.report {
                     shell.update(cx, |shell, cx| shell.show_report(kind, window, cx));
+                }
+                if let Some(value) = &launch.grants {
+                    let grants = shell.read(cx).grants().clone();
+                    grants.update(cx, |panel, cx| {
+                        panel.show(GrantsView::from_launch(value), window, cx);
+                    });
                 }
                 let panel = shell.read(cx).general_ledger().clone();
                 panel.update(cx, |panel, cx| {

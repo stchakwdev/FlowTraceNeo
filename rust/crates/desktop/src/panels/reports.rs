@@ -585,7 +585,7 @@ fn field(label: &'static str, control: impl IntoElement) -> impl IntoElement {
 
 /// One segment of a segmented control: report blue when chosen, muted with a wash on hover
 /// otherwise.
-fn segment(
+pub(crate) fn segment(
     id: &'static str,
     label: &str,
     active: bool,
@@ -648,7 +648,7 @@ fn statement_body(s: &Statement, org: Option<&str>, p: &Palette) -> impl IntoEle
 }
 
 /// A row of key figures (`KeyFigures`).
-fn key_figures(figures: &[KeyFigure], p: &Palette) -> impl IntoElement {
+pub(crate) fn key_figures(figures: &[KeyFigure], p: &Palette) -> impl IntoElement {
     h_flex()
         .border_b(px(space::HAIRLINE))
         .border_color(p.hairline.to_hsla())
@@ -679,7 +679,7 @@ fn key_figures(figures: &[KeyFigure], p: &Palette) -> impl IntoElement {
 }
 
 /// A statement table (`StatementTable`, `GroupHeading`, `AmountRow`, `GapRow`).
-fn statement_table(table: &Table, p: &Palette) -> impl IntoElement {
+pub(crate) fn statement_table(table: &Table, p: &Palette) -> impl IntoElement {
     let title = table.title.clone().map(|title| {
         div()
             .mt(px(space::SECTION))
