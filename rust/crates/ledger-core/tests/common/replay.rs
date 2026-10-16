@@ -82,7 +82,7 @@ pub fn call(l: &mut Ledger<'_>, method: &str, a: &Value) -> Option<Result<Value,
         "openFiscalYear" => out(l
             .open_fiscal_year(&arg(a, 0), arg(a, 1))
             .map(|()| Value::Null)),
-        "ensureFiscalYear" => Ok(Value::Null).inspect(|_| l.ensure_fiscal_year(arg(a, 0))),
+        "ensureFiscalYear" => out(l.ensure_fiscal_year(arg(a, 0)).map(|()| Value::Null)),
         "saveDraft" => out(l.save_draft(&arg(a, 0), &arg(a, 1))),
         "post" => out(l.post(&arg(a, 0), &arg(a, 1), opt(a, 2))),
         "updateDraft" => out(l.update_draft(&arg(a, 0), &arg(a, 1), &arg(a, 2))),
@@ -421,7 +421,8 @@ fn check_outcome(
     outcome: Option<Result<Value, Error>>,
     what: &str,
 ) -> Ran {
-    let ok = step["outcome"] == "ok";
+    // Backfill steps carry no `outcome`: every one of them was accepted.
+    let ok = step.get("outcome").is_none_or(|o| o == "ok");
     match outcome {
         Some(Ok(result)) => {
             assert!(

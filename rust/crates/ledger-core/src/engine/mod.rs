@@ -1,281 +1,213 @@
-//! The ledger engine, mirroring the `Ledger` class of `flowtrace/src/lib/ledger/engine.ts`.
+//! The ledger engine: every write goes through here, mirroring the `Ledger` class of
+//! `flowtrace/src/lib/ledger/engine.ts`.
 //!
-//! Skeleton for the failing parity tests; the next commit fills it in.
+//! The invariants of `Docs/flowtrace-ledger-plan.md` section 5 are checked here rather than in a
+//! UI (`engine.ts:1-11`): a posted entry balances in base currency and within each fund; posted
+//! entries are immutable and a correction is a reversal plus a new entry; nothing posts into a
+//! closed or locked period; restricted spend names its grant, and grant dates and awards block
+//! unless an override reason is given; amounts are integer minor units and base amounts are
+//! frozen at posting.
+//!
+//! Shape: [`Ledger`] borrows the books and a [`LedgerEnv`] for writes, as
+//! `new Ledger(state, env)` (`engine.ts:103-107`). Reads are methods on [`LedgerState`] and never
+//! call the env (`engine-queries.json`). Every id and timestamp comes from the env, drawn in the
+//! order the TS engine draws them, so a replay with a fixed env reproduces the fixtures.
+//!
+//! A rejected write returns before its first change, so the books and the env are left as they
+//! were. TS mutates in place and has its callers discard the books on a throw
+//! (`commands.ts:85-89`); the outcome is the same, and Rust checks every rule first.
 
-use serde::Deserialize;
+mod entries;
+mod periods;
+mod queries;
+mod setup;
+mod validate;
+
+pub use setup::{AccountPatch, NewAccount, NewDimension, NewFund};
+pub use validate::EntryOptions;
+
+use std::collections::BTreeMap;
 
 use crate::env::LedgerEnv;
-use crate::errors::{Issue, LedgerError};
-use crate::money::{Minor, MoneyError};
+use crate::errors::{IssueCode, LedgerError};
+use crate::money::MoneyError;
 use crate::types::{
-    Account, AccountId, AccountType, Actor, CashFlowClass, ClaimId, DimensionId, DimensionKind,
-    DimensionValue, EntryId, EntryInput, ExpenseClaim, ExpenseFunction, FiscalPeriod, FlowNodeId,
-    Fund, FundId, FundRestriction, Grant, GrantId, JournalEntry, JournalLine, LedgerState,
-    NormalBalance, Nullish, OrgLedgerSettings, PeriodId,
+    AccountType, Actor, AuditEvent, AuditEventId, LedgerState, NormalBalance, OrgLedgerSettings,
 };
 
-/// Why an engine call failed.
+/// Why an engine call failed: a ledger rule ([`LedgerError`]), or a `RangeError` from
+/// `money.ts` ([`MoneyError`]) that TS lets escape the engine, such as a draft line in a foreign
+/// currency with no rate (`money.ts:36-39`).
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
-    /// A ledger rule.
+    /// A broken ledger rule, with its code and message.
     #[error(transparent)]
     Ledger(#[from] LedgerError),
-    /// A `RangeError` from `money.ts`.
+    /// An amount or rate `money.ts` refuses.
     #[error(transparent)]
     Money(#[from] MoneyError),
 }
 
-/// Options of `validateEntry` and `post`.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
-pub struct EntryOptions {
-    /// A system posting.
-    #[serde(default)]
-    pub system: bool,
+/// `fail(code, message)` (`errors.ts:56-58`) as an `Err`.
+fn fail<T>(code: IssueCode, message: impl Into<String>) -> Result<T, Error> {
+    Err(LedgerError::fail(code, message).into())
 }
 
-/// `addAccount` input.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct NewAccount {
-    /// Id.
-    #[serde(default)]
-    pub id: Option<AccountId>,
-    /// Code.
-    pub code: String,
-    /// Name.
-    pub name: String,
-    /// Type.
-    #[serde(rename = "type")]
-    pub account_type: AccountType,
-    /// Parent.
-    #[serde(default)]
-    pub parent_id: Option<AccountId>,
-    /// Header account.
-    pub is_group: bool,
-    /// Active.
-    #[serde(default)]
-    pub is_active: Option<bool>,
-    /// Cash.
-    pub is_cash: bool,
-    /// Function.
-    #[serde(default)]
-    pub expense_function: Option<ExpenseFunction>,
-    /// Cash-flow class.
-    #[serde(default)]
-    pub cash_flow_class: Option<CashFlowClass>,
+/// The permissions `require` checks (`engine.ts:154-163`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Permission {
+    /// `can_post`
+    Post,
+    /// `can_close`
+    Close,
 }
 
-/// `updateAccount` patch.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
-pub struct AccountPatch {
-    /// Name.
-    #[serde(default)]
-    pub name: Option<String>,
-    /// Active.
-    #[serde(default)]
-    pub is_active: Option<bool>,
-    /// Function.
-    #[serde(default)]
-    pub expense_function: Nullish<ExpenseFunction>,
+/// `require(actor, perm)` (`engine.ts:154-163`): `PERMISSION` naming the actor and the act.
+fn require(actor: &Actor, perm: Permission) -> Result<(), Error> {
+    let (allowed, what) = match perm {
+        Permission::Post => (actor.can_post, "post to the ledger"),
+        Permission::Close => (actor.can_close, "close periods"),
+    };
+    if allowed {
+        Ok(())
+    } else {
+        fail(
+            IssueCode::Permission,
+            format!("{} does not have permission to {what}.", actor.name),
+        )
+    }
 }
 
-/// `addFund` input.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct NewFund {
-    /// Id.
-    #[serde(default)]
-    pub id: Option<FundId>,
-    /// Name.
-    pub name: String,
-    /// Restriction.
-    pub restriction: FundRestriction,
+/// `String.prototype.trim`: strips JS whitespace and line terminators (ECMA-262 `TrimString`),
+/// which include U+FEFF and leave out U+0085, unlike [`str::trim`].
+fn js_trim(s: &str) -> &str {
+    s.trim_matches(crate::money::is_js_whitespace)
 }
 
-/// `addDimension` input.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct NewDimension {
-    /// Id.
-    #[serde(default)]
-    pub id: Option<DimensionId>,
-    /// Kind.
-    pub kind: DimensionKind,
-    /// Name.
-    pub name: String,
-    /// Node.
-    #[serde(default)]
-    pub node_id: Option<FlowNodeId>,
+/// `s.trim()` is non-empty: the TS test `!s.trim()` negated.
+fn has_text(s: &str) -> bool {
+    !js_trim(s).is_empty()
 }
 
-/// `normalBalanceOf`.
+/// `JSON.stringify` of a string (ECMA-262 `QuoteJSONString`): quotes, backslash, the short
+/// escapes and `\u00xx` for the other control characters; everything else as is.
+fn json_string(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\u{8}' => out.push_str("\\b"),
+            '\u{c}' => out.push_str("\\f"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if u32::from(c) < 0x20 => {
+                let n = u32::from(c);
+                out.push_str("\\u00");
+                out.extend([n >> 4, n & 0xf].map(|d| char::from_digit(d, 16).unwrap_or('0')));
+            }
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
+/// `normalBalanceOf(type)` (`engine.ts:95-97`): assets and expenses are debit-normal, the rest
+/// credit-normal.
 #[must_use]
-pub fn normal_balance_of(_account_type: AccountType) -> NormalBalance {
-    todo!()
+pub fn normal_balance_of(account_type: AccountType) -> NormalBalance {
+    match account_type {
+        AccountType::Asset | AccountType::Expense => NormalBalance::Debit,
+        AccountType::Liability | AccountType::Equity | AccountType::Income => NormalBalance::Credit,
+    }
 }
 
-/// `emptyLedger`.
+/// `emptyLedger(settings)` (`engine.ts:51-72`): books with the settings and nothing else.
 #[must_use]
-pub fn empty_ledger(_settings: OrgLedgerSettings) -> LedgerState {
-    todo!()
+pub fn empty_ledger(settings: OrgLedgerSettings) -> LedgerState {
+    LedgerState {
+        settings,
+        accounts: Vec::new(),
+        funds: Vec::new(),
+        grants: Vec::new(),
+        dimensions: Vec::new(),
+        periods: Vec::new(),
+        entries: Vec::new(),
+        lines: Vec::new(),
+        budgets: Vec::new(),
+        budget_lines: Vec::new(),
+        vendors: Vec::new(),
+        bills: Vec::new(),
+        payments: Vec::new(),
+        claims: Vec::new(),
+        bank_accounts: Vec::new(),
+        statement_lines: Vec::new(),
+        audit: Vec::new(),
+        counters: BTreeMap::new(),
+    }
 }
 
-/// The engine over one organisation's books.
+/// A read-and-write view over one organisation's books (`engine.ts:99-107`): reads through
+/// [`Ledger::state`], writes through the methods, ids and time from the env.
 pub struct Ledger<'a> {
     state: &'a mut LedgerState,
     env: &'a mut dyn LedgerEnv,
 }
 
-#[allow(
-    missing_docs,
-    clippy::missing_errors_doc,
-    clippy::needless_pass_by_value
-)]
 impl<'a> Ledger<'a> {
+    /// `new Ledger(state, env)` (`engine.ts:104-107`).
     pub fn new(state: &'a mut LedgerState, env: &'a mut dyn LedgerEnv) -> Self {
         Self { state, env }
     }
+
+    /// The books, for reads.
     #[must_use]
     pub fn state(&self) -> &LedgerState {
-        let _ = &self.env;
         self.state
     }
-    pub fn add_account(&mut self, _actor: &Actor, _input: NewAccount) -> Result<Account, Error> {
-        todo!()
+
+    /// `nextNumber(prefix)` (`engine.ts:137-141`): bumps the counter and formats `JE-0001`.
+    fn next_number(&mut self, prefix: &str) -> String {
+        let n = self.state.counters.get(prefix).copied().unwrap_or(0) + 1;
+        self.state.counters.insert(prefix.to_owned(), n);
+        format!("{prefix}-{n:04}")
     }
-    pub fn update_account(
-        &mut self,
-        _actor: &Actor,
-        _id: &AccountId,
-        _patch: &AccountPatch,
-    ) -> Result<Account, Error> {
-        todo!()
-    }
-    pub fn add_fund(&mut self, _actor: &Actor, _input: NewFund) -> Result<Fund, Error> {
-        todo!()
-    }
-    pub fn add_dimension(
-        &mut self,
-        _actor: &Actor,
-        _input: NewDimension,
-    ) -> Result<DimensionValue, Error> {
-        todo!()
-    }
-    pub fn open_fiscal_year(&mut self, _actor: &Actor, _year: i32) -> Result<(), Error> {
-        todo!()
-    }
-    pub fn ensure_fiscal_year(&mut self, _year: i32) {
-        todo!()
-    }
-    pub fn save_draft(
-        &mut self,
-        _actor: &Actor,
-        _input: &EntryInput,
-    ) -> Result<JournalEntry, Error> {
-        todo!()
-    }
-    pub fn post(
-        &mut self,
-        _actor: &Actor,
-        _input: &EntryInput,
-        _opts: EntryOptions,
-    ) -> Result<JournalEntry, Error> {
-        todo!()
-    }
-    pub fn update_draft(
-        &mut self,
-        _actor: &Actor,
-        _id: &EntryId,
-        _input: &EntryInput,
-    ) -> Result<JournalEntry, Error> {
-        todo!()
-    }
-    pub fn delete_draft(&mut self, _actor: &Actor, _id: &EntryId) -> Result<(), Error> {
-        todo!()
-    }
-    pub fn post_draft(
-        &mut self,
-        _actor: &Actor,
-        _id: &EntryId,
-        _override_reason: Option<&str>,
-    ) -> Result<JournalEntry, Error> {
-        todo!()
-    }
-    pub fn reverse(
-        &mut self,
-        _actor: &Actor,
-        _id: &EntryId,
-        _date: &str,
-        _reason: &str,
-    ) -> Result<JournalEntry, Error> {
-        todo!()
-    }
-    pub fn close_period(&mut self, _actor: &Actor, _id: &PeriodId) -> Result<FiscalPeriod, Error> {
-        todo!()
-    }
-    pub fn reopen_period(
-        &mut self,
-        _actor: &Actor,
-        _id: &PeriodId,
-        _reason: &str,
-    ) -> Result<FiscalPeriod, Error> {
-        todo!()
-    }
-    pub fn lock_period(&mut self, _actor: &Actor, _id: &PeriodId) -> Result<FiscalPeriod, Error> {
-        todo!()
-    }
-    pub fn close_year(
-        &mut self,
-        _actor: &Actor,
-        _year: i32,
-    ) -> Result<Option<JournalEntry>, Error> {
-        todo!()
+
+    /// `audit(by, action, subject, detail)` (`engine.ts:143-152`): appends one event, drawing
+    /// one id.
+    fn audit(&mut self, by: &Actor, action: &str, subject: &str, detail: &str) {
+        let id = AuditEventId::from(self.env.new_id());
+        let at = self.env.now();
+        self.state.audit.push(AuditEvent {
+            id,
+            at,
+            by: by.id.clone(),
+            action: action.to_owned(),
+            subject: subject.to_owned(),
+            detail: detail.to_owned(),
+        });
     }
 }
 
-#[allow(missing_docs, clippy::missing_errors_doc)]
-impl LedgerState {
-    #[must_use]
-    pub fn account(&self, _id: &AccountId) -> Option<&Account> {
-        todo!()
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn json_string_escapes_as_json_stringify() {
+        assert_eq!(json_string("Internet, data"), r#""Internet, data""#);
+        assert_eq!(json_string("a\"b\\c"), r#""a\"b\\c""#);
+        assert_eq!(json_string("\n\t\u{1}"), r#""\n\t\u0001""#);
+        assert_eq!(json_string("caf\u{e9} \u{2019}"), "\"caf\u{e9} \u{2019}\"");
     }
-    #[must_use]
-    pub fn account_by_code(&self, _code: &str) -> Option<&Account> {
-        todo!()
-    }
-    #[must_use]
-    pub fn fund(&self, _id: &FundId) -> Option<&Fund> {
-        todo!()
-    }
-    #[must_use]
-    pub fn grant(&self, _id: &GrantId) -> Option<&Grant> {
-        todo!()
-    }
-    #[must_use]
-    pub fn entry(&self, _id: &EntryId) -> Option<&JournalEntry> {
-        todo!()
-    }
-    #[must_use]
-    pub fn lines_of(&self, _id: &EntryId) -> Vec<&JournalLine> {
-        todo!()
-    }
-    #[must_use]
-    pub fn period_for(&self, _date: &str) -> Option<&FiscalPeriod> {
-        todo!()
-    }
-    pub fn input_of(&self, _id: &EntryId) -> Result<EntryInput, LedgerError> {
-        todo!()
-    }
-    #[must_use]
-    pub fn grant_spend(&self, _grant: &GrantId, _ignore: Option<&EntryId>) -> Minor {
-        todo!()
-    }
-    pub fn validate_entry(
-        &self,
-        _input: &EntryInput,
-        _ignore: Option<&EntryId>,
-        _opts: EntryOptions,
-    ) -> Result<Vec<Issue>, Error> {
-        todo!()
-    }
-    pub fn claim(&self, _id: &ClaimId) -> Result<&ExpenseClaim, LedgerError> {
-        todo!()
+
+    #[test]
+    fn js_trim_follows_ecmascript_whitespace() {
+        assert_eq!(js_trim("\u{FEFF} x \u{3000}"), "x");
+        assert_eq!(js_trim("\u{85}x"), "\u{85}x");
+        assert!(!has_text(" \t\n"));
     }
 }

@@ -75,7 +75,7 @@ pub fn assert_safe(n: Minor, what: &str) -> Result<Minor, MoneyError> {
 
 /// JS `\s` (`WhiteSpace` and `LineTerminator`, ECMA-262 22.2.2.9). Unlike
 /// [`char::is_whitespace`] it includes U+FEFF and leaves out U+0085.
-fn is_js_whitespace(c: char) -> bool {
+pub(crate) fn is_js_whitespace(c: char) -> bool {
     matches!(
         c,
         '\t' | '\n' | '\u{000B}' | '\u{000C}' | '\r' | ' ' | '\u{00A0}' | '\u{1680}' | '\u{2000}'
