@@ -855,7 +855,7 @@ impl GrantsPanel {
         let Some(Ok(d)) = &self.detail else {
             return v_flex()
                 .gap(px(space::CELL))
-                .child(back)
+                .child(h_flex().child(back))
                 .child(notice(
                     "This grant is not in the books",
                     "The grant belongs to another organisation, or the id is wrong.",
@@ -885,7 +885,7 @@ impl GrantsPanel {
             .child(
                 v_flex()
                     .gap(px(8.0))
-                    .child(back)
+                    .child(h_flex().child(back))
                     .child(page_title(&d.grant.name))
                     .child(div().text_size(px(text::LEDE)).child(d.lede.clone())),
             )

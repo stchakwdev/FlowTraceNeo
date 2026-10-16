@@ -227,3 +227,27 @@ default account or contact field in the ledger, so the list shows payment detail
 flow-node id. Shots: `docs/screens/u6-bills.png`, `u6-vendors.png`, `u6-bill-new.png` (keys `b`,
 `n`, typing) and `u6-bill-detail.png`, `u6-bill-detail-books.png` (the paid AutoXpress bill,
 keys `b`, `j`, `j`, Enter, then End).
+
+## Grants (U7)
+
+`grants` holds the screen's view models, free of GPUI: `grant_rows` (every grant with its
+`reports::grant_summary`, most used first, as the web's `grants/index.tsx`), `grant_totals`,
+`grant_detail` (key figures, `runway`, the grant's budget lines and its posted lines through
+`GlFilter` with closing entries left out, newest first), `budget_view` (the chosen budget, else
+the one for the as-at year, else the latest; lines from `reports::budget_vs_actual` grouped
+grant, running, department as `budgets.tsx` groups them; `table()` for the Reports statement
+table, `figures()`, `bars()` for the chart), and the forms `NewGrantForm` (`grant.add`),
+`BudgetLineForm` and `LineEdit` (both `budgetLine.set`). Warnings are the engine's
+`warning_level`: 80% used from exactly 0.8, over above 1; a zero budget with spend has `used`
+Infinity and shows "spent with no budget" and an en dash in the Used column, as the web does.
+There is no command that adds a budget (TS `commands.ts` has none), so the budget tab shows the
+web's "No budget set up" notice on books without one.
+
+`panels::grants` draws it: keys `g` (grants), `b` (budget vs actual) and `n` (add a grant);
+clicking a grant opens its page. The budget chart is gpui-kit's `BarChart`
+(<https://gpui-kit.com/component/chart>), single-series, so each line gets a budget bar (gap
+grey) and an actual bar (report blue, signal orange at 80%, rejection red over) with unique band
+labels. `--grants list|budgets|<grant id>` opens the entry on a view for screenshots
+(`--entry 5 --grants grant-kisima-wash`). Tests: `tests/grants.rs`. Shots:
+`docs/screens/u7-grants.png`, `u7-grant-detail.png`, `u7-budgets.png` (figures and chart) and
+`u7-budgets-table.png` (Page Down: the over-budget line, the axis and the table).
