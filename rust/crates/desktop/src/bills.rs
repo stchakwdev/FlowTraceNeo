@@ -732,6 +732,26 @@ impl NewBillForm {
         (r > 0.0 && r.is_finite()).then_some(r)
     }
 
+    /// `toCodedLines` (`-shared.tsx:358-367`): trimmed descriptions, amounts in minor units,
+    /// the one dimension as the line's dimension list.
+    fn coded_lines(&self) -> Vec<NewCodedLine> {
+        self.lines
+            .iter()
+            .map(|l| {
+                #[expect(clippy::cast_precision_loss, reason = "minor units stay below 2^53")]
+                let amount = parse_money(&l.amount).unwrap_or(0) as f64;
+                NewCodedLine {
+                    description: l.description.trim().to_owned(),
+                    account_id: l.account_id.clone().unwrap_or_else(|| AccountId::from("")),
+                    amount,
+                    fund_id: l.fund_id.clone().unwrap_or_else(|| FundId::from("")),
+                    grant_id: l.grant_id.clone(),
+                    dimension_ids: l.dimension_id.iter().cloned().collect(),
+                }
+            })
+            .collect()
+    }
+
     /// The `bill.create` command, or what to fix first (`bills.new.tsx`, `check` and `save`).
     ///
     /// # Errors
@@ -808,23 +828,7 @@ impl NewBillForm {
         else {
             return Err(errors);
         };
-        // toCodedLines (`-shared.tsx:358-367`).
-        let lines = self
-            .lines
-            .iter()
-            .map(|l| {
-                #[expect(clippy::cast_precision_loss, reason = "minor units stay below 2^53")]
-                let amount = parse_money(&l.amount).unwrap_or(0) as f64;
-                NewCodedLine {
-                    description: l.description.trim().to_owned(),
-                    account_id: l.account_id.clone().unwrap_or_else(|| AccountId::from("")),
-                    amount,
-                    fund_id: l.fund_id.clone().unwrap_or_else(|| FundId::from("")),
-                    grant_id: l.grant_id.clone(),
-                    dimension_ids: l.dimension_id.iter().cloned().collect(),
-                }
-            })
-            .collect();
+        let lines = self.coded_lines();
         Ok(LedgerCommand::BillCreate {
             input: NewBill {
                 id: None,

@@ -401,7 +401,7 @@ impl BillsPanel {
                         self.vendor_failure = Some(Failure {
                             title: "Not added".into(),
                             ..f
-                        })
+                        });
                     }
                 }
             }
@@ -894,7 +894,7 @@ impl BillsPanel {
             .text_color(p.ink_muted.to_hsla())
             .child(col_bill().child("Supplier"))
             .child(col_wide().child("Payment details"))
-            .child(col_date().child("Flow node"))
+            .child(col_date().child("Flow map"))
             .child(col_count().child("Bills"))
             .child(col_money().child("Outstanding"));
         let rows = self.vendors.iter().map(|v| {
@@ -914,12 +914,13 @@ impl BillsPanel {
                             .unwrap_or_else(|| "\u{2013}".into()),
                     ),
                 )
-                .child(
-                    col_date()
-                        .text_size(px(text::MONO))
-                        .text_color(p.ink_muted.to_hsla())
-                        .child(v.flow_node.clone().unwrap_or_else(|| "\u{2013}".into())),
-                )
+                .child(col_date().text_color(p.ink_muted.to_hsla()).child(
+                    if v.flow_node.is_some() {
+                        "Linked"
+                    } else {
+                        "\u{2013}"
+                    },
+                ))
                 .child(col_count().child(v.bills.to_string()))
                 .child(
                     col_money()
@@ -1329,20 +1330,7 @@ impl BillsPanel {
         };
         let p = palette(cx.theme().mode);
         let b = &d.bill;
-        let figures = [
-            (format_whole(d.total), format!("Billed, {}", b.currency)),
-            (
-                d.outstanding
-                    .map_or_else(|| "\u{2013}".to_owned(), whole_or_zero),
-                "Outstanding".to_owned(),
-            ),
-            (whole_or_zero(d.paid), "Paid".to_owned()),
-            if d.overdue_days > 0 {
-                (d.overdue_days.to_string(), "Days overdue".to_owned())
-            } else {
-                (d.days_until_due.to_string(), "Days until due".to_owned())
-            },
-        ];
+        let figures = key_figures(d);
         let actions = d.actions.iter().map(|&a| {
             Button::new(SharedString::from(format!("act-{}", a.label())))
                 .primary()
@@ -1584,6 +1572,26 @@ impl BillsPanel {
     }
 }
 
+/// The bill's key figures (`bills.$id.tsx`, `KeyFigures`): billed, outstanding, paid, and
+/// days overdue or until due.
+fn key_figures(d: &BillDetail) -> [(String, String); 4] {
+    let b = &d.bill;
+    [
+        (format_whole(d.total), format!("Billed, {}", b.currency)),
+        (
+            d.outstanding
+                .map_or_else(|| "\u{2013}".to_owned(), whole_or_zero),
+            "Outstanding".to_owned(),
+        ),
+        (whole_or_zero(d.paid), "Paid".to_owned()),
+        if d.overdue_days > 0 {
+            (d.overdue_days.to_string(), "Days overdue".to_owned())
+        } else {
+            (d.days_until_due.to_string(), "Days until due".to_owned())
+        },
+    ]
+}
+
 /// Amounts with the currency, as `Money value currency`.
 fn money(minor: i64, currency: &str) -> String {
     format!("{currency} {}", format_minor(minor))
@@ -1630,7 +1638,7 @@ fn col_money() -> Div {
 }
 
 fn col_status() -> Div {
-    div().w(px(140.0)).flex_shrink_0().px(px(8.0))
+    div().w(px(140.0)).flex_shrink_0().px(px(8.0)).flex()
 }
 
 /// `DocStatus` (`-shared.tsx:88-118`): a square tag whose frame follows the status's tone.
