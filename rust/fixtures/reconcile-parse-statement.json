@@ -1,0 +1,274 @@
+{
+  "cases": [
+    {
+      "input_source": "flowtrace/src/lib/ledger/reconcile.test.ts:28-33",
+      "name": "M-Pesa statement with a failed row",
+      "result": {
+        "format": "mpesa",
+        "rows": [
+          {
+            "amount": -41000,
+            "date": "2026-02-01",
+            "description": "Customer Transfer Fuliza charge",
+            "reference": "RB17Q0XT3M"
+          },
+          {
+            "amount": 1500000,
+            "date": "2026-02-03",
+            "description": "Funds received from Equity Bank",
+            "reference": "RB34NNA81C"
+          }
+        ],
+        "skipped": [
+          {
+            "line": 4,
+            "reason": "status is failed"
+          }
+        ]
+      },
+      "text": "Receipt No.,Completion Time,Details,Transaction Status,Paid In,Withdrawn,Balance\nRB17Q0XT3M,2026-02-01 10:22:01,Customer Transfer Fuliza charge,Completed,,410.00,59590.00\nRB34NNA81C,2026-02-03 08:00:00,Funds received from Equity Bank,Completed,\"15,000.00\",,74590.00\nRB99FAILED,2026-02-03 09:00:00,Pay Bill to KPLC,Failed,,500.00,74590.00"
+    },
+    {
+      "input_source": "flowtrace/src/lib/ledger/reconcile.test.ts:44",
+      "name": "Bank CSV with debit and credit columns",
+      "result": {
+        "format": "bank",
+        "rows": [
+          {
+            "amount": -120050,
+            "date": "2026-01-15",
+            "description": "SUPPLIES",
+            "reference": "INV-9"
+          },
+          {
+            "amount": 500000,
+            "date": "2026-01-16",
+            "description": "GRANT",
+            "reference": "HHF-1"
+          }
+        ],
+        "skipped": []
+      },
+      "text": "Date,Narration,Reference,Debit,Credit\n15/01/2026,SUPPLIES,INV-9,\"1,200.50\",\n16/01/2026,GRANT,HHF-1,,5000"
+    },
+    {
+      "input_source": "flowtrace/src/routes/_authenticated/reconcile/$bankId.tsx:624",
+      "name": "M-Pesa placeholder from the statement import screen",
+      "result": {
+        "format": "mpesa",
+        "rows": [
+          {
+            "amount": 1500000,
+            "date": "2026-02-03",
+            "description": "Funds received",
+            "reference": "RB34NNA81C"
+          }
+        ],
+        "skipped": []
+      },
+      "text": "Receipt No.,Completion Time,Details,Transaction Status,Paid In,Withdrawn\nRB34NNA81C,2026-02-03 10:12,Funds received,Completed,15000,"
+    },
+    {
+      "input_source": "synthetic: written for this fixture (no MTN sample in flowtrace/)",
+      "name": "MTN MoMo statement, signed amount with a direction column",
+      "result": {
+        "format": "mtn",
+        "rows": [
+          {
+            "amount": -2500000,
+            "date": "2026-01-15",
+            "description": "Payment to supplier",
+            "reference": "EXT-77"
+          },
+          {
+            "amount": 4000050,
+            "date": "2026-01-16",
+            "description": "Deposit",
+            "reference": "FT-1002"
+          }
+        ],
+        "skipped": [
+          {
+            "line": 4,
+            "reason": "status is reversed"
+          }
+        ]
+      },
+      "text": "Financial Transaction Id,External Transaction Id,Date,Description,Status,Amount,Direction\nFT-1001,EXT-77,15/01/2026,Payment to supplier,Successful,\"25,000\",Dr\nFT-1002,,16-Jan-2026,Deposit,Successful,40000.50,Cr\nFT-1003,,17/01/2026,Reversal,Reversed,100,Dr"
+    },
+    {
+      "input_source": "synthetic: written for this fixture (no Airtel sample in flowtrace/)",
+      "name": "Airtel Money statement, money in and money out columns",
+      "result": {
+        "format": "airtel",
+        "rows": [
+          {
+            "amount": 500000,
+            "date": "2026-01-20",
+            "description": "Cash In",
+            "reference": "AT001"
+          },
+          {
+            "amount": -120025,
+            "date": "2026-01-20",
+            "description": "Merchant Payment",
+            "reference": "AT002"
+          }
+        ],
+        "skipped": [
+          {
+            "line": 4,
+            "reason": "no amount"
+          }
+        ]
+      },
+      "text": "Transaction ID,Transaction Date,Transaction Type,Service Type,Money In,Money Out,Transaction Status\nAT001,2026-01-20 08:15:00,Cash In,Agent,\"5,000\",,Success\nAT002,20 Jan 2026,Merchant Payment,Pay Bill,,(1200.25),Success\nAT003,2026-01-21,Bundle,Airtime,,,Success"
+    },
+    {
+      "input_source": "synthetic: written for this fixture",
+      "name": "Bank CSV with BOM, CRLF, a signed amount, a type column and bad rows",
+      "result": {
+        "format": "bank",
+        "rows": [
+          {
+            "amount": -50000,
+            "date": "2026-02-01",
+            "description": "CHEQUE 1001",
+            "reference": "CHQ1001"
+          },
+          {
+            "amount": -7550,
+            "date": "2026-02-02",
+            "description": "DEPOSIT",
+            "reference": null
+          }
+        ],
+        "skipped": [
+          {
+            "line": 4,
+            "reason": "no readable date"
+          },
+          {
+            "line": 5,
+            "reason": "no amount"
+          },
+          {
+            "line": 6,
+            "reason": "no amount"
+          }
+        ]
+      },
+      "text": "﻿Value Date,Particulars,Ref,Amount,Type\r\n01/02/2026,CHEQUE 1001,CHQ1001,500.00,DR\r\n02/02/2026,DEPOSIT,,(75.5),\r\nnot a date,BROKEN,,10,\r\n03/02/2026,ZERO,,0.00,\r\n04/02/2026,,,12.345,\r\n"
+    }
+  ],
+  "covers": [
+    "detectFormat",
+    "parseStatement"
+  ],
+  "description": "parseStatement over a statement CSV of every format (M-Pesa, MTN, Airtel, bank), from the tests and the import screen where a sample exists and synthetic otherwise (input_source says which); detectFormat over header sets for each branch.",
+  "detect_format": [
+    {
+      "args": [
+        [
+          "receipt no.",
+          "completion time",
+          "details"
+        ]
+      ],
+      "result": "mpesa"
+    },
+    {
+      "args": [
+        [
+          "receipt no"
+        ]
+      ],
+      "result": "mpesa"
+    },
+    {
+      "args": [
+        [
+          "completion time",
+          "paid in",
+          "withdrawn"
+        ]
+      ],
+      "result": "mpesa"
+    },
+    {
+      "args": [
+        [
+          "completion time",
+          "withdrawn"
+        ]
+      ],
+      "result": "bank"
+    },
+    {
+      "args": [
+        [
+          "external transaction id",
+          "amount"
+        ]
+      ],
+      "result": "mtn"
+    },
+    {
+      "args": [
+        [
+          "financial transaction id"
+        ]
+      ],
+      "result": "mtn"
+    },
+    {
+      "args": [
+        [
+          "transaction id",
+          "transaction type"
+        ]
+      ],
+      "result": "airtel"
+    },
+    {
+      "args": [
+        [
+          "transaction id",
+          "service type"
+        ]
+      ],
+      "result": "airtel"
+    },
+    {
+      "args": [
+        [
+          "transaction id"
+        ]
+      ],
+      "result": "bank"
+    },
+    {
+      "args": [
+        [
+          "date",
+          "narration",
+          "debit",
+          "credit"
+        ]
+      ],
+      "result": "bank"
+    },
+    {
+      "args": [
+        []
+      ],
+      "result": "bank"
+    }
+  ],
+  "env": null,
+  "fixture": "reconcile-parse-statement",
+  "sources": [
+    "flowtrace/src/lib/ledger/reconcile.ts#parseStatement",
+    "flowtrace/src/lib/ledger/reconcile.ts#detectFormat"
+  ]
+}

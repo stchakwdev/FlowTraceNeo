@@ -1,0 +1,70 @@
+{
+  "cases": [
+    {
+      "args": [
+        {
+          "normal_balance": "debit"
+        },
+        12345
+      ],
+      "result": 12345
+    },
+    {
+      "args": [
+        {
+          "normal_balance": "debit"
+        },
+        -12345
+      ],
+      "result": -12345
+    },
+    {
+      "args": [
+        {
+          "normal_balance": "debit"
+        },
+        0
+      ],
+      "result": 0
+    },
+    {
+      "args": [
+        {
+          "normal_balance": "credit"
+        },
+        12345
+      ],
+      "result": -12345
+    },
+    {
+      "args": [
+        {
+          "normal_balance": "credit"
+        },
+        -12345
+      ],
+      "result": 12345
+    },
+    {
+      "args": [
+        {
+          "normal_balance": "credit"
+        },
+        0
+      ],
+      "result": 0
+    }
+  ],
+  "covers": [
+    "natural"
+  ],
+  "description": "natural(account, signed) from reports.ts. Pure: no books. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-natural",
+  "function": "natural",
+  "signature": "natural(account, signed)",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#natural"
+  ],
+  "states": null
+}

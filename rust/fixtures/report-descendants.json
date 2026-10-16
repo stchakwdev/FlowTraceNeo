@@ -1,0 +1,368 @@
+{
+  "cases": [
+    {
+      "args": [
+        "acc-1000"
+      ],
+      "result": [
+        "acc-1000",
+        "acc-1100",
+        "acc-1110",
+        "acc-1120",
+        "acc-1130",
+        "acc-1140",
+        "acc-1150",
+        "acc-1160",
+        "acc-1200",
+        "acc-1210",
+        "acc-1220",
+        "acc-1300",
+        "acc-1400",
+        "acc-1500",
+        "acc-1510",
+        "acc-1520",
+        "acc-1590"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-1100"
+      ],
+      "result": [
+        "acc-1100",
+        "acc-1110",
+        "acc-1120",
+        "acc-1130",
+        "acc-1140",
+        "acc-1150",
+        "acc-1160"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-1200"
+      ],
+      "result": [
+        "acc-1200",
+        "acc-1210",
+        "acc-1220"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-1500"
+      ],
+      "result": [
+        "acc-1500",
+        "acc-1510",
+        "acc-1520",
+        "acc-1590"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-2000"
+      ],
+      "result": [
+        "acc-2000",
+        "acc-2100",
+        "acc-2110",
+        "acc-2200",
+        "acc-2300",
+        "acc-2400",
+        "acc-2500"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-3000"
+      ],
+      "result": [
+        "acc-3000",
+        "acc-3100",
+        "acc-3200"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-4000"
+      ],
+      "result": [
+        "acc-4000",
+        "acc-4100",
+        "acc-4200",
+        "acc-4300",
+        "acc-4400"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-5000"
+      ],
+      "result": [
+        "acc-5000",
+        "acc-5100",
+        "acc-5200",
+        "acc-5300",
+        "acc-5400",
+        "acc-5500",
+        "acc-5600",
+        "acc-5700"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-6000"
+      ],
+      "result": [
+        "acc-6000",
+        "acc-6100",
+        "acc-6200"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-7000"
+      ],
+      "result": [
+        "acc-7000",
+        "acc-7100",
+        "acc-7200",
+        "acc-7300",
+        "acc-7400",
+        "acc-7500",
+        "acc-7600",
+        "acc-7700",
+        "acc-7800"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-8000"
+      ],
+      "result": [
+        "acc-8000",
+        "acc-8100"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-1110"
+      ],
+      "result": [
+        "acc-1110"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-missing"
+      ],
+      "result": [
+        "acc-missing"
+      ],
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "acc-1000"
+      ],
+      "result": [
+        "acc-1000",
+        "acc-1100",
+        "acc-1110",
+        "acc-1120",
+        "acc-1130",
+        "acc-1140",
+        "acc-1150",
+        "acc-1160",
+        "acc-1200",
+        "acc-1210",
+        "acc-1220",
+        "acc-1300",
+        "acc-1400",
+        "acc-1500",
+        "acc-1510",
+        "acc-1520",
+        "acc-1590"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-1100"
+      ],
+      "result": [
+        "acc-1100",
+        "acc-1110",
+        "acc-1120",
+        "acc-1130",
+        "acc-1140",
+        "acc-1150",
+        "acc-1160"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-1200"
+      ],
+      "result": [
+        "acc-1200",
+        "acc-1210",
+        "acc-1220"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-1500"
+      ],
+      "result": [
+        "acc-1500",
+        "acc-1510",
+        "acc-1520",
+        "acc-1590"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-2000"
+      ],
+      "result": [
+        "acc-2000",
+        "acc-2100",
+        "acc-2110",
+        "acc-2200",
+        "acc-2300",
+        "acc-2400",
+        "acc-2500"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-3000"
+      ],
+      "result": [
+        "acc-3000",
+        "acc-3100",
+        "acc-3200"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-4000"
+      ],
+      "result": [
+        "acc-4000",
+        "acc-4100",
+        "acc-4200",
+        "acc-4300",
+        "acc-4400"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-5000"
+      ],
+      "result": [
+        "acc-5000",
+        "acc-5100",
+        "acc-5200",
+        "acc-5300",
+        "acc-5400",
+        "acc-5500",
+        "acc-5600",
+        "acc-5700"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-6000"
+      ],
+      "result": [
+        "acc-6000",
+        "acc-6100",
+        "acc-6200"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-7000"
+      ],
+      "result": [
+        "acc-7000",
+        "acc-7100",
+        "acc-7200",
+        "acc-7300",
+        "acc-7400",
+        "acc-7500",
+        "acc-7600",
+        "acc-7700",
+        "acc-7800",
+        "fx-0038"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-8000"
+      ],
+      "result": [
+        "acc-8000",
+        "acc-8100"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-1110"
+      ],
+      "result": [
+        "acc-1110"
+      ],
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "acc-missing"
+      ],
+      "result": [
+        "acc-missing"
+      ],
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "descendants"
+  ],
+  "description": "descendants(state, accountId) from reports.ts. Every header account, one posting account and an unknown id. The Set result is written as an array in insertion order. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-descendants",
+  "function": "descendants",
+  "signature": "descendants(state, accountId)",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#descendants"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

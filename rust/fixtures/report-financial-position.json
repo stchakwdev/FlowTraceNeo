@@ -1,0 +1,3091 @@
+{
+  "cases": [
+    {
+      "args": [
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2025-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 300000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 40000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 0,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 577500000
+        },
+        "totalAssets": 586000000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 577500000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2025-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 300000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 40000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 0,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 577500000
+        },
+        "totalAssets": 586000000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 577500000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-31",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-01-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 1011875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 226250000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 100000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 4770000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 4800000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 468770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1150825000
+        },
+        "totalAssets": 1632895000,
+        "totalLiabilities": 13300000,
+        "totalNetAssets": 1619595000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-01-31",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-01-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 1011875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 226250000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 100000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 4770000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 468770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1155625000
+        },
+        "totalAssets": 1632895000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 1624395000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-04",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-02-04",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 891875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6270000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 3980000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 948770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1146845000
+        },
+        "totalAssets": 2108095000,
+        "totalLiabilities": 12480000,
+        "totalNetAssets": 2095615000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-04",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-02-04",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 891875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6270000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 948770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1150825000
+        },
+        "totalAssets": 2108095000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 2099595000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-28",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-02-28",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 891875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6270000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 3980000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 948770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1146845000
+        },
+        "totalAssets": 2108095000,
+        "totalLiabilities": 12480000,
+        "totalNetAssets": 2095615000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-02-28",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-02-28",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 891875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6270000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 948770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1150825000
+        },
+        "totalAssets": 2108095000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 2099595000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 891875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6270000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 3980000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 948770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1146845000
+        },
+        "totalAssets": 2108095000,
+        "totalLiabilities": 12480000,
+        "totalNetAssets": 2095615000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 891875000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6270000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 948770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1150825000
+        },
+        "totalAssets": 2108095000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 2099595000
+      },
+      "state": "demo-books"
+    },
+    {
+      "args": [
+        "2025-12-31",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2025-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 300000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 40000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 0,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 577500000
+        },
+        "totalAssets": 586000000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 577500000
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2025-12-31",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2025-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 300000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 40000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 6000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 0,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 577500000
+        },
+        "totalAssets": 586000000,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 577500000
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-31",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-01-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 1012216200
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 226250000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 100000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 4770000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 4800000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 468770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1151166200
+        },
+        "totalAssets": 1633236200,
+        "totalLiabilities": 13300000,
+        "totalNetAssets": 1619936200
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-01-31",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-01-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 1012216200
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 226250000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 100000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 4770000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 468770000,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1155966200
+        },
+        "totalAssets": 1633236200,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 1624736200
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-04",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-02-04",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 890597500
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 5224950
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 5161666
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 946846657,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1145264127
+        },
+        "totalAssets": 2105772450,
+        "totalLiabilities": 13661666,
+        "totalNetAssets": 2092110784
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-04",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-02-04",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 890597500
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 5224950
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 947265945,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1150006505
+        },
+        "totalAssets": 2105772450,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 2097272450
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-28",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-02-28",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 890597500
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 5224950
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 5161666
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 946846657,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1145264127
+        },
+        "totalAssets": 2105772450,
+        "totalLiabilities": 13661666,
+        "totalNetAssets": 2092110784
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-02-28",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-02-28",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 890597500
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 5224950
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 947265945,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 577500000
+            }
+          ],
+          "unrestricted": 1150006505
+        },
+        "totalAssets": 2105772450,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 2097272450
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-31",
+        "accrual"
+      ],
+      "result": {
+        "asOf": "2026-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 890597500
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 5224950
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2100",
+              "expense_function": null,
+              "id": "acc-2100",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accounts payable",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 5161666
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 946846657,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 1145264127
+            },
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3200",
+                "expense_function": null,
+                "id": "acc-3200",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets with donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 946846657
+            }
+          ],
+          "unrestricted": 1145264127
+        },
+        "totalAssets": 2105772450,
+        "totalLiabilities": 13661666,
+        "totalNetAssets": 2092110784
+      },
+      "state": "commands-final"
+    },
+    {
+      "args": [
+        "2026-12-31",
+        "cash"
+      ],
+      "result": {
+        "asOf": "2026-12-31",
+        "assets": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1110",
+              "expense_function": null,
+              "id": "acc-1110",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Main operating account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 890597500
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1120",
+              "expense_function": null,
+              "id": "acc-1120",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Operations account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 219950000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1130",
+              "expense_function": null,
+              "id": "acc-1130",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "Bank: Restricted projects account",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 700000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1150",
+              "expense_function": null,
+              "id": "acc-1150",
+              "is_active": true,
+              "is_cash": true,
+              "is_group": false,
+              "name": "M-Pesa till and float",
+              "normal_balance": "debit",
+              "parent_id": "acc-1100",
+              "type": "asset"
+            },
+            "amount": 5224950
+          },
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "1400",
+              "expense_function": null,
+              "id": "acc-1400",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Suspense: unexplained movements",
+              "normal_balance": "debit",
+              "parent_id": "acc-1000",
+              "type": "asset"
+            },
+            "amount": 50000000
+          },
+          {
+            "account": {
+              "cash_flow_class": "investing",
+              "code": "1510",
+              "expense_function": null,
+              "id": "acc-1510",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Vehicles",
+              "normal_balance": "debit",
+              "parent_id": "acc-1500",
+              "type": "asset"
+            },
+            "amount": 240000000
+          }
+        ],
+        "difference": 0,
+        "liabilities": [
+          {
+            "account": {
+              "cash_flow_class": "operating",
+              "code": "2200",
+              "expense_function": null,
+              "id": "acc-2200",
+              "is_active": true,
+              "is_cash": false,
+              "is_group": false,
+              "name": "Accrued expenses",
+              "normal_balance": "credit",
+              "parent_id": "acc-2000",
+              "type": "liability"
+            },
+            "amount": 8500000
+          }
+        ],
+        "netAssets": {
+          "restricted": 947265945,
+          "rows": [
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3100",
+                "expense_function": null,
+                "id": "acc-3100",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets without donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 1145264127
+            },
+            {
+              "account": {
+                "cash_flow_class": "financing",
+                "code": "3200",
+                "expense_function": null,
+                "id": "acc-3200",
+                "is_active": true,
+                "is_cash": false,
+                "is_group": false,
+                "name": "Net assets with donor restrictions",
+                "normal_balance": "credit",
+                "parent_id": "acc-3000",
+                "type": "equity"
+              },
+              "amount": 946846657
+            }
+          ],
+          "unrestricted": 1150006505
+        },
+        "totalAssets": 2105772450,
+        "totalLiabilities": 8500000,
+        "totalNetAssets": 2097272450
+      },
+      "state": "commands-final"
+    }
+  ],
+  "covers": [
+    "financialPosition"
+  ],
+  "description": "financialPosition(state, asOf, basis = \"accrual\") from reports.ts. Every as-of date with activity and the demo as-of date, both bases. Each case: the books it ran on (see states), the arguments after the books (undefined written as null), and the return value.",
+  "env": null,
+  "fixture": "report-financial-position",
+  "function": "financialPosition",
+  "signature": "financialPosition(state, asOf, basis = \"accrual\")",
+  "sources": [
+    "flowtrace/src/lib/ledger/reports.ts#financialPosition"
+  ],
+  "states": {
+    "commands-final": "commands-accepted.json#/final_state",
+    "demo-books": "demo-books.json#/state"
+  }
+}

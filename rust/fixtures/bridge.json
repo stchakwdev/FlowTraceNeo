@@ -1,0 +1,1313 @@
+{
+  "cases": [
+    {
+      "expense_account_for": null,
+      "grant_for": {
+        "fund_id": "fund-unrestricted",
+        "grant_id": "grant-harambee-2026"
+      },
+      "result": {
+        "input": {
+          "date": "2026-01-05",
+          "lines": [
+            {
+              "account_id": "acc-1110",
+              "currency": "KES",
+              "debit": 850000000,
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": "grant-harambee-2026"
+            },
+            {
+              "account_id": "acc-4100",
+              "credit": 850000000,
+              "currency": "KES",
+              "dimension_ids": [
+                "dim-a12"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": "grant-harambee-2026"
+            }
+          ],
+          "memo": "Harambee Health Fund Q1 2026 Disbursement · HHF-2026-Q1-001",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 8500000,
+        "category": "Funding",
+        "currency": "KES",
+        "description": "Harambee Health Fund Q1 2026 Disbursement",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01",
+        "reference": "HHF-2026-Q1-001",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "transaction_date": "2026-01-05",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": {
+        "fund_id": "fund-maternal-health",
+        "grant_id": "grant-northlight-2026"
+      },
+      "result": {
+        "input": {
+          "date": "2026-01-08",
+          "lines": [
+            {
+              "account_id": "acc-1110",
+              "currency": "KES",
+              "debit": 320000000,
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "fund_id": "fund-maternal-health",
+              "fx_rate": 1,
+              "grant_id": "grant-northlight-2026"
+            },
+            {
+              "account_id": "acc-4100",
+              "credit": 320000000,
+              "currency": "KES",
+              "dimension_ids": [
+                "dim-a20"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+              "fund_id": "fund-maternal-health",
+              "fx_rate": 1,
+              "grant_id": "grant-northlight-2026"
+            }
+          ],
+          "memo": "Northlight Foundation Annual Grant · NLF-2026-001",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 3200000,
+        "category": "Funding",
+        "currency": "KES",
+        "description": "Northlight Foundation Annual Grant",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02",
+        "reference": "NLF-2026-001",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "transaction_date": "2026-01-08",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": {
+        "fund_id": "fund-wash",
+        "grant_id": "grant-kisima-wash"
+      },
+      "result": {
+        "input": {
+          "date": "2026-01-10",
+          "lines": [
+            {
+              "account_id": "acc-1130",
+              "currency": "KES",
+              "debit": 400000000,
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "fund_id": "fund-wash",
+              "fx_rate": 1,
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-4100",
+              "credit": 400000000,
+              "currency": "KES",
+              "dimension_ids": [
+                "dim-a30"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+              "fund_id": "fund-wash",
+              "fx_rate": 1,
+              "grant_id": "grant-kisima-wash"
+            }
+          ],
+          "memo": "Kisima Water Trust - Water & Sanitation Grant · KWT-WS-2026-01",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 4000000,
+        "category": "Funding",
+        "currency": "KES",
+        "description": "Kisima Water Trust - Water & Sanitation Grant",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03",
+        "reference": "KWT-WS-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "transaction_date": "2026-01-10",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-01-12",
+          "lines": [
+            {
+              "account_id": "acc-1120",
+              "currency": "KES",
+              "debit": 200000000,
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 200000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Operations Budget Allocation - January · INT-OPS-2026-01",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 2000000,
+        "category": "Budget",
+        "currency": "KES",
+        "description": "Operations Budget Allocation - January",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04",
+        "reference": "INT-OPS-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "transaction_date": "2026-01-12",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "amount": 1800000,
+        "dimensionNodeId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "kind": "allocation"
+      },
+      "transaction": {
+        "amount": 1800000,
+        "category": "Budget",
+        "currency": "KES",
+        "description": "Field Operations Q1 Budget",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05",
+        "reference": "INT-FIELD-2026-Q1",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "transaction_date": "2026-01-12",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-01-15",
+          "lines": [
+            {
+              "account_id": "acc-7100",
+              "currency": "KES",
+              "debit": 2850000,
+              "dimension_ids": [],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1120",
+              "credit": 2850000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Office Supplies - Nairobi HQ · PO-2026-0042",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 28500,
+        "category": "Operations",
+        "currency": "KES",
+        "description": "Office Supplies - Nairobi HQ",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07",
+        "reference": "PO-2026-0042",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+        "transaction_date": "2026-01-15",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": "acc-5100",
+      "grant_for": {
+        "fund_id": "fund-wash",
+        "grant_id": "grant-kisima-wash"
+      },
+      "result": {
+        "input": {
+          "date": "2026-01-18",
+          "lines": [
+            {
+              "account_id": "acc-5100",
+              "currency": "KES",
+              "debit": 250000000,
+              "dimension_ids": [
+                "dim-a35"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "fund_id": "fund-wash",
+              "fx_rate": 1,
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 250000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "fund_id": "fund-wash",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Clean Water Turkana - Borehole Phase 1 · PROJ-WATER-001",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 2500000,
+        "category": "Programs",
+        "currency": "KES",
+        "description": "Clean Water Turkana - Borehole Phase 1",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+        "reference": "PROJ-WATER-001",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "transaction_date": "2026-01-18",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-01-20",
+          "lines": [
+            {
+              "account_id": "acc-7200",
+              "currency": "KES",
+              "debit": 6700000,
+              "dimension_ids": [],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1120",
+              "credit": 6700000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Vehicle Maintenance - 3 Field Vehicles · PO-2026-0051",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 67000,
+        "category": "Transport",
+        "currency": "KES",
+        "description": "Vehicle Maintenance - 3 Field Vehicles",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08",
+        "reference": "PO-2026-0051",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+        "transaction_date": "2026-01-20",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-01-22",
+          "lines": [
+            {
+              "account_id": "acc-5600",
+              "currency": "KES",
+              "debit": 38000000,
+              "dimension_ids": [
+                "dim-a15"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 38000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Financial Literacy Workshop - Mombasa · TRN-2026-003",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 380000,
+        "category": "Training",
+        "currency": "KES",
+        "description": "Financial Literacy Workshop - Mombasa",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+        "reference": "TRN-2026-003",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+        "transaction_date": "2026-01-22",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-01-25",
+          "lines": [
+            {
+              "account_id": "acc-7300",
+              "currency": "KES",
+              "debit": 4200000,
+              "dimension_ids": [],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1120",
+              "credit": 4200000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Electricity Bill - January · UTIL-2026-01",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 42000,
+        "category": "Utilities",
+        "currency": "KES",
+        "description": "Electricity Bill - January",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09",
+        "reference": "UTIL-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+        "transaction_date": "2026-01-25",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": "acc-5400",
+      "grant_for": {
+        "fund_id": "fund-unrestricted",
+        "grant_id": "grant-harambee-2026"
+      },
+      "result": {
+        "input": {
+          "date": "2026-01-28",
+          "lines": [
+            {
+              "account_id": "acc-5400",
+              "currency": "KES",
+              "debit": 75000000,
+              "dimension_ids": [
+                "dim-a16"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": "grant-harambee-2026"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 75000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Community Health Worker Stipends · CHW-2026-01",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 750000,
+        "category": "Programs",
+        "currency": "KES",
+        "description": "Community Health Worker Stipends",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+        "reference": "CHW-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+        "transaction_date": "2026-01-28",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": {
+        "fund_id": "fund-wash",
+        "grant_id": "grant-kisima-wash"
+      },
+      "result": {
+        "input": {
+          "date": "2026-01-29",
+          "lines": [
+            {
+              "account_id": "acc-1400",
+              "currency": "KES",
+              "debit": 50000000,
+              "dimension_ids": [],
+              "flow_node_id": null,
+              "fund_id": "fund-wash",
+              "fx_rate": 1,
+              "grant_id": "grant-kisima-wash"
+            },
+            {
+              "account_id": "acc-1130",
+              "credit": 50000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "fund_id": "fund-wash",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Unreconciled Cash Withdrawal",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 500000,
+        "category": "Unclassified",
+        "currency": "KES",
+        "description": "Unreconciled Cash Withdrawal",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16",
+        "reference": null,
+        "to_node_id": null,
+        "transaction_date": "2026-01-29",
+        "verification_status": "flagged"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-01-31",
+          "lines": [
+            {
+              "account_id": "acc-6100",
+              "currency": "KES",
+              "debit": 145000000,
+              "dimension_ids": [],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 145000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Staff Salaries - January 2026 · PAY-2026-01",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 1450000,
+        "category": "Salaries",
+        "currency": "KES",
+        "description": "Staff Salaries - January 2026",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+        "reference": "PAY-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+        "transaction_date": "2026-01-31",
+        "verification_status": "verified"
+      }
+    },
+    {
+      "expense_account_for": "acc-5500",
+      "grant_for": {
+        "fund_id": "fund-maternal-health",
+        "grant_id": "grant-northlight-2026"
+      },
+      "result": {
+        "input": {
+          "date": "2026-02-01",
+          "lines": [
+            {
+              "account_id": "acc-5500",
+              "currency": "KES",
+              "debit": 120000000,
+              "dimension_ids": [
+                "dim-a16"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+              "fund_id": "fund-maternal-health",
+              "fx_rate": 1,
+              "grant_id": "grant-northlight-2026"
+            },
+            {
+              "account_id": "acc-1110",
+              "credit": 120000000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "fund_id": "fund-maternal-health",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "Maternal Health Equipment - Kilifi · PROJ-MH-002",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 1200000,
+        "category": "Programs",
+        "currency": "KES",
+        "description": "Maternal Health Equipment - Kilifi",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+        "reference": "PROJ-MH-002",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+        "transaction_date": "2026-02-01",
+        "verification_status": "pending"
+      }
+    },
+    {
+      "expense_account_for": "acc-1150",
+      "grant_for": null,
+      "result": {
+        "input": {
+          "date": "2026-02-03",
+          "lines": [
+            {
+              "account_id": "acc-1150",
+              "currency": "KES",
+              "debit": 1500000,
+              "dimension_ids": [],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1,
+              "grant_id": null
+            },
+            {
+              "account_id": "acc-1120",
+              "credit": 1500000,
+              "currency": "KES",
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+              "fund_id": "fund-unrestricted",
+              "fx_rate": 1
+            }
+          ],
+          "memo": "M-Pesa Float Top-up · MPESA-2026-02",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 15000,
+        "category": "Operations",
+        "currency": "KES",
+        "description": "M-Pesa Float Top-up",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "reference": "MPESA-2026-02",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+        "transaction_date": "2026-02-03",
+        "verification_status": "pending"
+      }
+    },
+    {
+      "expense_account_for": null,
+      "grant_for": {
+        "fund_id": "fund-education",
+        "grant_id": "grant-paef-education"
+      },
+      "result": {
+        "input": {
+          "date": "2026-02-04",
+          "lines": [
+            {
+              "account_id": "acc-1130",
+              "currency": "KES",
+              "debit": 600000000,
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "fund_id": "fund-education",
+              "fx_rate": 1,
+              "grant_id": "grant-paef-education"
+            },
+            {
+              "account_id": "acc-4100",
+              "credit": 600000000,
+              "currency": "KES",
+              "dimension_ids": [
+                "dim-a31"
+              ],
+              "flow_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+              "fund_id": "fund-education",
+              "fx_rate": 1,
+              "grant_id": "grant-paef-education"
+            }
+          ],
+          "memo": "Pan-African Education Fund - Education Grant · PAEF-2026-01",
+          "source_id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+          "source_type": "transaction"
+        },
+        "kind": "entry"
+      },
+      "transaction": {
+        "amount": 6000000,
+        "category": "Funding",
+        "currency": "KES",
+        "description": "Pan-African Education Fund - Education Grant",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+        "reference": "PAEF-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "transaction_date": "2026-02-04",
+        "verification_status": "pending"
+      }
+    }
+  ],
+  "context": {
+    "base_currency": "KES",
+    "cash_account_for_node": {
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11": "acc-1110",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13": "acc-1120",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14": "acc-1130",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19": "acc-1140"
+    },
+    "default_cash_account": "acc-1110",
+    "dimension_for_node": {
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12": "dim-a12",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15": "dim-a15",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16": "dim-a16",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20": "dim-a20",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21": "dim-a21",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30": "dim-a30",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31": "dim-a31",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32": "dim-a32",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35": "dim-a35",
+      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36": "dim-a36"
+    },
+    "nodes": [
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "name": "General Fund",
+        "type": "account"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "name": "Operations Budget",
+        "type": "account"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "name": "Project Fund",
+        "type": "account"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+        "name": "Payroll",
+        "type": "account"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+        "name": "Harambee Health Fund",
+        "type": "donor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+        "name": "Northlight Foundation",
+        "type": "donor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+        "name": "Kisima Water Trust",
+        "type": "donor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+        "name": "Pan-African Education Fund",
+        "type": "donor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+        "name": "Training Department",
+        "type": "department"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "name": "Field Operations",
+        "type": "department"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21",
+        "name": "Admin",
+        "type": "department"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32",
+        "name": "M&E Unit",
+        "type": "department"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+        "name": "Staples Kenya",
+        "type": "vendor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+        "name": "AutoXpress Ltd",
+        "type": "vendor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+        "name": "Training Co Ltd",
+        "type": "vendor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+        "name": "Safaricom M-Pesa",
+        "type": "vendor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+        "name": "Kenya Power",
+        "type": "vendor"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "name": "Clean Water Turkana",
+        "type": "project"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "name": "Maternal Health Kilifi",
+        "type": "project"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+        "name": "Communities",
+        "type": "beneficiary"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a37",
+        "name": "Turkana Schools",
+        "type": "beneficiary"
+      },
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+        "name": "Kilifi Health Centers",
+        "type": "beneficiary"
+      }
+    ],
+    "note": "grant_for and expense_account_for are the context functions evaluated per transaction (in each case)."
+  },
+  "covers": [
+    "bridgeTransaction",
+    "expenseAccountForCategory"
+  ],
+  "description": "bridgeTransaction over every demo transaction, in backfill order, with the demo bridge context written out as data (its function results per node and per transaction); and expenseAccountForCategory over every category the bridge maps.",
+  "env": null,
+  "expense_account_for_category": [
+    {
+      "args": [
+        null,
+        null
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        null,
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        null,
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "",
+        null
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "salaries",
+        null
+      ],
+      "result": "acc-6100"
+    },
+    {
+      "args": [
+        "salaries",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-6100"
+    },
+    {
+      "args": [
+        "salaries",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-6100"
+    },
+    {
+      "args": [
+        "Salaries",
+        null
+      ],
+      "result": "acc-6100"
+    },
+    {
+      "args": [
+        "Salaries",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-6100"
+    },
+    {
+      "args": [
+        "Salaries",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-6100"
+    },
+    {
+      "args": [
+        "operations",
+        null
+      ],
+      "result": "acc-7100"
+    },
+    {
+      "args": [
+        "operations",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-7100"
+    },
+    {
+      "args": [
+        "operations",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-7100"
+    },
+    {
+      "args": [
+        "supplies",
+        null
+      ],
+      "result": "acc-7100"
+    },
+    {
+      "args": [
+        "supplies",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-7100"
+    },
+    {
+      "args": [
+        "supplies",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-7100"
+    },
+    {
+      "args": [
+        "transport",
+        null
+      ],
+      "result": "acc-7200"
+    },
+    {
+      "args": [
+        "transport",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-7200"
+    },
+    {
+      "args": [
+        "transport",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-7200"
+    },
+    {
+      "args": [
+        "utilities",
+        null
+      ],
+      "result": "acc-7300"
+    },
+    {
+      "args": [
+        "utilities",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-7300"
+    },
+    {
+      "args": [
+        "utilities",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-7300"
+    },
+    {
+      "args": [
+        "training",
+        null
+      ],
+      "result": "acc-5600"
+    },
+    {
+      "args": [
+        "training",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-5600"
+    },
+    {
+      "args": [
+        "training",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-5600"
+    },
+    {
+      "args": [
+        "equipment",
+        null
+      ],
+      "result": "acc-5500"
+    },
+    {
+      "args": [
+        "equipment",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-5500"
+    },
+    {
+      "args": [
+        "equipment",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-5500"
+    },
+    {
+      "args": [
+        "programs",
+        null
+      ],
+      "result": "acc-5500"
+    },
+    {
+      "args": [
+        "programs",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": "acc-5400"
+    },
+    {
+      "args": [
+        "programs",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": "acc-5500"
+    },
+    {
+      "args": [
+        "funding",
+        null
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "funding",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "funding",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "budget",
+        null
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "budget",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "budget",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "unknown",
+        null
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "unknown",
+        {
+          "id": "n-beneficiary",
+          "name": "Beneficiary",
+          "type": "beneficiary"
+        }
+      ],
+      "result": null
+    },
+    {
+      "args": [
+        "unknown",
+        {
+          "id": "n-vendor",
+          "name": "Vendor",
+          "type": "vendor"
+        }
+      ],
+      "result": null
+    }
+  ],
+  "fixture": "bridge",
+  "sources": [
+    "flowtrace/src/lib/ledger/bridge.ts#bridgeTransaction",
+    "flowtrace/src/lib/ledger/bridge.ts#expenseAccountForCategory",
+    "flowtrace/src/lib/demo/ledger.ts#demoBridgeContext"
+  ]
+}
