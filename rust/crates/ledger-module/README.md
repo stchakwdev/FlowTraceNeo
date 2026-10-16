@@ -131,6 +131,10 @@ One command, with the local server up, proves the published module end to end (g
 cd rust/tools && ~/.bun/bin/bun install --frozen-lockfile && ~/.bun/bin/bun run integration
 ```
 
+The same checks run against a database that is already published (maincloud dev) with
+`--existing --url <server> --db <name>`: no build, publish or delete, and a demo organisation
+left behind in that database each run. See `rust/tools/README.md#remote-mode-an-existing-database-gate-g3`.
+
 `tools/module-integration.ts` builds the release wasm (cargo, waiting while two other cargo
 builds run), publishes it as a fresh `ft-s2-<timestamp>` database, and prints one timed `pass` or
 `FAIL` line per check:

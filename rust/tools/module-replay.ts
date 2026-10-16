@@ -4,6 +4,7 @@
 //
 //   cd rust && cargo build --release --locked --target wasm32-unknown-unknown -p ledger-module
 //   cd tools && ~/.bun/bin/bun run module-replay [--db ft-s4-test] [--keep]
+//   cd tools && ~/.bun/bin/bun run module-replay --existing --url <server> --db <name>
 //
 // 1. Publishes target/wasm32-unknown-unknown/release/ledger_module.wasm as a
 //    fresh local database (any earlier one of that name is deleted first).
@@ -18,32 +19,42 @@
 // 4. Checks refusals and a repeated request id, deletes the database (unless
 //    --keep) and prints `spacetime list -s local`.
 //
-// Only ever the local server (http://127.0.0.1:3100); src/module-server.ts
-// refuses any other URL and any database name that does not start with `ft-`.
+// Without --existing only ever the local server (http://127.0.0.1:3100);
+// src/module-server.ts refuses any other URL and any database name that does
+// not start with `ft-`. With --existing (maincloud dev for gate G3) steps 1 and
+// 4's delete are skipped, the run opens a new organisation with a random id,
+// and withdraws the operator it added; it WRITES that organisation into the
+// database and leaves it there.
 import fs from 'node:fs'
 import path from 'node:path'
-import { IdMap, demoFixtures, importDemoBooks, openDemoOrg, readFixture, replayCommandLog } from './src/demo-replay'
-import { WASM, args, localServer } from './src/module-server'
+import { IdMap, demoFixtures, importDemoBooks, openDemoOrg, readFixture, replayCommandLog, retireOperator } from './src/demo-replay'
+import { WASM, openServer, parseTarget } from './src/module-server'
 import type { Json, Obj } from './src/module-server'
 import { RUST_DIR } from './src/paths'
 
-const { flag, option } = args()
-const server = localServer(option('db', 'ft-s4-test'), option('url', 'http://127.0.0.1:3100'))
-const KEEP = flag('keep')
+const argv = process.argv.slice(2)
+const target = parseTarget(argv, 'ft-s4-test')
+const server = openServer(target)
+const EXISTING = target.existing
+const KEEP = argv.includes('--keep')
 const log = (...xs: Array<unknown>) => console.log(...xs)
 
-if (!fs.existsSync(WASM)) throw new Error(`No module at ${WASM}; build it first (see the header).`)
+if (!EXISTING && !fs.existsSync(WASM)) throw new Error(`No module at ${WASM}; build it first (see the header).`)
 
-const fx = demoFixtures()
+const fx = demoFixtures(EXISTING ? crypto.randomUUID() : undefined)
 const { org: ORG, steps } = fx
 const map = new IdMap(fx.frozenNow)
 const started = performance.now()
 
-log(`module-replay: database ${server.db} on ${server.url}, module ${path.relative(RUST_DIR, WASM)} (${fs.statSync(WASM).size} bytes)`)
-log(server.publish().split('\n').pop())
+if (EXISTING) log(`module-replay: existing database ${server.db} on ${server.url} (no publish or delete)`)
+else {
+  log(`module-replay: database ${server.db} on ${server.url}, module ${path.relative(RUST_DIR, WASM)} (${fs.statSync(WASM).size} bytes)`)
+  log(server.publish().split('\n').pop())
+}
 
 const people = await openDemoOrg(server, fx, 'Replay Operator')
 const { operator, stranger, who, actorKey, admin } = people
+if (EXISTING) log(`organisation for this run: ${ORG}`)
 {
   // The seeded books are TS createOrgLedger's for the same arguments, plus the ledger.create
   // audit event the reducer appends (index.ts:593). Read before import_books replaces them; the
@@ -140,7 +151,12 @@ for (const [what, ok, detail] of checks) log(`${ok ? 'ok  ' : 'FAIL'} ${what}: $
 // Clean up and verdict
 // ---------------------------------------------------------------------------
 
-if (KEEP) log(`kept database ${server.db}`)
+if (EXISTING) {
+  retireOperator(server, people)
+  const ms = server.calls.filter((c) => c.reducer === 'run_command').map((c) => c.ms).sort((a, b) => a - b)
+  log(`withdrew operator 0x${operator.identity.slice(0, 12)}...; run_command round trip over ${ms.length} calls: min ${ms[0].toFixed(0)} ms, median ${ms[Math.floor(ms.length / 2)].toFixed(0)} ms, max ${ms[ms.length - 1].toFixed(0)} ms`)
+  log(`left organisation ${ORG} in ${server.db}`)
+} else if (KEEP) log(`kept database ${server.db}`)
 else {
   log(server.remove())
   log(`spacetime list -s local:\n${server.list()}`)
