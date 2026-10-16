@@ -31,6 +31,8 @@ thiserror = "2.0"
 gpui-kit = "0.7.3"
 # Rust client SDK at the server's 2.12 line: https://spacetimedb.com/docs/clients/rust
 spacetimedb-sdk = "2.12.0"
+# Server module crate, pinned to the server's 2.12.0: https://spacetimedb.com/docs/quickstarts/rust/
+spacetimedb = "=2.12.0"
 async-channel = "2.5"
 
 # Every crate inherits these with `[lints] workspace = true`.
