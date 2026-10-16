@@ -15,8 +15,16 @@ const rust = join(import.meta.dir, '..', '..')
 const script = join(rust, 'tools', 'release.sh')
 const releaseConfig = join(rust, 'crates', 'desktop', 'release', 'config.toml')
 
+// A cargo that only fails, first on PATH: `--name` and `--check` must not need a Rust toolchain.
+// The CI fixtures job installs none, and there rustup would fetch rust-toolchain.toml's channel
+// on the first cargo call, past bun's 5 s test timeout.
+const noCargo = mkdtempSync(join(tmpdir(), 'ft-release-no-cargo-'))
+writeFileSync(join(noCargo, 'cargo'), '#!/bin/sh\necho "cargo called" >&2\nexit 99\n', { mode: 0o755 })
+process.on('exit', () => rmSync(noCargo, { recursive: true, force: true }))
+
 function run(...args: Array<string>) {
-  const out = Bun.spawnSync(['bash', script, ...args], { stdout: 'pipe', stderr: 'pipe' })
+  const env = { ...process.env, PATH: `${noCargo}:${process.env.PATH ?? ''}` }
+  const out = Bun.spawnSync(['bash', script, ...args], { stdout: 'pipe', stderr: 'pipe', env })
   return { code: out.exitCode, stdout: out.stdout.toString(), stderr: out.stderr.toString() }
 }
 
@@ -59,7 +67,10 @@ describe('release.sh --check', () => {
   // Packs <name>/flowtrace-books, INSTALL.txt and (unless `config` is null) config.toml the way
   // release.sh does, and runs the check on it.
   function check(config: string | null) {
-    const name = run('--name').stdout.trim().replace(/\.tar\.gz$/, '')
+    const named = run('--name')
+    expect(named.code).toBe(0)
+    const name = named.stdout.trim().replace(/\.tar\.gz$/, '')
+    expect(name).not.toBe('')
     const dir = mkdtempSync(join(tmpdir(), 'ft-release-check-'))
     try {
       const stage = join(dir, name)

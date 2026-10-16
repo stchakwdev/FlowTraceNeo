@@ -57,9 +57,10 @@ jobs:
       - name: Format, lint and test
         run: cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
 
-  # rust/fixtures must equal a fresh export from the TS engine in flowtrace/src/lib/ledger
-  # (rust/fixtures/README.md). Needs no GPUI libraries and no flowtrace/ install: the exporter
-  # imports flowtrace/src by relative path and its one npm package from rust/tools/node_modules.
+  # The rust/tools unit tests (bun test), then rust/fixtures must equal a fresh export from the
+  # TS engine in flowtrace/src/lib/ledger (rust/fixtures/README.md). Needs no GPUI libraries and
+  # no flowtrace/ install: the exporter imports flowtrace/src by relative path and its one npm
+  # package from rust/tools/node_modules.
   fixtures:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -76,6 +77,9 @@ jobs:
 
       - name: Install the fixture tools
         run: bun install --frozen-lockfile
+
+      - name: Unit tests of the tools
+        run: bun test
 
       - name: Export twice and compare with rust/fixtures
         run: bun run check

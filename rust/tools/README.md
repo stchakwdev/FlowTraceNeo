@@ -17,8 +17,8 @@ use `~/.bun/bin/bun`. Install once with `~/.bun/bin/bun install --frozen-lockfil
 
 `bun test` runs the offline unit tests in `src/*.test.ts` (the remote-mode refusals and flags).
 
-CI runs `bun run check` in the `fixtures` job of `.github/workflows/rust.yml`; on a drift, run
-`bun run export` here and commit the changed `rust/fixtures/*.json`.
+CI runs `bun test` and then `bun run check` in the `fixtures` job of `.github/workflows/rust.yml`;
+on a drift, run `bun run export` here and commit the changed `rust/fixtures/*.json`.
 
 ## Remote mode (an existing database, gate G3)
 
