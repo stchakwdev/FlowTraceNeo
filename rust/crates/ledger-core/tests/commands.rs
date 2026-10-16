@@ -1,16 +1,14 @@
 //! Task C4 acceptance: the command layer (`commands.ts`). The whole `commands-accepted.json` log
 //! replays from the books it names through `sanitize_command` and `apply_command`: each
 //! sanitised command, `CommandResult` and state delta equals the fixture's, and so do the final
-//! books. The bank and statement commands (C6) are refused as not implemented and applied as
-//! recorded deltas. Every command-layer rejection in `rejected-cases.json` matches exactly.
+//! books, the bank and statement commands (C6) among them. Every command-layer rejection in
+//! `rejected-cases.json` matches exactly.
 #![expect(clippy::unwrap_used, clippy::expect_used, reason = "tests may unwrap")]
 
 mod common;
 
 use common::fixture;
-use common::replay::{
-    C6_COMMANDS, apply_delta, assert_json_eq, diff_state, error_json, sync_env, to_json,
-};
+use common::replay::{assert_json_eq, diff_state, error_json, to_json};
 use ledger_core::commands::{CommandError, LedgerCommand, apply_command, sanitize_command};
 use ledger_core::engine::{Error, Ledger};
 use ledger_core::env::fixed;
@@ -40,7 +38,7 @@ fn command_log_replays_from_the_books_it_names() {
     let mut state: LedgerState =
         serde_json::from_value(fixture("demo-books")["state"].clone()).unwrap();
     let mut env = fixed::fixture();
-    let (mut live, mut delta) = (0, 0);
+    let mut live = 0;
     for (i, step) in f["steps"].as_array().unwrap().iter().enumerate() {
         let what = format!("commands-accepted step {i} {}", step["command"]["type"]);
         let cmd = sanitize_command(&step["command"])
@@ -66,17 +64,6 @@ fn command_log_replays_from_the_books_it_names() {
                 );
                 live += 1;
             }
-            Err(CommandError::NotImplemented(kind)) => {
-                assert!(C6_COMMANDS.contains(&kind), "{what}: {kind} refused");
-                assert_eq!(Some(kind), step["command"]["type"].as_str());
-                assert_json_eq(&to_json(&state), &before, &format!("{what}: books changed"));
-                let mut books = before;
-                apply_delta(&mut books, &step["delta"]);
-                state = serde_json::from_value(books).unwrap();
-                sync_env(&mut env, &step["delta"]);
-                sync_env(&mut env, &step["result"]);
-                delta += 1;
-            }
             Err(CommandError::Engine(e)) => panic!("{what}: rejected with {e}"),
         }
     }
@@ -85,8 +72,8 @@ fn command_log_replays_from_the_books_it_names() {
         &f["final_state"],
         "the replayed books equal commands-accepted.json#/final_state",
     );
-    eprintln!("command log: {live} commands live, {delta} C6 commands applied as deltas");
-    assert_eq!((live, delta), (31, 6));
+    eprintln!("command log: {live} commands live");
+    assert_eq!(live, 37);
 }
 
 #[test]

@@ -7,10 +7,10 @@
 //! [`call`]; the replay tests count both kinds.
 
 use ledger_core::commands::{CommandError, apply_command, sanitize_command};
-use ledger_core::engine::{EntryOptions, Error, Ledger};
+use ledger_core::engine::{EntryOptions, Error, Ledger, StatementRow};
 use ledger_core::env::LedgerEnv;
 use ledger_core::env::fixed::FixedEnv;
-use ledger_core::types::{AppliesTo, EntryId, LedgerState};
+use ledger_core::types::{AppliesTo, EntryId, LedgerState, MatchKind};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value, json};
@@ -125,6 +125,20 @@ pub fn call(l: &mut Ledger<'_>, method: &str, a: &Value) -> Option<Result<Value,
         )),
         "rejectClaim" => out(l.reject_claim(&arg(a, 0), &arg(a, 1), &arg::<String>(a, 2))),
         "reimburseClaim" => out(l.reimburse_claim(&arg(a, 0), &arg(a, 1), &arg(a, 2))),
+        "addBankAccount" => out(l.add_bank_account(&arg(a, 0), arg(a, 1))),
+        "importStatement" => {
+            out(l.import_statement(&arg(a, 0), &arg(a, 1), &arg::<Vec<StatementRow>>(a, 2)))
+        }
+        "matchStatementLine" => out(l.match_statement_line(
+            &arg(a, 0),
+            &arg(a, 1),
+            &arg(a, 2),
+            opt::<Option<MatchKind>>(a, 3).unwrap_or(MatchKind::Manual),
+        )),
+        "unmatchStatementLine" => out(l.unmatch_statement_line(&arg(a, 0), &arg(a, 1))),
+        "postFromStatementLine" => {
+            out(l.post_from_statement_line(&arg(a, 0), &arg(a, 1), &arg(a, 2)))
+        }
         _ => return None,
     })
 }
@@ -159,22 +173,13 @@ pub fn query(s: &LedgerState, method: &str, a: &Value) -> Option<Result<Value, E
 }
 
 /// Runs a raw command as the TS module does (`spacetimedb/src/index.ts:671-680`):
-/// `sanitize_command` then `apply_command`, returning the `CommandResult` or the error. `None`
-/// for a bank or statement command, whose engine method is not ported yet (C6): the caller
-/// applies the recorded delta instead.
-pub fn command(l: &mut Ledger<'_>, actor: &Value, raw: &Value) -> Option<Result<Value, Error>> {
-    let cmd = match sanitize_command(raw) {
-        Ok(cmd) => cmd,
-        Err(e) => return Some(Err(e.into())),
-    };
-    match apply_command(l, &arg(&json!([actor]), 0), cmd) {
-        Ok(result) => Some(Ok(to_json(&result))),
-        Err(CommandError::Engine(e)) => Some(Err(e)),
-        Err(CommandError::NotImplemented(kind)) => {
-            assert!(C6_COMMANDS.contains(&kind), "{kind} is not implemented");
-            None
-        }
-    }
+/// `sanitize_command` then `apply_command`, returning the `CommandResult` or the error. Every
+/// command type is ported (C6), so a command step always runs live.
+pub fn command(l: &mut Ledger<'_>, actor: &Value, raw: &Value) -> Result<Value, Error> {
+    let cmd = sanitize_command(raw)?;
+    apply_command(l, &arg(&json!([actor]), 0), cmd)
+        .map(|result| to_json(&result))
+        .map_err(|CommandError::Engine(e)| e)
 }
 
 /// `diffState` (`rust/tools/src/trace.ts:30-62`) over two JSON snapshots of the books.
@@ -388,11 +393,11 @@ pub fn run_command_step(
 ) -> Ran {
     let kind = step["command"]["type"].as_str().unwrap_or("?");
     let before = to_json(state);
-    let outcome = command(
+    let outcome = Some(command(
         &mut Ledger::new(state, env),
         &step["actor"],
         &step["command"],
-    );
+    ));
     check_outcome(state, env, step, before, outcome, &format!("{what} {kind}"))
 }
 
@@ -504,13 +509,17 @@ pub const C2_QUERIES: [&str; 11] = [
     "claim",
 ];
 
-/// The commands whose engine methods come with task C6: `apply_command` refuses them as not
-/// implemented, and the replay applies their recorded deltas.
-pub const C6_COMMANDS: [&str; 6] = [
-    "bank.add",
-    "statement.import",
-    "statement.autoMatch",
-    "statement.match",
-    "statement.unmatch",
-    "statement.post",
+/// The `Ledger` write methods ported in task C6: bank accounts and statement lines. With C2's
+/// and C3's, every engine write method.
+pub const C6_METHODS: [&str; 5] = [
+    "addBankAccount",
+    "importStatement",
+    "matchStatementLine",
+    "unmatchStatementLine",
+    "postFromStatementLine",
 ];
+
+/// Whether `method` is a ported `Ledger` write method, which must never fall back to its delta.
+pub fn ported(method: &str) -> bool {
+    C2_METHODS.contains(&method) || C3_METHODS.contains(&method) || C6_METHODS.contains(&method)
+}

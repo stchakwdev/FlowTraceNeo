@@ -17,6 +17,7 @@
 //! were. TS mutates in place and has its callers discard the books on a throw
 //! (`commands.ts:85-89`); the outcome is the same, and Rust checks every rule first.
 
+mod bank;
 mod budgets;
 mod claims;
 mod documents;
@@ -27,6 +28,7 @@ mod queries;
 mod setup;
 mod validate;
 
+pub use bank::{NewBankAccount, StatementCounter, StatementRow};
 pub use budgets::{NewBudget, NewBudgetLine};
 pub use claims::{NewClaim, ReimburseInput};
 pub use documents::NewCodedLine;

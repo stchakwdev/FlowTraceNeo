@@ -59,6 +59,11 @@ impl IsoDate {
         }
     }
 
+    /// `YYYY-MM-DD` from numeric parts, zero-padded; the caller keeps them in range.
+    pub(crate) fn from_parts(year: i64, month: i64, day: i64) -> Self {
+        Self(format!("{year:04}-{month:02}-{day:02}"))
+    }
+
     /// The date as `YYYY-MM-DD`.
     #[must_use]
     pub fn as_str(&self) -> &str {
