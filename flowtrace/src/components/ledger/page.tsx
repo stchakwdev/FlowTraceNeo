@@ -131,6 +131,13 @@ export function BooksState({
       <ReportNotice title="The books are not connected yet">
         This organisation’s ledger lives in SpacetimeDB. Ask an administrator to
         connect it; until then the transparency screens still work.
+        {error.identity && (
+          <>
+            {' '}
+            To add this device as a member, give them its identity:{' '}
+            <code className="font-mono text-xs break-all">0x{error.identity}</code>
+          </>
+        )}
       </ReportNotice>
     )
   return (

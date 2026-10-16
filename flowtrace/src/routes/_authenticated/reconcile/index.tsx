@@ -2,8 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { ArrowRight } from '@phosphor-icons/react'
 import { balances, ledgerSignals } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { formatDate } from '@/lib/format'
 import {
   AsOf,
@@ -67,7 +66,7 @@ function ReconcilePage() {
             meta={
               <>
                 <AsOf date={asOf} />
-                {DEV_MODE && <DemoTag />}
+                {DEMO_BOOKS && <DemoTag />}
               </>
             }
           >

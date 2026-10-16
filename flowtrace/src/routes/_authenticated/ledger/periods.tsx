@@ -2,8 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { PeriodStatusMark } from './-shared'
 import type { FiscalPeriod, LedgerState } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { formatDate, formatShortDate } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -170,7 +169,7 @@ function PeriodsPage() {
               meta={
                 <>
                   <AsOf date={asOf} className="hidden sm:inline" />
-                  {DEV_MODE && <DemoTag />}
+                  {DEMO_BOOKS && <DemoTag />}
                 </>
               }
               actions={

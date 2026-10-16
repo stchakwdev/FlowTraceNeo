@@ -3,9 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { DownloadSimple, Printer } from '@phosphor-icons/react'
 import type { ReportId, ReportParams } from '@/components/ledger/reports/statements'
 import type { Basis, ISODate, LedgerState } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { useOrg } from '@/lib/org-context'
-import { DEV_MODE } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -153,7 +152,7 @@ function ReportsPage() {
             meta={
               <>
                 <AsOf date={asOf} />
-                {DEV_MODE && <DemoTag />}
+                {DEMO_BOOKS && <DemoTag />}
               </>
             }
           >

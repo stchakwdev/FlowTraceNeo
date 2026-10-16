@@ -8,117 +8,117 @@ import {
   t as __t,
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
-} from "spacetimedb";
+} from 'spacetimedb'
 
-export const Account = __t.object("Account", {
+export const AccountRow = __t.object('AccountRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Account = __Infer<typeof Account>;
+})
+export type AccountRow = __Infer<typeof AccountRow>
 
-export const AuditEvent = __t.object("AuditEvent", {
+export const AuditEventRow = __t.object('AuditEventRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type AuditEvent = __Infer<typeof AuditEvent>;
+})
+export type AuditEventRow = __Infer<typeof AuditEventRow>
 
-export const BankAccount = __t.object("BankAccount", {
+export const BankAccountRow = __t.object('BankAccountRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type BankAccount = __Infer<typeof BankAccount>;
+})
+export type BankAccountRow = __Infer<typeof BankAccountRow>
 
-export const Bill = __t.object("Bill", {
+export const BillRow = __t.object('BillRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Bill = __Infer<typeof Bill>;
+})
+export type BillRow = __Infer<typeof BillRow>
 
-export const Budget = __t.object("Budget", {
+export const BudgetLineRow = __t.object('BudgetLineRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Budget = __Infer<typeof Budget>;
+})
+export type BudgetLineRow = __Infer<typeof BudgetLineRow>
 
-export const BudgetLine = __t.object("BudgetLine", {
+export const BudgetRow = __t.object('BudgetRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type BudgetLine = __Infer<typeof BudgetLine>;
+})
+export type BudgetRow = __Infer<typeof BudgetRow>
 
-export const CommandResult = __t.object("CommandResult", {
+export const CommandResult = __t.object('CommandResult', {
   identity: __t.identity(),
   orgId: __t.string(),
   requestId: __t.string(),
   resultJson: __t.string(),
   at: __t.timestamp(),
-});
-export type CommandResult = __Infer<typeof CommandResult>;
+})
+export type CommandResult = __Infer<typeof CommandResult>
 
-export const Dimension = __t.object("Dimension", {
+export const DimensionRow = __t.object('DimensionRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Dimension = __Infer<typeof Dimension>;
+})
+export type DimensionRow = __Infer<typeof DimensionRow>
 
-export const ExpenseClaim = __t.object("ExpenseClaim", {
+export const ExpenseClaimRow = __t.object('ExpenseClaimRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type ExpenseClaim = __Infer<typeof ExpenseClaim>;
+})
+export type ExpenseClaimRow = __Infer<typeof ExpenseClaimRow>
 
-export const FiscalPeriod = __t.object("FiscalPeriod", {
+export const FiscalPeriodRow = __t.object('FiscalPeriodRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type FiscalPeriod = __Infer<typeof FiscalPeriod>;
+})
+export type FiscalPeriodRow = __Infer<typeof FiscalPeriodRow>
 
-export const Fund = __t.object("Fund", {
+export const FundRow = __t.object('FundRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Fund = __Infer<typeof Fund>;
+})
+export type FundRow = __Infer<typeof FundRow>
 
-export const Grant = __t.object("Grant", {
+export const GrantRow = __t.object('GrantRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Grant = __Infer<typeof Grant>;
+})
+export type GrantRow = __Infer<typeof GrantRow>
 
-export const JournalEntry = __t.object("JournalEntry", {
+export const JournalEntryRow = __t.object('JournalEntryRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
@@ -137,10 +137,10 @@ export const JournalEntry = __t.object("JournalEntry", {
   createdAt: __t.string(),
   postedBy: __t.option(__t.string()),
   postedAt: __t.option(__t.string()),
-});
-export type JournalEntry = __Infer<typeof JournalEntry>;
+})
+export type JournalEntryRow = __Infer<typeof JournalEntryRow>
 
-export const JournalLine = __t.object("JournalLine", {
+export const JournalLineRow = __t.object('JournalLineRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
@@ -157,20 +157,20 @@ export const JournalLine = __t.object("JournalLine", {
   dimensionIds: __t.array(__t.string()),
   flowNodeId: __t.option(__t.string()),
   memo: __t.option(__t.string()),
-});
-export type JournalLine = __Infer<typeof JournalLine>;
+})
+export type JournalLineRow = __Infer<typeof JournalLineRow>
 
-export const LedgerOrg = __t.object("LedgerOrg", {
+export const LedgerOrg = __t.object('LedgerOrg', {
   orgId: __t.string(),
   settingsJson: __t.string(),
   countersJson: __t.string(),
   nextSeq: __t.u64(),
   createdBy: __t.identity(),
   createdAt: __t.timestamp(),
-});
-export type LedgerOrg = __Infer<typeof LedgerOrg>;
+})
+export type LedgerOrg = __Infer<typeof LedgerOrg>
 
-export const Member = __t.object("Member", {
+export const Member = __t.object('Member', {
   key: __t.string(),
   identity: __t.identity(),
   orgId: __t.string(),
@@ -179,96 +179,38 @@ export const Member = __t.object("Member", {
   canPost: __t.bool(),
   canApprove: __t.bool(),
   canClose: __t.bool(),
-});
-export type Member = __Infer<typeof Member>;
+})
+export type Member = __Infer<typeof Member>
 
-export const MyAccount = __t.object("MyAccount", {});
-export type MyAccount = __Infer<typeof MyAccount>;
-
-export const MyAuditEvent = __t.object("MyAuditEvent", {});
-export type MyAuditEvent = __Infer<typeof MyAuditEvent>;
-
-export const MyBankAccount = __t.object("MyBankAccount", {});
-export type MyBankAccount = __Infer<typeof MyBankAccount>;
-
-export const MyBill = __t.object("MyBill", {});
-export type MyBill = __Infer<typeof MyBill>;
-
-export const MyBudget = __t.object("MyBudget", {});
-export type MyBudget = __Infer<typeof MyBudget>;
-
-export const MyBudgetLine = __t.object("MyBudgetLine", {});
-export type MyBudgetLine = __Infer<typeof MyBudgetLine>;
-
-export const MyCommandResult = __t.object("MyCommandResult", {});
-export type MyCommandResult = __Infer<typeof MyCommandResult>;
-
-export const MyDimension = __t.object("MyDimension", {});
-export type MyDimension = __Infer<typeof MyDimension>;
-
-export const MyExpenseClaim = __t.object("MyExpenseClaim", {});
-export type MyExpenseClaim = __Infer<typeof MyExpenseClaim>;
-
-export const MyFiscalPeriod = __t.object("MyFiscalPeriod", {});
-export type MyFiscalPeriod = __Infer<typeof MyFiscalPeriod>;
-
-export const MyFund = __t.object("MyFund", {});
-export type MyFund = __Infer<typeof MyFund>;
-
-export const MyGrant = __t.object("MyGrant", {});
-export type MyGrant = __Infer<typeof MyGrant>;
-
-export const MyJournalEntry = __t.object("MyJournalEntry", {});
-export type MyJournalEntry = __Infer<typeof MyJournalEntry>;
-
-export const MyJournalLine = __t.object("MyJournalLine", {});
-export type MyJournalLine = __Infer<typeof MyJournalLine>;
-
-export const MyLedgerOrg = __t.object("MyLedgerOrg", {});
-export type MyLedgerOrg = __Infer<typeof MyLedgerOrg>;
-
-export const MyMember = __t.object("MyMember", {});
-export type MyMember = __Infer<typeof MyMember>;
-
-export const MyPayment = __t.object("MyPayment", {});
-export type MyPayment = __Infer<typeof MyPayment>;
-
-export const MyStatementLine = __t.object("MyStatementLine", {});
-export type MyStatementLine = __Infer<typeof MyStatementLine>;
-
-export const MyVendor = __t.object("MyVendor", {});
-export type MyVendor = __Infer<typeof MyVendor>;
-
-export const Operator = __t.object("Operator", {
+export const Operator = __t.object('Operator', {
   identity: __t.identity(),
   addedAt: __t.timestamp(),
-});
-export type Operator = __Infer<typeof Operator>;
+})
+export type Operator = __Infer<typeof Operator>
 
-export const Payment = __t.object("Payment", {
+export const PaymentRow = __t.object('PaymentRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Payment = __Infer<typeof Payment>;
+})
+export type PaymentRow = __Infer<typeof PaymentRow>
 
-export const StatementLine = __t.object("StatementLine", {
+export const StatementLineRow = __t.object('StatementLineRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type StatementLine = __Infer<typeof StatementLine>;
+})
+export type StatementLineRow = __Infer<typeof StatementLineRow>
 
-export const Vendor = __t.object("Vendor", {
+export const VendorRow = __t.object('VendorRow', {
   key: __t.string(),
   orgId: __t.string(),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
-export type Vendor = __Infer<typeof Vendor>;
-
+})
+export type VendorRow = __Infer<typeof VendorRow>

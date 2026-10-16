@@ -8,12 +8,12 @@ import {
   t as __t,
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
-} from "spacetimedb";
+} from 'spacetimedb'
 
 export default __t.row({
   key: __t.string().primaryKey(),
-  orgId: __t.string().name("org_id"),
+  orgId: __t.string().name('org_id'),
   id: __t.string(),
   seq: __t.u64(),
   data: __t.string(),
-});
+})

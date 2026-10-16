@@ -3,8 +3,7 @@ import { useMemo } from 'react'
 import { Plus } from '@phosphor-icons/react'
 import { BILL_STATUS_LABEL, DocStatus, OverdueFlag, daysBetween, docTotal } from './-shared'
 import type { Bill, BillStatus, Ledger, LedgerState } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { formatDate, formatShortDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
@@ -91,7 +90,7 @@ function BillsPage() {
           meta={
             <>
               <AsOf date={asOf} />
-              {DEV_MODE && <DemoTag />}
+              {DEMO_BOOKS && <DemoTag />}
             </>
           }
         >

@@ -12,8 +12,7 @@ import {
 } from './-shared'
 import type { Bill, LedgerState } from '@/lib/ledger'
 import { parseMoney } from '@/lib/ledger'
-import { useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { formatDate } from '@/lib/format'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -139,7 +138,7 @@ function BillDetail({
         meta={
           <>
             <AsOf date={asOf} />
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
           </>
         }
       >

@@ -3,9 +3,8 @@ import { useMemo } from 'react'
 import { CloudSlash, Plus } from '@phosphor-icons/react'
 import { CLAIM_STATUS_LABEL, DocStatus, docTotal } from './-shared'
 import type { ClaimStatus, ExpenseClaim, LedgerState } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { useOfflineClaimSync } from '@/lib/offline-claims'
-import { DEV_MODE } from '@/lib/auth'
 import { formatDate, formatShortDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -125,7 +124,7 @@ function ClaimsPage() {
           meta={
             <>
               <AsOf date={asOf} />
-              {DEV_MODE && <DemoTag />}
+              {DEMO_BOOKS && <DemoTag />}
             </>
           }
         >

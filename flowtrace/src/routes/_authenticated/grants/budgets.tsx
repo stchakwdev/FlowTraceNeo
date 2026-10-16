@@ -4,8 +4,7 @@ import { DownloadSimple, PencilSimple, Plus, Warning } from '@phosphor-icons/rea
 import { GRANTS_NAV } from './index'
 import type { Basis, BudgetLine, BudgetVsActualRow, LedgerState } from '@/lib/ledger'
 import { budgetVsActual, parseMoney } from '@/lib/ledger'
-import { useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS, useLedger, useLedgerActor, useLedgerAsOf, useLedgerCommand } from '@/lib/ledger-client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -196,7 +195,7 @@ function Budget({ state, asOf }: { state: LedgerState; asOf: string }) {
           <>
             <span>{basis === 'cash' ? 'Cash basis' : 'Accrual basis'}</span>
             <AsOf date={asOf} />
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
           </>
         }
       >
