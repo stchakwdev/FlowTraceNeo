@@ -7,16 +7,38 @@
 //! `entries.$id.tsx` and `-shared.tsx`; the rules stay in `ledger-core` (`engine/entries.rs`),
 //! whose messages are shown as they come.
 
+use std::collections::HashSet;
+
+use ledger_core::demo::demo_actor;
+use ledger_core::js_number::to_js_string;
 use ledger_core::types::{
     ActorId, EntryId, EntryStatus, IsoDate, JournalEntry, JournalLine, LedgerState, PeriodId,
     SourceType,
 };
 use ledger_core::{CommandResult, LedgerCommand, Minor};
 
+use crate::accounts::format_date;
+use crate::claims::{format_date_time, iso_to_day_month_year, parse_day_month_year};
+
+/// The en dash the web app shows for an empty cell (`money.tsx:12`).
+const DASH: &str = "\u{2013}";
+
 /// `SOURCE_LABEL` (`-shared.tsx:15-27`).
 #[must_use]
-pub fn source_label(_source: SourceType) -> &'static str {
-    ""
+pub fn source_label(source: SourceType) -> &'static str {
+    match source {
+        SourceType::Manual => "Manual entry",
+        SourceType::Transaction => "Transaction",
+        SourceType::Bill => "Bill",
+        SourceType::Payment => "Bill payment",
+        SourceType::ExpenseClaim => "Expense claim",
+        SourceType::Reimbursement => "Claim reimbursement",
+        SourceType::Statement => "Bank statement",
+        SourceType::Opening => "Opening balances",
+        SourceType::YearEndClose => "Year-end close",
+        SourceType::Reversal => "Reversal",
+        SourceType::Import => "Import",
+    }
 }
 
 /// The sources in the web's `SOURCE_LABEL` order, for the source filter.
@@ -36,8 +58,12 @@ pub const SOURCES: [SourceType; 11] = [
 
 /// `ENTRY_STATUS_LABEL` (`-shared.tsx:29-33`).
 #[must_use]
-pub fn entry_status_label(_status: EntryStatus) -> &'static str {
-    ""
+pub fn entry_status_label(status: EntryStatus) -> &'static str {
+    match status {
+        EntryStatus::Draft => "Draft",
+        EntryStatus::Posted => "Posted",
+        EntryStatus::Reversed => "Reversed",
+    }
 }
 
 /// The status filter's choices (`index.tsx:39`, `[undefined, ...STATUSES]`).
@@ -50,8 +76,8 @@ pub const STATUS_FILTERS: [Option<EntryStatus>; 4] = [
 
 /// `entryTotal` (`-shared.tsx:104-109`): the debits of an entry's lines in base currency.
 #[must_use]
-pub fn entry_total<'a>(_lines: impl IntoIterator<Item = &'a JournalLine>) -> Minor {
-    0
+pub fn entry_total<'a>(lines: impl IntoIterator<Item = &'a JournalLine>) -> Minor {
+    lines.into_iter().map(|l| l.base_amount.max(0)).sum()
 }
 
 /// One row of the journal list (`index.tsx`, `Row`).
@@ -67,19 +93,70 @@ pub struct EntryRow {
     pub funds: String,
 }
 
+/// True when the entry's override reason is its own, not the reason a reversal or a
+/// year-end close carries (`index.tsx`, `EntryTable`; `entries.$id.tsx`).
+fn shows_override(entry: &JournalEntry) -> bool {
+    entry.override_reason.is_some()
+        && !matches!(
+            entry.source_type,
+            SourceType::Reversal | SourceType::YearEndClose
+        )
+}
+
 impl EntryRow {
     /// `3 lines`, then ` · posted with an override` when an override reason is kept on an
     /// entry that is not a reversal or a year-end close (`index.tsx`, `EntryTable`).
     #[must_use]
     pub fn detail(&self) -> String {
-        String::new()
+        let n = self.line_count;
+        let lines = format!("{n} {}", if n == 1 { "line" } else { "lines" });
+        if shows_override(&self.entry) {
+            format!("{lines} \u{b7} posted with an override")
+        } else {
+            lines
+        }
     }
 }
 
 /// Every entry of `state`, latest date first, then latest number (`index.tsx`, `all`).
 #[must_use]
-pub fn entry_rows(_state: &LedgerState) -> Vec<EntryRow> {
-    Vec::new()
+pub fn entry_rows(state: &LedgerState) -> Vec<EntryRow> {
+    let mut rows: Vec<EntryRow> = state
+        .entries
+        .iter()
+        .map(|entry| {
+            let lines: Vec<&JournalLine> = state
+                .lines
+                .iter()
+                .filter(|l| l.entry_id == entry.id)
+                .collect();
+            let mut seen = HashSet::new();
+            let funds: Vec<&str> = lines
+                .iter()
+                .filter(|l| seen.insert(&l.fund_id))
+                .map(|l| {
+                    state
+                        .funds
+                        .iter()
+                        .find(|f| f.id == l.fund_id)
+                        .map_or("Unknown fund", |f| f.name.as_str())
+                })
+                .collect();
+            EntryRow {
+                entry: entry.clone(),
+                total: entry_total(lines.iter().copied()),
+                line_count: lines.len(),
+                funds: funds.join(", "),
+            }
+        })
+        .collect();
+    rows.sort_by(|a, b| {
+        b.entry
+            .date
+            .cmp(&a.entry.date)
+            .then_with(|| b.entry.number.cmp(&a.entry.number))
+    });
+    rows
 }
 
 /// Entries per status (`index.tsx`, `counts`).
@@ -98,14 +175,30 @@ pub struct StatusCounts {
 impl StatusCounts {
     /// The counts of `rows`.
     #[must_use]
-    pub fn of(_rows: &[EntryRow]) -> Self {
-        Self::default()
+    pub fn of(rows: &[EntryRow]) -> Self {
+        let mut c = Self {
+            all: rows.len(),
+            ..Self::default()
+        };
+        for r in rows {
+            match r.entry.status {
+                EntryStatus::Draft => c.draft += 1,
+                EntryStatus::Posted => c.posted += 1,
+                EntryStatus::Reversed => c.reversed += 1,
+            }
+        }
+        c
     }
 
     /// The count behind a status filter choice.
     #[must_use]
-    pub fn get(&self, _status: Option<EntryStatus>) -> usize {
-        0
+    pub fn get(&self, status: Option<EntryStatus>) -> usize {
+        match status {
+            None => self.all,
+            Some(EntryStatus::Draft) => self.draft,
+            Some(EntryStatus::Posted) => self.posted,
+            Some(EntryStatus::Reversed) => self.reversed,
+        }
     }
 }
 
@@ -126,28 +219,61 @@ impl JournalFilter {
     /// True when anything is filtered (`index.tsx`, `filtered`).
     #[must_use]
     pub fn is_filtered(&self) -> bool {
-        false
+        self.status.is_some()
+            || self.source.is_some()
+            || self.period.is_some()
+            || !self.query.is_empty()
     }
 
     /// The rows of `all` this filter keeps, in order (`index.tsx`, `rows`).
     #[must_use]
-    pub fn apply(&self, _all: &[EntryRow]) -> Vec<EntryRow> {
-        Vec::new()
+    pub fn apply(&self, all: &[EntryRow]) -> Vec<EntryRow> {
+        let needle = self.query.trim().to_lowercase();
+        all.iter()
+            .filter(|r| {
+                let e = &r.entry;
+                self.status.is_none_or(|s| e.status == s)
+                    && self.source.is_none_or(|s| e.source_type == s)
+                    && self.period.as_ref().is_none_or(|p| &e.period_id == p)
+                    && (needle.is_empty()
+                        || [Some(&e.number), Some(&e.memo), e.override_reason.as_ref()]
+                            .into_iter()
+                            .flatten()
+                            .any(|f| f.to_lowercase().contains(&needle)))
+            })
+            .cloned()
+            .collect()
     }
 }
 
 /// The source filter's choices: All sources, then each source present in the books
 /// (`index.tsx`, `sourceOptions`).
 #[must_use]
-pub fn source_choices(_all: &[EntryRow]) -> Vec<(Option<SourceType>, &'static str)> {
-    Vec::new()
+pub fn source_choices(all: &[EntryRow]) -> Vec<(Option<SourceType>, &'static str)> {
+    let present: HashSet<SourceType> = all.iter().map(|r| r.entry.source_type).collect();
+    std::iter::once((None, "All sources"))
+        .chain(
+            SOURCES
+                .into_iter()
+                .filter(|s| present.contains(s))
+                .map(|s| (Some(s), source_label(s))),
+        )
+        .collect()
 }
 
 /// The period filter's choices: All periods, then the periods latest first (`index.tsx`,
 /// `periodOptions`).
 #[must_use]
-pub fn period_choices(_state: &LedgerState) -> Vec<(Option<PeriodId>, String)> {
-    Vec::new()
+pub fn period_choices(state: &LedgerState) -> Vec<(Option<PeriodId>, String)> {
+    let mut periods: Vec<_> = state.periods.iter().collect();
+    periods.sort_by(|a, b| b.start_date.cmp(&a.start_date));
+    std::iter::once((None, "All periods".to_owned()))
+        .chain(
+            periods
+                .into_iter()
+                .map(|p| (Some(p.id.clone()), p.name.clone())),
+        )
+        .collect()
 }
 
 /// A notice in place of the table.
@@ -161,26 +287,83 @@ pub struct Notice {
 
 /// `No entries yet` or `No entries match` (`index.tsx`), or `None` when rows show.
 #[must_use]
-pub fn list_notice(_all: usize, _shown: usize, _filter: &JournalFilter) -> Option<Notice> {
-    None
+pub fn list_notice(all: usize, shown: usize, filter: &JournalFilter) -> Option<Notice> {
+    if all == 0 {
+        return Some(Notice {
+            title: "No entries yet".to_owned(),
+            body: "Entries appear here as transactions, bills and claims post, or when you \
+                   write one by hand."
+                .to_owned(),
+        });
+    }
+    if shown > 0 {
+        return None;
+    }
+    Some(Notice {
+        title: "No entries match".to_owned(),
+        body: if filter.query.is_empty() {
+            "No entries have this combination of status, source and period.".to_owned()
+        } else {
+            format!(
+                "Nothing matches \u{201c}{}\u{201d} with these filters.",
+                filter.query
+            )
+        },
+    })
 }
 
 /// The line under the table: `Total: 22 entries` or `Shown: 1 entry` (`index.tsx`).
 #[must_use]
-pub fn list_footer(_shown: usize, _filter: &JournalFilter) -> String {
-    String::new()
+pub fn list_footer(shown: usize, filter: &JournalFilter) -> String {
+    format!(
+        "{}: {shown} {}",
+        if filter.is_filtered() {
+            "Shown"
+        } else {
+            "Total"
+        },
+        if shown == 1 { "entry" } else { "entries" }
+    )
 }
 
 /// `actorName` (`-shared.tsx:120-126`): who acted, for the audit trail.
 #[must_use]
-pub fn actor_name(_id: &ActorId) -> String {
-    String::new()
+pub fn actor_name(id: &ActorId) -> String {
+    let id = id.as_str();
+    let demo = demo_actor();
+    if id == "system" {
+        "FlowTrace (automatic)".to_owned()
+    } else if id == demo.id.as_str() {
+        demo.name
+    } else if let Some(name) = id.strip_prefix("staff-") {
+        let mut chars = name.chars();
+        chars
+            .next()
+            .map(|c| c.to_uppercase().chain(chars).collect())
+            .unwrap_or_default()
+    } else {
+        format!("Member {}", id.chars().take(8).collect::<String>())
+    }
 }
 
 /// `AUDIT_ACTION_LABEL` (`-shared.tsx:128-140`), the action itself when it has no label.
 #[must_use]
 pub fn audit_label(action: &str) -> String {
-    action.to_owned()
+    match action {
+        "entry.draft" => "Saved as draft",
+        "entry.update" => "Draft edited",
+        "entry.post" => "Posted",
+        "entry.delete" => "Draft deleted",
+        "entry.reverse" => "Reversed",
+        "account.create" => "Account added",
+        "account.update" => "Account changed",
+        "period.close" => "Period closed",
+        "period.reopen" => "Period reopened",
+        "period.lock" => "Period locked",
+        "year.close" => "Year closed",
+        other => other,
+    }
+    .to_owned()
 }
 
 /// What can be done to an entry (`entries.$id.tsx`, `actions`).
@@ -200,15 +383,24 @@ impl EntryAction {
     /// The button label.
     #[must_use]
     pub fn label(self) -> &'static str {
-        ""
+        match self {
+            Self::Edit => "Edit",
+            Self::Delete => "Delete",
+            Self::Post => "Post",
+            Self::Reverse => "Reverse",
+        }
     }
 }
 
 /// The actions of an entry by its status: a draft is edited, deleted or posted, a posted entry
 /// reversed, a reversed one left alone (`entries.$id.tsx`, `actions`).
 #[must_use]
-pub fn actions_for(_status: EntryStatus) -> Vec<EntryAction> {
-    Vec::new()
+pub fn actions_for(status: EntryStatus) -> Vec<EntryAction> {
+    match status {
+        EntryStatus::Draft => vec![EntryAction::Edit, EntryAction::Delete, EntryAction::Post],
+        EntryStatus::Posted => vec![EntryAction::Reverse],
+        EntryStatus::Reversed => Vec::new(),
+    }
 }
 
 /// One line of the entry detail (`entries.$id.tsx`, the lines table).
@@ -243,7 +435,7 @@ pub struct AuditRow {
     pub at: String,
     /// `Posted`.
     pub label: String,
-    /// `by FlowTrace (automatic)`.
+    /// `FlowTrace (automatic)`.
     pub by: String,
     /// The reason of a reversal.
     pub reason: Option<String>,
@@ -291,33 +483,165 @@ pub struct EntryView {
     pub actions: Vec<EntryAction>,
 }
 
+/// The lines of `entry` as the detail table shows them (`entries.$id.tsx`, `accountName`,
+/// `fundName`, `grantName`, `dimNames`, `foreign`).
+fn line_views(state: &LedgerState, lines: &[&JournalLine]) -> Vec<LineView> {
+    let base = &state.settings.base_currency;
+    let foreign = lines.iter().any(|l| &l.currency != base);
+    lines
+        .iter()
+        .map(|l| {
+            let account = state
+                .accounts
+                .iter()
+                .find(|a| a.id == l.account_id)
+                .map_or_else(
+                    || "Unknown account".to_owned(),
+                    |a| format!("{} \u{b7} {}", a.code, a.name),
+                );
+            let fund = state
+                .funds
+                .iter()
+                .find(|f| f.id == l.fund_id)
+                .map_or_else(|| "Unknown fund".to_owned(), |f| f.name.clone());
+            let grant = l.grant_id.as_ref().map_or_else(
+                || "No grant".to_owned(),
+                |id| {
+                    state
+                        .grants
+                        .iter()
+                        .find(|g| &g.id == id)
+                        .map_or_else(|| "Unknown grant".to_owned(), |g| g.name.clone())
+                },
+            );
+            let tags: Vec<&str> = l
+                .dimension_ids
+                .iter()
+                .filter_map(|id| {
+                    state
+                        .dimensions
+                        .iter()
+                        .find(|d| &d.id == id)
+                        .map(|d| d.name.as_str())
+                })
+                .collect();
+            LineView {
+                account,
+                memo: l.memo.clone(),
+                fund,
+                grant,
+                tags: if tags.is_empty() {
+                    DASH.to_owned()
+                } else {
+                    tags.join(", ")
+                },
+                debit: l.debit,
+                credit: l.credit,
+                currency: foreign.then(|| l.currency.clone()),
+                base_amount: l.base_amount,
+                rate: (&l.currency != base).then(|| format!("at {}", to_js_string(l.fx_rate))),
+            }
+        })
+        .collect()
+}
+
 impl EntryView {
     /// The entry `id` of `state`, or `None` when it is not in the books.
     #[must_use]
-    pub fn new(_state: &LedgerState, _id: &EntryId) -> Option<Self> {
-        None
+    pub fn new(state: &LedgerState, id: &EntryId) -> Option<Self> {
+        let entry = state.entries.iter().find(|e| &e.id == id)?;
+        let lines: Vec<&JournalLine> = state.lines.iter().filter(|l| &l.entry_id == id).collect();
+        let debits = lines.iter().map(|l| l.base_amount.max(0)).sum();
+        let credits = lines.iter().map(|l| (-l.base_amount).max(0)).sum();
+        let find = |id: &EntryId| state.entries.iter().find(|e| &e.id == id);
+        let reverses = entry
+            .reversal_of
+            .as_ref()
+            .and_then(find)
+            .map(|e| EntryLink {
+                id: e.id.clone(),
+                text: format!("{} {}", e.number, e.memo),
+            });
+        let reversed_by = entry
+            .reversed_by
+            .as_ref()
+            .and_then(find)
+            .map(|e| EntryLink {
+                id: e.id.clone(),
+                text: format!("{} on {}", e.number, format_date(&e.date)),
+            });
+        let mut audit: Vec<_> = state
+            .audit
+            .iter()
+            .filter(|a| a.subject == id.as_str())
+            .collect();
+        audit.sort_by(|a, b| a.at.cmp(&b.at));
+        let audit = audit
+            .into_iter()
+            .map(|a| AuditRow {
+                at: format_date_time(&a.at),
+                label: audit_label(&a.action),
+                by: actor_name(&a.by),
+                reason: (!a.detail.is_empty() && a.action == "entry.reverse")
+                    .then(|| a.detail.clone()),
+            })
+            .collect();
+        let posted = match (&entry.posted_at, &entry.posted_by) {
+            (Some(at), Some(by)) => format!("{} by {}", format_date_time(at), actor_name(by)),
+            _ => "Not posted. Drafts do not count in any balance or report.".to_owned(),
+        };
+        Some(Self {
+            lines: line_views(state, &lines),
+            total: entry_total(lines.iter().copied()),
+            debits,
+            credits,
+            date_label: state
+                .periods
+                .iter()
+                .find(|p| p.id == entry.period_id)
+                .map_or_else(|| "Date".to_owned(), |p| format!("Date \u{b7} {}", p.name)),
+            source: source_label(entry.source_type),
+            created: format!(
+                "{} by {}",
+                format_date_time(&entry.created_at),
+                actor_name(&entry.created_by)
+            ),
+            posted,
+            override_reason: shows_override(entry)
+                .then(|| entry.override_reason.clone())
+                .flatten(),
+            reverses,
+            reversed_by,
+            audit,
+            actions: actions_for(entry.status),
+            entry: entry.clone(),
+        })
     }
 
     /// The title of a refusal on this entry: `Not posted` for a draft, else `Not done`.
     #[must_use]
     pub fn failure_title(&self) -> &'static str {
-        ""
+        if self.entry.status == EntryStatus::Draft {
+            "Not posted"
+        } else {
+            "Not done"
+        }
     }
 
     /// `entry.postDraft`, with an override reason when given (`entries.$id.tsx`, `post`).
     #[must_use]
-    pub fn post_command(&self, _override_reason: Option<&str>) -> LedgerCommand {
-        LedgerCommand::EntryDeleteDraft {
-            entry_id: EntryId::from(""),
+    pub fn post_command(&self, override_reason: Option<&str>) -> LedgerCommand {
+        LedgerCommand::EntryPostDraft {
+            entry_id: self.entry.id.clone(),
+            override_reason: override_reason.map(str::to_owned),
         }
     }
 
     /// `entry.deleteDraft` (`entries.$id.tsx`, `remove`).
     #[must_use]
     pub fn delete_command(&self) -> LedgerCommand {
-        LedgerCommand::EntryPostDraft {
-            entry_id: EntryId::from(""),
-            override_reason: None,
+        LedgerCommand::EntryDeleteDraft {
+            entry_id: self.entry.id.clone(),
         }
     }
 }
@@ -328,8 +652,13 @@ impl EntryView {
 /// # Errors
 ///
 /// The message to show under the field when the reason is blank.
-pub fn override_reason(_text: &str) -> Result<String, String> {
-    Err(String::new())
+pub fn override_reason(text: &str) -> Result<String, String> {
+    let reason = text.trim();
+    if reason.is_empty() {
+        Err("Say why this entry should post despite the rule.".to_owned())
+    } else {
+        Ok(reason.to_owned())
+    }
 }
 
 /// The confirmation of Delete (`entries.$id.tsx`, the delete `ReportDialog`).
@@ -346,11 +675,12 @@ pub struct DeleteDialog {
 impl DeleteDialog {
     /// The dialog for `entry`.
     #[must_use]
-    pub fn of(_entry: &JournalEntry) -> Self {
+    pub fn of(entry: &JournalEntry) -> Self {
         Self {
-            title: String::new(),
-            description: String::new(),
-            memo: String::new(),
+            title: format!("Delete {}?", entry.number),
+            description: "The draft and its lines are removed. Nothing posted is affected."
+                .to_owned(),
+            memo: entry.memo.clone(),
         }
     }
 }
@@ -380,11 +710,13 @@ pub struct ReverseForm {
 impl ReverseForm {
     /// The dialog for `entry`, dated `as_of`.
     #[must_use]
-    pub fn new(_entry: &JournalEntry, _as_of: &IsoDate) -> Self {
+    pub fn new(entry: &JournalEntry, as_of: &IsoDate) -> Self {
         Self {
-            title: String::new(),
-            description: String::new(),
-            date: String::new(),
+            title: format!("Reverse {}", entry.number),
+            description: "A mirror-image entry is posted on the date you choose. The original \
+                          stays in the books, marked reversed."
+                .to_owned(),
+            date: iso_to_day_month_year(as_of),
             reason: String::new(),
         }
     }
@@ -394,15 +726,41 @@ impl ReverseForm {
     /// # Errors
     ///
     /// The field messages when the date or the reason is missing or wrong.
-    pub fn command(&self, _entry: &EntryId) -> Result<LedgerCommand, ReverseErrors> {
-        Err(ReverseErrors::default())
+    pub fn command(&self, entry: &EntryId) -> Result<LedgerCommand, ReverseErrors> {
+        let mut errors = ReverseErrors::default();
+        let date = match parse_day_month_year(&self.date) {
+            None => {
+                errors.date = Some("Enter the date of the reversal.".to_owned());
+                None
+            }
+            Some(Err(message)) => {
+                errors.date = Some(message);
+                None
+            }
+            Some(Ok(date)) => Some(date),
+        };
+        let reason = self.reason.trim();
+        if reason.is_empty() {
+            errors.reason = Some("Say why the entry is being reversed.".to_owned());
+        }
+        match date {
+            Some(date) if errors == ReverseErrors::default() => Ok(LedgerCommand::EntryReverse {
+                entry_id: entry.clone(),
+                date: date.as_str().to_owned(),
+                reason: reason.to_owned(),
+            }),
+            _ => Err(errors),
+        }
     }
 }
 
-/// The entry a reversal created, to open after it (`ReverseDialog`, `onDone`).
+/// The entry a command created, to open after it (`ReverseDialog`, `onDone`; `createdId`).
 #[must_use]
-pub fn created_entry(_result: &CommandResult) -> Option<EntryId> {
-    None
+pub fn created_entry(result: &CommandResult) -> Option<EntryId> {
+    match result {
+        CommandResult::Id { id } => Some(EntryId::from(id.as_str())),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
