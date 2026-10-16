@@ -11,5 +11,6 @@ pub mod backend;
 pub mod model;
 pub mod panels;
 pub mod shell;
+pub mod statements;
 pub mod store;
 pub mod theme;

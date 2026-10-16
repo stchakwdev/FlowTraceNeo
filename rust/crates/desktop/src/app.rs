@@ -11,6 +11,7 @@ use gpui_kit::{
 use crate::backend::InProcessBackend;
 use crate::model::Navigation;
 use crate::shell::Shell;
+use crate::statements::ReportKind;
 use crate::store::LedgerStore;
 use crate::theme;
 
@@ -27,6 +28,8 @@ pub struct Launch {
     pub dark: Option<bool>,
     /// The screen and nav entry to open on.
     pub nav: Navigation,
+    /// A report to open the Reports entry on.
+    pub report: Option<ReportKind>,
 }
 
 /// Opens the window and runs until it closes.
@@ -68,7 +71,11 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
                 ..Default::default()
             };
             let opened = gpui_kit::open_window(options, cx, |window, cx| {
-                cx.new(|cx| Shell::new(store, launch.nav, window, cx))
+                let shell = cx.new(|cx| Shell::new(store, launch.nav, window, cx));
+                if let Some(kind) = launch.report {
+                    shell.update(cx, |shell, cx| shell.show_report(kind, window, cx));
+                }
+                shell
             });
             if let Err(err) = opened {
                 eprintln!("desktop: could not open a window: {err:#}");

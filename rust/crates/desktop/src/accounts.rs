@@ -93,9 +93,10 @@ pub fn format_minor(minor: Minor) -> String {
     if minor < 0 { format!("({text})") } else { text }
 }
 
-/// The short English month names `en-GB` dates use.
+/// The short English month names `en-GB` dates use, as current ICU writes them: September is
+/// "Sept" (`toLocaleDateString('en-GB', { month: 'short' })` in a browser since CLDR 38).
 const MONTHS: [&str; 12] = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec",
 ];
 
 /// Day and month name of a `YYYY-MM-DD` date, without leading zero on the day.

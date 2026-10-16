@@ -1,0 +1,2 @@
+# Exported CSV samples keep the CRLF line ends ledger_core::csv::to_csv writes; tests compare them byte for byte.
+docs/screens/*.csv -text
