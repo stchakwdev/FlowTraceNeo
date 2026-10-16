@@ -1,0 +1,26 @@
+# Throwaway SpacetimeDB module for the F3 spike (rust/docs/adr/0002-gpui-spacetime.md).
+# Excluded from the workspace in rust/Cargo.toml so the workspace checks stay fast;
+# build and publish it with the spacetime CLI only, against the local server.
+[package]
+name = "stdb-spike"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "UNLICENSED"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# https://spacetimedb.com/docs/quickstarts/rust/
+spacetimedb = "=2.12.0"
+
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
