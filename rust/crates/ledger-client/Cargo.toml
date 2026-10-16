@@ -8,6 +8,13 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
+async-channel.workspace = true
+ledger-core = { path = "../ledger-core" }
+# The row structs and `codec` only (rows to `LedgerState` and back), built as an rlib on the host.
+ledger-module = { path = "../ledger-module" }
+serde_json.workspace = true
+spacetimedb-sdk.workspace = true
+thiserror.workspace = true
 
 [lints]
 workspace = true

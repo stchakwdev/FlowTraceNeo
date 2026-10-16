@@ -9,8 +9,9 @@ publish.workspace = true
 
 # The wasm module the SpacetimeDB host loads. It stays a workspace member, so the workspace
 # checks build, lint and unit-test it on the host target too; see README.md for the wasm build.
+# `rlib` as well, so ledger-client reuses the row structs and `codec` on the host.
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 ledger-core = { path = "../ledger-core" }

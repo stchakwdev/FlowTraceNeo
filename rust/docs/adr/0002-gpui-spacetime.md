@@ -233,3 +233,25 @@ let refresh = cx.observe(&store, |screen: &mut Journal, store, cx| {
 - The SDK owns a tokio runtime (`spacetimedb-sdk` `db_connection.rs`,
   `enter_or_create_runtime`) next to GPUI's executor; the spike saw no conflict, and
   callbacks only send.
+
+## 2026-10-16: how ledger-client implements the pattern (S3)
+
+`crates/ledger-client` follows the pattern above with one change the warning in "What did not
+work" asked for: it does not use `run_threaded`. Its thread runs its own loop over
+`advance_one_message_blocking`; callbacks send on an internal channel; after each message the
+loop applies that message's row changes to its own cache as one batch and sends one
+`ClientEvent::Changed { orgs }`. So the desktop's store receives `ClientEvent`s, not row
+changes, and reads books with `SpacetimeClient::state(org)` instead of applying rows itself:
+
+```rust
+// desktop (U10, behind the desktop's own LedgerBackend trait from U1):
+let rx = client.subscribe(); // first event: the current ConnectionStatus
+// in the cx.spawn pump: drain a batch, then for each org in Changed { orgs }:
+store.books.insert(org.clone(), client.state(&org)?);
+cx.notify();
+```
+
+Subscription rows map back to engine state one to one: the `my_*` views return the module's
+table rows unchanged, the generated binding structs have the same fields as
+`ledger_module::tables`, and the rebuild is the module's own `codec::assemble_state`.
+Pre-decision P6 did not fire.
