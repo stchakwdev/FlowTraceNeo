@@ -1,7 +1,7 @@
 # Handoff: FlowTrace Books, October 2026
 
 What a maintainer who was not on the build needs: where things stand, what is known to differ
-from the web app, three decisions still waiting for the product owner, and the next steps.
+from the web app, the three decisions the product owner confirmed, and the next steps.
 Start with `../README.md`; the plan the work followed is `PRIMER.md` section 8 at the repository
 root.
 
@@ -24,25 +24,26 @@ root.
   (`../README.md`, "Release build"); a tag `v*` builds Linux and macOS archives in CI as
   workflow artifacts. Nothing is signed, and no GitHub Release is made.
 
-## Decisions waiting for the user's confirmation
+## Decisions confirmed by the user (2026-10-16)
 
 The coordinator took the recommended option on each while the user was away (standing rule S1)
-and queued them. Each is reversible today; two get harder once production books exist.
+and queued them; the user confirmed all three on 2026-10-16. Two of them shape stored data, so
+changing either once production books exist means a migration.
 
-1. **Timestamps in milliseconds in the Rust module.** The TS module stamps
+1. **Timestamps in milliseconds in the Rust module.** Confirmed 2026-10-16. The TS module stamps
    `ctx.timestamp.toISOString()`, which has microseconds (`.123456Z`); ledger-core's `Timestamp`
    holds the engine's millisecond shape (`.123Z`), so the Rust module truncates to milliseconds
    (`crates/ledger-module/src/clock.rs`, `iso_millis`; ADR 0003, Decision 5). Every fixture and
    the engine use milliseconds, and the Rust module and the desktop share one database, so
    byte parity with the TS module's stored stamps is not needed. Matching TS would mean
-   ledger-core's `Timestamp` accepting six fractional digits. **Confirm before production**:
-   changing it later rewrites or mixes the stamps of every stored audit event and entry.
-2. **`float_roundtrip` on the workspace `serde_json`.** `rust/Cargo.toml` turns the feature on
+   ledger-core's `Timestamp` accepting six fractional digits. Changing it later would rewrite or
+   mix the stamps of every stored audit event and entry.
+2. **`float_roundtrip` on the workspace `serde_json`.** Confirmed 2026-10-16. `rust/Cargo.toml` turns the feature on
    for every crate (PR #19), so a 16 or 17 digit float in command JSON (an `fx_rate`) parses to
    the nearest double, as JS `JSON.parse` does. Without it, three of the fifteen report fixture
    files fail by one ulp (`../fixtures/README.md`, "Rust reports"). The cost is a slightly
-   slower float parser. **Confirm before production**: it decides how stored rates read back.
-3. **No `budget.add` command.** Neither the TS command set (`flowtrace/src/lib/ledger/commands.ts`)
+   slower float parser. It decides how stored rates read back.
+3. **No `budget.add` command.** Confirmed 2026-10-16. Neither the TS command set (`flowtrace/src/lib/ledger/commands.ts`)
    nor ledger-core has a command that creates a budget; budgets exist only through the demo
    backfill (`Ledger::add_budget` is an engine method, not a command). The desktop's budget tab
    shows the web's "No budget set up" notice on books without one, as the web does. Parity won
@@ -124,8 +125,8 @@ and queued them. Each is reversible today; two get harder once production books 
 
 ## Next steps for a maintainer
 
-1. Get the three decisions above confirmed, then name the production database
-   (`module-release.md`, section 4).
+1. Publish the production database `flowtrace-ledger` to maincloud. This is the user's step,
+   never an agent's (`module-release.md`, section 4).
 2. Add the bun fixture check to `.github/workflows/rust.yml` so TS engine changes that move a
    fixture fail CI.
 3. Give the desktop the organisation and member calls (`ledger-client` first, with a test, as

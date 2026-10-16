@@ -168,7 +168,7 @@ Release and publishes nothing.
 
 | Document | What it holds |
 |---|---|
-| `docs/handoff.md` | Where things stand, known gaps and differences from the web app, decisions waiting for confirmation, next steps |
+| `docs/handoff.md` | Where things stand, known gaps and differences from the web app, decisions the user confirmed, next steps |
 | `docs/module-release.md` | Building the wasm, how maincloud dev was published, operators and members, what production needs |
 | `docs/parity.md` | Every TS ledger export, its Rust counterpart, the test that proves it, known differences |
 | `docs/adr/0002-gpui-spacetime.md` | Why GPUI with gpui-kit and the SpacetimeDB client, the store-entity data pattern, build costs |
