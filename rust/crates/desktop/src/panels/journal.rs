@@ -7,6 +7,8 @@
 //! <https://gpui-kit.com/component/input>, <https://gpui-kit.com/component/select>,
 //! <https://gpui-kit.com/component/button>.
 
+mod form;
+
 use std::sync::Arc;
 
 use gpui_kit::component::IndexPath;
@@ -27,6 +29,7 @@ use ledger_core::{CommandResult, LedgerCommand, LedgerState};
 use crate::accounts::{Failure, format_date, format_minor};
 use crate::backend::BackendError;
 use crate::claims::{format_whole, has_overridable};
+use crate::entry_form::{EntryForm, ImportPreview};
 use crate::journal::{
     DeleteDialog, EntryAction, EntryRow, EntryView, JournalFilter, ReverseErrors, ReverseForm,
     STATUS_FILTERS, StatusCounts, created_entry, entry_rows, entry_status_label, format_signed,
@@ -48,6 +51,10 @@ const MAX_ROWS: usize = 500;
 enum JournalView {
     List,
     Detail(EntryId),
+    /// The manual entry form, new or on a draft.
+    Form,
+    /// The CSV journal import.
+    Import,
 }
 
 /// The confirmation box open on an entry.
@@ -88,6 +95,25 @@ pub struct JournalPanel {
     override_text: Entity<InputState>,
     override_error: Option<String>,
 
+    form: Option<EntryForm>,
+    form_submitted: bool,
+    form_failure: Option<Failure>,
+    form_needs_override: bool,
+    form_override_error: Option<String>,
+    entry_date: Entity<InputState>,
+    entry_memo: Entity<InputState>,
+    form_override: Entity<InputState>,
+    form_lines: Vec<form::LineWidgets>,
+
+    import_path: Entity<InputState>,
+    import_fund: Entity<SelectState<Items>>,
+    import_fund_id: Option<ledger_core::types::FundId>,
+    import_text: Option<String>,
+    import_error: Option<String>,
+    import_preview: Option<ImportPreview>,
+    import_failure: Option<Failure>,
+    import_created: Option<usize>,
+
     _subscriptions: Vec<Subscription>,
 }
 
@@ -102,7 +128,8 @@ impl JournalPanel {
         let reverse_reason = cx.new(|cx| InputState::new(window, cx));
         let override_text = cx.new(|cx| InputState::new(window, cx));
         let enter = |event: &InputEvent| matches!(event, InputEvent::PressEnter { .. });
-        let subscriptions = vec![
+        let w = form::widgets(window, cx);
+        let mut subscriptions = vec![
             cx.observe_in(&store, window, |this, _, window, cx| {
                 this.refresh(window, cx);
             }),
@@ -136,6 +163,7 @@ impl JournalPanel {
                 }
             }),
         ];
+        subscriptions.extend(form::subscriptions(&w, window, cx));
         let mut panel = Self {
             store,
             seen: None,
@@ -162,6 +190,23 @@ impl JournalPanel {
             reverse_reason,
             override_text,
             override_error: None,
+            form: None,
+            form_submitted: false,
+            form_failure: None,
+            form_needs_override: false,
+            form_override_error: None,
+            entry_date: w.entry_date,
+            entry_memo: w.entry_memo,
+            form_override: w.form_override,
+            form_lines: Vec::new(),
+            import_path: w.import_path,
+            import_fund: w.import_fund,
+            import_fund_id: None,
+            import_text: None,
+            import_error: None,
+            import_preview: None,
+            import_failure: None,
+            import_created: None,
             _subscriptions: subscriptions,
         };
         panel.refresh(window, cx);
@@ -233,9 +278,14 @@ impl JournalPanel {
             self.done = None;
             self.cursor = 0;
             self.search.update(cx, |i, cx| i.set_value("", window, cx));
+            self.form = None;
+            self.form_lines.clear();
+            self.import_text = None;
+            self.import_created = None;
         }
         self.derive();
         self.reset_pickers(window, cx);
+        self.reset_import_fund(org_changed, window, cx);
         cx.notify();
     }
 
@@ -284,8 +334,12 @@ impl JournalPanel {
         self.cursor = self.cursor.min(self.rows.len().saturating_sub(1));
         self.detail = match &self.view {
             JournalView::Detail(id) => EntryView::new(books, id),
-            JournalView::List => None,
+            _ => None,
         };
+        self.import_preview = self
+            .import_text
+            .as_deref()
+            .and_then(|t| ImportPreview::new(t, books, self.import_fund_id.as_ref()));
     }
 
     /// Opens the entry `id` (from a row, a link, or the General ledger's
@@ -301,6 +355,8 @@ impl JournalPanel {
 
     fn back_to_list(&mut self) {
         self.view = JournalView::List;
+        self.form = None;
+        self.form_lines.clear();
         self.pending = None;
         self.action_failure = None;
         self.derive();
@@ -313,6 +369,18 @@ impl JournalPanel {
     pub fn press_key(&mut self, key: &str, window: &mut Window, cx: &mut Context<Self>) -> bool {
         let handled = match (key, &self.view) {
             ("escape", JournalView::List) => false,
+            ("n", JournalView::List) => {
+                self.open_form(None, window, cx);
+                true
+            }
+            ("i", JournalView::List) => {
+                self.open_import(window, cx);
+                true
+            }
+            ("escape", JournalView::Form) => {
+                self.leave_form();
+                true
+            }
             ("escape", _) => {
                 if self.pending.is_some() {
                     self.pending = None;
@@ -349,10 +417,11 @@ impl JournalPanel {
                 self.confirm(window, cx);
                 true
             }
-            (k @ ("p" | "d" | "r"), JournalView::Detail(_)) => {
+            (k @ ("p" | "d" | "r" | "e"), JournalView::Detail(_)) => {
                 let action = match k {
                     "p" => EntryAction::Post,
                     "d" => EntryAction::Delete,
+                    "e" => EntryAction::Edit,
                     _ => EntryAction::Reverse,
                 };
                 let allowed = self
@@ -414,7 +483,10 @@ impl JournalPanel {
                 self.reverse_errors = ReverseErrors::default();
                 self.pending = Some(Pending::Reverse(form));
             }
-            EntryAction::Edit => {}
+            EntryAction::Edit => {
+                let id = detail.entry.id.clone();
+                self.open_form(Some(&id), window, cx);
+            }
         }
     }
 
@@ -795,13 +867,7 @@ impl JournalPanel {
             .child(figure(&d.lines.len().to_string(), "Lines", false, cx))
             .child(figure(d.source, "Source", false, cx));
         let facts = Self::facts(d, cx);
-        let shown: Vec<EntryAction> = d
-            .actions
-            .iter()
-            .copied()
-            .filter(|a| *a != EntryAction::Edit)
-            .collect();
-        let actions = shown.iter().map(|&action| {
+        let actions = d.actions.iter().map(|&action| {
             let b = Button::new(SharedString::from(format!("act-{}", action.label())))
                 .label(action.label())
                 .on_click(cx.listener(move |panel, _: &ClickEvent, window, cx| {
@@ -1237,10 +1303,10 @@ fn col_amount() -> Div {
         .justify_end()
 }
 
-impl Render for JournalPanel {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let p = palette(cx.theme().mode);
-        let (title, lede) = match &self.view {
+impl JournalPanel {
+    /// The page title and lede of the view showing.
+    fn heading(&self) -> (String, String) {
+        match &self.view {
             JournalView::List => (
                 "Journal".to_owned(),
                 "Every entry in the books, in date order. Drafts are not in the books until \
@@ -1253,10 +1319,65 @@ impl Render for JournalPanel {
                     .map_or_else(|| "Journal entry".to_owned(), |d| d.entry.number.clone()),
                 String::new(),
             ),
-        };
+            JournalView::Form => (
+                self.form
+                    .as_ref()
+                    .map_or("New journal entry", EntryForm::title)
+                    .to_owned(),
+                "A manual entry moves amounts between accounts. Debits must equal credits, in \
+                 total and within each fund. Save it as a draft to finish later, or post it to \
+                 put it in the books."
+                    .to_owned(),
+            ),
+            JournalView::Import => (
+                "Import journals".to_owned(),
+                "Bring entries across from QuickBooks or Xero. Each journal in the file becomes \
+                 a draft here; nothing reaches the books until someone reviews and posts it."
+                    .to_owned(),
+            ),
+        }
+    }
+}
+
+impl Render for JournalPanel {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let p = palette(cx.theme().mode);
+        let (title, lede) = self.heading();
         let action: AnyElement = match &self.view {
-            JournalView::List => div().into_any_element(),
-            JournalView::Detail(_) => Button::new("back")
+            JournalView::List => h_flex()
+                .gap(px(8.0))
+                .child(
+                    Button::new("open-import")
+                        .outline()
+                        .label("Import journals")
+                        .on_click(cx.listener(|panel, _: &ClickEvent, window, cx| {
+                            panel.open_import(window, cx);
+                            cx.notify();
+                        })),
+                )
+                .child(
+                    Button::new("open-new")
+                        .primary()
+                        .label("New journal entry")
+                        .on_click(cx.listener(|panel, _: &ClickEvent, window, cx| {
+                            panel.open_form(None, window, cx);
+                            cx.notify();
+                        })),
+                )
+                .into_any_element(),
+            JournalView::Form => Button::new("back")
+                .ghost()
+                .label(if self.form.as_ref().is_some_and(|f| f.draft.is_some()) {
+                    "Back to the draft"
+                } else {
+                    "Journal"
+                })
+                .on_click(cx.listener(|panel, _: &ClickEvent, _, cx| {
+                    panel.leave_form();
+                    cx.notify();
+                }))
+                .into_any_element(),
+            JournalView::Detail(_) | JournalView::Import => Button::new("back")
                 .ghost()
                 .label("Journal")
                 .on_click(cx.listener(|panel, _: &ClickEvent, _, cx| {
@@ -1274,6 +1395,8 @@ impl Render for JournalPanel {
             match &self.view {
                 JournalView::List => self.list(cx),
                 JournalView::Detail(_) => self.detail_view(cx),
+                JournalView::Form => self.form_view(cx),
+                JournalView::Import => self.import_view(cx),
             }
         };
         v_flex()
