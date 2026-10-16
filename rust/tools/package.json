@@ -1,0 +1,14 @@
+{
+  "name": "flowtrace-fixture-tools",
+  "private": true,
+  "type": "module",
+  "description": "Exports parity fixtures from the TypeScript ledger engine in flowtrace/src/lib/ledger for the Rust ledger-core.",
+  "scripts": {
+    "export": "\"$npm_execpath\" --no-install export-fixtures.ts",
+    "coverage": "\"$npm_execpath\" --no-install coverage.ts",
+    "check": "\"$npm_execpath\" --no-install check.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.89.0"
+  }
+}
