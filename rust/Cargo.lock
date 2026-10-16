@@ -3785,6 +3785,14 @@ checksum = "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8"
 [[package]]
 name = "ledger-client"
 version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "ledger-core",
+ "ledger-module",
+ "serde_json",
+ "spacetimedb-sdk",
+ "thiserror 2.0.21",
+]
 
 [[package]]
 name = "ledger-core"
