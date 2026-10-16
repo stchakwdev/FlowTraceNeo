@@ -1,4 +1,5 @@
-//! The accounts-payable half of the Spend entry: the bills list with its status filter, the
+//! The accounts-payable half of the Spend entry, drawn inside `panels::spend::SpendPanel`'s
+//! Bills tab: the bills list with its status filter, the
 //! vendors with their add form, the new-bill form, and the bill detail with Approve, Post and
 //! Pay, its journal entries, the payments' fund split and the status trail.
 //!
@@ -18,7 +19,7 @@ use gpui_kit::component::{ActiveTheme as _, IndexPath, Sizable as _, h_flex, v_f
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClickEvent, Context, Div, Entity, FontWeight,
-    InteractiveElement as _, IntoElement, ParentElement, Render, SharedString,
+    InteractiveElement as _, IntoElement, ParentElement, SharedString,
     StatefulInteractiveElement as _, Styled as _, Subscription, Window, div, px,
 };
 use ledger_core::demo::{DEMO_AS_OF, DEMO_ORG_ID};
@@ -31,14 +32,13 @@ use ledger_core::{CommandResult, LedgerCommand};
 use crate::accounts::{Failure, format_date, format_minor};
 use crate::bills::{
     BillAction, BillDetail, BillErrors, BillField, BillFilter, BillRow, CURRENCIES, EntryView,
-    FILTERS, LineDraft, LineField, NewBillForm, NewVendorForm, PayErrors, PayForm, Tone,
-    VendorRow, bill_detail, bill_rows, cash_accounts, filter_count, filtered, grants_for,
-    line_accounts, no_match_text, overdue_text, status_label, status_tone, vendor_rows,
-    vendors_meta,
+    FILTERS, LineDraft, LineField, NewBillForm, NewVendorForm, PayErrors, PayForm, Tone, VendorRow,
+    bill_detail, bill_rows, filter_count, filtered, line_accounts, no_match_text, overdue_text,
+    status_label, status_tone, vendor_rows, vendors_meta,
 };
+use crate::claims::{cash_accounts, format_whole, grant_choices};
 use crate::panels::{
-    Pick, PickState, choice, demo_tag, failure_box, field, form_buttons, hint, page_title,
-    section_header,
+    Pick, PickState, choice, demo_tag, failure_box, field, form_buttons, hint, section_header,
 };
 use crate::statements::today_utc;
 use crate::store::LedgerStore;
@@ -334,7 +334,8 @@ impl BillsPanel {
                 };
                 self.open_detail(id);
             }
-            "escape" if self.tab == Tab::Bills && self.page != Page::List => {
+            "escape" if self.tab == Tab::Vendors || self.page != Page::List => {
+                self.tab = Tab::Bills;
                 self.page = Page::List;
             }
             _ => return false,
@@ -357,7 +358,11 @@ impl BillsPanel {
         self.load_detail();
     }
 
-    fn submit(&self, command: LedgerCommand, cx: &mut Context<Self>) -> Result<CommandResult, Failure> {
+    fn submit(
+        &self,
+        command: LedgerCommand,
+        cx: &mut Context<Self>,
+    ) -> Result<CommandResult, Failure> {
         self.store
             .update(cx, |store, _| store.submit(command))
             .map_err(|err| Failure::new("Not done", &err))
@@ -392,7 +397,12 @@ impl BillsPanel {
                         self.vendor_failure = None;
                         self.vendor_done = Some(format!("Added {}.", form.name.trim()));
                     }
-                    Err(f) => self.vendor_failure = Some(Failure { title: "Not added".into(), ..f }),
+                    Err(f) => {
+                        self.vendor_failure = Some(Failure {
+                            title: "Not added".into(),
+                            ..f
+                        })
+                    }
                 }
             }
         }
@@ -408,7 +418,8 @@ impl BillsPanel {
         let form = NewBillForm::new(&books, &self.as_of);
         self.number.update(cx, |i, cx| i.set_value("", window, cx));
         let (b, d) = (form.bill_date.clone(), form.due_date.clone());
-        self.bill_date.update(cx, |i, cx| i.set_value(b, window, cx));
+        self.bill_date
+            .update(cx, |i, cx| i.set_value(b, window, cx));
         self.due_date.update(cx, |i, cx| i.set_value(d, window, cx));
         self.fx_rate.update(cx, |i, cx| i.set_value("", window, cx));
         self.vendor_pick
@@ -462,7 +473,10 @@ impl BillsPanel {
         let grant = new_pick(
             window,
             cx,
-            picks(&grants_for(books, line.fund_id.as_ref()), Some("No grant")),
+            picks(
+                &grant_choices(books, line.fund_id.as_ref()),
+                Some("No grant"),
+            ),
             Some(line.grant_id.as_ref().map_or("", GrantId::as_str)),
         );
         let dims: Vec<(DimensionId, String)> = books
@@ -518,7 +532,10 @@ impl BillsPanel {
             return;
         };
         line.set_fund(&books, FundId::from(fund));
-        let items = picks(&grants_for(&books, line.fund_id.as_ref()), Some("No grant"));
+        let items = picks(
+            &grant_choices(&books, line.fund_id.as_ref()),
+            Some("No grant"),
+        );
         let chosen = line
             .grant_id
             .as_ref()
@@ -567,9 +584,7 @@ impl BillsPanel {
             return;
         };
         let widgets = Self::line_widgets(&books, &line, window, cx);
-        widgets
-            .description
-            .update(cx, |i, cx| i.focus(window, cx));
+        widgets.description.update(cx, |i, cx| i.focus(window, cx));
         self.lines.push(widgets);
         cx.notify();
     }
@@ -643,7 +658,8 @@ impl BillsPanel {
             let (amount, date) = (form.amount.clone(), form.date.clone());
             self.pay_amount
                 .update(cx, |i, cx| i.set_value(amount, window, cx));
-            self.pay_date.update(cx, |i, cx| i.set_value(date, window, cx));
+            self.pay_date
+                .update(cx, |i, cx| i.set_value(date, window, cx));
             self.pay_reference
                 .update(cx, |i, cx| i.set_value("", window, cx));
             self.pay_cash
@@ -722,8 +738,8 @@ impl BillsPanel {
         h_flex()
             .border_b(px(space::HAIRLINE))
             .border_color(p.hairline.to_hsla())
-            .child(tab("tab-bills", "Bills", "b", Tab::Bills))
-            .child(tab("tab-vendors", "Vendors", "v", Tab::Vendors))
+            .child(tab("ap-bills", "All bills", "b", Tab::Bills))
+            .child(tab("ap-vendors", "Vendors", "v", Tab::Vendors))
     }
 
     fn meta(&self, extra: Option<String>, cx: &App) -> Div {
@@ -818,7 +834,11 @@ impl BillsPanel {
             .hover(|row| row.bg(p.rail_hover.to_hsla()))
             .child(
                 col_bill()
-                    .child(div().font_weight(FontWeight::SEMIBOLD).child(r.vendor.clone()))
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .child(r.vendor.clone()),
+                    )
                     .child(
                         div()
                             .text_size(px(text::MONO))
@@ -845,16 +865,15 @@ impl BillsPanel {
                     }),
             )
             .child(col_money().child(money(r.total, &r.currency)))
-            .child(
-                col_money()
-                    .map(|c| match r.outstanding {
-                        None => c
-                            .text_size(px(12.0))
-                            .text_color(p.ink_muted.to_hsla())
-                            .child("Not posted"),
-                        Some(_) => c.font_weight(FontWeight::BOLD).child(r.outstanding_text()),
-                    }),
-            )
+            .child(col_money().map(|c| {
+                match r.outstanding {
+                    None => c
+                        .text_size(px(12.0))
+                        .text_color(p.ink_muted.to_hsla())
+                        .child("Not posted"),
+                    Some(_) => c.font_weight(FontWeight::BOLD).child(r.outstanding_text()),
+                }
+            }))
             .child(col_status().child(status_tag(r.status, p)))
             .on_click(cx.listener(move |panel, _: &ClickEvent, _, cx| {
                 panel.cursor = i;
@@ -883,11 +902,17 @@ impl BillsPanel {
                 .min_h(px(44.0))
                 .border_b(px(space::HAIRLINE))
                 .border_color(p.hairline.to_hsla())
-                .child(col_bill().font_weight(FontWeight::SEMIBOLD).child(v.name.clone()))
                 .child(
-                    col_wide()
-                        .text_color(p.ink_muted.to_hsla())
-                        .child(v.payment_details.clone().unwrap_or_else(|| "\u{2013}".into())),
+                    col_bill()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child(v.name.clone()),
+                )
+                .child(
+                    col_wide().text_color(p.ink_muted.to_hsla()).child(
+                        v.payment_details
+                            .clone()
+                            .unwrap_or_else(|| "\u{2013}".into()),
+                    ),
                 )
                 .child(
                     col_date()
@@ -904,7 +929,9 @@ impl BillsPanel {
         });
         v_flex()
             .gap(px(space::SECTION))
-            .when_some(self.vendor_done.clone(), |v, done| v.child(done_box(&done, p)))
+            .when_some(self.vendor_done.clone(), |v, done| {
+                v.child(done_box(&done, p))
+            })
             .when(self.vendor_open, |v| v.child(self.vendor_form(cx)))
             .child(
                 v_flex()
@@ -938,7 +965,9 @@ impl BillsPanel {
                 v_flex()
                     .py(px(space::CELL))
                     .gap(px(space::CELL))
-                    .when_some(self.vendor_failure.clone(), |v, f| v.child(failure_box(&f, cx)))
+                    .when_some(self.vendor_failure.clone(), |v, f| {
+                        v.child(failure_box(&f, cx))
+                    })
                     .child(
                         h_flex()
                             .gap(px(space::CELL))
@@ -953,8 +982,13 @@ impl BillsPanel {
                                 .flex_1(),
                             )
                             .child(
-                                field("Payment details", Input::new(&self.vendor_details), None, cx)
-                                    .flex_1(),
+                                field(
+                                    "Payment details",
+                                    Input::new(&self.vendor_details),
+                                    None,
+                                    cx,
+                                )
+                                .flex_1(),
                             ),
                     )
                     .child(form_buttons(
@@ -968,7 +1002,10 @@ impl BillsPanel {
             .into_any_element()
     }
 
-    #[expect(clippy::too_many_lines, reason = "one linear layout of the form's sections")]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "one linear layout of the form's sections"
+    )]
     fn new_form(&self, cx: &mut Context<Self>) -> AnyElement {
         let Some(form) = &self.form else {
             return div().into_any_element();
@@ -976,9 +1013,9 @@ impl BillsPanel {
         let p = palette(cx.theme().mode);
         let errors = &self.form_errors;
         let currencies = CURRENCIES.into_iter().map(|(code, _)| {
-            choice(format!("currency-{code}"), code, form.currency == code).on_click(cx.listener(
-                move |panel, _: &ClickEvent, _, cx| panel.set_currency(code, cx),
-            ))
+            choice(format!("currency-{code}"), code, form.currency == code).on_click(
+                cx.listener(move |panel, _: &ClickEvent, _, cx| panel.set_currency(code, cx)),
+            )
         });
         let currencies: Vec<Button> = currencies.collect();
         let total = {
@@ -1017,95 +1054,96 @@ impl BillsPanel {
                         .children(errors.summary().into_iter().map(|m| div().child(m))),
                 )
             })
-            .when_some(self.form_failure.clone(), |v, f| v.child(failure_box(&f, cx)))
+            .when_some(self.form_failure.clone(), |v, f| {
+                v.child(failure_box(&f, cx))
+            })
             .child(
                 v_flex()
                     .child(section_header("Supplier", div(), cx))
-                    .child(
-                        div().py(px(space::CELL)).max_w(px(420.0)).child(field(
-                            "Supplier",
-                            Select::new(&self.vendor_pick).placeholder(if self.vendors.is_empty() {
-                                "No suppliers yet"
-                            } else {
-                                "Choose a supplier"
-                            }),
-                            errors.field(BillField::Vendor),
-                            cx,
-                        )),
-                    )
-                    .child(hint("A new supplier is added on the Vendors tab (key v).", cx)),
+                    .child(div().py(px(space::CELL)).max_w(px(420.0)).child(field(
+                        "Supplier",
+                        Select::new(&self.vendor_pick).placeholder(if self.vendors.is_empty() {
+                            "No suppliers yet"
+                        } else {
+                            "Choose a supplier"
+                        }),
+                        errors.field(BillField::Vendor),
+                        cx,
+                    )))
+                    .child(hint(
+                        "A new supplier is added on the Vendors tab (key v).",
+                        cx,
+                    )),
             )
             .child(
-                v_flex()
-                    .child(section_header("The bill", div(), cx))
-                    .child(
-                        v_flex()
-                            .py(px(space::CELL))
-                            .gap(px(space::CELL))
-                            .child(
-                                field(
-                                    "Bill number",
-                                    Input::new(&self.number),
-                                    errors.field(BillField::Number),
-                                    cx,
-                                )
-                                .max_w(px(420.0)),
-                            )
-                            .child(
-                                h_flex()
-                                    .gap(px(space::CELL))
-                                    .items_start()
-                                    .child(
-                                        field(
-                                            "Bill date",
-                                            Input::new(&self.bill_date),
-                                            errors.field(BillField::BillDate),
-                                            cx,
-                                        )
-                                        .flex_1(),
-                                    )
-                                    .child(
-                                        field(
-                                            "Due date",
-                                            Input::new(&self.due_date),
-                                            errors.field(BillField::DueDate),
-                                            cx,
-                                        )
-                                        .flex_1(),
-                                    ),
-                            )
-                            .child(field(
-                                "Currency",
-                                h_flex().gap(px(6.0)).flex_wrap().children(currencies),
-                                None,
+                v_flex().child(section_header("The bill", div(), cx)).child(
+                    v_flex()
+                        .py(px(space::CELL))
+                        .gap(px(space::CELL))
+                        .child(
+                            field(
+                                "Bill number",
+                                Input::new(&self.number),
+                                errors.field(BillField::Number),
                                 cx,
-                            ))
-                            .map(|v| {
-                                if form.foreign() {
-                                    v.child(
-                                        field(
-                                            &format!(
-                                                "Exchange rate, {} per {}",
-                                                form.base, form.currency
-                                            ),
-                                            Input::new(&self.fx_rate),
-                                            errors.field(BillField::FxRate),
-                                            cx,
-                                        )
-                                        .max_w(px(320.0)),
-                                    )
-                                } else {
-                                    v.child(hint(
-                                        &format!(
-                                            "{} is the books\u{2019} own currency, so no exchange \
-                                             rate is needed.",
-                                            form.base
-                                        ),
+                            )
+                            .max_w(px(420.0)),
+                        )
+                        .child(
+                            h_flex()
+                                .gap(px(space::CELL))
+                                .items_start()
+                                .child(
+                                    field(
+                                        "Bill date",
+                                        Input::new(&self.bill_date),
+                                        errors.field(BillField::BillDate),
                                         cx,
-                                    ))
-                                }
-                            }),
-                    ),
+                                    )
+                                    .flex_1(),
+                                )
+                                .child(
+                                    field(
+                                        "Due date",
+                                        Input::new(&self.due_date),
+                                        errors.field(BillField::DueDate),
+                                        cx,
+                                    )
+                                    .flex_1(),
+                                ),
+                        )
+                        .child(field(
+                            "Currency",
+                            h_flex().gap(px(6.0)).flex_wrap().children(currencies),
+                            None,
+                            cx,
+                        ))
+                        .map(|v| {
+                            if form.foreign() {
+                                v.child(
+                                    field(
+                                        &format!(
+                                            "Exchange rate, {} per {}",
+                                            form.base, form.currency
+                                        ),
+                                        Input::new(&self.fx_rate),
+                                        errors.field(BillField::FxRate),
+                                        cx,
+                                    )
+                                    .max_w(px(320.0)),
+                                )
+                            } else {
+                                v.child(hint(
+                                    &format!(
+                                        "{} is the books\u{2019} own currency, so no exchange \
+                                             rate is needed.",
+                                        form.base
+                                    ),
+                                    cx,
+                                ))
+                            }
+                        }),
+                ),
             )
             .child(
                 v_flex()
@@ -1191,7 +1229,11 @@ impl BillsPanel {
             .child(
                 h_flex()
                     .justify_between()
-                    .child(div().font_weight(FontWeight::SEMIBOLD).child(format!("Line {}", i + 1)))
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .child(format!("Line {}", i + 1)),
+                    )
                     .when(self.lines.len() > 1, |h| {
                         h.child(
                             Button::new(SharedString::from(format!("remove-line-{i}")))
@@ -1290,10 +1332,11 @@ impl BillsPanel {
         let figures = [
             (format_whole(d.total), format!("Billed, {}", b.currency)),
             (
-                d.outstanding.map_or_else(|| "\u{2013}".to_owned(), format_whole),
+                d.outstanding
+                    .map_or_else(|| "\u{2013}".to_owned(), whole_or_zero),
                 "Outstanding".to_owned(),
             ),
-            (format_whole(d.paid), "Paid".to_owned()),
+            (whole_or_zero(d.paid), "Paid".to_owned()),
             if d.overdue_days > 0 {
                 (d.overdue_days.to_string(), "Days overdue".to_owned())
             } else {
@@ -1329,9 +1372,19 @@ impl BillsPanel {
                 v_flex()
                     .child(section_header("Bill", self.meta(None, cx), cx))
                     .child(figure_row(&figures, p))
-                    .when(b.currency != self.books.as_ref().map_or(String::new(), |s| s.settings.base_currency.clone()), |v| {
-                        v.child(hint(&format!("Booked at {} per {}.", b.fx_rate, b.currency), cx))
-                    }),
+                    .when(
+                        b.currency
+                            != self
+                                .books
+                                .as_ref()
+                                .map_or(String::new(), |s| s.settings.base_currency.clone()),
+                        |v| {
+                            v.child(hint(
+                                &format!("Booked at {} per {}.", b.fx_rate, b.currency),
+                                cx,
+                            ))
+                        },
+                    ),
             )
             .child(
                 v_flex()
@@ -1399,7 +1452,9 @@ impl BillsPanel {
                 d.bill.currency,
                 format_minor(d.outstanding.unwrap_or(0))
             )))
-            .when_some(self.pay_failure.clone(), |v, f| v.child(failure_box(&f, cx)))
+            .when_some(self.pay_failure.clone(), |v, f| {
+                v.child(failure_box(&f, cx))
+            })
             .child(
                 h_flex()
                     .gap(px(space::CELL))
@@ -1414,8 +1469,7 @@ impl BillsPanel {
                         .flex_1(),
                     )
                     .child(
-                        field("Date paid", Input::new(&self.pay_date), e.date.clone(), cx)
-                            .flex_1(),
+                        field("Date paid", Input::new(&self.pay_date), e.date.clone(), cx).flex_1(),
                     ),
             )
             .child(field(
@@ -1424,7 +1478,12 @@ impl BillsPanel {
                 e.cash.clone(),
                 cx,
             ))
-            .child(field("Reference", Input::new(&self.pay_reference), None, cx))
+            .child(field(
+                "Reference",
+                Input::new(&self.pay_reference),
+                None,
+                cx,
+            ))
             .child(form_buttons(
                 "pay",
                 "Record payment",
@@ -1472,7 +1531,11 @@ impl BillsPanel {
                                 format_date(&pay.date)
                             )))
                             .when_some(pay.entry.as_ref(), |h, e| {
-                                h.child(div().text_size(px(text::MONO)).child(e.detail.number.clone()))
+                                h.child(
+                                    div()
+                                        .text_size(px(text::MONO))
+                                        .child(e.detail.number.clone()),
+                                )
                             }),
                     )
                     .child(
@@ -1509,12 +1572,14 @@ impl BillsPanel {
                     div()
                         .py(px(space::CELL))
                         .text_color(p.ink_muted.to_hsla())
-                        .child(
-                            "Not posted yet. A journal entry is made when the bill is posted.",
-                        ),
+                        .child("Not posted yet. A journal entry is made when the bill is posted."),
                 )
             })
-            .children(entries.into_iter().map(|(label, e)| entry_table(&label, e, p)))
+            .children(
+                entries
+                    .into_iter()
+                    .map(|(label, e)| entry_table(&label, e, p)),
+            )
             .into_any_element()
     }
 }
@@ -1524,17 +1589,13 @@ fn money(minor: i64, currency: &str) -> String {
     format!("{currency} {}", format_minor(minor))
 }
 
-/// `formatMinor(x, { decimals: 0, zero: '0' })`: whole units with grouping.
-fn format_whole(minor: i64) -> String {
+/// `formatMinor(x, { decimals: 0, zero: '0' })` (`bills.$id.tsx`, the key figures).
+fn whole_or_zero(minor: i64) -> String {
     if minor == 0 {
-        return "0".to_owned();
+        "0".to_owned()
+    } else {
+        format_whole(minor)
     }
-    // Rounded half away from zero, as Intl rounds.
-    let rounded = (minor.abs() + 50) / 100 * 100 * minor.signum();
-    if rounded == 0 {
-        return "0".to_owned();
-    }
-    format_minor(rounded).replace(".00", "")
 }
 
 fn col_bill() -> Div {
@@ -1550,7 +1611,12 @@ fn col_date() -> Div {
 }
 
 fn col_count() -> Div {
-    div().w(px(64.0)).flex_shrink_0().px(px(8.0)).flex().justify_end()
+    div()
+        .w(px(64.0))
+        .flex_shrink_0()
+        .px(px(8.0))
+        .flex()
+        .justify_end()
 }
 
 fn col_money() -> Div {
@@ -1602,8 +1668,16 @@ fn notice(title: &str, body: &str, cx: &App) -> Div {
     v_flex()
         .py(px(space::CELL))
         .gap(px(4.0))
-        .child(div().font_weight(FontWeight::SEMIBOLD).child(title.to_owned()))
-        .child(div().text_color(p.ink_muted.to_hsla()).child(body.to_owned()))
+        .child(
+            div()
+                .font_weight(FontWeight::SEMIBOLD)
+                .child(title.to_owned()),
+        )
+        .child(
+            div()
+                .text_color(p.ink_muted.to_hsla())
+                .child(body.to_owned()),
+        )
 }
 
 fn done_box(text_: &str, p: &Palette) -> Div {
@@ -1672,7 +1746,11 @@ fn coded_lines(d: &BillDetail, p: &Palette) -> Div {
                 .py(px(6.0))
                 .border_b(px(space::HAIRLINE))
                 .border_color(p.hairline.to_hsla())
-                .child(col_bill().font_weight(FontWeight::MEDIUM).child(l.description.clone()))
+                .child(
+                    col_bill()
+                        .font_weight(FontWeight::MEDIUM)
+                        .child(l.description.clone()),
+                )
                 .child(col_wide().child(l.account.clone()))
                 .child(
                     col_wide().child(l.fund.clone()).child(
@@ -1687,7 +1765,11 @@ fn coded_lines(d: &BillDetail, p: &Palette) -> Div {
                         .text_color(p.ink_muted.to_hsla())
                         .child(l.dimensions.clone()),
                 )
-                .child(col_money().font_weight(FontWeight::SEMIBOLD).child(format_minor(l.amount)))
+                .child(
+                    col_money()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child(format_minor(l.amount)),
+                )
         }))
         .child(
             h_flex()
@@ -1730,16 +1812,31 @@ fn entry_table(label: &str, e: &EntryView, p: &Palette) -> AnyElement {
             h_flex()
                 .justify_between()
                 .pb(px(6.0))
-                .child(div().font_weight(FontWeight::SEMIBOLD).child(label.to_owned()))
+                .child(
+                    div()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child(label.to_owned()),
+                )
                 .child(
                     h_flex()
                         .gap(px(10.0))
                         .text_color(muted)
                         .child(format_date(&d.date))
-                        .child(div().text_size(px(text::MONO)).text_color(p.ink_navy.to_hsla()).child(d.number.clone())),
+                        .child(
+                            div()
+                                .text_size(px(text::MONO))
+                                .text_color(p.ink_navy.to_hsla())
+                                .child(d.number.clone()),
+                        ),
                 ),
         )
-        .child(div().pb(px(6.0)).text_size(px(12.0)).text_color(muted).child(d.memo.clone()))
+        .child(
+            div()
+                .pb(px(6.0))
+                .text_size(px(12.0))
+                .text_color(muted)
+                .child(d.memo.clone()),
+        )
         .child(
             h_flex()
                 .h(px(32.0))
@@ -1769,7 +1866,11 @@ fn entry_table(label: &str, e: &EntryView, p: &Palette) -> AnyElement {
                 .border_t(px(2.0))
                 .border_color(p.ink_navy.to_hsla())
                 .font_weight(FontWeight::BOLD)
-                .child(col_bill().child(if e.balanced() { "Balanced" } else { "Out of balance" }))
+                .child(col_bill().child(if e.balanced() {
+                    "Balanced"
+                } else {
+                    "Out of balance"
+                }))
                 .child(col_wide())
                 .child(col_money().child(format_minor(d.debits)))
                 .child(col_money().child(format_minor(d.credits))),
@@ -1777,9 +1878,10 @@ fn entry_table(label: &str, e: &EntryView, p: &Palette) -> AnyElement {
         .into_any_element()
 }
 
-impl Render for BillsPanel {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let p = palette(cx.theme().mode);
+impl BillsPanel {
+    /// The Spend page's title, lede and action button while the Bills tab shows
+    /// (`panels::spend::SpendPanel` draws them above its tabs).
+    pub fn header(&mut self, cx: &mut Context<Self>) -> (String, String, AnyElement) {
         let (title, lede) = match (self.tab, &self.page) {
             (Tab::Vendors, _) => (
                 "Vendors".to_owned(),
@@ -1829,6 +1931,12 @@ impl Render for BillsPanel {
                 }))
                 .into_any_element(),
         };
+        (title, lede, action)
+    }
+
+    /// The Bills tab under the Spend tabs: the bills and vendors switch, then the page showing.
+    pub fn body(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        let p = palette(cx.theme().mode);
         let body = if self.books.is_none() {
             div()
                 .text_color(p.ink_muted.to_hsla())
@@ -1844,21 +1952,8 @@ impl Render for BillsPanel {
         };
         v_flex()
             .gap(px(space::SECTION))
-            .child(
-                h_flex()
-                    .justify_between()
-                    .items_end()
-                    .gap(px(16.0))
-                    .child(
-                        v_flex()
-                            .gap(px(8.0))
-                            .max_w(px(720.0))
-                            .child(page_title(&title))
-                            .child(div().text_size(px(text::LEDE)).child(lede)),
-                    )
-                    .child(action),
-            )
             .child(self.tabs(cx))
             .child(body)
+            .into_any_element()
     }
 }

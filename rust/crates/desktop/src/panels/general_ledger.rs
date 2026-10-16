@@ -39,8 +39,6 @@ use crate::theme::{palette, space, text};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpenEntry(pub EntryId);
 
-
-
 fn picks<T: AsRef<str>>(choices: &[Choice<T>]) -> Vec<Pick> {
     choices
         .iter()

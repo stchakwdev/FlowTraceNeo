@@ -20,6 +20,7 @@ use ledger_core::types::{
 };
 
 use crate::accounts::{ACCOUNT_TYPES, format_date, format_minor};
+use crate::claims::{iso_to_day_month_year, parse_day_month_year};
 use crate::general_ledger::EntryDetail;
 
 /// The en dash of an empty cell (`money.tsx:12`).
@@ -286,7 +287,10 @@ fn in_base(state: &LedgerState, bill: &Bill, amount: Minor) -> Minor {
     }
     #[expect(clippy::cast_precision_loss, reason = "minor units stay below 2^53")]
     let x = ledger_core::money::js_round(amount as f64 * bill.fx_rate);
-    #[expect(clippy::cast_possible_truncation, reason = "a whole number of minor units")]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "a whole number of minor units"
+    )]
     let minor = x as Minor;
     minor
 }
@@ -365,91 +369,6 @@ impl NewVendorForm {
                 payment_details: (!details.is_empty()).then(|| details.to_owned()),
             },
         })
-    }
-}
-
-/// The month names of the date field's messages (`date-field.tsx:7-20`).
-const MONTHS: [&str; 12] = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
-
-fn days_in_month(year: i64, month: i64) -> i64 {
-    match month {
-        2 if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 => 29,
-        2 => 28,
-        4 | 6 | 9 | 11 => 30,
-        _ => 31,
-    }
-}
-
-/// `parseDayMonthYear` (`flowtrace/src/components/ui/date-field.tsx:50-80`): `Ok(None)` for an
-/// empty field, `Ok(Some(date))` for a valid `dd/mm/yyyy`, otherwise the plain-words problem.
-///
-/// # Errors
-///
-/// The message the web field shows for a malformed or impossible date.
-pub fn parse_day_month_year(text: &str) -> Result<Option<IsoDate>, String> {
-    let t = text.trim();
-    if t.is_empty() {
-        return Ok(None);
-    }
-    let malformed = || "Enter the date as day/month/year, for example 18/01/2026.".to_owned();
-    let parts: Vec<&str> = t.split(['/', '.', '-']).collect();
-    let digits = |p: &str| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit());
-    let [d, m, y] = parts.as_slice() else {
-        return Err(malformed());
-    };
-    if !(digits(d) && digits(m) && digits(y) && d.len() <= 2 && m.len() <= 2) {
-        return Err(malformed());
-    }
-    if y.len() != 4 {
-        return Err("Write the year in full, for example 2026.".to_owned());
-    }
-    let (day, month, year): (i64, i64, i64) = (
-        d.parse().map_err(|_| malformed())?,
-        m.parse().map_err(|_| malformed())?,
-        y.parse().map_err(|_| malformed())?,
-    );
-    if !(1..=12).contains(&month) {
-        return Err(format!(
-            "There is no month {month}. Put the day first, then the month: dd/mm/yyyy."
-        ));
-    }
-    let days = days_in_month(year, month);
-    if day < 1 {
-        return Err("There is no day 0. Enter a day from 1.".to_owned());
-    }
-    if day > days {
-        let name = usize::try_from(month - 1)
-            .ok()
-            .and_then(|i| MONTHS.get(i))
-            .copied()
-            .unwrap_or_default();
-        return Err(format!("{name} {year} has only {days} days."));
-    }
-    IsoDate::parse(&format!("{year:04}-{month:02}-{day:02}"))
-        .map(Some)
-        .map_err(|_| malformed())
-}
-
-/// `isoToDayMonthYear` (`date-field.tsx:36-39`): `2026-01-18` to `18/01/2026`.
-#[must_use]
-pub fn iso_to_day_month_year(date: &IsoDate) -> String {
-    let s = date.as_str();
-    match (s.get(0..4), s.get(5..7), s.get(8..10)) {
-        (Some(y), Some(m), Some(d)) => format!("{d}/{m}/{y}"),
-        _ => String::new(),
     }
 }
 
@@ -541,16 +460,26 @@ fn account_label(code: &str, name: &str) -> String {
 
 /// `AccountSelect` (`pickers.tsx:25-44`): active posting accounts of `types`, by type in
 /// `TYPE_LABEL` order, then by code.
-fn accounts_of(state: &LedgerState, types: &[AccountType], cash_only: bool) -> Vec<(AccountId, String)> {
+fn accounts_of(
+    state: &LedgerState,
+    types: &[AccountType],
+    cash_only: bool,
+) -> Vec<(AccountId, String)> {
     let mut out = Vec::new();
     for t in ACCOUNT_TYPES.into_iter().filter(|t| types.contains(t)) {
         let mut of_type: Vec<_> = state
             .accounts
             .iter()
-            .filter(|a| a.account_type == t && !a.is_group && a.is_active && (!cash_only || a.is_cash))
+            .filter(|a| {
+                a.account_type == t && !a.is_group && a.is_active && (!cash_only || a.is_cash)
+            })
             .collect();
         of_type.sort_by(|a, b| a.code.cmp(&b.code));
-        out.extend(of_type.into_iter().map(|a| (a.id.clone(), account_label(&a.code, &a.name))));
+        out.extend(
+            of_type
+                .into_iter()
+                .map(|a| (a.id.clone(), account_label(&a.code, &a.name))),
+        );
     }
     out
 }
@@ -561,23 +490,6 @@ fn accounts_of(state: &LedgerState, types: &[AccountType], cash_only: bool) -> V
 #[must_use]
 pub fn line_accounts(state: &LedgerState) -> Vec<(AccountId, String)> {
     accounts_of(state, &[AccountType::Expense, AccountType::Asset], false)
-}
-
-/// `AccountSelect cashOnly` (`pickers.tsx:25-44`): the active cash accounts, by code.
-#[must_use]
-pub fn cash_accounts(state: &LedgerState) -> Vec<(AccountId, String)> {
-    accounts_of(state, &ACCOUNT_TYPES, true)
-}
-
-/// `GrantSelect fundId` (`pickers.tsx:57-69`): the grants on `fund`.
-#[must_use]
-pub fn grants_for(state: &LedgerState, fund: Option<&FundId>) -> Vec<(GrantId, String)> {
-    state
-        .grants
-        .iter()
-        .filter(|g| fund.is_none_or(|f| &g.fund_id == f))
-        .map(|g| (g.id.clone(), g.name.clone()))
-        .collect()
 }
 
 /// `linesTotal` (`-shared.tsx:369-371`): the lines' amounts, a line that does not parse or is
@@ -852,17 +764,20 @@ impl NewBillForm {
         let bill_date = parse_day_month_year(&self.bill_date);
         let due_date = parse_day_month_year(&self.due_date);
         match &bill_date {
-            Ok(None) => add(BillField::BillDate, "Enter the date on the bill.".to_owned()),
-            Err(e) => add(BillField::BillDate, e.clone()),
-            Ok(Some(_)) => {}
+            None => add(
+                BillField::BillDate,
+                "Enter the date on the bill.".to_owned(),
+            ),
+            Some(Err(e)) => add(BillField::BillDate, e.clone()),
+            Some(Ok(_)) => {}
         }
         match (&due_date, &bill_date) {
-            (Ok(None), _) => add(
+            (None, _) => add(
                 BillField::DueDate,
                 "Enter when the bill must be paid.".to_owned(),
             ),
-            (Err(e), _) => add(BillField::DueDate, e.clone()),
-            (Ok(Some(due)), Ok(Some(billed))) if due.as_str() < billed.as_str() => add(
+            (Some(Err(e)), _) => add(BillField::DueDate, e.clone()),
+            (Some(Ok(due)), Some(Ok(billed))) if due.as_str() < billed.as_str() => add(
                 BillField::DueDate,
                 "The due date cannot be before the bill date.".to_owned(),
             ),
@@ -872,7 +787,10 @@ impl NewBillForm {
             if self.fx_rate.trim().is_empty() {
                 add(
                     BillField::FxRate,
-                    format!("Enter how many {} one {} is worth.", self.base, self.currency),
+                    format!(
+                        "Enter how many {} one {} is worth.",
+                        self.base, self.currency
+                    ),
                 );
             } else if self.rate().is_none() {
                 add(
@@ -885,12 +803,9 @@ impl NewBillForm {
             fields,
             lines: line_errors(state, &self.lines),
         };
-        let (Some(vendor), Ok(Some(bill_date)), Ok(Some(due_date)), true) = (
-            self.vendor.clone(),
-            bill_date,
-            due_date,
-            errors.is_empty(),
-        ) else {
+        let (Some(vendor), Some(Ok(bill_date)), Some(Ok(due_date)), true) =
+            (self.vendor.clone(), bill_date, due_date, errors.is_empty())
+        else {
             return Err(errors);
         };
         // toCodedLines (`-shared.tsx:358-367`).
@@ -1141,7 +1056,8 @@ impl EntryView {
     /// Whether the debits equal the credits in base currency.
     #[must_use]
     pub fn balanced(&self) -> bool {
-        self.detail.debits == self.detail.credits && self.movements.iter().map(|m| m.1).sum::<Minor>() == 0
+        self.detail.debits == self.detail.credits
+            && self.movements.iter().map(|m| m.1).sum::<Minor>() == 0
     }
 
     /// The net base-currency movement on `account` in this entry (debit positive).
@@ -1238,10 +1154,7 @@ pub fn bill_detail(
     let total = doc_total(bill);
     let outstanding = outstanding_of(state, bill);
     let (next, actions) = next_step(bill, actor, outstanding);
-    let posting = bill
-        .entry_id
-        .as_ref()
-        .and_then(|e| EntryView::of(state, e));
+    let posting = bill.entry_id.as_ref().and_then(|e| EntryView::of(state, e));
     let payable = &state.settings.system_accounts.accounts_payable;
     let mut payments: Vec<_> = state
         .payments
@@ -1277,7 +1190,11 @@ pub fn bill_detail(
             TrailRow {
                 when: when(at.as_str()),
                 who: person_name(
-                    entry.posted_by.as_ref().unwrap_or(&entry.created_by).as_str(),
+                    entry
+                        .posted_by
+                        .as_ref()
+                        .unwrap_or(&entry.created_by)
+                        .as_str(),
                     actor,
                 ),
                 what: format!("Posted as {}", entry.number),
@@ -1383,7 +1300,11 @@ impl PayForm {
         let amount = match outstanding {
             Some(o) if o != 0 => {
                 let sign = if o < 0 { "-" } else { "" };
-                format!("{sign}{}.{:02}", o.unsigned_abs() / 100, o.unsigned_abs() % 100)
+                format!(
+                    "{sign}{}.{:02}",
+                    o.unsigned_abs() / 100,
+                    o.unsigned_abs() % 100
+                )
             }
             _ => String::new(),
         };
@@ -1404,15 +1325,15 @@ impl PayForm {
     pub fn command(&self, bill: &BillId, outstanding: Minor) -> Result<LedgerCommand, PayErrors> {
         let mut errors = PayErrors::default();
         let date = match parse_day_month_year(&self.date) {
-            Ok(None) => {
+            None => {
                 errors.date = Some("Enter the date the money left.".to_owned());
                 None
             }
-            Err(e) => {
+            Some(Err(e)) => {
                 errors.date = Some(e);
                 None
             }
-            Ok(Some(d)) => Some(d),
+            Some(Ok(d)) => Some(d),
         };
         if self.cash_account.is_none() {
             errors.cash = Some("Choose the account the money left from.".to_owned());
@@ -1437,11 +1358,16 @@ impl PayForm {
                 Some(_) => {}
             }
         }
-        let (Some(date), Some(cash), Some(amount), PayErrors {
-            amount: None,
-            date: None,
-            cash: None,
-        }) = (date, self.cash_account.clone(), amount, &errors)
+        let (
+            Some(date),
+            Some(cash),
+            Some(amount),
+            PayErrors {
+                amount: None,
+                date: None,
+                cash: None,
+            },
+        ) = (date, self.cash_account.clone(), amount, &errors)
         else {
             return Err(errors);
         };
@@ -1571,12 +1497,18 @@ mod tests {
     fn the_filter_counts_and_keeps_its_status() {
         let state = books();
         let rows = bill_rows(&state, &as_of());
-        let counts: Vec<_> = FILTERS.into_iter().map(|f| filter_count(&rows, f)).collect();
+        let counts: Vec<_> = FILTERS
+            .into_iter()
+            .map(|f| filter_count(&rows, f))
+            .collect();
         assert_eq!(counts, [3, 0, 1, 1, 1, 0]);
         let to_pay = filtered(&rows, BillFilter::Status(BillStatus::Posted));
         assert_eq!(to_pay.len(), 1);
         assert_eq!(to_pay[0].number, "KPLC-0226-77140");
-        assert_eq!(filtered(&rows, BillFilter::Status(BillStatus::Draft)), vec![]);
+        assert_eq!(
+            filtered(&rows, BillFilter::Status(BillStatus::Draft)),
+            vec![]
+        );
         assert_eq!(
             no_match_text(BillFilter::Status(BillStatus::Posted)),
             "No bills are posted, to pay."
@@ -1639,34 +1571,6 @@ mod tests {
     }
 
     #[test]
-    fn dates_read_day_first() {
-        assert_eq!(parse_day_month_year(" "), Ok(None));
-        assert_eq!(parse_day_month_year("4/2/2026"), Ok(Some(d("2026-02-04"))));
-        assert_eq!(parse_day_month_year("04.02.2026"), Ok(Some(d("2026-02-04"))));
-        assert_eq!(
-            parse_day_month_year("2026-02-04").unwrap_err(),
-            "Enter the date as day/month/year, for example 18/01/2026."
-        );
-        assert_eq!(
-            parse_day_month_year("4/2/26").unwrap_err(),
-            "Write the year in full, for example 2026."
-        );
-        assert_eq!(
-            parse_day_month_year("4/13/2026").unwrap_err(),
-            "There is no month 13. Put the day first, then the month: dd/mm/yyyy."
-        );
-        assert_eq!(
-            parse_day_month_year("30/02/2026").unwrap_err(),
-            "February 2026 has only 28 days."
-        );
-        assert_eq!(
-            parse_day_month_year("0/02/2026").unwrap_err(),
-            "There is no day 0. Enter a day from 1."
-        );
-        assert_eq!(iso_to_day_month_year(&d("2026-01-18")), "18/01/2026");
-    }
-
-    #[test]
     fn a_new_form_starts_on_the_unrestricted_fund_due_in_30_days() {
         let state = books();
         let form = NewBillForm::new(&state, &as_of());
@@ -1710,11 +1614,13 @@ mod tests {
         let restricted = state
             .funds
             .iter()
-            .find(|f| {
-                state.grants.iter().filter(|g| g.fund_id == f.id).count() == 1
-            })
+            .find(|f| state.grants.iter().filter(|g| g.fund_id == f.id).count() == 1)
             .unwrap();
-        let only = state.grants.iter().find(|g| g.fund_id == restricted.id).unwrap();
+        let only = state
+            .grants
+            .iter()
+            .find(|g| g.fund_id == restricted.id)
+            .unwrap();
         let mut line = LineDraft::new(&state);
         line.set_fund(&state, restricted.id.clone());
         assert_eq!(line.grant_id.as_ref(), Some(&only.id));
@@ -1731,7 +1637,7 @@ mod tests {
         line.set_fund(&state, restricted.id.clone());
         assert_eq!(line.grant_id.as_ref(), Some(&only.id));
         assert_eq!(
-            grants_for(&state, Some(&restricted.id)),
+            crate::claims::grant_choices(&state, Some(&restricted.id)),
             vec![(only.id.clone(), only.name.clone())]
         );
     }
@@ -1753,9 +1659,12 @@ mod tests {
         // Assets come before expenses, as in TYPE_LABEL.
         let first = state.account(&lines[0].0).unwrap();
         assert_eq!(first.account_type, ledger_core::types::AccountType::Asset);
-        let cash = cash_accounts(&state);
+        let cash = crate::claims::cash_accounts(&state);
         assert!(cash.iter().any(|(id, _)| id == &account_id("1120")));
-        assert!(cash.iter().all(|(id, _)| state.account(id).unwrap().is_cash));
+        assert!(
+            cash.iter()
+                .all(|(id, _)| state.account(id).unwrap().is_cash)
+        );
     }
 
     #[test]
@@ -1809,7 +1718,10 @@ mod tests {
         );
         form.fx_rate = "-3".into();
         assert_eq!(
-            form.command(&state).unwrap_err().field(BillField::FxRate).as_deref(),
+            form.command(&state)
+                .unwrap_err()
+                .field(BillField::FxRate)
+                .as_deref(),
             Some("Enter a positive number, like 129.45.")
         );
     }
@@ -1875,7 +1787,10 @@ mod tests {
         let power = bill_by_number(&state, "KPLC-0226-77140");
         let (text, actions) = next_step(power, Some(&me), Some(3_980_000));
         assert_eq!(actions, [BillAction::Pay]);
-        assert_eq!(text, "Posted. KES 39,800.00 is still owed, due 16 Feb 2026.");
+        assert_eq!(
+            text,
+            "Posted. KES 39,800.00 is still owed, due 16 Feb 2026."
+        );
 
         let autox = bill_by_number(&state, "AX-2026-0112");
         let (text, actions) = next_step(autox, Some(&me), Some(0));
@@ -1933,7 +1848,10 @@ mod tests {
         let autox = bill_by_number(&state, "AX-2026-0112");
         let detail = bill_detail(&state, &autox.id, Some(&demo_actor()), &as_of()).unwrap();
         assert_eq!(detail.vendor, "AutoXpress Ltd");
-        assert_eq!((detail.total, detail.outstanding, detail.paid), (4_800_000, Some(0), 4_800_000));
+        assert_eq!(
+            (detail.total, detail.outstanding, detail.paid),
+            (4_800_000, Some(0), 4_800_000)
+        );
         assert_eq!(detail.lines.len(), 1);
         let tyres = state.account(&account_id("7200")).unwrap();
         assert_eq!(detail.lines[0].account, format!("7200 {}", tyres.name));
@@ -1953,7 +1871,13 @@ mod tests {
             pay.fund_split,
             vec![(
                 FundId::from(UNRESTRICTED_FUND_ID),
-                state.funds.iter().find(|f| f.id.as_str() == UNRESTRICTED_FUND_ID).unwrap().name.clone(),
+                state
+                    .funds
+                    .iter()
+                    .find(|f| f.id.as_str() == UNRESTRICTED_FUND_ID)
+                    .unwrap()
+                    .name
+                    .clone(),
                 4_800_000
             )]
         );
@@ -1962,7 +1886,11 @@ mod tests {
         assert_eq!(steps[0], "Entered bill AX-2026-0112");
         assert_eq!(steps[1], "Approved");
         assert!(steps[2].starts_with("Posted as JE-"), "{}", steps[2]);
-        assert!(steps[3].starts_with("Paid 48,000.00 as JE-"), "{}", steps[3]);
+        assert!(
+            steps[3].starts_with("Paid 48,000.00 as JE-"),
+            "{}",
+            steps[3]
+        );
         assert_eq!(detail.trail[0].who, "FlowTrace");
         assert_eq!(detail.trail[1].who, "Demo User (you)");
         assert_eq!(detail.actions, vec![]);
@@ -1991,7 +1919,10 @@ mod tests {
         form.date = String::new();
         let errors = form.command(&id, 3_980_000).unwrap_err();
         assert_eq!(errors.amount.as_deref(), Some("Enter the amount paid."));
-        assert_eq!(errors.date.as_deref(), Some("Enter the date the money left."));
+        assert_eq!(
+            errors.date.as_deref(),
+            Some("Enter the date the money left.")
+        );
         form.amount = "0".into();
         assert_eq!(
             form.command(&id, 3_980_000).unwrap_err().amount.as_deref(),

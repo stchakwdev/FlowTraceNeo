@@ -1,4 +1,4 @@
-//! The Spend screen: two tabs, Claims (U5) and Bills (U6, a placeholder here). The claims tab
+//! The Spend screen: two tabs, Claims (U5) and Bills (U6, `panels::bills::BillsPanel`). The claims tab
 //! is the claims list with its status filter, the new claim form, and one claim's detail with
 //! the actions its status allows.
 //!
@@ -33,17 +33,18 @@ use crate::claims::{
     claim_tone, cost_accounts, dimension_choices, filter_counts, format_whole, fund_choices,
     grant_choices, has_overridable, list_notice,
 };
+use crate::panels::bills::BillsPanel;
 use crate::panels::{demo_tag, failure_box, field, form_buttons, hint, page_title, section_header};
 use crate::statements::today_utc;
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
 
-/// The two tabs of the Spend entry. U6 fills [`SpendTab::Bills`].
+/// The two tabs of the Spend entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpendTab {
     /// Expense claims.
     Claims,
-    /// Bills, payments and vendors (U6).
+    /// Bills, payments and vendors (U6, drawn by [`BillsPanel`]).
     Bills,
 }
 
@@ -127,6 +128,8 @@ pub struct SpendPanel {
     cash: Entity<SelectState<Items>>,
     action_failure: Option<Failure>,
 
+    bills: Entity<BillsPanel>,
+
     _subscriptions: Vec<Subscription>,
 }
 
@@ -144,8 +147,10 @@ impl SpendPanel {
         let reference =
             cx.new(|cx| InputState::new(window, cx).placeholder("M-Pesa code or bank reference"));
         let cash = cx.new(|cx| SelectState::new(Items::new(), None, window, cx));
+        let bills = cx.new(|cx| BillsPanel::new(store.clone(), window, cx));
         let enter = |event: &InputEvent| matches!(event, InputEvent::PressEnter { .. });
         let subscriptions = vec![
+            cx.observe(&bills, |_, _, cx| cx.notify()),
             cx.observe_in(&store, window, |this, _, window, cx| {
                 this.refresh(window, cx);
             }),
@@ -220,6 +225,7 @@ impl SpendPanel {
             reference,
             cash,
             action_failure: None,
+            bills,
             _subscriptions: subscriptions,
         };
         panel.refresh(window, cx);
@@ -303,9 +309,16 @@ impl SpendPanel {
             }
             ("b", _) => {
                 self.tab = SpendTab::Bills;
+                self.bills
+                    .update(cx, |bills, cx| bills.press_key(key, window, cx));
                 true
             }
-            _ if self.tab == SpendTab::Bills => false,
+            // `b` also takes the bills back to their list.
+            _ if self.tab == SpendTab::Bills => {
+                return self
+                    .bills
+                    .update(cx, |bills, cx| bills.press_key(key, window, cx));
+            }
             ("n", _) => {
                 self.open_new(window, cx);
                 true
@@ -1764,11 +1777,14 @@ fn col_status() -> Div {
 impl Render for SpendPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let p = palette(cx.theme().mode);
+        let (mut bills_header, mut bills_action) = (None, None);
+        if self.tab == SpendTab::Bills {
+            let (title, lede, action) = self.bills.update(cx, BillsPanel::header);
+            bills_header = Some((title, lede));
+            bills_action = Some(action);
+        }
         let (title, lede) = match (self.tab, &self.view) {
-            (SpendTab::Bills, _) => (
-                "Bills".to_owned(),
-                "Supplier bills, their approval and payment.".to_owned(),
-            ),
+            (SpendTab::Bills, _) => bills_header.take().unwrap_or_default(),
             (SpendTab::Claims, ClaimsView::New) => ("New expense claim".to_owned(), String::new()),
             (SpendTab::Claims, ClaimsView::Detail(_)) => (
                 self.detail
@@ -1802,7 +1818,7 @@ impl Render for SpendPanel {
                     cx.notify();
                 }))
                 .into_any_element(),
-            (SpendTab::Bills, _) => div().into_any_element(),
+            (SpendTab::Bills, _) => bills_action.unwrap_or_else(|| div().into_any_element()),
         };
         let body = if self.books.is_none() {
             div()
@@ -1811,15 +1827,7 @@ impl Render for SpendPanel {
                 .into_any_element()
         } else {
             match (self.tab, self.view.clone()) {
-                (SpendTab::Bills, _) => v_flex()
-                    .child(section_header("Arrives with U6", div(), cx))
-                    .child(
-                        div()
-                            .py(px(space::CELL))
-                            .text_color(p.ink_muted.to_hsla())
-                            .child("Bills, payments and vendors arrive with U6."),
-                    )
-                    .into_any_element(),
+                (SpendTab::Bills, _) => self.bills.update(cx, BillsPanel::body),
                 (SpendTab::Claims, ClaimsView::List) => self.list(cx),
                 (SpendTab::Claims, ClaimsView::New) => self.new_form(cx),
                 (SpendTab::Claims, ClaimsView::Detail(_)) => self.detail_view(cx),

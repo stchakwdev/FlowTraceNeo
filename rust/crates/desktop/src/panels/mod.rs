@@ -13,8 +13,8 @@ use gpui_kit::component::select::{SelectItem, SelectState};
 use gpui_kit::component::{ActiveTheme as _, Sizable as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    App, ClickEvent, Context, Div, Entity, FontWeight, IntoElement, ParentElement as _, SharedString,
-    Styled as _, Window, div, px,
+    App, ClickEvent, Context, Div, Entity, FontWeight, IntoElement, ParentElement as _,
+    SharedString, Styled as _, Window, div, px,
 };
 
 use crate::accounts::Failure;

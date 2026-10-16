@@ -74,7 +74,11 @@ fn post_and_pay_the_approved_demo_bill() {
         -total,
         "the payable moved by the bill total"
     );
-    assert!(d.trail.iter().any(|t| t.what == format!("Posted as {}", accrual.detail.number)));
+    assert!(
+        d.trail
+            .iter()
+            .any(|t| t.what == format!("Posted as {}", accrual.detail.number))
+    );
 
     // A part payment from the bank.
     let mut pay = PayForm::new(d.outstanding, &as_of());
@@ -86,7 +90,11 @@ fn post_and_pay_the_approved_demo_bill() {
     backend.submit(&org(), command).unwrap();
     let (paid_part, d) = detail(&backend, "SK-INV-30418");
     let amount = 10_000_000;
-    assert_eq!(d.bill.status, BillStatus::Posted, "a part payment leaves it posted");
+    assert_eq!(
+        d.bill.status,
+        BillStatus::Posted,
+        "a part payment leaves it posted"
+    );
     assert_eq!(d.outstanding, Some(total - amount));
     assert_eq!(d.paid, amount);
     assert_eq!(d.payments.len(), 1);
@@ -106,9 +114,16 @@ fn post_and_pay_the_approved_demo_bill() {
 
     // The split the engine made: the education fund first, its share rounded as JS rounds it,
     // the unrestricted fund the rest.
-    let split: Vec<_> = p.fund_split.iter().map(|(f, _, m)| (f.as_str(), *m)).collect();
+    let split: Vec<_> = p
+        .fund_split
+        .iter()
+        .map(|(f, _, m)| (f.as_str(), *m))
+        .collect();
     let education = 18_600_000_f64;
-    #[expect(clippy::cast_possible_truncation, reason = "a whole share below the amount")]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "a whole share below the amount"
+    )]
     let first = js_round(1e7 * education / 20_050_000.0) as i64;
     assert_eq!(first, 9_276_808);
     assert_eq!(split.len(), 2);
@@ -145,7 +160,11 @@ fn post_and_pay_the_approved_demo_bill() {
 fn a_bill_entered_here_waits_for_another_approver() {
     let mut backend = InProcessBackend::with_demo_and_empty().unwrap();
     let state = LedgerState::clone(&backend.state(&org()).unwrap());
-    let vendor = state.vendors.iter().find(|v| v.name == "Kenya Power").unwrap();
+    let vendor = state
+        .vendors
+        .iter()
+        .find(|v| v.name == "Kenya Power")
+        .unwrap();
     let mut form = NewBillForm::new(&state, &as_of());
     form.vendor = Some(vendor.id.clone());
     form.number = "KPLC-0326-1".into();
@@ -164,9 +183,12 @@ fn a_bill_entered_here_waits_for_another_approver() {
     assert!(d.next.starts_with("You entered this bill"), "{}", d.next);
     // The engine agrees, with its own message.
     let refused = backend
-        .submit(&org(), LedgerCommand::BillApprove {
-            bill_id: d.bill.id.clone(),
-        })
+        .submit(
+            &org(),
+            LedgerCommand::BillApprove {
+                bill_id: d.bill.id.clone(),
+            },
+        )
         .unwrap_err();
     assert_eq!(
         Failure::new("Not done", &refused).messages,
