@@ -281,7 +281,8 @@ checks the entry with the engine's `validate_entry` first and lists what stops i
 CSV import: a path (Enter or Load reads it; `Choose...` opens the platform file dialog) and the
 fund for every line, then a preview of each draft with its issues, the unreadable rows and the
 accounts not in the chart, and Create N drafts sends one `entry.import`. The web's paste box is
-left out: gpui-kit 0.7.3 has no multi-line text input in the API this app uses.
+left out for now (a gpui-kit textarea could take it); the path field and the dialog read the
+same files.
 
 Shots: `docs/screens/u3-journal.png`, `u3-entry-detail.png` (Enter on JE-0016, `r`, a reason,
 Enter: the reversing entry), `u3-entry-new.png` (`n`, a memo, Enter, 2,500, Tab to line 2's
