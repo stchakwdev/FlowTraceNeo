@@ -332,6 +332,11 @@ pub struct Verification {
     pub description: Option<String>,
     /// Who attached it.
     pub created_by: Option<String>,
+    /// Shown to anyone at the proofs Worker's `GET /public/<sha256>` (P13, STO1); set by
+    /// [`crate::transparency::plan::mark_published`]. Module addition: absent in TS and in rows
+    /// written before STO1, and left out of the JSON while false so those rows stay byte-equal.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub published: bool,
     /// How much of this row the reader was given: set only on rows of the `my_verification` view.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub visible_as: Option<Visibility>,

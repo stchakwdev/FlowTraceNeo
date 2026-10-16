@@ -22,6 +22,7 @@ use std::time::Duration;
 
 use ledger_core::types::LedgerState;
 use ledger_core::{CommandResult, LedgerCommand};
+use ledger_module::transparency::types::NewVerification;
 use spacetimedb_sdk::__codegen::InternalError;
 use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
 
@@ -44,8 +45,8 @@ use crate::module_bindings::{
     MyTrustScoreTableAccess as _, MyVendorTableAccess as _,
     MyVerificationAccessLogTableAccess as _, MyVerificationTableAccess as _,
     PublicBadgeTableAccess as _, PublicCampaignTableAccess as _,
-    PublicOrganizationTableAccess as _, create_org_ledger as _, import_books as _,
-    run_command as _,
+    PublicOrganizationTableAccess as _, create_org_ledger as _, create_verification as _,
+    import_books as _, mark_published as _, run_command as _,
 };
 use crate::status::{
     ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
@@ -311,6 +312,38 @@ impl SpacetimeClient {
         self.call(|conn, done| {
             conn.reducers
                 .import_books_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Records a proof on a claim, bill or transaction of the organisation: the R2 object key
+    /// and SHA-256 the proofs Worker returned (`create_verification`, ADR 0004, Reducers; P13).
+    /// The new row arrives through `my_verification` as any other change.
+    pub fn create_verification(&self, org_id: &str, proof: &NewVerification) -> Ticket<()> {
+        let json = match serde_json::to_string(proof) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .create_verification_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Shows a proof at the proofs Worker's public path, or takes it back (`mark_published`,
+    /// `crates/ledger-module/src/transparency/plan.rs`); admins and managers only.
+    pub fn mark_published(
+        &self,
+        org_id: &str,
+        verification_id: &str,
+        published: bool,
+    ) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers.mark_published_then(
+                org_id.to_owned(),
+                verification_id.to_owned(),
+                published,
+                done,
+            )
         })
     }
 

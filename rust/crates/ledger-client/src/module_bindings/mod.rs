@@ -55,6 +55,7 @@ pub mod ledger_org_type;
 pub mod link_transaction_entries_reducer;
 pub mod log_verification_access_reducer;
 pub mod mark_donor_update_sent_reducer;
+pub mod mark_published_reducer;
 pub mod member_type;
 pub mod my_access_group_member_table;
 pub mod my_access_group_table;
@@ -198,6 +199,7 @@ pub use ledger_org_type::LedgerOrg;
 pub use link_transaction_entries_reducer::link_transaction_entries;
 pub use log_verification_access_reducer::log_verification_access;
 pub use mark_donor_update_sent_reducer::mark_donor_update_sent;
+pub use mark_published_reducer::mark_published;
 pub use member_type::Member;
 pub use my_access_group_member_table::*;
 pub use my_access_group_table::*;
@@ -403,6 +405,11 @@ pub enum Reducer {
         org_id: String,
         update_id: String,
     },
+    MarkPublished {
+        org_id: String,
+        verification_id: String,
+        published: bool,
+    },
     PostDonorUpdate {
         org_id: String,
         update_json: String,
@@ -570,6 +577,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::LinkTransactionEntries { .. } => "link_transaction_entries",
             Reducer::LogVerificationAccess { .. } => "log_verification_access",
             Reducer::MarkDonorUpdateSent { .. } => "mark_donor_update_sent",
+            Reducer::MarkPublished { .. } => "mark_published",
             Reducer::PostDonorUpdate { .. } => "post_donor_update",
             Reducer::RecomputeTrust { .. } => "recompute_trust",
             Reducer::RecordDonation { .. } => "record_donation",
@@ -793,6 +801,15 @@ impl __sdk::Reducer for Reducer {
                     update_id: update_id.clone(),
                 })
             }
+            Reducer::MarkPublished {
+                org_id,
+                verification_id,
+                published,
+            } => __sats::bsatn::to_vec(&mark_published_reducer::MarkPublishedArgs {
+                org_id: org_id.clone(),
+                verification_id: verification_id.clone(),
+                published: published.clone(),
+            }),
             Reducer::PostDonorUpdate {
                 org_id,
                 update_json,
