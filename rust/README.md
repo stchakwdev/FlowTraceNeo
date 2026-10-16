@@ -6,7 +6,6 @@ Cargo workspace for the native desktop ERP, its ledger core and its SpacetimeDB 
 | `crates/ledger-core` | money, types, engine, commands, reports, reconcile, importers, demo books; no I/O |
 | `crates/ledger-module` | SpacetimeDB server module |
 | `crates/ledger-client` | SpacetimeDB Rust client |
-| `crates/desktop` | GPUI desktop app |
-| `spikes/stdb-spike` | F3 spike module, built and published with the spacetime CLI only; excluded from the workspace |
+| `crates/desktop` | GPUI desktop app: shell, theme, `LedgerBackend` and screens (see its README) |
 
-Decisions: `docs/adr/` (0002: GPUI, gpui-kit and the SpacetimeDB client, from the F3 spike). Screenshots: `docs/screens/`. The F3 spike window is `cargo run -p desktop --bin desktop-spike` against a local database published from `spikes/stdb-spike`.
+Decisions: `docs/adr/` (0002: GPUI, gpui-kit and the SpacetimeDB client, from the F3 spike). Screenshots: `docs/screens/`. The app runs with `cargo run -p desktop`; the F3 spike that ADR 0002 describes was removed in U1 and lives in git history.

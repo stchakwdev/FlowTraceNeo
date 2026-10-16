@@ -1435,7 +1435,10 @@ dependencies = [
  "anyhow",
  "async-channel",
  "gpui-kit",
- "spacetimedb-sdk",
+ "ledger-core",
+ "serde_json",
+ "thiserror 2.0.21",
+ "uuid",
 ]
 
 [[package]]

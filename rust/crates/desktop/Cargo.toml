@@ -7,22 +7,27 @@ license.workspace = true
 repository.workspace = true
 publish.workspace = true
 
-# The product entry point (src/main.rs) stays a stub until U1. The F3 spike is a
-# second binary that U1 can delete with its folder; see docs/adr/0002-gpui-spacetime.md.
+# The library holds the backend, theme, view models and screens so they are unit-tested; the
+# binary only starts the app. See README.md for the module layout.
+[lib]
+name = "desktop"
+path = "src/lib.rs"
+
 [[bin]]
 name = "desktop"
 path = "src/main.rs"
-
-[[bin]]
-name = "desktop-spike"
-path = "src/bin/desktop-spike/main.rs"
 
 [dependencies]
 anyhow.workspace = true
 async-channel.workspace = true
 # Brings gpui-pre =0.3.9 (re-exported as gpui_kit::*), gpui-component and the default assets.
 gpui-kit.workspace = true
-spacetimedb-sdk.workspace = true
+ledger-core = { path = "../ledger-core" }
+serde_json.workspace = true
+thiserror.workspace = true
+# Fresh ids for an organisation created in the app, as the TS module's `crypto.randomUUID()`
+# (spacetimedb/src/index.ts, envFor).
+uuid = { version = "1.28", features = ["v4"] }
 
 [lints]
 workspace = true
