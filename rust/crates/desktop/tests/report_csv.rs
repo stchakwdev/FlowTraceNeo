@@ -355,6 +355,6 @@ fn an_export_written_twice_is_byte_equal() {
     desktop::statements::write_export(&state, &params, &b).unwrap();
     let (a_bytes, b_bytes) = (std::fs::read(&a).unwrap(), std::fs::read(&b).unwrap());
     std::fs::remove_dir_all(&dir).unwrap();
-    assert!(!a_bytes.is_empty());
+    assert!(a_bytes.starts_with(b"Trial balance\r\n"));
     assert_eq!(a_bytes, b_bytes);
 }
