@@ -11,9 +11,13 @@
     "integration": "\"$npm_execpath\" --no-install module-integration.ts",
     "transparency-proof": "\"$npm_execpath\" --no-install transparency-proof.ts",
     "auth-proof": "\"$npm_execpath\" --no-install auth-proof.ts",
-    "signin-proof": "\"$npm_execpath\" --no-install signin-proof.ts"
+    "signin-proof": "\"$npm_execpath\" --no-install signin-proof.ts",
+    "it1": "\"$npm_execpath\" --no-install it1.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.89.0"
+  },
+  "devDependencies": {
+    "playwright-core": "1.64.0"
   }
 }
