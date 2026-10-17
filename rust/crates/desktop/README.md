@@ -16,6 +16,7 @@ cargo run -p desktop -- --screen connect           # opens on the connect screen
 cargo run -p desktop -- --report activities        # Reports, on the statement of activities
 cargo run -p desktop -- --server https://maincloud.spacetimedb.com --database flowtrace-ledger-dev
 cargo run -p desktop -- --server http://127.0.0.1:9 --timings on   # offline at once, times on stderr
+cargo run -p desktop -- --config out/auth2/trusted/config.toml --sign-in on   # another config; sign in at once
 ```
 
 Keys `1` to `7` open the nav entries (Accounts, Journal, General ledger, Spend, Grants,
@@ -38,11 +39,12 @@ when the app closes.
 | Module | Holds | GPUI? |
 |---|---|---|
 | `backend` | `LedgerBackend` trait, `Submission`, `InProcessBackend`, `SystemEnv`, `BackendEvent`, `ConnectionStatus`; `backend::spacetime`: `SpacetimeBackend` over `ledger_client::SpacetimeClient` (through the `LiveClient` trait), `status_of`, `actor_for`, `backend_error` | no |
-| `config` | `Config` (`flowtrace-books/config.toml`), `config_dir`, `token_path`, `with_token` | no |
+| `config` | `Config` (`flowtrace-books/config.toml`, including the `workos_*` keys), `config_dir`, `token_path`, `with_token` | no |
+| `signin` | WorkOS AuthKit sign-in through the system browser (AUTH2): `pkce`, `loopback` (the one-shot `127.0.0.1` listener), `workos` (authorize URL, code exchange, refresh), `flow` (`begin`/`finish`, `resume`, `sign_out`), `state` (`SignInState`, the Connect screen's `Card`), `TokenClaims`, `Session`, `refresh_delay`, `refresh_file` | no |
 | `model` | `NavEntry`, `Navigation` (entry, screen, keys), `LedgerView` (orgs, selection, status, snapshot, revision), `ConnectForm` | no |
 | `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
-| `store` | `StoreCore` (backend, `LedgerView`, connect, disconnect, submit; no GPUI) and `LedgerStore`, the one store entity that drains the change channel in batches | `LedgerStore` only |
+| `store` | `StoreCore` (backend, `LedgerView`, sign-in state, connect, disconnect, submit; no GPUI) and `LedgerStore`, the one store entity that drains the change channel in batches; `store/session.rs` runs the sign-in steps off the UI thread | `LedgerStore` only |
 | `shell` | `Shell`, the root view: masthead, rail, content, connect screen, status bar, keys | yes |
 | `bills` | Bills, payments and vendors view models: `bill_rows`, `filtered`, `filter_count`, `vendor_rows`, `NewVendorForm`, `NewBillForm` (lines, `total`, `command`), `next_step` (status to actions), `bill_detail` (coded lines, accrual and payment entries, fund split, status trail), `PayForm` | no |
 | `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
@@ -162,6 +164,72 @@ seven times to line 2's account, Enter, Down, Enter for 1110, Tab twice, 1500, t
 posts and the new entry opens), and `u10-offline.png` (`--server http://127.0.0.1:9`).
 Before each `wtype` step check `hyprctl activewindow` is the app: if focus moves to another
 window mid-script, the keys land there.
+
+## Signing in with WorkOS (AUTH2)
+
+With a WorkOS client id in `config.toml` the Connection screen has a **Sign-in** section, and the
+app connects to SpacetimeDB as the signed-in person instead of as this device. One WorkOS user
+is one SpacetimeDB identity on every device and on the web (pre-decision P11; the identity is
+`Identity::from_claims(iss, sub)`, `../../docs/adr/0002-gpui-spacetime.md`, AUTH1 section).
+Without a client id nothing changes: the app connects with its device identity, as before.
+
+```toml
+workos_client_id = "client_01..."   # the WorkOS environment's client id; turns the sign-in on
+# optional, by default https://api.workos.com/user_management/<workos_client_id>: the iss of the
+# environment's access tokens (with a custom auth domain, that domain)
+workos_issuer = "https://api.workos.com/user_management/client_01..."
+# optional, by default https://api.workos.com: where the authorize and authenticate endpoints are
+workos_api = "https://api.workos.com"
+```
+
+The client id is not a secret (the app is a public client and holds none), but a staging or
+production id belongs in the user's own `config.toml`, never in the repository.
+
+**The flow** (`src/signin.rs` has the details and sources). "Sign in with WorkOS" (or
+`--sign-in on` at launch) draws a PKCE verifier and a state, listens on `127.0.0.1` on a port
+the OS picks, and opens the system browser (GPUI `open_url`: `xdg-open` on Linux) at
+`{workos_api}/user_management/authorize?response_type=code&provider=authkit&client_id=..&redirect_uri=http://127.0.0.1:<port>/callback&state=..&code_challenge=..&code_challenge_method=S256`.
+AuthKit signs the person in and sends the browser to the loopback address; the app takes that one
+request (anything else gets a 404), checks the state, answers "Signed in, you can close this
+tab" and closes the listener. It waits at most five minutes. A worker thread then calls
+`POST {workos_api}/user_management/authenticate` with `grant_type=authorization_code`,
+`client_id`, `code` and `code_verifier` (no client secret), and the app reconnects with the
+access token. No web view is embedded.
+
+**The token files.** The access token (a JWT, five minutes at WorkOS by default) lives in memory
+only and is presented as the connection's token; the token the host returns is not saved. The
+refresh token is saved in the device token file's path with `.workos` appended (for maincloud
+`~/.config/flowtrace-books/token-maincloud.spacetimedb.com.workos`), mode 0600, through
+`ledger_client::TokenFile`; it holds nothing else and is never printed. The device token file
+itself is left as it was, so signing out returns to the same device identity.
+
+**Refresh.** On every launch with a `.workos` file the app trades the refresh token for a new
+access token (`grant_type=refresh_token`, `client_id`, `refresh_token`, no secret) before it
+connects, so no device connection opens first; it then refreshes again before the access token
+expires (`signin::refresh_delay`: at four fifths of its life, at most a minute early, never
+sooner than 5 s), saving the refresh token WorkOS sends back, which may be rotated. The open
+connection is not touched by a refresh (the host checks the token when a connection opens); a
+Reconnect presents the newest access token, refreshing first if it has under 30 s left. A
+refresh token WorkOS refuses is deleted and the app falls back to the device identity with the
+reason on the Connection screen; when WorkOS cannot be reached the file is kept and the app
+retries every 30 s while connected (or stays offline at launch). **Sign out** deletes the
+`.workos` file and reconnects with the device identity.
+
+**Connection screen.** Signed in, the section shows the name and email from the WorkOS user
+object (the authenticate answer has no id token), the WorkOS user id, the identity, and the issuer
+and audience (`aud`, else `client_id`) the token carries; the organisations list below is the
+signed-in identity's. When the module refuses the connection (the issuer or audience is not
+trusted) it shows, word for word as the web, "SpacetimeDB refused this sign-in: an operator must
+trust issuer ... for audience ... on this database": exactly what the operator registers
+(`../../docs/module-release.md`, section 5). `--timings on` writes each change of this section
+to stderr (never a token).
+
+**Local proof.** `rust/tools/signin-proof.ts` (`cd rust/tools && ~/.bun/bin/bun run
+signin-proof`) publishes `ft-auth2-<time>` on the local server, trusts a test issuer, adds Alice
+by subject, serves a stand-in for the two AuthKit endpoints (`tools/src/authkit-mock.ts`) and
+writes `out/auth2/trusted/config.toml` and `out/auth2/untrusted/config.toml`; it prints the
+`cargo run` lines for the three runs (sign in through the browser, reconnect from the refresh
+token, the untrusted issuer's refusal).
 
 ## How a screen replaces its placeholder
 

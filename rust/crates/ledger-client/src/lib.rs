@@ -5,12 +5,15 @@
 //!   operator calls. The desktop's `LedgerBackend` trait (U1) wraps it in U10.
 //! - [`cache`]: the client's row cache and the `LedgerState` rebuild through the module's own
 //!   `ledger_module::codec`.
-//! - [`TokenFile`]: the connection token in a file the caller names.
+//! - [`TokenFile`]: the connection token in a file the caller names; [`AccessToken`]: a
+//!   sign-in's token, presented instead and never saved; [`identity_of_subject`]: the identity
+//!   the host gives a signed-in subject.
 //! - [`transparency`]: the cache of the transparency views (MOD1) and the typed records rebuilt
 //!   from it through the module's own codec.
 //! - [`module_bindings`]: `spacetime generate` output for `crates/ledger-module`; regenerate with
 //!   the command in `README.md`, never edit.
 
+mod auth;
 pub mod cache;
 mod client;
 mod error;
@@ -29,6 +32,7 @@ pub mod module_bindings;
 #[cfg(test)]
 mod testing;
 
+pub use auth::{AccessToken, identity_of_subject};
 pub use client::{ClientConfig, SpacetimeClient, VIEWS};
 pub use error::{ClientError, decode_reducer_error, is_valid_org_id};
 pub use status::{

@@ -23,6 +23,7 @@ fn settings() -> ConnectSettings {
         host: "https://maincloud.spacetimedb.com".to_owned(),
         database: "flowtrace-ledger-dev".to_owned(),
         token_path: "/tmp/ft-u10-unused-token".to_owned(),
+        access_token: None,
     }
 }
 

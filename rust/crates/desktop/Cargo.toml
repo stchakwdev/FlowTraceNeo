@@ -20,6 +20,10 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 async-channel.workspace = true
+# PKCE code challenge for the WorkOS sign-in (RFC 7636 section 4.2: BASE64URL(SHA256(verifier))).
+base64 = "0.22"
+# PKCE verifier and state from the OS random source (RFC 7636 section 7.1).
+getrandom = "0.3"
 # The platform config dir for flowtrace-books/config.toml (README.md, Configuration).
 dirs = "6.0"
 # Brings gpui-pre =0.3.9 (re-exported as gpui_kit::*), gpui-component and the default assets.
@@ -32,16 +36,19 @@ ledger-client = { path = "../ledger-client" }
 ledger-module = { path = "../ledger-module" }
 serde.workspace = true
 serde_json.workspace = true
-# Checks the proofs Worker's hash of an upload against the file's own (`src/proofs.rs`).
+# Checks the proofs Worker's hash of an upload against the file's own (`src/proofs.rs`), and the
+# PKCE challenge of the WorkOS sign-in (`src/signin/pkce.rs`).
 sha2.workspace = true
 # `Identity` for the member row the in-process backend runs the module's proof rules as.
 spacetimedb.workspace = true
 thiserror.workspace = true
 toml = "0.8"
-# HTTPS to the proofs Worker (`src/proofs.rs`). The workspace had no HTTP client: the SpacetimeDB
-# SDK only speaks WebSocket and GPUI's http_client trait has no implementation in gpui-pre. ureq is
-# blocking and small (rustls, no async runtime); calls run on GPUI's background executor.
+# HTTPS to the proofs Worker (`src/proofs.rs`) and to WorkOS AuthKit (`src/signin/workos.rs`). The
+# workspace had no HTTP client: the SpacetimeDB SDK only speaks WebSocket and GPUI's http_client
+# trait has no implementation in gpui-pre. ureq is blocking and small (rustls, no async runtime).
 ureq = "3.1"
+# Authorize URL and callback query encoding for the WorkOS sign-in.
+url = "2.5"
 # Fresh ids for an organisation created in the app, as the TS module's `crypto.randomUUID()`
 # (spacetimedb/src/index.ts, envFor).
 uuid = { version = "1.28", features = ["v4"] }

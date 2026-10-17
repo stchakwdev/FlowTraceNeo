@@ -23,7 +23,7 @@ use gpui_kit::{
 use crate::backend::ConnectionStatus;
 use crate::model::{
     ConnectForm, LedgerView, NavEntry, Navigation, Screen, connection_summary, scroll_target,
-    status_label,
+    short_identity, status_label,
 };
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
@@ -33,6 +33,7 @@ use crate::panels::journal::JournalPanel;
 use crate::panels::reconcile::ReconcilePanel;
 use crate::panels::reports::ReportsPanel;
 use crate::panels::spend::SpendPanel;
+use crate::signin::state::{Action, Card, Phase};
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
 use crate::theme::{self, palette, space, text};
@@ -279,12 +280,7 @@ impl Shell {
     }
 
     fn connect(&mut self, _: &ClickEvent, window: &mut Window, cx: &mut Context<Self>) {
-        let form = ConnectForm {
-            host: self.host.read(cx).value().to_string(),
-            database: self.database.read(cx).value().to_string(),
-            token_path: self.token_path.read(cx).value().to_string(),
-        };
-        let outcome = form.validate().and_then(|settings| {
+        let outcome = self.form_settings(cx).and_then(|settings| {
             self.store
                 .update(cx, |store, cx| store.connect(settings, cx))
                 .map_err(|err| err.to_string())
@@ -296,6 +292,33 @@ impl Shell {
             }
             Err(message) => self.connect_error = Some(message.into()),
         }
+        cx.notify();
+    }
+
+    /// The form's settings, or the form's message.
+    fn form_settings(&self, cx: &App) -> Result<crate::backend::ConnectSettings, String> {
+        ConnectForm {
+            host: self.host.read(cx).value().to_string(),
+            database: self.database.read(cx).value().to_string(),
+            token_path: self.token_path.read(cx).value().to_string(),
+        }
+        .validate()
+    }
+
+    fn sign_in(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
+        match self.form_settings(cx) {
+            Ok(settings) => {
+                self.connect_error = None;
+                self.store
+                    .update(cx, |store, cx| store.sign_in(Some(settings), cx));
+            }
+            Err(message) => self.connect_error = Some(message.into()),
+        }
+        cx.notify();
+    }
+
+    fn sign_out(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
+        self.store.update(cx, LedgerStore::sign_out);
         cx.notify();
     }
 
@@ -445,7 +468,14 @@ impl Shell {
         let status = view.status().clone();
         let remote = view.is_remote();
         let live = matches!(status, ConnectionStatus::Connected { .. });
-        let status_line = connection_summary(&status, remote);
+        let signed_in = self.store.read(cx).signin().phase() == Phase::SignedIn;
+        let status_line = match &status {
+            ConnectionStatus::Connected { identity } if signed_in => format!(
+                "Connected as {}, the identity of your WorkOS sign-in.",
+                short_identity(identity)
+            ),
+            _ => connection_summary(&status, remote),
+        };
         v_flex()
             .gap(px(space::SECTION))
             .max_w(px(560.0))
@@ -470,6 +500,7 @@ impl Shell {
                             .child(status_line),
                     ),
             )
+            .child(self.signin_section(cx))
             .child(
                 v_flex()
                     .child(panels::section_header("SpacetimeDB server", div(), cx))
@@ -528,6 +559,58 @@ impl Shell {
                     ),
             )
             .child(self.org_section(live, cx))
+    }
+
+    /// Who is signed in, with the button to sign in or out, the last failure and the module's
+    /// refusal (`signin::state::Card`).
+    fn signin_section(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let p = palette(cx.theme().mode);
+        let card = Card::of(self.store.read(cx).signin());
+        let red = |message: String| {
+            div()
+                .text_size(px(text::BODY))
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(p.rejection_red.to_hsla())
+                .child(message)
+        };
+        let details = card.details.into_iter().map(|(label, value)| {
+            h_flex()
+                .gap(px(12.0))
+                .child(
+                    div()
+                        .w(px(96.0))
+                        .flex_shrink_0()
+                        .text_size(px(12.0))
+                        .text_color(p.ink_muted.to_hsla())
+                        .child(label),
+                )
+                .child(div().text_size(px(text::BODY)).child(value))
+        });
+        v_flex()
+            .child(panels::section_header("Sign-in", div(), cx))
+            .child(
+                v_flex()
+                    .py(px(space::CELL))
+                    .gap(px(space::CELL))
+                    .child(div().text_size(px(text::BODY)).child(card.status))
+                    .children(details)
+                    .when_some(card.refusal, |d, message| d.child(red(message)))
+                    .when_some(card.error, |d, message| d.child(red(message)))
+                    .when_some(card.action, |d, action| {
+                        d.child(
+                            h_flex().child(match action {
+                                Action::SignIn => Button::new("sign-in")
+                                    .primary()
+                                    .label("Sign in with WorkOS")
+                                    .on_click(cx.listener(Self::sign_in)),
+                                Action::SignOut => Button::new("sign-out")
+                                    .outline()
+                                    .label("Sign out")
+                                    .on_click(cx.listener(Self::sign_out)),
+                            }),
+                        )
+                    }),
+            )
     }
 
     /// The organisations this identity can open, with a count.

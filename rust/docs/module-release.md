@@ -225,6 +225,33 @@ The member's user id is the subject, as `create_org_ledger` makes a signed-in ow
 their subject. A person who already connected can also be added by identity with `add_member`;
 the Books screens show it.
 
+### Registering the desktop sign-in (AUTH2)
+
+The desktop signs in with the same WorkOS environment as the web and presents the same kind of
+access token, so the `trusted_issuer` row above covers it: one row per issuer and audience, and
+the same person is the same identity on both. What the desktop needs in addition:
+
+1. **In the WorkOS dashboard** (the user's step), under Redirects for the environment, add
+   `http://127.0.0.1:*/callback`: the desktop listens on a port the OS picks for each sign-in
+   (RFC 8252 section 7.3). WorkOS allows `http` and a wildcard port on loopback addresses in
+   sandbox (staging) environments only (<https://workos.com/docs/sso/redirect-uris>: "Redirect
+   URIs that use HTTP and localhost are allowed in Sandbox Environments"; "In WorkOS Production
+   Environments, the Redirect URI to your application cannot use HTTP or localhost"). Production
+   therefore needs another redirect for the desktop (a custom URI scheme the app registers, or a
+   hosted https page that hands the code back) or the device code flow; that is still to decide.
+2. **In the desktop's `config.toml`** (never in the repository): `workos_client_id = "client_..."`;
+   `workos_issuer` only when the tokens' `iss` is not
+   `https://api.workos.com/user_management/<client id>` (a custom auth domain).
+3. **Sign in once** on the Connection screen. While the issuer is not trusted the screen says
+   "SpacetimeDB refused this sign-in: an operator must trust issuer ... for audience ... on this
+   database"; those two values are the `ISS` and `AUD` of the commands above. Once trusted, the
+   person is let in; `add_member_by_subject` with their WorkOS user id (shown on the Connection
+   screen as "WorkOS user") makes them a member, before or after they first sign in.
+
+Proven on the local server with a stand-in for AuthKit (`../tools/signin-proof.ts`); the
+identity the desktop connected as was the identity of the member row `add_member_by_subject`
+wrote.
+
 **Production.** Device identities are on in every database until an operator turns them off,
 including `flowtrace-ledger`: the desktop (and its release archives) connect with a device
 identity until AUTH2 adds the browser sign-in, so turning them off on production before that

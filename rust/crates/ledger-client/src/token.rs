@@ -56,6 +56,19 @@ impl TokenFile {
         self.write(token).map_err(|source| self.error(source))
     }
 
+    /// Removes the saved token (a sign-out); no file is fine.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Token`] when the file exists but cannot be removed.
+    pub fn clear(&self) -> Result<(), ClientError> {
+        match fs::remove_file(&self.path) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(source) => Err(self.error(source)),
+        }
+    }
+
     fn write(&self, token: &str) -> io::Result<()> {
         if let Some(dir) = self.path.parent().filter(|d| !d.as_os_str().is_empty()) {
             fs::create_dir_all(dir)?;
@@ -113,6 +126,18 @@ mod tests {
         assert_eq!(file.load().unwrap().as_deref(), Some("tok.en-1"));
         file.save("tok.en-2").unwrap();
         assert_eq!(file.load().unwrap().as_deref(), Some("tok.en-2"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn clear_removes_the_token_and_a_missing_file_is_fine() {
+        let dir = scratch("clear");
+        let file = TokenFile::new(dir.join("token"));
+        file.clear().unwrap();
+        file.save("refresh").unwrap();
+        file.clear().unwrap();
+        assert_eq!(file.load().unwrap(), None);
+        assert!(!file.path().exists());
         fs::remove_dir_all(dir).unwrap();
     }
 

@@ -1434,7 +1434,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-channel",
+ "base64 0.22.1",
  "dirs 6.0.0",
+ "getrandom 0.3.4",
  "gpui-kit",
  "ledger-client",
  "ledger-core",
@@ -1446,6 +1448,7 @@ dependencies = [
  "thiserror 2.0.21",
  "toml 0.8.23",
  "ureq",
+ "url",
  "uuid",
 ]
 
