@@ -1,6 +1,7 @@
 //! The transparency reducers: one per demo API write (`flowtrace/src/lib/demo/api.ts`), plus
 //! `set_profile`, `log_verification_access`, `create_default_access_groups` and the operator's
-//! `import_transparency`.
+//! `import_transparency`. The MOD2 reducers are in [`super::flow_reducers`],
+//! [`super::chain_reducers`] and [`super::trust_reducers`].
 //!
 //! Each one loads the organisation's transparency rows, lets a [`super::plan`] function change
 //! the records with the caller's member row and the reducer's ids and clock, and writes the rows
@@ -8,17 +9,27 @@
 //! organisations are its ledgers). Record-shaped arguments are JSON in the module's shape
 //! ([`super::types`]: money in minor units, files as object keys); an `Err` rolls the call back
 //! (<https://docs.rs/spacetimedb/2.12.0/spacetimedb/attr.reducer.html>).
+//!
+//! After every change ([`change`]) the trust score is computed again when an input moved
+//! ([`super::trust::refresh`]), and the organisation's public rows are rewritten from its records
+//! ([`publish`]), so the projection never lags the records it comes from.
 
 use ledger_core::types::OrgLedgerSettings;
 use serde::de::DeserializeOwned;
 use spacetimedb::{ReducerContext, Table};
 
 use super::OrgTransparency;
+use super::flows::EntryLinks;
 use super::plan::{self, Ctx, LedgerLinks, no_org};
-use super::rows::{TransparencyRows, TransparencyWrite, from_rows, plan_write, profile_of};
+use super::rows::{
+    OneRow, PublicRows, TransparencyRows, TransparencyWrite, from_rows, plan_public_write,
+    plan_write, profile_of, public_rows,
+};
 use super::tables::{
     ProfileRow, access_group, access_group_member, campaign, campaign_stat, donation, donor_update,
-    organization_profile, profile, verification, verification_access_log,
+    flag, flow_node, node_visibility, organization_profile, profile, public_badge, public_campaign,
+    public_embed_config, public_organization, service, transaction, transaction_visibility,
+    trust_score, trust_score_history, verification, verification_access_log,
 };
 use super::types::{
     AccessGroupPatch, AccessType, CampaignPatch, NewAccessGroup, NewCampaign, NewDonation,
@@ -28,11 +39,11 @@ use crate::clock::reducer_time;
 use crate::codec::{row_key, row_to_doc};
 use crate::reducers::{is_operator, reducer_env, text};
 use crate::rules::member_key;
-use crate::tables::{bill, expense_claim, ledger_org, member};
+use crate::tables::{bill, expense_claim, journal_entry, ledger_org, member};
 use crate::write_back::TableOps;
 
 /// The organisation's transparency rows.
-fn load_rows(ctx: &ReducerContext, org_id: &str) -> TransparencyRows {
+pub(super) fn load_rows(ctx: &ReducerContext, org_id: &str) -> TransparencyRows {
     let org = org_id.to_owned();
     TransparencyRows {
         profile: ctx.db.organization_profile().org_id().find(&org),
@@ -49,7 +60,38 @@ fn load_rows(ctx: &ReducerContext, org_id: &str) -> TransparencyRows {
         campaign_stats: ctx.db.campaign_stat().org_id().filter(&org).collect(),
         donations: ctx.db.donation().org_id().filter(&org).collect(),
         donor_updates: ctx.db.donor_update().org_id().filter(&org).collect(),
+        flow_nodes: ctx.db.flow_node().org_id().filter(&org).collect(),
+        transactions: ctx.db.transaction().org_id().filter(&org).collect(),
+        node_visibility: ctx.db.node_visibility().org_id().filter(&org).collect(),
+        transaction_visibility: ctx
+            .db
+            .transaction_visibility()
+            .org_id()
+            .filter(&org)
+            .collect(),
+        trust: ctx.db.trust_score().org_id().find(&org),
+        trust_history: ctx.db.trust_score_history().org_id().filter(&org).collect(),
+        flags: ctx.db.flag().org_id().filter(&org).collect(),
+        embed: ctx.db.public_embed_config().org_id().find(&org),
     }
+}
+
+/// An organisation's records, read from its rows.
+pub(super) fn load(ctx: &ReducerContext, org_id: &str) -> Result<OrgTransparency, String> {
+    from_rows(&load_rows(ctx, org_id)).map_err(text)
+}
+
+/// Inserts or replaces a row of a table keyed by `$key`.
+macro_rules! upsert {
+    ($table:expr, $key:ident, $row:expr) => {{
+        let table = $table;
+        let row = $row;
+        if table.$key().find(&row.$key).is_some() {
+            table.$key().update(row);
+        } else {
+            table.try_insert(row).map_err(text)?;
+        }
+    }};
 }
 
 /// Applies one table's writes through its `key` index.
@@ -71,21 +113,20 @@ macro_rules! write_table {
 
 fn write(ctx: &ReducerContext, w: TransparencyWrite) -> Result<(), String> {
     if let Some(row) = w.profile {
-        if ctx
-            .db
-            .organization_profile()
-            .org_id()
-            .find(&row.org_id)
-            .is_some()
-        {
-            ctx.db.organization_profile().org_id().update(row);
-        } else {
-            ctx.db
-                .organization_profile()
-                .try_insert(row)
-                .map_err(text)?;
-        }
+        upsert!(ctx.db.organization_profile(), org_id, row);
     }
+    if let Some(row) = w.trust {
+        upsert!(ctx.db.trust_score(), org_id, row);
+    }
+    if let Some(row) = w.embed {
+        upsert!(ctx.db.public_embed_config(), org_id, row);
+    }
+    write_table!(ctx.db.flow_node(), w.flow_nodes);
+    write_table!(ctx.db.transaction(), w.transactions);
+    write_table!(ctx.db.node_visibility(), w.node_visibility);
+    write_table!(ctx.db.transaction_visibility(), w.transaction_visibility);
+    write_table!(ctx.db.trust_score_history(), w.trust_history);
+    write_table!(ctx.db.flag(), w.flags);
     write_table!(ctx.db.access_group(), w.access_groups);
     write_table!(ctx.db.access_group_member(), w.group_members);
     write_table!(ctx.db.verification(), w.verifications);
@@ -97,9 +138,64 @@ fn write(ctx: &ReducerContext, w: TransparencyWrite) -> Result<(), String> {
     Ok(())
 }
 
+/// Rewrites the organisation's public rows from its records ([`super::public::project`]).
+pub(super) fn publish(
+    ctx: &ReducerContext,
+    org_id: &str,
+    records: &OrgTransparency,
+) -> Result<(), String> {
+    let org = org_id.to_owned();
+    let before = PublicRows {
+        organization: ctx.db.public_organization().org_id().find(&org),
+        badge: ctx.db.public_badge().org_id().find(&org),
+        campaigns: ctx.db.public_campaign().org_id().filter(&org).collect(),
+    };
+    let after = public_rows(org_id, &super::public::project(org_id, records)).map_err(text)?;
+    let w = plan_public_write(&before, after);
+    match w.organization {
+        OneRow::Keep => {}
+        OneRow::Put(row) => upsert!(ctx.db.public_organization(), org_id, row),
+        OneRow::Delete => {
+            ctx.db.public_organization().org_id().delete(&org);
+        }
+    }
+    match w.badge {
+        OneRow::Keep => {}
+        OneRow::Put(row) => upsert!(ctx.db.public_badge(), org_id, row),
+        OneRow::Delete => {
+            ctx.db.public_badge().org_id().delete(&org);
+        }
+    }
+    for id in &w.campaigns.delete {
+        ctx.db.public_campaign().campaign_id().delete(id);
+    }
+    for row in w.campaigns.update {
+        ctx.db.public_campaign().campaign_id().update(row);
+    }
+    for row in w.campaigns.insert {
+        ctx.db.public_campaign().try_insert(row).map_err(text)?;
+    }
+    Ok(())
+}
+
+/// Who a write is by, for the trust row's `computed_by`: the member's user id, a service's
+/// signature, else the identity.
+fn author(ctx: &ReducerContext, caller: Option<&crate::tables::Member>) -> String {
+    caller.map_or_else(
+        || {
+            ctx.db.service().identity().find(ctx.sender()).map_or_else(
+                || ctx.sender().to_hex().to_string(),
+                |s| super::services::signature(&s.label),
+            )
+        },
+        |m| m.user_id.clone(),
+    )
+}
+
 /// Runs one [`super::plan`] function on the organisation's records as the caller and writes back
-/// what changed. `base` is the books' settings, for the defaults of a first profile.
-fn change<T>(
+/// what changed, with the trust score computed again when an input moved and the public rows
+/// rewritten. `base` is the books' settings, for the defaults of a first profile.
+pub(super) fn change<T>(
     ctx: &ReducerContext,
     org_id: &str,
     f: impl FnOnce(&mut OrgTransparency, &mut Ctx<'_>, &OrgLedgerSettings) -> Result<T, String>,
@@ -125,11 +221,15 @@ fn change<T>(
         f(&mut records, &mut c, &settings)?
     };
     env.finish()?;
-    write(ctx, plan_write(org_id, &rows, &records).map_err(text)?).map(|()| out)
+    let now = reducer_time(ctx.timestamp).map_err(text)?.to_string();
+    super::trust::refresh(&mut records, org_id, &now, &author(ctx, caller.as_ref()));
+    write(ctx, plan_write(org_id, &rows, &records).map_err(text)?)?;
+    publish(ctx, org_id, &records)?;
+    Ok(out)
 }
 
 /// A JSON argument as the module's input type.
-fn parse<T: DeserializeOwned>(what: &str, json: &str) -> Result<T, String> {
+pub(super) fn parse<T: DeserializeOwned>(what: &str, json: &str) -> Result<T, String> {
     serde_json::from_str(json).map_err(|e| format!("The {what} is malformed: {e}"))
 }
 
@@ -159,10 +259,24 @@ fn profile_slug_elsewhere(ctx: &ReducerContext, org_id: &str) -> impl Fn(&str) -
     move |s| slugs.iter().any(|x| x == s)
 }
 
-/// The organisation's expense claims and bills, for proof links.
-struct Books<'a> {
-    ctx: &'a ReducerContext,
-    org_id: &'a str,
+/// The organisation's journal entries, expense claims and bills, for proof, flag and
+/// transaction links.
+pub(super) struct Books<'a> {
+    /// The call.
+    pub(super) ctx: &'a ReducerContext,
+    /// The organisation.
+    pub(super) org_id: &'a str,
+}
+
+impl EntryLinks for Books<'_> {
+    fn has_entry(&self, id: &str) -> bool {
+        self.ctx
+            .db
+            .journal_entry()
+            .key()
+            .find(row_key(self.org_id, id))
+            .is_some()
+    }
 }
 
 impl LedgerLinks for Books<'_> {
@@ -605,7 +719,9 @@ pub fn mark_donor_update_sent(
 
 /// Replaces an organisation's transparency records with a dataset in the demo store's TS shape
 /// (`rust/fixtures/transparency-dataset.json#/store`, mapped by [`super::ts::dataset`]); no TS
-/// counterpart, like `import_books`, and only an operator may call it. Profiles stay.
+/// counterpart, like `import_books`, and only an operator may call it. Profiles stay. The
+/// dataset's chains that the organisation is on either side of replace the chains it is on
+/// ([`super::ts::chains`]); the trust row is computed and the public rows written.
 ///
 /// # Errors
 ///
@@ -637,8 +753,23 @@ pub fn import_transparency(
     ctx.db.campaign_stat().org_id().delete(&org_id);
     ctx.db.donation().org_id().delete(&org_id);
     ctx.db.donor_update().org_id().delete(&org_id);
+    ctx.db.flow_node().org_id().delete(&org_id);
+    ctx.db.transaction().org_id().delete(&org_id);
+    ctx.db.node_visibility().org_id().delete(&org_id);
+    ctx.db.transaction_visibility().org_id().delete(&org_id);
+    ctx.db.trust_score().org_id().delete(&org_id);
+    ctx.db.trust_score_history().org_id().delete(&org_id);
+    ctx.db.flag().org_id().delete(&org_id);
+    ctx.db.public_embed_config().org_id().delete(&org_id);
+    let mut records = records;
+    let now = reducer_time(ctx.timestamp).map_err(text)?.to_string();
+    super::trust::refresh(&mut records, &org_id, &now, "module");
     write(
         ctx,
         plan_write(&org_id, &TransparencyRows::default(), &records).map_err(text)?,
-    )
+    )?;
+    publish(ctx, &org_id, &records)?;
+    let before = super::chain_reducers::load_chains(ctx, &[org_id.as_str()]);
+    let after = super::ts::chains(&org_id, &store).map_err(text)?;
+    super::chain_reducers::write_chains(ctx, &before, &after)
 }

@@ -287,7 +287,7 @@ fn check_stats(t: &OrgTransparency, stat: &Value, ts_stats: &Value, campaign_id:
 }
 
 /// The demo store's delta for one call, applied to the expected records in the module's shape.
-/// `transactions` belongs to MOD2 and is skipped.
+/// `transactions` is MOD2's record, which a proof counts towards (`api.ts:300-306`).
 fn apply_delta(expected: &mut OrgTransparency, delta: &Value, org_id: &str) {
     fn by_id<T>(rows: &mut Vec<T>, d: &Value, id: impl Fn(&T) -> &str, map: impl Fn(&Value) -> T) {
         for removed in d["removed"].as_array().into_iter().flatten() {
@@ -347,7 +347,12 @@ fn apply_delta(expected: &mut OrgTransparency, delta: &Value, org_id: &str) {
                 |u| &u.id,
                 |v| ts::donor_update(v).unwrap(),
             ),
-            "transactions" => {}
+            "transactions" => by_id(
+                &mut expected.transactions,
+                d,
+                |x| &x.id,
+                |v| ts::transaction(v).unwrap(),
+            ),
             other => panic!("delta of {other}: not a MOD1 collection"),
         }
     }
@@ -380,6 +385,9 @@ fn keyed(t: &OrgTransparency) -> BTreeMap<String, Value> {
     }
     for u in &t.donor_updates {
         put("donor_update", &u.id, serde_json::to_value(u).unwrap());
+    }
+    for x in &t.transactions {
+        put("transaction", &x.id, serde_json::to_value(x).unwrap());
     }
     out
 }

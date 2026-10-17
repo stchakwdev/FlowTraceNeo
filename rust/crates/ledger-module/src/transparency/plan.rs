@@ -48,23 +48,23 @@ pub struct Ctx<'a> {
 }
 
 impl Ctx<'_> {
-    fn now(&self) -> String {
+    pub(crate) fn now(&self) -> String {
         self.env.now().to_string()
     }
 
-    fn new_id(&mut self) -> String {
+    pub(crate) fn new_id(&mut self) -> String {
         self.env.new_id()
     }
 
     /// The caller as a member (`actorOf`, `spacetimedb/src/index.ts:507-511`; the policies'
     /// `organization_id = get_current_org_id()`).
-    fn member(&self) -> Result<&Member, String> {
+    pub(crate) fn member(&self) -> Result<&Member, String> {
         self.member
             .ok_or_else(|| format!("You are not a member of organisation {}.", self.org_id))
     }
 
     /// The caller as an admin or manager: a member who can close periods (module docs above).
-    fn manager(&self, what: &str) -> Result<&Member, String> {
+    pub(crate) fn manager(&self, what: &str) -> Result<&Member, String> {
         let m = self.member()?;
         if m.can_close {
             Ok(m)
@@ -72,10 +72,21 @@ impl Ctx<'_> {
             Err(format!("Only members who can close periods can {what}."))
         }
     }
+
+    /// The caller as an approver: a member who can approve spend (pre-decision P15, flags are
+    /// resolved by members with approve rights).
+    pub(crate) fn approver(&self, what: &str) -> Result<&Member, String> {
+        let m = self.member()?;
+        if m.can_approve {
+            Ok(m)
+        } else {
+            Err(format!("Only members who can approve spend can {what}."))
+        }
+    }
 }
 
 /// `"${what} not found in the demo data."` (`api.ts:85-87`), without the demo.
-fn not_found(what: &str) -> String {
+pub(crate) fn not_found(what: &str) -> String {
     format!("{what} not found.")
 }
 
@@ -103,7 +114,7 @@ fn refresh_stats(t: &mut OrgTransparency) {
         .collect();
 }
 
-fn positive_minor(amount: Minor, message: &str) -> Result<Minor, String> {
+pub(crate) fn positive_minor(amount: Minor, message: &str) -> Result<Minor, String> {
     if amount > 0 && amount <= MAX_SAFE_MINOR {
         Ok(amount)
     } else {
@@ -176,14 +187,14 @@ pub fn update_organization(
 }
 
 /// `Object.assign` of one field that may be left out.
-fn set<T>(field: &mut T, value: Option<T>) {
+pub(crate) fn set<T>(field: &mut T, value: Option<T>) {
     if let Some(v) = value {
         *field = v;
     }
 }
 
 /// `Object.assign` of one field that may be left out or set to `null`.
-fn set_nullish<T>(field: &mut Option<T>, value: Nullish<T>) {
+pub(crate) fn set_nullish<T>(field: &mut Option<T>, value: Nullish<T>) {
     match value {
         Nullish::Undefined => {}
         Nullish::Null => *field = None,
@@ -459,8 +470,9 @@ pub fn update_access_group(
     Ok(g.clone())
 }
 
-/// `deleteAccessGroup` (`api.ts:611-616`): removes the group and its members (its node
-/// visibility rows are MOD2's); an unknown id changes nothing, as in the demo. Only an admin, and
+/// `deleteAccessGroup` (`api.ts:611-616`): removes the group, its members and its node
+/// visibility rows (and its transaction visibility rows, as `ON DELETE CASCADE` does,
+/// `005_access_groups.sql:105-119`); an unknown id changes nothing, as in the demo. Only an admin, and
 /// never a default group: the web offers no delete for one (`access-groups.tsx:402-413`) and the
 /// policy refuses it (`006_access_groups_rls.sql:54-65`), though the demo API would delete it.
 ///
@@ -478,10 +490,12 @@ pub fn delete_access_group(
     }
     t.access_groups.retain(|g| g.id != id);
     t.group_members.retain(|m| m.group_id != id);
+    t.node_visibility.retain(|v| v.group_id != id);
+    t.transaction_visibility.retain(|v| v.group_id != id);
     Ok(())
 }
 
-fn group_in_org(t: &OrgTransparency, group_id: &str) -> Result<(), String> {
+pub(crate) fn group_in_org(t: &OrgTransparency, group_id: &str) -> Result<(), String> {
     if t.access_groups.iter().any(|g| g.id == group_id) {
         Ok(())
     } else {
@@ -658,13 +672,14 @@ fn is_sha256(s: &str) -> bool {
 /// `createVerification` (`insertVerification`, `api.ts:284-317`): any member (policy "Users can
 /// create org verifications", `002_rls_policies.sql:108-114`). Trust points from the type,
 /// `verified_at` and `verified_by` only for a proof made verified, `created_by` the caller. The
-/// module adds: one link, to a transaction (MOD2), or an expense claim or bill of the books; an
-/// R2 object key comes with its SHA-256 (P13). The demo's transaction side effects (count and
-/// auto-verify) are MOD2's.
+/// module adds: one link, to a transaction of the organisation or an expense claim or bill of the
+/// books; an R2 object key comes with its SHA-256 (P13). A proof of a transaction counts towards
+/// it and verifies a pending one at two ([`super::flows::count_proof`], `api.ts:300-306`).
 ///
 /// # Errors
 ///
-/// Not a member, not exactly one link, an unknown claim or bill, or a file without its hash.
+/// Not a member, not exactly one link, an unknown transaction, claim or bill, or a file without
+/// its hash.
 pub fn create_verification(
     t: &mut OrgTransparency,
     ctx: &mut Ctx<'_>,
@@ -675,6 +690,11 @@ pub fn create_verification(
     let links = [&input.transaction_id, &input.claim_id, &input.bill_id];
     if links.iter().filter(|l| l.is_some()).count() != 1 {
         return Err("A proof belongs to one transaction, expense claim or bill.".to_owned());
+    }
+    if let Some(id) = &input.transaction_id
+        && !t.transactions.iter().any(|x| &x.id == id)
+    {
+        return Err(format!("Transaction {id} not found."));
     }
     if let Some(id) = &input.claim_id
         && !ledger.has_claim(id)
@@ -743,6 +763,9 @@ pub fn create_verification(
         visible_as: None,
     };
     t.verifications.push(row.clone());
+    if let Some(id) = &row.transaction_id {
+        super::flows::count_proof(t, id);
+    }
     Ok(row)
 }
 

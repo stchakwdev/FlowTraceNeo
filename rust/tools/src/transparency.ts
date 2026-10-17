@@ -29,7 +29,7 @@ export const TRANSPARENCY_ENV: FrozenEnv = {
     'rust/tools/src/transparency.ts#withFrozenClock: replaces Date and crypto.randomUUID while the demo API runs (it has no LedgerEnv)',
 }
 
-/** The store collections MOD1 covers, by demo store key, with the module table that holds them. */
+/** The store collections MOD1 and MOD2 cover, by demo store key, with the module table that holds them. */
 export const IN_SCOPE: Record<string, string> = {
   organizations: 'organization_profile',
   profiles: 'profile',
@@ -39,12 +39,19 @@ export const IN_SCOPE: Record<string, string> = {
   campaigns: 'campaign',
   donations: 'donation',
   donorUpdates: 'donor_update',
+  flowNodes: 'flow_node',
+  transactions: 'transaction',
+  nodeVisibility: 'node_visibility',
+  trustScoreHistory: 'trust_score_history',
+  organizationChains: 'organization_chain',
+  chainActivityLog: 'chain_activity_log',
+  publicEmbedConfigs: 'public_embed_config',
 }
 
-type Rec = Record<string, Json>
-type Store = Record<string, Array<Rec>>
+export type Rec = Record<string, Json>
+export type Store = Record<string, Array<Rec>>
 
-async function withFrozenClock<T>(run: () => Promise<T>): Promise<T> {
+export async function withFrozenClock<T>(run: () => Promise<T>): Promise<T> {
   const Guarded = globalThis.Date
   const guardedUuid = globalThis.crypto.randomUUID
   const frozenMs = new Guarded(TRANSPARENCY_NOW).getTime()
@@ -69,7 +76,7 @@ async function withFrozenClock<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /** Per changed collection: added records, removed ids, changed (whole new) records. */
-function delta(before: Store, after: Store): Record<string, Json> {
+export function delta(before: Store, after: Store): Record<string, Json> {
   const out: Record<string, Json> = {}
   for (const key of Object.keys(after).sort()) {
     const was = new Map((before[key] ?? []).map((r) => [String(r.id), fingerprint(r)]))
@@ -95,8 +102,9 @@ export async function exportTransparency(outDir: string) {
     description:
       'The demo dataset for the transparency tables of the module (MOD1): organisations, the demo profile, access ' +
       'groups and their members, verifications, campaigns, donations and donor updates, as the demo store holds ' +
-      'them before any call (amounts in major units, as the TS types). The public embed config is included for ' +
-      'MOD2, which owns it. Also the trust points per verification type.',
+      'them before any call (amounts in major units, as the TS types); and for MOD2 the flow nodes, transactions, ' +
+      'node visibility, trust score history, organisation chains with their activity log and the public embed ' +
+      'config. Also the trust points per verification type.',
     sources: [`${DATASET}`, `${SUPABASE}#VERIFICATION_TRUST_POINTS`],
     covers: ['transparency dataset'],
     env: null,
@@ -113,6 +121,13 @@ export async function exportTransparency(outDir: string) {
       campaigns: seed.campaigns,
       donations: seed.donations,
       donorUpdates: seed.donorUpdates,
+      flowNodes: seed.flowNodes,
+      transactions: seed.transactions,
+      nodeVisibility: seed.nodeVisibility,
+      trustScoreHistory: seed.trustScoreHistory,
+      organizationChains: seed.organizationChains,
+      chainActivityLog: seed.chainActivityLog,
+      publicEmbedConfigs: seed.publicEmbedConfigs,
     },
     public_embed_configs: seed.publicEmbedConfigs,
   })

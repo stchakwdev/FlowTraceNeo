@@ -1,0 +1,3757 @@
+{
+  "calls": [
+    {
+      "args": [
+        {
+          "metadata": {
+            "county": "Kilifi"
+          },
+          "name": "Community Health Volunteers",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "type": "beneficiary"
+        }
+      ],
+      "delta": {
+        "flowNodes": {
+          "added": [
+            {
+              "balance": 0,
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "id": "00000000-0000-4000-8000-000000000001",
+              "metadata": {
+                "county": "Kilifi"
+              },
+              "name": "Community Health Volunteers",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "beneficiary"
+            }
+          ]
+        }
+      },
+      "fn": "createNode",
+      "outcome": "ok",
+      "result": {
+        "balance": 0,
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "metadata": {
+          "county": "Kilifi"
+        },
+        "name": "Community Health Volunteers",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "beneficiary"
+      }
+    },
+    {
+      "args": [
+        {
+          "metadata": {},
+          "name": "Medisafe Supplies",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "type": "vendor"
+        }
+      ],
+      "delta": {
+        "flowNodes": {
+          "added": [
+            {
+              "balance": 0,
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "id": "00000000-0000-4000-8000-000000000002",
+              "metadata": {},
+              "name": "Medisafe Supplies",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "vendor"
+            }
+          ]
+        }
+      },
+      "fn": "createNode",
+      "outcome": "ok",
+      "result": {
+        "balance": 0,
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "metadata": {},
+        "name": "Medisafe Supplies",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "vendor"
+      }
+    },
+    {
+      "args": [
+        {
+          "amount": 185000,
+          "amount_usd": null,
+          "category": "Supplies",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "description": "Delivery kits for Kilifi health centres",
+          "exchange_rate": null,
+          "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+          "notes": null,
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "reference": "MS-2026-014",
+          "to_node_id": "00000000-0000-4000-8000-000000000002",
+          "transaction_date": "2026-02-03",
+          "verification_status": "pending"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "added": [
+            {
+              "amount": 185000,
+              "amount_usd": null,
+              "category": "Supplies",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Delivery kits for Kilifi health centres",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "id": "00000000-0000-4000-8000-000000000003",
+              "notes": null,
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "MS-2026-014",
+              "to_node_id": "00000000-0000-4000-8000-000000000002",
+              "transaction_date": "2026-02-03",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 0,
+              "verification_status": "pending"
+            }
+          ]
+        }
+      },
+      "fn": "createTransaction",
+      "outcome": "ok",
+      "result": {
+        "amount": 185000,
+        "amount_usd": null,
+        "category": "Supplies",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Delivery kits for Kilifi health centres",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "id": "00000000-0000-4000-8000-000000000003",
+        "notes": null,
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "MS-2026-014",
+        "to_node_id": "00000000-0000-4000-8000-000000000002",
+        "transaction_date": "2026-02-03",
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "verification_count": 0,
+        "verification_status": "pending"
+      }
+    },
+    {
+      "args": [
+        {
+          "amount": 96000,
+          "amount_usd": null,
+          "category": "Programs",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "description": "Volunteer transport stipends, January",
+          "exchange_rate": null,
+          "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+          "notes": null,
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "reference": null,
+          "to_node_id": "00000000-0000-4000-8000-000000000001",
+          "transaction_date": "2026-01-30",
+          "verification_status": "pending"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "added": [
+            {
+              "amount": 96000,
+              "amount_usd": null,
+              "category": "Programs",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Volunteer transport stipends, January",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "id": "00000000-0000-4000-8000-000000000004",
+              "notes": null,
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": null,
+              "to_node_id": "00000000-0000-4000-8000-000000000001",
+              "transaction_date": "2026-01-30",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 0,
+              "verification_status": "pending"
+            }
+          ]
+        }
+      },
+      "fn": "createTransaction",
+      "outcome": "ok",
+      "result": {
+        "amount": 96000,
+        "amount_usd": null,
+        "category": "Programs",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Volunteer transport stipends, January",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "id": "00000000-0000-4000-8000-000000000004",
+        "notes": null,
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": null,
+        "to_node_id": "00000000-0000-4000-8000-000000000001",
+        "transaction_date": "2026-01-30",
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "verification_count": 0,
+        "verification_status": "pending"
+      }
+    },
+    {
+      "args": [
+        {
+          "amount": 2590000,
+          "amount_usd": 20000,
+          "category": "Funding",
+          "created_by": "user_dummy",
+          "currency": "USD",
+          "description": "Northlight Foundation supplementary grant",
+          "exchange_rate": 129.5,
+          "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+          "notes": null,
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "reference": "NLF-2026-002",
+          "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+          "transaction_date": "2026-02-02",
+          "verification_status": "verified"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "added": [
+            {
+              "amount": 2590000,
+              "amount_usd": 20000,
+              "category": "Funding",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "USD",
+              "description": "Northlight Foundation supplementary grant",
+              "exchange_rate": 129.5,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+              "id": "00000000-0000-4000-8000-000000000005",
+              "notes": null,
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "NLF-2026-002",
+              "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "transaction_date": "2026-02-02",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 0,
+              "verification_status": "verified"
+            }
+          ]
+        }
+      },
+      "fn": "createTransaction",
+      "outcome": "ok",
+      "result": {
+        "amount": 2590000,
+        "amount_usd": 20000,
+        "category": "Funding",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "USD",
+        "description": "Northlight Foundation supplementary grant",
+        "exchange_rate": 129.5,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+        "id": "00000000-0000-4000-8000-000000000005",
+        "notes": null,
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "NLF-2026-002",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "transaction_date": "2026-02-02",
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "verification_count": 0,
+        "verification_status": "verified"
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000003",
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "category": "Equipment",
+          "notes": "Two cartons short; supplier credit note to follow"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 185000,
+              "amount_usd": null,
+              "category": "Equipment",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Delivery kits for Kilifi health centres",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "id": "00000000-0000-4000-8000-000000000003",
+              "notes": "Two cartons short; supplier credit note to follow",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "MS-2026-014",
+              "to_node_id": "00000000-0000-4000-8000-000000000002",
+              "transaction_date": "2026-02-03",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 0,
+              "verification_status": "pending"
+            }
+          ]
+        }
+      },
+      "fn": "updateTransaction",
+      "outcome": "ok",
+      "result": {
+        "amount": 185000,
+        "amount_usd": null,
+        "category": "Equipment",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Delivery kits for Kilifi health centres",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "id": "00000000-0000-4000-8000-000000000003",
+        "notes": "Two cartons short; supplier credit note to follow",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "MS-2026-014",
+        "to_node_id": "00000000-0000-4000-8000-000000000002",
+        "transaction_date": "2026-02-03",
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "verification_count": 0,
+        "verification_status": "pending"
+      }
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000004",
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "verification_status": "flagged"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 96000,
+              "amount_usd": null,
+              "category": "Programs",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Volunteer transport stipends, January",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "id": "00000000-0000-4000-8000-000000000004",
+              "notes": null,
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": null,
+              "to_node_id": "00000000-0000-4000-8000-000000000001",
+              "transaction_date": "2026-01-30",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 0,
+              "verification_status": "flagged"
+            }
+          ]
+        }
+      },
+      "fn": "updateTransaction",
+      "outcome": "ok",
+      "result": {
+        "amount": 96000,
+        "amount_usd": null,
+        "category": "Programs",
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Volunteer transport stipends, January",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "id": "00000000-0000-4000-8000-000000000004",
+        "notes": null,
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": null,
+        "to_node_id": "00000000-0000-4000-8000-000000000001",
+        "transaction_date": "2026-01-30",
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "verification_count": 0,
+        "verification_status": "flagged"
+      }
+    },
+    {
+      "args": [
+        "txn-missing",
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "notes": "Nobody"
+        }
+      ],
+      "delta": {},
+      "error": "Transaction not found in the demo data.",
+      "fn": "updateTransaction",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        {
+          "created_by": "user_dummy",
+          "description": "Medisafe invoice MS-2026-014",
+          "executor_name": null,
+          "file_url": null,
+          "gps_accuracy": null,
+          "gps_latitude": null,
+          "gps_longitude": null,
+          "location_name": null,
+          "metadata": {},
+          "ocr_data": null,
+          "status": "pending",
+          "thumbnail_url": null,
+          "transaction_id": "00000000-0000-4000-8000-000000000003",
+          "type": "invoice",
+          "verified_by": null,
+          "visibility_level": "full"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 185000,
+              "amount_usd": null,
+              "category": "Equipment",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Delivery kits for Kilifi health centres",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "id": "00000000-0000-4000-8000-000000000003",
+              "notes": "Two cartons short; supplier credit note to follow",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "MS-2026-014",
+              "to_node_id": "00000000-0000-4000-8000-000000000002",
+              "transaction_date": "2026-02-03",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 1,
+              "verification_status": "pending"
+            }
+          ]
+        },
+        "verifications": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "description": "Medisafe invoice MS-2026-014",
+              "executor_name": null,
+              "file_url": null,
+              "gps_accuracy": null,
+              "gps_latitude": null,
+              "gps_longitude": null,
+              "id": "00000000-0000-4000-8000-000000000006",
+              "location_name": null,
+              "metadata": {},
+              "ocr_data": null,
+              "status": "pending",
+              "thumbnail_url": null,
+              "transaction_id": "00000000-0000-4000-8000-000000000003",
+              "trust_points": 4,
+              "type": "invoice",
+              "verified_at": null,
+              "verified_by": null,
+              "visibility_level": "full"
+            }
+          ]
+        }
+      },
+      "fn": "createVerification",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "description": "Medisafe invoice MS-2026-014",
+        "executor_name": null,
+        "file_url": null,
+        "gps_accuracy": null,
+        "gps_latitude": null,
+        "gps_longitude": null,
+        "id": "00000000-0000-4000-8000-000000000006",
+        "location_name": null,
+        "metadata": {},
+        "ocr_data": null,
+        "status": "pending",
+        "thumbnail_url": null,
+        "transaction_id": "00000000-0000-4000-8000-000000000003",
+        "trust_points": 4,
+        "type": "invoice",
+        "verified_at": null,
+        "verified_by": null,
+        "visibility_level": "full"
+      }
+    },
+    {
+      "args": [
+        {
+          "created_by": "user_dummy",
+          "description": "Delivered kits at Mariakani health centre",
+          "executor_name": null,
+          "file_url": null,
+          "gps_accuracy": null,
+          "gps_latitude": null,
+          "gps_longitude": null,
+          "location_name": null,
+          "metadata": {},
+          "ocr_data": null,
+          "status": "verified",
+          "thumbnail_url": null,
+          "transaction_id": "00000000-0000-4000-8000-000000000003",
+          "type": "photo",
+          "verified_by": "user_dummy",
+          "visibility_level": "full"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 185000,
+              "amount_usd": null,
+              "category": "Equipment",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Delivery kits for Kilifi health centres",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "id": "00000000-0000-4000-8000-000000000003",
+              "notes": "Two cartons short; supplier credit note to follow",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": "MS-2026-014",
+              "to_node_id": "00000000-0000-4000-8000-000000000002",
+              "transaction_date": "2026-02-03",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 2,
+              "verification_status": "verified"
+            }
+          ]
+        },
+        "verifications": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "description": "Delivered kits at Mariakani health centre",
+              "executor_name": null,
+              "file_url": null,
+              "gps_accuracy": null,
+              "gps_latitude": null,
+              "gps_longitude": null,
+              "id": "00000000-0000-4000-8000-000000000007",
+              "location_name": null,
+              "metadata": {},
+              "ocr_data": null,
+              "status": "verified",
+              "thumbnail_url": null,
+              "transaction_id": "00000000-0000-4000-8000-000000000003",
+              "trust_points": 8,
+              "type": "photo",
+              "verified_at": "2026-02-04T09:00:00.000Z",
+              "verified_by": "user_dummy",
+              "visibility_level": "full"
+            }
+          ]
+        }
+      },
+      "fn": "createVerification",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "description": "Delivered kits at Mariakani health centre",
+        "executor_name": null,
+        "file_url": null,
+        "gps_accuracy": null,
+        "gps_latitude": null,
+        "gps_longitude": null,
+        "id": "00000000-0000-4000-8000-000000000007",
+        "location_name": null,
+        "metadata": {},
+        "ocr_data": null,
+        "status": "verified",
+        "thumbnail_url": null,
+        "transaction_id": "00000000-0000-4000-8000-000000000003",
+        "trust_points": 8,
+        "type": "photo",
+        "verified_at": "2026-02-04T09:00:00.000Z",
+        "verified_by": "user_dummy",
+        "visibility_level": "full"
+      }
+    },
+    {
+      "args": [
+        {
+          "created_by": "user_dummy",
+          "description": "M-Pesa stipend batch confirmation",
+          "executor_name": null,
+          "file_url": null,
+          "gps_accuracy": null,
+          "gps_latitude": null,
+          "gps_longitude": null,
+          "location_name": null,
+          "metadata": {},
+          "ocr_data": null,
+          "status": "pending",
+          "thumbnail_url": null,
+          "transaction_id": "00000000-0000-4000-8000-000000000004",
+          "type": "receipt",
+          "verified_by": null,
+          "visibility_level": "full"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 96000,
+              "amount_usd": null,
+              "category": "Programs",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Volunteer transport stipends, January",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "id": "00000000-0000-4000-8000-000000000004",
+              "notes": null,
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": null,
+              "to_node_id": "00000000-0000-4000-8000-000000000001",
+              "transaction_date": "2026-01-30",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 1,
+              "verification_status": "flagged"
+            }
+          ]
+        },
+        "verifications": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "description": "M-Pesa stipend batch confirmation",
+              "executor_name": null,
+              "file_url": null,
+              "gps_accuracy": null,
+              "gps_latitude": null,
+              "gps_longitude": null,
+              "id": "00000000-0000-4000-8000-000000000008",
+              "location_name": null,
+              "metadata": {},
+              "ocr_data": null,
+              "status": "pending",
+              "thumbnail_url": null,
+              "transaction_id": "00000000-0000-4000-8000-000000000004",
+              "trust_points": 5,
+              "type": "receipt",
+              "verified_at": null,
+              "verified_by": null,
+              "visibility_level": "full"
+            }
+          ]
+        }
+      },
+      "fn": "createVerification",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "description": "M-Pesa stipend batch confirmation",
+        "executor_name": null,
+        "file_url": null,
+        "gps_accuracy": null,
+        "gps_latitude": null,
+        "gps_longitude": null,
+        "id": "00000000-0000-4000-8000-000000000008",
+        "location_name": null,
+        "metadata": {},
+        "ocr_data": null,
+        "status": "pending",
+        "thumbnail_url": null,
+        "transaction_id": "00000000-0000-4000-8000-000000000004",
+        "trust_points": 5,
+        "type": "receipt",
+        "verified_at": null,
+        "verified_by": null,
+        "visibility_level": "full"
+      }
+    },
+    {
+      "args": [
+        {
+          "created_by": "user_dummy",
+          "description": "Signed volunteer register",
+          "executor_name": null,
+          "file_url": null,
+          "gps_accuracy": null,
+          "gps_latitude": null,
+          "gps_longitude": null,
+          "location_name": null,
+          "metadata": {},
+          "ocr_data": null,
+          "status": "pending",
+          "thumbnail_url": null,
+          "transaction_id": "00000000-0000-4000-8000-000000000004",
+          "type": "signature",
+          "verified_by": null,
+          "visibility_level": "full"
+        }
+      ],
+      "delta": {
+        "transactions": {
+          "changed": [
+            {
+              "amount": 96000,
+              "amount_usd": null,
+              "category": "Programs",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "currency": "KES",
+              "description": "Volunteer transport stipends, January",
+              "exchange_rate": null,
+              "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "id": "00000000-0000-4000-8000-000000000004",
+              "notes": null,
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "reference": null,
+              "to_node_id": "00000000-0000-4000-8000-000000000001",
+              "transaction_date": "2026-01-30",
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "verification_count": 2,
+              "verification_status": "flagged"
+            }
+          ]
+        },
+        "verifications": {
+          "added": [
+            {
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "created_by": "user_dummy",
+              "description": "Signed volunteer register",
+              "executor_name": null,
+              "file_url": null,
+              "gps_accuracy": null,
+              "gps_latitude": null,
+              "gps_longitude": null,
+              "id": "00000000-0000-4000-8000-000000000009",
+              "location_name": null,
+              "metadata": {},
+              "ocr_data": null,
+              "status": "pending",
+              "thumbnail_url": null,
+              "transaction_id": "00000000-0000-4000-8000-000000000004",
+              "trust_points": 7,
+              "type": "signature",
+              "verified_at": null,
+              "verified_by": null,
+              "visibility_level": "full"
+            }
+          ]
+        }
+      },
+      "fn": "createVerification",
+      "outcome": "ok",
+      "result": {
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "created_by": "user_dummy",
+        "description": "Signed volunteer register",
+        "executor_name": null,
+        "file_url": null,
+        "gps_accuracy": null,
+        "gps_latitude": null,
+        "gps_longitude": null,
+        "id": "00000000-0000-4000-8000-000000000009",
+        "location_name": null,
+        "metadata": {},
+        "ocr_data": null,
+        "status": "pending",
+        "thumbnail_url": null,
+        "transaction_id": "00000000-0000-4000-8000-000000000004",
+        "trust_points": 7,
+        "type": "signature",
+        "verified_at": null,
+        "verified_by": null,
+        "visibility_level": "full"
+      }
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getFlowDataAPI",
+      "outcome": "ok",
+      "result": {
+        "edges": [
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "value": 8500000
+          },
+          {
+            "count": 2,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "value": 5790000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "value": 4000000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "value": 2000000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "value": 1800000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "value": 1450000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "value": 28500
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "value": 67000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "value": 42000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "value": 2500000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "value": 750000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "value": 380000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "value": 1200000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "value": 15000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "value": 6000000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "target": "00000000-0000-4000-8000-000000000002",
+            "value": 185000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "target": "00000000-0000-4000-8000-000000000001",
+            "value": 96000
+          }
+        ],
+        "nodes": [
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "inflow": 0,
+            "name": "Harambee Health Fund",
+            "outflow": 8500000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 19,
+            "type": "donor",
+            "verification_count": 3,
+            "verified_count": 3
+          },
+          {
+            "balance": 5000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "inflow": 14290000,
+            "name": "General Fund",
+            "outflow": 5250000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 63,
+            "type": "account",
+            "verification_count": 9,
+            "verified_count": 9
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "inflow": 0,
+            "name": "Northlight Foundation",
+            "outflow": 5790000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 16,
+            "type": "donor",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "inflow": 0,
+            "name": "Kisima Water Trust",
+            "outflow": 4000000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 18,
+            "type": "donor",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "inflow": 10000000,
+            "name": "Project Fund",
+            "outflow": 3000000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 35,
+            "type": "account",
+            "verification_count": 5,
+            "verified_count": 5
+          },
+          {
+            "balance": 1500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "inflow": 2000000,
+            "name": "Operations Budget",
+            "outflow": 152500,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 26,
+            "type": "account",
+            "verification_count": 5,
+            "verified_count": 5
+          },
+          {
+            "balance": 500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "inflow": 1800000,
+            "name": "Field Operations",
+            "outflow": 2046000,
+            "pending_count": 2,
+            "rejected_count": 0,
+            "trust_points": 37,
+            "type": "department",
+            "verification_count": 6,
+            "verified_count": 4
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "inflow": 1450000,
+            "name": "Payroll",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 10,
+            "type": "account",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "inflow": 28500,
+            "name": "Staples Kenya",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 13,
+            "type": "vendor",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "inflow": 67000,
+            "name": "AutoXpress Ltd",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 4,
+            "type": "vendor",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "inflow": 42000,
+            "name": "Kenya Power",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 5,
+            "type": "vendor",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 1200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "inflow": 2500000,
+            "name": "Clean Water Turkana",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 17,
+            "type": "project",
+            "verification_count": 3,
+            "verified_count": 3
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "inflow": 750000,
+            "name": "Communities",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 11,
+            "type": "beneficiary",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 250000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "inflow": 0,
+            "name": "Training Department",
+            "outflow": 380000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 8,
+            "type": "department",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "inflow": 380000,
+            "name": "Training Co Ltd",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 8,
+            "type": "vendor",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "inflow": 1200000,
+            "name": "Kilifi Health Centers",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 0,
+            "type": "beneficiary",
+            "verification_count": 0,
+            "verified_count": 0
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "inflow": 15000,
+            "name": "Safaricom M-Pesa",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 0,
+            "type": "vendor",
+            "verification_count": 0,
+            "verified_count": 0
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "inflow": 0,
+            "name": "Pan-African Education Fund",
+            "outflow": 6000000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 0,
+            "type": "donor",
+            "verification_count": 0,
+            "verified_count": 0
+          },
+          {
+            "balance": 800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "inflow": 0,
+            "name": "Maternal Health Kilifi",
+            "outflow": 185000,
+            "pending_count": 1,
+            "rejected_count": 0,
+            "trust_points": 12,
+            "type": "project",
+            "verification_count": 2,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "00000000-0000-4000-8000-000000000002",
+            "inflow": 185000,
+            "name": "Medisafe Supplies",
+            "outflow": 0,
+            "pending_count": 1,
+            "rejected_count": 0,
+            "trust_points": 12,
+            "type": "vendor",
+            "verification_count": 2,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "00000000-0000-4000-8000-000000000001",
+            "inflow": 96000,
+            "name": "Community Health Volunteers",
+            "outflow": 0,
+            "pending_count": 2,
+            "rejected_count": 0,
+            "trust_points": 12,
+            "type": "beneficiary",
+            "verification_count": 2,
+            "verified_count": 0
+          }
+        ],
+        "summary": {
+          "currency": "KES",
+          "total_edges": 17,
+          "total_flow": 34803500,
+          "total_nodes": 21,
+          "transaction_count": 19
+        }
+      }
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        "2026-01-01",
+        "2026-01-31"
+      ],
+      "delta": {},
+      "fn": "getFlowDataAPI",
+      "outcome": "ok",
+      "result": {
+        "edges": [
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "value": 8500000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "value": 3200000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "value": 4000000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "value": 2000000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "value": 1800000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "value": 1450000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "value": 28500
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "value": 67000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "value": 42000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "value": 2500000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "value": 750000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "value": 380000
+          },
+          {
+            "count": 1,
+            "currency": "KES",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "target": "00000000-0000-4000-8000-000000000001",
+            "value": 96000
+          }
+        ],
+        "nodes": [
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "inflow": 0,
+            "name": "Harambee Health Fund",
+            "outflow": 8500000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 19,
+            "type": "donor",
+            "verification_count": 3,
+            "verified_count": 3
+          },
+          {
+            "balance": 5000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "inflow": 11700000,
+            "name": "General Fund",
+            "outflow": 5250000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 63,
+            "type": "account",
+            "verification_count": 9,
+            "verified_count": 9
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "inflow": 0,
+            "name": "Northlight Foundation",
+            "outflow": 3200000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 16,
+            "type": "donor",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "inflow": 0,
+            "name": "Kisima Water Trust",
+            "outflow": 4000000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 18,
+            "type": "donor",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "inflow": 4000000,
+            "name": "Project Fund",
+            "outflow": 3000000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 35,
+            "type": "account",
+            "verification_count": 5,
+            "verified_count": 5
+          },
+          {
+            "balance": 1500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "inflow": 2000000,
+            "name": "Operations Budget",
+            "outflow": 137500,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 26,
+            "type": "account",
+            "verification_count": 5,
+            "verified_count": 5
+          },
+          {
+            "balance": 500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "inflow": 1800000,
+            "name": "Field Operations",
+            "outflow": 846000,
+            "pending_count": 2,
+            "rejected_count": 0,
+            "trust_points": 37,
+            "type": "department",
+            "verification_count": 6,
+            "verified_count": 4
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "inflow": 1450000,
+            "name": "Payroll",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 10,
+            "type": "account",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "inflow": 28500,
+            "name": "Staples Kenya",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 13,
+            "type": "vendor",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "inflow": 67000,
+            "name": "AutoXpress Ltd",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 4,
+            "type": "vendor",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "inflow": 42000,
+            "name": "Kenya Power",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 5,
+            "type": "vendor",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 1200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "inflow": 2500000,
+            "name": "Clean Water Turkana",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 17,
+            "type": "project",
+            "verification_count": 3,
+            "verified_count": 3
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "inflow": 750000,
+            "name": "Communities",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 11,
+            "type": "beneficiary",
+            "verification_count": 2,
+            "verified_count": 2
+          },
+          {
+            "balance": 250000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "inflow": 0,
+            "name": "Training Department",
+            "outflow": 380000,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 8,
+            "type": "department",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "inflow": 380000,
+            "name": "Training Co Ltd",
+            "outflow": 0,
+            "pending_count": 0,
+            "rejected_count": 0,
+            "trust_points": 8,
+            "type": "vendor",
+            "verification_count": 1,
+            "verified_count": 1
+          },
+          {
+            "balance": 0,
+            "id": "00000000-0000-4000-8000-000000000001",
+            "inflow": 96000,
+            "name": "Community Health Volunteers",
+            "outflow": 0,
+            "pending_count": 2,
+            "rejected_count": 0,
+            "trust_points": 12,
+            "type": "beneficiary",
+            "verification_count": 2,
+            "verified_count": 0
+          }
+        ],
+        "summary": {
+          "currency": "KES",
+          "total_edges": 13,
+          "total_flow": 24813500,
+          "total_nodes": 16,
+          "transaction_count": 14
+        }
+      }
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getOrganizationStats",
+      "outcome": "ok",
+      "result": {
+        "flagged": 2,
+        "pending": 3,
+        "proofStats": {
+          "pendingProofs": 3,
+          "proofCoverageRate": 74,
+          "rejectedProofs": 0,
+          "totalProofs": 25,
+          "totalTrustPoints": 163,
+          "transactionsWithProofs": 14,
+          "verifiedProofs": 22
+        },
+        "total": 19,
+        "verificationRate": 74,
+        "verified": 14
+      }
+    },
+    {
+      "args": [
+        "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        {
+          "can_view_amounts": false,
+          "display_name": "Maternal health programme"
+        }
+      ],
+      "delta": {
+        "nodeVisibility": {
+          "added": [
+            {
+              "can_view": true,
+              "can_view_amounts": false,
+              "can_view_executor": null,
+              "can_view_proofs": null,
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "display_name": "Maternal health programme",
+              "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+              "id": "00000000-0000-4000-8000-000000000010",
+              "node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36"
+            }
+          ]
+        }
+      },
+      "fn": "setNodeVisibility",
+      "outcome": "ok",
+      "result": {
+        "can_view": true,
+        "can_view_amounts": false,
+        "can_view_executor": null,
+        "can_view_proofs": null,
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "display_name": "Maternal health programme",
+        "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "id": "00000000-0000-4000-8000-000000000010",
+        "node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36"
+      }
+    },
+    {
+      "args": [
+        "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        {
+          "can_view_proofs": true
+        }
+      ],
+      "delta": {
+        "nodeVisibility": {
+          "changed": [
+            {
+              "can_view": true,
+              "can_view_amounts": true,
+              "can_view_executor": false,
+              "can_view_proofs": true,
+              "created_at": "2025-11-18T09:00:00Z",
+              "display_name": null,
+              "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+              "id": "v0eebc99-9c0b-4ef8-bb6d-6bb9bd380v01",
+              "node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+            }
+          ]
+        }
+      },
+      "fn": "setNodeVisibility",
+      "outcome": "ok",
+      "result": {
+        "can_view": true,
+        "can_view_amounts": true,
+        "can_view_executor": false,
+        "can_view_proofs": true,
+        "created_at": "2025-11-18T09:00:00Z",
+        "display_name": null,
+        "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        "id": "v0eebc99-9c0b-4ef8-bb6d-6bb9bd380v01",
+        "node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+      }
+    },
+    {
+      "args": [
+        "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03"
+      ],
+      "delta": {
+        "nodeVisibility": {
+          "removed": [
+            "00000000-0000-4000-8000-000000000010"
+          ]
+        }
+      },
+      "fn": "removeNodeVisibility",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        {
+          "amount_format": "exact",
+          "display_mode": "detailed",
+          "hidden_node_ids": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "theme": {
+            "background": "dark",
+            "border_radius": "md",
+            "primary_color": "#0f766e",
+            "show_logo": false
+          }
+        }
+      ],
+      "delta": {
+        "publicEmbedConfigs": {
+          "changed": [
+            {
+              "allow_embed": true,
+              "allowed_domains": [],
+              "amount_format": "exact",
+              "created_at": "2025-06-01T09:00:00Z",
+              "display_mode": "detailed",
+              "embed_token": "demo4f1c2b9e7a8d6c5b4a3f2e1d0c9b8",
+              "hidden_node_ids": [
+                "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+              ],
+              "id": "h0eebc99-9c0b-4ef8-bb6d-6bb9bd380h01",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "show_amounts": true,
+              "show_last_updated": true,
+              "show_node_names": true,
+              "show_transaction_count": true,
+              "show_trust_score": true,
+              "theme": {
+                "background": "dark",
+                "border_radius": "md",
+                "primary_color": "#0f766e",
+                "show_logo": false
+              },
+              "updated_at": "2026-02-04T09:00:00.000Z",
+              "visible_node_types": [
+                "donor",
+                "department",
+                "project",
+                "beneficiary"
+              ]
+            }
+          ]
+        }
+      },
+      "fn": "updatePublicEmbedConfig",
+      "outcome": "ok",
+      "result": {
+        "allow_embed": true,
+        "allowed_domains": [],
+        "amount_format": "exact",
+        "created_at": "2025-06-01T09:00:00Z",
+        "display_mode": "detailed",
+        "embed_token": "demo4f1c2b9e7a8d6c5b4a3f2e1d0c9b8",
+        "hidden_node_ids": [
+          "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+        ],
+        "id": "h0eebc99-9c0b-4ef8-bb6d-6bb9bd380h01",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "show_amounts": true,
+        "show_last_updated": true,
+        "show_node_names": true,
+        "show_transaction_count": true,
+        "show_trust_score": true,
+        "theme": {
+          "background": "dark",
+          "border_radius": "md",
+          "primary_color": "#0f766e",
+          "show_logo": false
+        },
+        "updated_at": "2026-02-04T09:00:00.000Z",
+        "visible_node_types": [
+          "donor",
+          "department",
+          "project",
+          "beneficiary"
+        ]
+      }
+    },
+    {
+      "args": [
+        "org-missing",
+        {
+          "show_amounts": false
+        }
+      ],
+      "delta": {},
+      "error": "Embed settings not found in the demo data.",
+      "fn": "updatePublicEmbedConfig",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        "660e8400-e29b-41d4-a716-446655440004",
+        "user_dummy",
+        "Linking the Kilifi maternal health money end to end."
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "added": [
+            {
+              "action": "requested",
+              "actor_id": "user_dummy",
+              "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "chain_id": "00000000-0000-4000-8000-000000000011",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "details": {
+                "message": "Linking the Kilifi maternal health money end to end."
+              },
+              "id": "00000000-0000-4000-8000-000000000012"
+            }
+          ]
+        },
+        "organizationChains": {
+          "added": [
+            {
+              "approved_at": null,
+              "approved_by": null,
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "granted_group_id": null,
+              "id": "00000000-0000-4000-8000-000000000011",
+              "link_node_id": null,
+              "rejection_reason": null,
+              "request_message": "Linking the Kilifi maternal health money end to end.",
+              "requested_at": "2026-02-04T09:00:00.000Z",
+              "requested_by": "user_dummy",
+              "revoked_at": null,
+              "revoked_by": null,
+              "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "status": "pending",
+              "target_org_id": "660e8400-e29b-41d4-a716-446655440004",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "requestChain",
+      "outcome": "ok",
+      "result": {
+        "approved_at": null,
+        "approved_by": null,
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "granted_group_id": null,
+        "id": "00000000-0000-4000-8000-000000000011",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "Linking the Kilifi maternal health money end to end.",
+        "requested_at": "2026-02-04T09:00:00.000Z",
+        "requested_by": "user_dummy",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "status": "pending",
+        "target_org_id": "660e8400-e29b-41d4-a716-446655440004",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        "660e8400-e29b-41d4-a716-446655440003",
+        "user_dummy"
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "added": [
+            {
+              "action": "requested",
+              "actor_id": "user_dummy",
+              "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "chain_id": "00000000-0000-4000-8000-000000000013",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "details": {
+                "message": null
+              },
+              "id": "00000000-0000-4000-8000-000000000014"
+            }
+          ]
+        },
+        "organizationChains": {
+          "added": [
+            {
+              "approved_at": null,
+              "approved_by": null,
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "granted_group_id": null,
+              "id": "00000000-0000-4000-8000-000000000013",
+              "link_node_id": null,
+              "rejection_reason": null,
+              "request_message": null,
+              "requested_at": "2026-02-04T09:00:00.000Z",
+              "requested_by": "user_dummy",
+              "revoked_at": null,
+              "revoked_by": null,
+              "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "status": "pending",
+              "target_org_id": "660e8400-e29b-41d4-a716-446655440003",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "requestChain",
+      "outcome": "ok",
+      "result": {
+        "approved_at": null,
+        "approved_by": null,
+        "created_at": "2026-02-04T09:00:00.000Z",
+        "granted_group_id": null,
+        "id": "00000000-0000-4000-8000-000000000013",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": null,
+        "requested_at": "2026-02-04T09:00:00.000Z",
+        "requested_by": "user_dummy",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "status": "pending",
+        "target_org_id": "660e8400-e29b-41d4-a716-446655440003",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+        "user_dummy",
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16"
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "added": [
+            {
+              "action": "approved",
+              "actor_id": "user_dummy",
+              "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "details": {
+                "approved_at": "2026-02-04T09:00:00.000Z",
+                "approved_by": "user_dummy",
+                "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+                "link_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+                "status": "active"
+              },
+              "id": "00000000-0000-4000-8000-000000000015"
+            }
+          ]
+        },
+        "organizationChains": {
+          "changed": [
+            {
+              "approved_at": "2026-02-04T09:00:00.000Z",
+              "approved_by": "user_dummy",
+              "created_at": "2026-01-20T09:00:00Z",
+              "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+              "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+              "link_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "rejection_reason": null,
+              "request_message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows.",
+              "requested_at": "2026-01-20T09:00:00Z",
+              "requested_by": "system",
+              "revoked_at": null,
+              "revoked_by": null,
+              "source_org_id": "660e8400-e29b-41d4-a716-446655440003",
+              "status": "active",
+              "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "approveChain",
+      "outcome": "ok",
+      "result": {
+        "approved_at": "2026-02-04T09:00:00.000Z",
+        "approved_by": "user_dummy",
+        "created_at": "2026-01-20T09:00:00Z",
+        "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+        "link_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "rejection_reason": null,
+        "request_message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows.",
+        "requested_at": "2026-01-20T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "660e8400-e29b-41d4-a716-446655440003",
+        "status": "active",
+        "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+        "user_dummy",
+        "We share programme data through the county dashboard instead."
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "added": [
+            {
+              "action": "rejected",
+              "actor_id": "user_dummy",
+              "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "details": {
+                "approved_at": "2026-02-04T09:00:00.000Z",
+                "approved_by": "user_dummy",
+                "rejection_reason": "We share programme data through the county dashboard instead.",
+                "status": "rejected"
+              },
+              "id": "00000000-0000-4000-8000-000000000016"
+            }
+          ]
+        },
+        "organizationChains": {
+          "changed": [
+            {
+              "approved_at": "2026-02-04T09:00:00.000Z",
+              "approved_by": "user_dummy",
+              "created_at": "2026-02-01T09:00:00Z",
+              "granted_group_id": null,
+              "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+              "link_node_id": null,
+              "rejection_reason": "We share programme data through the county dashboard instead.",
+              "request_message": "Pwani County Health Office requests a transparency chain for the maternal health program funded through your organization.",
+              "requested_at": "2026-02-01T09:00:00Z",
+              "requested_by": "system",
+              "revoked_at": null,
+              "revoked_by": null,
+              "source_org_id": "660e8400-e29b-41d4-a716-446655440004",
+              "status": "rejected",
+              "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "rejectChain",
+      "outcome": "ok",
+      "result": {
+        "approved_at": "2026-02-04T09:00:00.000Z",
+        "approved_by": "user_dummy",
+        "created_at": "2026-02-01T09:00:00Z",
+        "granted_group_id": null,
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+        "link_node_id": null,
+        "rejection_reason": "We share programme data through the county dashboard instead.",
+        "request_message": "Pwani County Health Office requests a transparency chain for the maternal health program funded through your organization.",
+        "requested_at": "2026-02-01T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "660e8400-e29b-41d4-a716-446655440004",
+        "status": "rejected",
+        "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+        "user_dummy",
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04"
+      ],
+      "delta": {},
+      "error": "This chain is no longer pending, so it can't be changed.",
+      "fn": "approveChain",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03"
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "added": [
+            {
+              "action": "permissions_updated",
+              "actor_id": "user_dummy",
+              "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "details": {
+                "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+                "link_node_id": null
+              },
+              "id": "00000000-0000-4000-8000-000000000017"
+            }
+          ]
+        },
+        "organizationChains": {
+          "changed": [
+            {
+              "approved_at": "2026-02-04T09:00:00.000Z",
+              "approved_by": "user_dummy",
+              "created_at": "2026-01-20T09:00:00Z",
+              "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+              "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+              "link_node_id": null,
+              "rejection_reason": null,
+              "request_message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows.",
+              "requested_at": "2026-01-20T09:00:00Z",
+              "requested_by": "system",
+              "revoked_at": null,
+              "revoked_by": null,
+              "source_org_id": "660e8400-e29b-41d4-a716-446655440003",
+              "status": "active",
+              "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "updateChainPermissions",
+      "outcome": "ok",
+      "result": {
+        "approved_at": "2026-02-04T09:00:00.000Z",
+        "approved_by": "user_dummy",
+        "created_at": "2026-01-20T09:00:00Z",
+        "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows.",
+        "requested_at": "2026-01-20T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "660e8400-e29b-41d4-a716-446655440003",
+        "status": "active",
+        "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+        "user_dummy"
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "added": [
+            {
+              "action": "revoked",
+              "actor_id": "user_dummy",
+              "actor_org_id": "660e8400-e29b-41d4-a716-446655440002",
+              "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+              "created_at": "2026-02-04T09:00:00.000Z",
+              "details": {
+                "revoked_at": "2026-02-04T09:00:00.000Z",
+                "revoked_by": "user_dummy",
+                "status": "revoked"
+              },
+              "id": "00000000-0000-4000-8000-000000000018"
+            }
+          ]
+        },
+        "organizationChains": {
+          "changed": [
+            {
+              "approved_at": "2025-12-05T09:00:00Z",
+              "approved_by": "system",
+              "created_at": "2025-12-01T09:00:00Z",
+              "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+              "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+              "link_node_id": null,
+              "rejection_reason": null,
+              "request_message": "Partnership for maternal health data sharing across our organizations.",
+              "requested_at": "2025-12-01T09:00:00Z",
+              "requested_by": "system",
+              "revoked_at": "2026-02-04T09:00:00.000Z",
+              "revoked_by": "user_dummy",
+              "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+              "status": "revoked",
+              "target_org_id": "660e8400-e29b-41d4-a716-446655440002",
+              "updated_at": "2026-02-04T09:00:00.000Z"
+            }
+          ]
+        }
+      },
+      "fn": "revokeChain",
+      "outcome": "ok",
+      "result": {
+        "approved_at": "2025-12-05T09:00:00Z",
+        "approved_by": "system",
+        "created_at": "2025-12-01T09:00:00Z",
+        "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "Partnership for maternal health data sharing across our organizations.",
+        "requested_at": "2025-12-01T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": "2026-02-04T09:00:00.000Z",
+        "revoked_by": "user_dummy",
+        "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "status": "revoked",
+        "target_org_id": "660e8400-e29b-41d4-a716-446655440002",
+        "updated_at": "2026-02-04T09:00:00.000Z"
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+        "user_dummy"
+      ],
+      "delta": {},
+      "error": "This chain is no longer active, so it can't be changed.",
+      "fn": "revokeChain",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000013"
+      ],
+      "delta": {
+        "chainActivityLog": {
+          "removed": [
+            "00000000-0000-4000-8000-000000000014"
+          ]
+        },
+        "organizationChains": {
+          "removed": [
+            "00000000-0000-4000-8000-000000000013"
+          ]
+        }
+      },
+      "fn": "cancelChainRequest",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g01"
+      ],
+      "delta": {},
+      "fn": "cancelChainRequest",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getChainCounts",
+      "outcome": "ok",
+      "result": {
+        "incoming_active": 1,
+        "incoming_pending": 0,
+        "outgoing_active": 1,
+        "outgoing_pending": 1
+      }
+    },
+    {
+      "args": [
+        "660e8400-e29b-41d4-a716-446655440001"
+      ],
+      "delta": {},
+      "fn": "getChainCounts",
+      "outcome": "ok",
+      "result": {
+        "incoming_active": 1,
+        "incoming_pending": 0,
+        "outgoing_active": 0,
+        "outgoing_pending": 0
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03"
+      ],
+      "delta": {},
+      "fn": "getChainActivityLog",
+      "outcome": "ok",
+      "result": [
+        {
+          "action": "approved",
+          "actor_id": "user_dummy",
+          "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+          "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+          "created_at": "2026-02-04T09:00:00.000Z",
+          "details": {
+            "approved_at": "2026-02-04T09:00:00.000Z",
+            "approved_by": "user_dummy",
+            "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+            "link_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "active"
+          },
+          "id": "00000000-0000-4000-8000-000000000015"
+        },
+        {
+          "action": "permissions_updated",
+          "actor_id": "user_dummy",
+          "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+          "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+          "created_at": "2026-02-04T09:00:00.000Z",
+          "details": {
+            "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+            "link_node_id": null
+          },
+          "id": "00000000-0000-4000-8000-000000000017"
+        },
+        {
+          "action": "requested",
+          "actor_id": "system",
+          "actor_org_id": "660e8400-e29b-41d4-a716-446655440003",
+          "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+          "created_at": "2026-01-20T09:00:00Z",
+          "details": {
+            "message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows."
+          },
+          "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l21"
+        }
+      ]
+    },
+    {
+      "args": [
+        "00000000-0000-4000-8000-000000000011"
+      ],
+      "delta": {},
+      "fn": "getChainActivityLog",
+      "outcome": "ok",
+      "result": [
+        {
+          "action": "requested",
+          "actor_id": "user_dummy",
+          "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+          "chain_id": "00000000-0000-4000-8000-000000000011",
+          "created_at": "2026-02-04T09:00:00.000Z",
+          "details": {
+            "message": "Linking the Kilifi maternal health money end to end."
+          },
+          "id": "00000000-0000-4000-8000-000000000012"
+        }
+      ]
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {
+        "organizations": {
+          "changed": [
+            {
+              "country": "KE",
+              "created_at": "2025-06-01T09:00:00Z",
+              "currency": "KES",
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "logo_url": null,
+              "name": "Demo NGO Kenya",
+              "public_slug": "demo-ngo",
+              "trust_score": 76,
+              "type": "NGO",
+              "updated_at": "2026-02-01T09:00:00Z",
+              "verified": true
+            }
+          ]
+        },
+        "trustScoreHistory": {
+          "added": [
+            {
+              "breakdown": {
+                "consistency": 82,
+                "documentation": 74,
+                "verification": 74
+              },
+              "calculated_at": "2026-02-04T09:00:00.000Z",
+              "consistency_score": 82,
+              "documentation_rate": 74,
+              "id": "00000000-0000-4000-8000-000000000019",
+              "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+              "score": 76,
+              "verification_rate": 74
+            }
+          ]
+        }
+      },
+      "fn": "calculateTrustScoreAPI",
+      "outcome": "ok",
+      "result": {
+        "delta": -11,
+        "details": {
+          "consistency_score": 82,
+          "documentation_rate": 74,
+          "documented_transactions": 14,
+          "total_transactions": 19,
+          "trust_score": 76,
+          "verification_rate": 74,
+          "verified_transactions": 14
+        },
+        "previous_score": 87,
+        "success": true,
+        "trust_score": 76
+      }
+    },
+    {
+      "args": [
+        "org-missing"
+      ],
+      "delta": {},
+      "error": "Organization not found in the demo data.",
+      "fn": "calculateTrustScoreAPI",
+      "outcome": "error"
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000"
+      ],
+      "delta": {},
+      "fn": "getTrustScoreHistory",
+      "outcome": "ok",
+      "result": [
+        {
+          "breakdown": {
+            "consistency": 70,
+            "documentation": 60,
+            "verification": 58
+          },
+          "calculated_at": "2025-07-01T00:00:00Z",
+          "consistency_score": 70,
+          "documentation_rate": 60,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380001",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 62,
+          "verification_rate": 58
+        },
+        {
+          "breakdown": {
+            "consistency": 74,
+            "documentation": 66,
+            "verification": 65
+          },
+          "calculated_at": "2025-08-01T00:00:00Z",
+          "consistency_score": 74,
+          "documentation_rate": 66,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380002",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 68,
+          "verification_rate": 65
+        },
+        {
+          "breakdown": {
+            "consistency": 78,
+            "documentation": 68,
+            "verification": 70
+          },
+          "calculated_at": "2025-09-01T00:00:00Z",
+          "consistency_score": 78,
+          "documentation_rate": 68,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380003",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 72,
+          "verification_rate": 70
+        },
+        {
+          "breakdown": {
+            "consistency": 80,
+            "documentation": 72,
+            "verification": 74
+          },
+          "calculated_at": "2025-10-01T00:00:00Z",
+          "consistency_score": 80,
+          "documentation_rate": 72,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380004",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 75,
+          "verification_rate": 74
+        },
+        {
+          "breakdown": {
+            "consistency": 81,
+            "documentation": 75,
+            "verification": 78
+          },
+          "calculated_at": "2025-11-01T00:00:00Z",
+          "consistency_score": 81,
+          "documentation_rate": 75,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380005",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 78,
+          "verification_rate": 78
+        },
+        {
+          "breakdown": {
+            "consistency": 84,
+            "documentation": 80,
+            "verification": 82
+          },
+          "calculated_at": "2025-12-01T00:00:00Z",
+          "consistency_score": 84,
+          "documentation_rate": 80,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380006",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 82,
+          "verification_rate": 82
+        },
+        {
+          "breakdown": {
+            "consistency": 85,
+            "documentation": 82,
+            "verification": 88
+          },
+          "calculated_at": "2026-01-01T00:00:00Z",
+          "consistency_score": 85,
+          "documentation_rate": 82,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380007",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 85,
+          "verification_rate": 88
+        },
+        {
+          "breakdown": {
+            "consistency": 82,
+            "documentation": 85,
+            "verification": 92
+          },
+          "calculated_at": "2026-02-01T00:00:00Z",
+          "consistency_score": 82,
+          "documentation_rate": 85,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380008",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 87,
+          "verification_rate": 92
+        },
+        {
+          "breakdown": {
+            "consistency": 82,
+            "documentation": 74,
+            "verification": 74
+          },
+          "calculated_at": "2026-02-04T09:00:00.000Z",
+          "consistency_score": 82,
+          "documentation_rate": 74,
+          "id": "00000000-0000-4000-8000-000000000019",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 76,
+          "verification_rate": 74
+        }
+      ]
+    },
+    {
+      "args": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        3
+      ],
+      "delta": {},
+      "fn": "getTrustScoreHistory",
+      "outcome": "ok",
+      "result": [
+        {
+          "breakdown": {
+            "consistency": 85,
+            "documentation": 82,
+            "verification": 88
+          },
+          "calculated_at": "2026-01-01T00:00:00Z",
+          "consistency_score": 85,
+          "documentation_rate": 82,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380007",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 85,
+          "verification_rate": 88
+        },
+        {
+          "breakdown": {
+            "consistency": 82,
+            "documentation": 85,
+            "verification": 92
+          },
+          "calculated_at": "2026-02-01T00:00:00Z",
+          "consistency_score": 82,
+          "documentation_rate": 85,
+          "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380008",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 87,
+          "verification_rate": 92
+        },
+        {
+          "breakdown": {
+            "consistency": 82,
+            "documentation": 74,
+            "verification": 74
+          },
+          "calculated_at": "2026-02-04T09:00:00.000Z",
+          "consistency_score": 82,
+          "documentation_rate": 74,
+          "id": "00000000-0000-4000-8000-000000000019",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "score": 76,
+          "verification_rate": 74
+        }
+      ]
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g01"
+      ],
+      "delta": {},
+      "fn": "getChainTrustScore",
+      "outcome": "ok",
+      "result": {
+        "aggregated_score": 84,
+        "org_count": 2,
+        "scores": {
+          "source_org": 76,
+          "target_org": 92
+        }
+      }
+    },
+    {
+      "args": [
+        "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02"
+      ],
+      "delta": {},
+      "fn": "getChainTrustScore",
+      "outcome": "ok",
+      "result": {
+        "aggregated_score": 86,
+        "org_count": 2,
+        "scores": {
+          "source_org": 76,
+          "target_org": 95
+        }
+      }
+    },
+    {
+      "args": [
+        "chain-missing"
+      ],
+      "delta": {},
+      "fn": "getChainTrustScore",
+      "outcome": "ok",
+      "result": null
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e04"
+      ],
+      "delta": {},
+      "fn": "getCampaignReport",
+      "outcome": "ok",
+      "result": {
+        "campaign": {
+          "allow_overflow": false,
+          "category": "emergency",
+          "created_at": "2026-03-01T00:00:00Z",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "current_amount": 0,
+          "description": "Emergency food and water supplies for drought-affected communities in Northern Kenya.",
+          "ends_at": null,
+          "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e04",
+          "image_url": null,
+          "is_public": false,
+          "metadata": {},
+          "name": "Emergency Drought Relief",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": null,
+          "short_description": "Emergency relief for drought-affected families",
+          "starts_at": "2026-03-01T00:00:00Z",
+          "status": "draft",
+          "tags": null,
+          "target_amount": 8000000,
+          "target_node": null,
+          "target_node_id": null,
+          "updated_at": "2026-03-01T00:00:00Z"
+        },
+        "earmarks": [
+          {
+            "evidenced": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "is_target": false,
+            "name": "Clean Water Turkana",
+            "received": 2500000,
+            "type": "project"
+          },
+          {
+            "evidenced": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "is_target": false,
+            "name": "Field Operations",
+            "received": 1800000,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "is_target": false,
+            "name": "Training Department",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21",
+            "is_target": false,
+            "name": "Admin",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32",
+            "is_target": false,
+            "name": "M&E Unit",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "is_target": false,
+            "name": "Maternal Health Kilifi",
+            "received": 0,
+            "type": "project"
+          }
+        ],
+        "evidenced_amount": null,
+        "organization": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "name": "Demo NGO Kenya",
+          "trust_score": 76,
+          "verified": true
+        },
+        "spending": [
+          {
+            "amount": 185000,
+            "amount_usd": null,
+            "category": "Equipment",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Delivery kits for Kilifi health centres",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "name": "Maternal Health Kilifi",
+              "type": "project"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "id": "00000000-0000-4000-8000-000000000003",
+            "notes": "Two cartons short; supplier credit note to follow",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "MS-2026-014",
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Medisafe Supplies",
+              "type": "vendor"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000002",
+            "transaction_date": "2026-02-03",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 1200000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-01T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Maternal Health Equipment - Kilifi",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+            "notes": "Medical equipment for 8 health centers",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-MH-002",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+              "name": "Kilifi Health Centers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_date": "2026-02-01",
+            "updated_at": "2026-02-01T09:00:00Z",
+            "verification_count": 0,
+            "verification_status": "pending"
+          },
+          {
+            "amount": 96000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Volunteer transport stipends, January",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "00000000-0000-4000-8000-000000000004",
+            "notes": null,
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": null,
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Community Health Volunteers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000001",
+            "transaction_date": "2026-01-30",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "flagged"
+          },
+          {
+            "amount": 750000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-28T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Community Health Worker Stipends",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+            "notes": "Monthly stipends for 50 CHWs across 3 counties",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "CHW-2026-01",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+              "name": "Communities",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_date": "2026-01-28",
+            "updated_at": "2026-01-28T09:00:00Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 380000,
+            "amount_usd": null,
+            "category": "Training",
+            "created_at": "2026-01-22T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Financial Literacy Workshop - Mombasa",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+              "name": "Training Department",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+            "notes": "3-day workshop for 45 community leaders",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "TRN-2026-003",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "name": "Training Co Ltd",
+              "type": "vendor"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_date": "2026-01-22",
+            "updated_at": "2026-01-22T09:00:00Z",
+            "verification_count": 1,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 2500000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-18T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Clean Water Turkana - Borehole Phase 1",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "name": "Project Fund",
+              "type": "account"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+            "notes": "Drilling and installation of 5 boreholes in Turkana South",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-WATER-001",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "name": "Clean Water Turkana",
+              "type": "project"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_date": "2026-01-18",
+            "updated_at": "2026-01-18T09:00:00Z",
+            "verification_count": 3,
+            "verification_status": "verified"
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02"
+      ],
+      "delta": {},
+      "fn": "getCampaignReport",
+      "outcome": "ok",
+      "result": {
+        "campaign": {
+          "allow_overflow": false,
+          "category": "health",
+          "created_at": "2026-01-15T00:00:00Z",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "current_amount": 1800000,
+          "description": "Equip 8 health centers in Kilifi County with essential maternal health equipment. Reduce maternal mortality by improving access to quality care.",
+          "ends_at": "2026-11-30T23:59:59Z",
+          "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02",
+          "image_url": null,
+          "is_public": true,
+          "metadata": {},
+          "name": "Maternal Health Kilifi",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": "maternal-health-kilifi",
+          "short_description": "Equipping 8 health centers for better maternal care",
+          "starts_at": "2026-01-15T00:00:00Z",
+          "status": "active",
+          "tags": null,
+          "target_amount": 3500000,
+          "target_node": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "name": "Maternal Health Kilifi",
+            "type": "project"
+          },
+          "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+          "updated_at": "2026-01-15T00:00:00Z"
+        },
+        "earmarks": [
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "is_target": true,
+            "name": "Maternal Health Kilifi",
+            "received": 0,
+            "type": "project"
+          },
+          {
+            "evidenced": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "is_target": false,
+            "name": "Clean Water Turkana",
+            "received": 2500000,
+            "type": "project"
+          },
+          {
+            "evidenced": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "is_target": false,
+            "name": "Field Operations",
+            "received": 1800000,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "is_target": false,
+            "name": "Training Department",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21",
+            "is_target": false,
+            "name": "Admin",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32",
+            "is_target": false,
+            "name": "M&E Unit",
+            "received": 0,
+            "type": "department"
+          }
+        ],
+        "evidenced_amount": 0,
+        "organization": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "name": "Demo NGO Kenya",
+          "trust_score": 76,
+          "verified": true
+        },
+        "spending": [
+          {
+            "amount": 185000,
+            "amount_usd": null,
+            "category": "Equipment",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Delivery kits for Kilifi health centres",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "name": "Maternal Health Kilifi",
+              "type": "project"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "id": "00000000-0000-4000-8000-000000000003",
+            "notes": "Two cartons short; supplier credit note to follow",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "MS-2026-014",
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Medisafe Supplies",
+              "type": "vendor"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000002",
+            "transaction_date": "2026-02-03",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 1200000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-01T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Maternal Health Equipment - Kilifi",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+            "notes": "Medical equipment for 8 health centers",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-MH-002",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+              "name": "Kilifi Health Centers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_date": "2026-02-01",
+            "updated_at": "2026-02-01T09:00:00Z",
+            "verification_count": 0,
+            "verification_status": "pending"
+          },
+          {
+            "amount": 96000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Volunteer transport stipends, January",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "00000000-0000-4000-8000-000000000004",
+            "notes": null,
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": null,
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Community Health Volunteers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000001",
+            "transaction_date": "2026-01-30",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "flagged"
+          },
+          {
+            "amount": 750000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-28T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Community Health Worker Stipends",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+            "notes": "Monthly stipends for 50 CHWs across 3 counties",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "CHW-2026-01",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+              "name": "Communities",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_date": "2026-01-28",
+            "updated_at": "2026-01-28T09:00:00Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 380000,
+            "amount_usd": null,
+            "category": "Training",
+            "created_at": "2026-01-22T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Financial Literacy Workshop - Mombasa",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+              "name": "Training Department",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+            "notes": "3-day workshop for 45 community leaders",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "TRN-2026-003",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "name": "Training Co Ltd",
+              "type": "vendor"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_date": "2026-01-22",
+            "updated_at": "2026-01-22T09:00:00Z",
+            "verification_count": 1,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 2500000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-18T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Clean Water Turkana - Borehole Phase 1",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "name": "Project Fund",
+              "type": "account"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+            "notes": "Drilling and installation of 5 boreholes in Turkana South",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-WATER-001",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "name": "Clean Water Turkana",
+              "type": "project"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_date": "2026-01-18",
+            "updated_at": "2026-01-18T09:00:00Z",
+            "verification_count": 3,
+            "verification_status": "verified"
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01"
+      ],
+      "delta": {},
+      "fn": "getCampaignReport",
+      "outcome": "ok",
+      "result": {
+        "campaign": {
+          "allow_overflow": false,
+          "category": "water",
+          "created_at": "2025-12-01T00:00:00Z",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "current_amount": 3200000,
+          "description": "Help us bring clean drinking water to 15,000 people in Turkana County. Funds will be used to drill boreholes, install solar-powered pumps, and train local maintenance teams.",
+          "ends_at": "2026-12-31T23:59:59Z",
+          "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01",
+          "image_url": null,
+          "is_public": true,
+          "metadata": {},
+          "name": "Clean Water for Turkana",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": "clean-water-turkana",
+          "short_description": "Bringing clean water to 15,000 people in Turkana",
+          "starts_at": "2025-12-01T00:00:00Z",
+          "status": "active",
+          "tags": null,
+          "target_amount": 5000000,
+          "target_node": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "name": "Clean Water Turkana",
+            "type": "project"
+          },
+          "target_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+          "updated_at": "2025-12-01T00:00:00Z"
+        },
+        "earmarks": [
+          {
+            "evidenced": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "is_target": true,
+            "name": "Clean Water Turkana",
+            "received": 2500000,
+            "type": "project"
+          },
+          {
+            "evidenced": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "is_target": false,
+            "name": "Field Operations",
+            "received": 1800000,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "is_target": false,
+            "name": "Training Department",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21",
+            "is_target": false,
+            "name": "Admin",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32",
+            "is_target": false,
+            "name": "M&E Unit",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "is_target": false,
+            "name": "Maternal Health Kilifi",
+            "received": 0,
+            "type": "project"
+          }
+        ],
+        "evidenced_amount": 2500000,
+        "organization": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "name": "Demo NGO Kenya",
+          "trust_score": 76,
+          "verified": true
+        },
+        "spending": [
+          {
+            "amount": 185000,
+            "amount_usd": null,
+            "category": "Equipment",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Delivery kits for Kilifi health centres",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "name": "Maternal Health Kilifi",
+              "type": "project"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "id": "00000000-0000-4000-8000-000000000003",
+            "notes": "Two cartons short; supplier credit note to follow",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "MS-2026-014",
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Medisafe Supplies",
+              "type": "vendor"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000002",
+            "transaction_date": "2026-02-03",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 1200000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-01T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Maternal Health Equipment - Kilifi",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+            "notes": "Medical equipment for 8 health centers",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-MH-002",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+              "name": "Kilifi Health Centers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_date": "2026-02-01",
+            "updated_at": "2026-02-01T09:00:00Z",
+            "verification_count": 0,
+            "verification_status": "pending"
+          },
+          {
+            "amount": 96000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Volunteer transport stipends, January",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "00000000-0000-4000-8000-000000000004",
+            "notes": null,
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": null,
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Community Health Volunteers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000001",
+            "transaction_date": "2026-01-30",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "flagged"
+          },
+          {
+            "amount": 750000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-28T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Community Health Worker Stipends",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+            "notes": "Monthly stipends for 50 CHWs across 3 counties",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "CHW-2026-01",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+              "name": "Communities",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_date": "2026-01-28",
+            "updated_at": "2026-01-28T09:00:00Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 380000,
+            "amount_usd": null,
+            "category": "Training",
+            "created_at": "2026-01-22T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Financial Literacy Workshop - Mombasa",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+              "name": "Training Department",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+            "notes": "3-day workshop for 45 community leaders",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "TRN-2026-003",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "name": "Training Co Ltd",
+              "type": "vendor"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_date": "2026-01-22",
+            "updated_at": "2026-01-22T09:00:00Z",
+            "verification_count": 1,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 2500000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-18T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Clean Water Turkana - Borehole Phase 1",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "name": "Project Fund",
+              "type": "account"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+            "notes": "Drilling and installation of 5 boreholes in Turkana South",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-WATER-001",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "name": "Clean Water Turkana",
+              "type": "project"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_date": "2026-01-18",
+            "updated_at": "2026-01-18T09:00:00Z",
+            "verification_count": 3,
+            "verification_status": "verified"
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e03"
+      ],
+      "delta": {},
+      "fn": "getCampaignReport",
+      "outcome": "ok",
+      "result": {
+        "campaign": {
+          "allow_overflow": false,
+          "category": "education",
+          "created_at": "2025-06-01T00:00:00Z",
+          "created_by": "user_dummy",
+          "currency": "KES",
+          "current_amount": 2000000,
+          "description": "Provide 200 tablets and internet connectivity to schools in underserved communities. Includes 6-month training program for teachers.",
+          "ends_at": "2025-12-31T23:59:59Z",
+          "id": "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e03",
+          "image_url": null,
+          "is_public": true,
+          "metadata": {},
+          "name": "Digital Literacy for Youth",
+          "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+          "overflow_campaign_id": null,
+          "overflow_consent_message": null,
+          "public_slug": "digital-literacy",
+          "short_description": "Bringing digital education to 200 students",
+          "starts_at": "2025-06-01T00:00:00Z",
+          "status": "completed",
+          "tags": null,
+          "target_amount": 2000000,
+          "target_node": null,
+          "target_node_id": null,
+          "updated_at": "2025-06-01T00:00:00Z"
+        },
+        "earmarks": [
+          {
+            "evidenced": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "is_target": false,
+            "name": "Clean Water Turkana",
+            "received": 2500000,
+            "type": "project"
+          },
+          {
+            "evidenced": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "is_target": false,
+            "name": "Field Operations",
+            "received": 1800000,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "is_target": false,
+            "name": "Training Department",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21",
+            "is_target": false,
+            "name": "Admin",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32",
+            "is_target": false,
+            "name": "M&E Unit",
+            "received": 0,
+            "type": "department"
+          },
+          {
+            "evidenced": 0,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "is_target": false,
+            "name": "Maternal Health Kilifi",
+            "received": 0,
+            "type": "project"
+          }
+        ],
+        "evidenced_amount": null,
+        "organization": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "name": "Demo NGO Kenya",
+          "trust_score": 76,
+          "verified": true
+        },
+        "spending": [
+          {
+            "amount": 185000,
+            "amount_usd": null,
+            "category": "Equipment",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Delivery kits for Kilifi health centres",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+              "name": "Maternal Health Kilifi",
+              "type": "project"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+            "id": "00000000-0000-4000-8000-000000000003",
+            "notes": "Two cartons short; supplier credit note to follow",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "MS-2026-014",
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Medisafe Supplies",
+              "type": "vendor"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000002",
+            "transaction_date": "2026-02-03",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 1200000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-01T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Maternal Health Equipment - Kilifi",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+            "notes": "Medical equipment for 8 health centers",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-MH-002",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+              "name": "Kilifi Health Centers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_date": "2026-02-01",
+            "updated_at": "2026-02-01T09:00:00Z",
+            "verification_count": 0,
+            "verification_status": "pending"
+          },
+          {
+            "amount": 96000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-02-04T09:00:00.000Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Volunteer transport stipends, January",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "00000000-0000-4000-8000-000000000004",
+            "notes": null,
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": null,
+            "to_node": {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Community Health Volunteers",
+              "type": "beneficiary"
+            },
+            "to_node_id": "00000000-0000-4000-8000-000000000001",
+            "transaction_date": "2026-01-30",
+            "updated_at": "2026-02-04T09:00:00.000Z",
+            "verification_count": 2,
+            "verification_status": "flagged"
+          },
+          {
+            "amount": 750000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-28T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Community Health Worker Stipends",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+              "name": "Field Operations",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+            "notes": "Monthly stipends for 50 CHWs across 3 counties",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "CHW-2026-01",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+              "name": "Communities",
+              "type": "beneficiary"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_date": "2026-01-28",
+            "updated_at": "2026-01-28T09:00:00Z",
+            "verification_count": 2,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 380000,
+            "amount_usd": null,
+            "category": "Training",
+            "created_at": "2026-01-22T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Financial Literacy Workshop - Mombasa",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+              "name": "Training Department",
+              "type": "department"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+            "notes": "3-day workshop for 45 community leaders",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "TRN-2026-003",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+              "name": "Training Co Ltd",
+              "type": "vendor"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_date": "2026-01-22",
+            "updated_at": "2026-01-22T09:00:00Z",
+            "verification_count": 1,
+            "verification_status": "verified"
+          },
+          {
+            "amount": 2500000,
+            "amount_usd": null,
+            "category": "Programs",
+            "created_at": "2026-01-18T09:00:00Z",
+            "created_by": "user_dummy",
+            "currency": "KES",
+            "description": "Clean Water Turkana - Borehole Phase 1",
+            "exchange_rate": null,
+            "from_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+              "name": "Project Fund",
+              "type": "account"
+            },
+            "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+            "notes": "Drilling and installation of 5 boreholes in Turkana South",
+            "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+            "reference": "PROJ-WATER-001",
+            "to_node": {
+              "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+              "name": "Clean Water Turkana",
+              "type": "project"
+            },
+            "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_date": "2026-01-18",
+            "updated_at": "2026-01-18T09:00:00Z",
+            "verification_count": 3,
+            "verification_status": "verified"
+          }
+        ]
+      }
+    }
+  ],
+  "covers": [
+    "approveChain",
+    "calculateTrustScoreAPI",
+    "cancelChainRequest",
+    "createNode",
+    "createTransaction",
+    "createVerification",
+    "getCampaignReport",
+    "getChainActivityLog",
+    "getChainCounts",
+    "getChainTrustScore",
+    "getFlowDataAPI",
+    "getOrganizationStats",
+    "getTrustScoreHistory",
+    "rejectChain",
+    "removeNodeVisibility",
+    "requestChain",
+    "revokeChain",
+    "setNodeVisibility",
+    "updateChainPermissions",
+    "updatePublicEmbedConfig",
+    "updateTransaction"
+  ],
+  "description": "A scripted run of the demo API over transparency-dataset.json#/store for the MOD2 tables, one call at a time: the function, its arguments, the outcome (`ok` with the result, `error` with the message) and the store delta per collection (`added` records, `removed` ids, `changed` whole new records). Covers the flow node, transaction, proof counting, node visibility, embed config, chain and trust score writes the demo API has, and the reads whose rules the module mirrors (flow data, organisation stats, chain counts, chain trust score, chain activity log, trust history, campaign report). Chain activity of a cancelled request is not reachable through the API, so it shows as removed.",
+  "env": {
+    "defined_at": "rust/tools/src/transparency.ts#withFrozenClock: replaces Date and crypto.randomUUID while the demo API runs (it has no LedgerEnv)",
+    "new_id": "00000000-0000-4000-8000- then n left-padded with 0 to 12 digits, n = 1, 2, 3, ... (a UUID v4 shape), one per crypto.randomUUID() call",
+    "now": "2026-02-04T09:00:00.000Z"
+  },
+  "fixture": "transparency-flows",
+  "sources": [
+    "flowtrace/src/lib/demo/api.ts"
+  ],
+  "store": "transparency-dataset.json#/store"
+}

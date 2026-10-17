@@ -16,7 +16,13 @@ use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
 use super::OrgTransparency;
+use super::chains::{ChainActivity, Chains, OrganizationChain};
+use super::flows::{
+    EmbedConfigPatch, FlowNode, NewFlowNode, NewTransaction, NodeVisibility,
+    NodeVisibilitySettings, PublicEmbedConfig, Transaction, TransactionPatch,
+};
 use super::stats::campaign_stat;
+use super::trust::TrustHistory;
 use super::types::{
     AccessGroup, Campaign, CampaignPatch, Donation, DonorUpdate, GroupMember, NewAccessGroup,
     NewCampaign, NewDonation, NewDonorUpdate, NewGroupMember, NewVerification, OrganizationPatch,
@@ -305,6 +311,157 @@ pub fn new_donor_update(v: &Value) -> Result<NewDonorUpdate, TsError> {
     convert("DonorUpdate input", v, &[])
 }
 
+/// `FlowNode` (`supabase.ts:52-66`): the balance to minor units.
+///
+/// # Errors
+///
+/// When the JSON is not a `FlowNode` or the balance is not money.
+pub fn flow_node(v: &Value) -> Result<FlowNode, TsError> {
+    convert("FlowNode", v, &[Edit::Major("balance")])
+}
+
+/// `Transaction` (`supabase.ts:68-87`): amounts to minor units; no journal entries linked.
+///
+/// # Errors
+///
+/// When the JSON is not a `Transaction` or an amount is not money.
+pub fn transaction(v: &Value) -> Result<Transaction, TsError> {
+    convert(
+        "Transaction",
+        v,
+        &[Edit::Major("amount"), Edit::Major("amount_usd")],
+    )
+}
+
+/// `NodeVisibility` (`supabase.ts:225-235`), unchanged.
+///
+/// # Errors
+///
+/// When the JSON is not a `NodeVisibility`.
+pub fn node_visibility(v: &Value) -> Result<NodeVisibility, TsError> {
+    convert("NodeVisibility", v, &[])
+}
+
+/// `TrustScoreHistory` (`supabase.ts:164-173`), unchanged.
+///
+/// # Errors
+///
+/// When the JSON is not a `TrustScoreHistory`.
+pub fn trust_history(v: &Value) -> Result<TrustHistory, TsError> {
+    convert("TrustScoreHistory", v, &[])
+}
+
+/// `PublicEmbedConfig` (`supabase.ts:248-271`), unchanged.
+///
+/// # Errors
+///
+/// When the JSON is not a `PublicEmbedConfig`.
+pub fn embed_config(v: &Value) -> Result<PublicEmbedConfig, TsError> {
+    convert("PublicEmbedConfig", v, &[])
+}
+
+/// `OrganizationChain` (`supabase.ts:1088-1105`), unchanged.
+///
+/// # Errors
+///
+/// When the JSON is not an `OrganizationChain`.
+pub fn chain(v: &Value) -> Result<OrganizationChain, TsError> {
+    convert("OrganizationChain", v, &[])
+}
+
+/// `ChainActivityLog` (`supabase.ts:1122-1130`), unchanged.
+///
+/// # Errors
+///
+/// When the JSON is not a `ChainActivityLog`.
+pub fn chain_activity(v: &Value) -> Result<ChainActivity, TsError> {
+    convert("ChainActivityLog", v, &[])
+}
+
+/// `createNode`'s input (`api.ts:264-274`) less the organisation.
+///
+/// # Errors
+///
+/// When the JSON is not a node input.
+pub fn new_flow_node(v: &Value) -> Result<NewFlowNode, TsError> {
+    convert("FlowNode input", v, &[Edit::Drop("organization_id")])
+}
+
+/// `createTransaction`'s input (`api.ts:220-238`) less the organisation and `created_by`;
+/// amounts to minor units.
+///
+/// # Errors
+///
+/// When the JSON is not a transaction input or an amount is not money.
+pub fn new_transaction(v: &Value) -> Result<NewTransaction, TsError> {
+    convert(
+        "Transaction input",
+        v,
+        &[
+            Edit::Drop("organization_id"),
+            Edit::Drop("created_by"),
+            Edit::Major("amount"),
+            Edit::Major("amount_usd"),
+        ],
+    )
+}
+
+/// `updateTransaction`'s update (`api.ts:240-254`); amounts to minor units.
+///
+/// # Errors
+///
+/// When the JSON is not an update the module takes.
+pub fn transaction_patch(v: &Value) -> Result<TransactionPatch, TsError> {
+    convert(
+        "Transaction update",
+        v,
+        &[Edit::Major("amount"), Edit::Major("amount_usd")],
+    )
+}
+
+/// `setNodeVisibility`'s settings (`api.ts:708-736`).
+///
+/// # Errors
+///
+/// When the JSON is not node visibility settings.
+pub fn node_visibility_settings(v: &Value) -> Result<NodeVisibilitySettings, TsError> {
+    convert("NodeVisibility settings", v, &[])
+}
+
+/// `updatePublicEmbedConfig`'s update (`api.ts:752-770`).
+///
+/// # Errors
+///
+/// When the JSON is not an embed config update.
+pub fn embed_patch(v: &Value) -> Result<EmbedConfigPatch, TsError> {
+    convert("PublicEmbedConfig update", v, &[])
+}
+
+/// Every chain of a demo-store-shaped dataset that the organisation is on either side of, with
+/// their log entries (`organizationChains`, `chainActivityLog`).
+///
+/// # Errors
+///
+/// The first record that does not map.
+pub fn chains(org_id: &str, store: &Value) -> Result<Chains, TsError> {
+    let chains = list(store, "organizationChains")
+        .map(chain)
+        .filter(|c| {
+            c.as_ref().map_or(true, |c| {
+                c.source_org_id == org_id || c.target_org_id == org_id
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let log = list(store, "chainActivityLog")
+        .map(chain_activity)
+        .filter(|l| {
+            l.as_ref()
+                .map_or(true, |l| chains.iter().any(|c| c.id == l.chain_id))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(Chains { chains, log })
+}
+
 fn list<'a>(store: &'a Value, key: &str) -> impl Iterator<Item = &'a Value> {
     store
         .get(key)
@@ -317,8 +474,10 @@ fn list<'a>(store: &'a Value, key: &str) -> impl Iterator<Item = &'a Value> {
 /// the collections of `flowtrace/src/lib/demo/api.ts:49-68`): its organisation, its access groups
 /// and their members, its campaigns, their donations and donor updates, and every verification
 /// in the store (a TS verification names a transaction, not an organisation, so the dataset given
-/// must be the organisation's own). Profiles are per identity and not part of it. The campaign
-/// figures are computed.
+/// must be the organisation's own); and for MOD2 its flow nodes, transactions, their node
+/// visibility, its trust history and embed config. Profiles are per identity and not part of it;
+/// chains belong to two organisations ([`chains`]). The campaign figures are computed; the trust
+/// row is left for the first write to compute.
 ///
 /// # Errors
 ///
@@ -369,6 +528,29 @@ pub fn dataset(org_id: &str, store: &Value) -> Result<OrgTransparency, TsError> 
         .iter()
         .map(|c| campaign_stat(c, &donations))
         .collect();
+    let flow_nodes = list(store, "flowNodes")
+        .filter(in_org)
+        .map(flow_node)
+        .collect::<Result<Vec<_>, _>>()?;
+    let transactions = list(store, "transactions")
+        .filter(in_org)
+        .map(transaction)
+        .collect::<Result<Vec<_>, _>>()?;
+    let node_visibility = list(store, "nodeVisibility")
+        .map(node_visibility)
+        .filter(|v| {
+            v.as_ref()
+                .map_or(true, |v| flow_nodes.iter().any(|n| n.id == v.node_id))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let trust_history = list(store, "trustScoreHistory")
+        .filter(in_org)
+        .map(trust_history)
+        .collect::<Result<Vec<_>, _>>()?;
+    let embed = list(store, "publicEmbedConfigs")
+        .find(in_org)
+        .map(embed_config)
+        .transpose()?;
     Ok(OrgTransparency {
         profile,
         access_groups,
@@ -379,5 +561,13 @@ pub fn dataset(org_id: &str, store: &Value) -> Result<OrgTransparency, TsError> 
         campaign_stats,
         donations,
         donor_updates,
+        flow_nodes,
+        transactions,
+        node_visibility,
+        transaction_visibility: Vec::new(),
+        trust: None,
+        trust_history,
+        flags: Vec::new(),
+        embed,
     })
 }

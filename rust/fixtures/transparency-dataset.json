@@ -4,17 +4,24 @@
   ],
   "demo_org_id": "550e8400-e29b-41d4-a716-446655440000",
   "demo_user_id": "user_dummy",
-  "description": "The demo dataset for the transparency tables of the module (MOD1): organisations, the demo profile, access groups and their members, verifications, campaigns, donations and donor updates, as the demo store holds them before any call (amounts in major units, as the TS types). The public embed config is included for MOD2, which owns it. Also the trust points per verification type.",
+  "description": "The demo dataset for the transparency tables of the module (MOD1): organisations, the demo profile, access groups and their members, verifications, campaigns, donations and donor updates, as the demo store holds them before any call (amounts in major units, as the TS types); and for MOD2 the flow nodes, transactions, node visibility, trust score history, organisation chains with their activity log and the public embed config. Also the trust points per verification type.",
   "env": null,
   "fixture": "transparency-dataset",
   "in_scope": {
     "accessGroups": "access_group",
     "campaigns": "campaign",
+    "chainActivityLog": "chain_activity_log",
     "donations": "donation",
     "donorUpdates": "donor_update",
+    "flowNodes": "flow_node",
     "groupMembers": "access_group_member",
+    "nodeVisibility": "node_visibility",
+    "organizationChains": "organization_chain",
     "organizations": "organization_profile",
     "profiles": "profile",
+    "publicEmbedConfigs": "public_embed_config",
+    "transactions": "transaction",
+    "trustScoreHistory": "trust_score_history",
     "verifications": "verification"
   },
   "public_embed_configs": [
@@ -289,6 +296,74 @@
         "target_amount": 8000000,
         "target_node_id": null,
         "updated_at": "2026-03-01T00:00:00Z"
+      }
+    ],
+    "chainActivityLog": [
+      {
+        "action": "requested",
+        "actor_id": "system",
+        "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g01",
+        "created_at": "2025-11-15T09:00:00Z",
+        "details": {
+          "message": "We would like to link our water programs for end-to-end fund tracking."
+        },
+        "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l01"
+      },
+      {
+        "action": "approved",
+        "actor_id": "system",
+        "actor_org_id": "660e8400-e29b-41d4-a716-446655440001",
+        "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g01",
+        "created_at": "2025-11-18T09:00:00Z",
+        "details": {
+          "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04"
+        },
+        "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l02"
+      },
+      {
+        "action": "requested",
+        "actor_id": "system",
+        "actor_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+        "created_at": "2025-12-01T09:00:00Z",
+        "details": {
+          "message": "Partnership for maternal health data sharing across our organizations."
+        },
+        "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l11"
+      },
+      {
+        "action": "approved",
+        "actor_id": "system",
+        "actor_org_id": "660e8400-e29b-41d4-a716-446655440002",
+        "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+        "created_at": "2025-12-05T09:00:00Z",
+        "details": {
+          "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03"
+        },
+        "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l12"
+      },
+      {
+        "action": "requested",
+        "actor_id": "system",
+        "actor_org_id": "660e8400-e29b-41d4-a716-446655440003",
+        "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+        "created_at": "2026-01-20T09:00:00Z",
+        "details": {
+          "message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows."
+        },
+        "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l21"
+      },
+      {
+        "action": "requested",
+        "actor_id": "system",
+        "actor_org_id": "660e8400-e29b-41d4-a716-446655440004",
+        "chain_id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+        "created_at": "2026-02-01T09:00:00Z",
+        "details": {
+          "message": "Pwani County Health Office requests a transparency chain for the maternal health program funded through your organization."
+        },
+        "id": "l0eebc99-9c0b-4ef8-bb6d-6bb9bd380l31"
       }
     ],
     "donations": [
@@ -1040,6 +1115,206 @@
         "update_type": "thank_you"
       }
     ],
+    "flowNodes": [
+      {
+        "balance": 5000000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "metadata": {},
+        "name": "General Fund",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "account"
+      },
+      {
+        "balance": 1500000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "metadata": {},
+        "name": "Operations Budget",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "account"
+      },
+      {
+        "balance": 2500000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "metadata": {},
+        "name": "Project Fund",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "account"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+        "metadata": {},
+        "name": "Payroll",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "account"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+        "metadata": {},
+        "name": "Harambee Health Fund",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "donor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+        "metadata": {},
+        "name": "Northlight Foundation",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "donor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+        "metadata": {},
+        "name": "Kisima Water Trust",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "donor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+        "metadata": {},
+        "name": "Pan-African Education Fund",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "donor"
+      },
+      {
+        "balance": 250000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+        "metadata": {},
+        "name": "Training Department",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "department"
+      },
+      {
+        "balance": 500000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "metadata": {},
+        "name": "Field Operations",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "department"
+      },
+      {
+        "balance": 100000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21",
+        "metadata": {},
+        "name": "Admin",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "department"
+      },
+      {
+        "balance": 180000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a32",
+        "metadata": {},
+        "name": "M&E Unit",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "department"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+        "metadata": {},
+        "name": "Staples Kenya",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "vendor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+        "metadata": {},
+        "name": "AutoXpress Ltd",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "vendor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+        "metadata": {},
+        "name": "Training Co Ltd",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "vendor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+        "metadata": {},
+        "name": "Safaricom M-Pesa",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "vendor"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+        "metadata": {},
+        "name": "Kenya Power",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "vendor"
+      },
+      {
+        "balance": 1200000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "metadata": {},
+        "name": "Clean Water Turkana",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "project"
+      },
+      {
+        "balance": 800000,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a36",
+        "metadata": {},
+        "name": "Maternal Health Kilifi",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "project"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+        "metadata": {},
+        "name": "Communities",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "beneficiary"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a37",
+        "metadata": {},
+        "name": "Turkana Schools",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "beneficiary"
+      },
+      {
+        "balance": 0,
+        "created_at": "2025-06-01T09:00:00Z",
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+        "metadata": {},
+        "name": "Kilifi Health Centers",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "beneficiary"
+      }
+    ],
     "groupMembers": [
       {
         "created_at": "2025-06-01T09:00:00Z",
@@ -1130,6 +1405,93 @@
         "valid_until": "2026-03-31T09:00:00Z"
       }
     ],
+    "nodeVisibility": [
+      {
+        "can_view": true,
+        "can_view_amounts": true,
+        "can_view_executor": false,
+        "can_view_proofs": false,
+        "created_at": "2025-11-18T09:00:00Z",
+        "display_name": null,
+        "group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        "id": "v0eebc99-9c0b-4ef8-bb6d-6bb9bd380v01",
+        "node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+      }
+    ],
+    "organizationChains": [
+      {
+        "approved_at": "2025-11-18T09:00:00Z",
+        "approved_by": "system",
+        "created_at": "2025-11-15T09:00:00Z",
+        "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04",
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g01",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "We would like to link our water programs for end-to-end fund tracking.",
+        "requested_at": "2025-11-15T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "status": "active",
+        "target_org_id": "660e8400-e29b-41d4-a716-446655440001",
+        "updated_at": "2025-11-18T09:00:00Z"
+      },
+      {
+        "approved_at": "2025-12-05T09:00:00Z",
+        "approved_by": "system",
+        "created_at": "2025-12-01T09:00:00Z",
+        "granted_group_id": "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03",
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g02",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "Partnership for maternal health data sharing across our organizations.",
+        "requested_at": "2025-12-01T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "status": "active",
+        "target_org_id": "660e8400-e29b-41d4-a716-446655440002",
+        "updated_at": "2025-12-05T09:00:00Z"
+      },
+      {
+        "approved_at": null,
+        "approved_by": null,
+        "created_at": "2026-01-20T09:00:00Z",
+        "granted_group_id": null,
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g03",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "We are developing a technology solution for your field operations and would like visibility into relevant fund flows.",
+        "requested_at": "2026-01-20T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "660e8400-e29b-41d4-a716-446655440003",
+        "status": "pending",
+        "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "updated_at": "2026-01-20T09:00:00Z"
+      },
+      {
+        "approved_at": null,
+        "approved_by": null,
+        "created_at": "2026-02-01T09:00:00Z",
+        "granted_group_id": null,
+        "id": "g0eebc99-9c0b-4ef8-bb6d-6bb9bd380g04",
+        "link_node_id": null,
+        "rejection_reason": null,
+        "request_message": "Pwani County Health Office requests a transparency chain for the maternal health program funded through your organization.",
+        "requested_at": "2026-02-01T09:00:00Z",
+        "requested_by": "system",
+        "revoked_at": null,
+        "revoked_by": null,
+        "source_org_id": "660e8400-e29b-41d4-a716-446655440004",
+        "status": "pending",
+        "target_org_id": "550e8400-e29b-41d4-a716-446655440000",
+        "updated_at": "2026-02-01T09:00:00Z"
+      }
+    ],
     "organizations": [
       {
         "country": "KE",
@@ -1206,6 +1568,473 @@
         "organization_id": "550e8400-e29b-41d4-a716-446655440000",
         "phone": null,
         "role": "admin"
+      }
+    ],
+    "publicEmbedConfigs": [
+      {
+        "allow_embed": true,
+        "allowed_domains": [],
+        "amount_format": "ranges",
+        "created_at": "2025-06-01T09:00:00Z",
+        "display_mode": "simplified",
+        "embed_token": "demo4f1c2b9e7a8d6c5b4a3f2e1d0c9b8",
+        "hidden_node_ids": [],
+        "id": "h0eebc99-9c0b-4ef8-bb6d-6bb9bd380h01",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "show_amounts": true,
+        "show_last_updated": true,
+        "show_node_names": true,
+        "show_transaction_count": true,
+        "show_trust_score": true,
+        "theme": {
+          "background": "light",
+          "border_radius": "sm",
+          "primary_color": "#1c5fa8",
+          "show_logo": true
+        },
+        "updated_at": "2026-01-15T09:00:00Z",
+        "visible_node_types": [
+          "donor",
+          "department",
+          "project",
+          "beneficiary"
+        ]
+      }
+    ],
+    "transactions": [
+      {
+        "amount": 8500000,
+        "amount_usd": null,
+        "category": "Funding",
+        "created_at": "2026-01-05T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Harambee Health Fund Q1 2026 Disbursement",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01",
+        "notes": "Quarterly grant for community health programs",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "HHF-2026-Q1-001",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "transaction_date": "2026-01-05",
+        "updated_at": "2026-01-05T09:00:00Z",
+        "verification_count": 3,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 3200000,
+        "amount_usd": null,
+        "category": "Funding",
+        "created_at": "2026-01-08T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Northlight Foundation Annual Grant",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02",
+        "notes": "Annual support for maternal health initiatives",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "NLF-2026-001",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "transaction_date": "2026-01-08",
+        "updated_at": "2026-01-08T09:00:00Z",
+        "verification_count": 2,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 4000000,
+        "amount_usd": null,
+        "category": "Funding",
+        "created_at": "2026-01-10T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Kisima Water Trust - Water & Sanitation Grant",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03",
+        "notes": "Dedicated funding for Turkana water project",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "KWT-WS-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "transaction_date": "2026-01-10",
+        "updated_at": "2026-01-10T09:00:00Z",
+        "verification_count": 2,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 2000000,
+        "amount_usd": null,
+        "category": "Budget",
+        "created_at": "2026-01-12T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Operations Budget Allocation - January",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04",
+        "notes": "Monthly operations budget transfer",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "INT-OPS-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "transaction_date": "2026-01-12",
+        "updated_at": "2026-01-12T09:00:00Z",
+        "verification_count": 1,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 1800000,
+        "amount_usd": null,
+        "category": "Budget",
+        "created_at": "2026-01-12T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Field Operations Q1 Budget",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05",
+        "notes": "Quarterly field operations allocation",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "INT-FIELD-2026-Q1",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "transaction_date": "2026-01-12",
+        "updated_at": "2026-01-12T09:00:00Z",
+        "verification_count": 2,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 1450000,
+        "amount_usd": null,
+        "category": "Salaries",
+        "created_at": "2026-01-31T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Staff Salaries - January 2026",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+        "notes": "Monthly payroll for 23 staff members",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "PAY-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+        "transaction_date": "2026-01-31",
+        "updated_at": "2026-01-31T09:00:00Z",
+        "verification_count": 1,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 28500,
+        "amount_usd": null,
+        "category": "Operations",
+        "created_at": "2026-01-15T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Office Supplies - Nairobi HQ",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07",
+        "notes": "Monthly office supplies order",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "PO-2026-0042",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+        "transaction_date": "2026-01-15",
+        "updated_at": "2026-01-15T09:00:00Z",
+        "verification_count": 2,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 67000,
+        "amount_usd": null,
+        "category": "Transport",
+        "created_at": "2026-01-20T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Vehicle Maintenance - 3 Field Vehicles",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08",
+        "notes": "Quarterly servicing for Land Cruisers",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "PO-2026-0051",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+        "transaction_date": "2026-01-20",
+        "updated_at": "2026-01-20T09:00:00Z",
+        "verification_count": 1,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 42000,
+        "amount_usd": null,
+        "category": "Utilities",
+        "created_at": "2026-01-25T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Electricity Bill - January",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09",
+        "notes": "Nairobi office + Mombasa sub-office",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "UTIL-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+        "transaction_date": "2026-01-25",
+        "updated_at": "2026-01-25T09:00:00Z",
+        "verification_count": 1,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 2500000,
+        "amount_usd": null,
+        "category": "Programs",
+        "created_at": "2026-01-18T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Clean Water Turkana - Borehole Phase 1",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+        "notes": "Drilling and installation of 5 boreholes in Turkana South",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "PROJ-WATER-001",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+        "transaction_date": "2026-01-18",
+        "updated_at": "2026-01-18T09:00:00Z",
+        "verification_count": 3,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 750000,
+        "amount_usd": null,
+        "category": "Programs",
+        "created_at": "2026-01-28T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Community Health Worker Stipends",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+        "notes": "Monthly stipends for 50 CHWs across 3 counties",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "CHW-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+        "transaction_date": "2026-01-28",
+        "updated_at": "2026-01-28T09:00:00Z",
+        "verification_count": 2,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 380000,
+        "amount_usd": null,
+        "category": "Training",
+        "created_at": "2026-01-22T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Financial Literacy Workshop - Mombasa",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+        "notes": "3-day workshop for 45 community leaders",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "TRN-2026-003",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+        "transaction_date": "2026-01-22",
+        "updated_at": "2026-01-22T09:00:00Z",
+        "verification_count": 1,
+        "verification_status": "verified"
+      },
+      {
+        "amount": 1200000,
+        "amount_usd": null,
+        "category": "Programs",
+        "created_at": "2026-02-01T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Maternal Health Equipment - Kilifi",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+        "notes": "Medical equipment for 8 health centers",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "PROJ-MH-002",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+        "transaction_date": "2026-02-01",
+        "updated_at": "2026-02-01T09:00:00Z",
+        "verification_count": 0,
+        "verification_status": "pending"
+      },
+      {
+        "amount": 15000,
+        "amount_usd": null,
+        "category": "Operations",
+        "created_at": "2026-02-03T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "M-Pesa Float Top-up",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "notes": "Mobile money float for field disbursements",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "MPESA-2026-02",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+        "transaction_date": "2026-02-03",
+        "updated_at": "2026-02-03T09:00:00Z",
+        "verification_count": 0,
+        "verification_status": "pending"
+      },
+      {
+        "amount": 6000000,
+        "amount_usd": null,
+        "category": "Funding",
+        "created_at": "2026-02-04T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Pan-African Education Fund - Education Grant",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+        "notes": "First tranche of education support grant",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": "PAEF-2026-01",
+        "to_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "transaction_date": "2026-02-04",
+        "updated_at": "2026-02-04T09:00:00Z",
+        "verification_count": 0,
+        "verification_status": "pending"
+      },
+      {
+        "amount": 500000,
+        "amount_usd": null,
+        "category": "Unclassified",
+        "created_at": "2026-01-29T09:00:00Z",
+        "created_by": "user_dummy",
+        "currency": "KES",
+        "description": "Unreconciled Cash Withdrawal",
+        "exchange_rate": null,
+        "from_node_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+        "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16",
+        "notes": "Cash withdrawal without matching receipt - flagged for review",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reference": null,
+        "to_node_id": null,
+        "transaction_date": "2026-01-29",
+        "updated_at": "2026-01-29T09:00:00Z",
+        "verification_count": 0,
+        "verification_status": "flagged"
+      }
+    ],
+    "trustScoreHistory": [
+      {
+        "breakdown": {
+          "consistency": 70,
+          "documentation": 60,
+          "verification": 58
+        },
+        "calculated_at": "2025-07-01T00:00:00Z",
+        "consistency_score": 70,
+        "documentation_rate": 60,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380001",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 62,
+        "verification_rate": 58
+      },
+      {
+        "breakdown": {
+          "consistency": 74,
+          "documentation": 66,
+          "verification": 65
+        },
+        "calculated_at": "2025-08-01T00:00:00Z",
+        "consistency_score": 74,
+        "documentation_rate": 66,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380002",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 68,
+        "verification_rate": 65
+      },
+      {
+        "breakdown": {
+          "consistency": 78,
+          "documentation": 68,
+          "verification": 70
+        },
+        "calculated_at": "2025-09-01T00:00:00Z",
+        "consistency_score": 78,
+        "documentation_rate": 68,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380003",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 72,
+        "verification_rate": 70
+      },
+      {
+        "breakdown": {
+          "consistency": 80,
+          "documentation": 72,
+          "verification": 74
+        },
+        "calculated_at": "2025-10-01T00:00:00Z",
+        "consistency_score": 80,
+        "documentation_rate": 72,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380004",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 75,
+        "verification_rate": 74
+      },
+      {
+        "breakdown": {
+          "consistency": 81,
+          "documentation": 75,
+          "verification": 78
+        },
+        "calculated_at": "2025-11-01T00:00:00Z",
+        "consistency_score": 81,
+        "documentation_rate": 75,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380005",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 78,
+        "verification_rate": 78
+      },
+      {
+        "breakdown": {
+          "consistency": 84,
+          "documentation": 80,
+          "verification": 82
+        },
+        "calculated_at": "2025-12-01T00:00:00Z",
+        "consistency_score": 84,
+        "documentation_rate": 80,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380006",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 82,
+        "verification_rate": 82
+      },
+      {
+        "breakdown": {
+          "consistency": 85,
+          "documentation": 82,
+          "verification": 88
+        },
+        "calculated_at": "2026-01-01T00:00:00Z",
+        "consistency_score": 85,
+        "documentation_rate": 82,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380007",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 85,
+        "verification_rate": 88
+      },
+      {
+        "breakdown": {
+          "consistency": 82,
+          "documentation": 85,
+          "verification": 92
+        },
+        "calculated_at": "2026-02-01T00:00:00Z",
+        "consistency_score": 82,
+        "documentation_rate": 85,
+        "id": "t0eebc99-9c0b-4ef8-bb6d-6bb9bd380008",
+        "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 87,
+        "verification_rate": 92
       }
     ],
     "verifications": [

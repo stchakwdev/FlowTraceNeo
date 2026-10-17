@@ -123,6 +123,34 @@ fn proof(object_key: Option<&str>, sha256: Option<&str>) -> NewVerification {
     }
 }
 
+/// An organisation with the transaction `txn-1` that [`proof`] links to (MOD2's records).
+fn with_txn() -> OrgTransparency {
+    OrgTransparency {
+        transactions: vec![crate::transparency::flows::Transaction {
+            id: "txn-1".to_owned(),
+            organization_id: ORG.to_owned(),
+            from_node_id: None,
+            to_node_id: None,
+            amount: 100_000,
+            currency: "KES".to_owned(),
+            exchange_rate: None,
+            amount_usd: None,
+            description: "Float top-up".to_owned(),
+            category: None,
+            reference: None,
+            notes: None,
+            verification_status: crate::transparency::flows::TransactionStatus::Pending,
+            verification_count: 0,
+            transaction_date: "2026-02-03".to_owned(),
+            created_by: None,
+            created_at: NOW.to_owned(),
+            updated_at: NOW.to_owned(),
+            journal_entry_ids: Vec::new(),
+        }],
+        ..OrgTransparency::default()
+    }
+}
+
 fn campaign(status: CampaignStatus, current: i64, ends_at: Option<&str>) -> Campaign {
     Campaign {
         id: "c-1".to_owned(),
@@ -383,6 +411,48 @@ fn a_proof_needs_exactly_one_link() {
 }
 
 #[test]
+fn a_proof_of_an_unknown_transaction_is_refused() {
+    let mut t = OrgTransparency::default();
+    assert_eq!(
+        as_caller(Some(&clerk()), &mut t, |t, c| plan::create_verification(
+            t,
+            c,
+            proof(None, None),
+            &Books
+        ))
+        .unwrap_err(),
+        "Transaction txn-1 not found."
+    );
+}
+
+#[test]
+fn proofs_count_towards_their_transaction_and_verify_a_pending_one_at_two() {
+    let mut t = with_txn();
+    let status = |t: &OrgTransparency| {
+        (
+            t.transactions[0].verification_count,
+            t.transactions[0].verification_status,
+        )
+    };
+    as_caller(Some(&clerk()), &mut t, |t, c| {
+        plan::create_verification(t, c, proof(None, None), &Books)
+    })
+    .unwrap();
+    assert_eq!(
+        status(&t),
+        (1, crate::transparency::flows::TransactionStatus::Pending)
+    );
+    as_caller(Some(&clerk()), &mut t, |t, c| {
+        plan::create_verification(t, c, proof(None, None), &Books)
+    })
+    .unwrap();
+    assert_eq!(
+        status(&t),
+        (2, crate::transparency::flows::TransactionStatus::Verified)
+    );
+}
+
+#[test]
 fn a_proof_of_an_unknown_claim_is_refused() {
     let mut t = OrgTransparency::default();
     let mut input = proof(None, None);
@@ -399,7 +469,7 @@ fn a_proof_of_an_unknown_claim_is_refused() {
 
 #[test]
 fn a_proof_file_needs_its_hash() {
-    let mut t = OrgTransparency::default();
+    let mut t = with_txn();
     assert_eq!(
         as_caller(Some(&clerk()), &mut t, |t, c| {
             plan::create_verification(t, c, proof(Some("org-1/r.pdf"), None), &Books)
@@ -411,7 +481,7 @@ fn a_proof_file_needs_its_hash() {
 
 #[test]
 fn an_uppercase_hash_is_refused() {
-    let mut t = OrgTransparency::default();
+    let mut t = with_txn();
     let upper = HASH.to_uppercase();
     assert_eq!(
         as_caller(Some(&clerk()), &mut t, |t, c| {
@@ -452,7 +522,7 @@ fn a_proof_of_a_bill_with_its_file_is_kept_with_key_hash_and_points() {
 }
 
 fn org_with_proof_and_group(perms: AccessGroupPermissions, user: &str) -> OrgTransparency {
-    let mut t = OrgTransparency::default();
+    let mut t = with_txn();
     let g = as_caller(Some(&admin()), &mut t, |t, c| {
         plan::create_access_group(
             t,

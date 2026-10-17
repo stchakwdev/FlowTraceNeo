@@ -34,7 +34,11 @@ pub(crate) fn is_operator(ctx: &ReducerContext, identity: Identity) -> bool {
 
 /// `appendAudit` (`index.ts:521-527`): one audit event with a reducer-seeded UUID v4 and the
 /// reducer time, at the organisation's next `seq`.
-fn append_audit(ctx: &ReducerContext, org_id: &str, note: AuditNote) -> Result<(), String> {
+pub(crate) fn append_audit(
+    ctx: &ReducerContext,
+    org_id: &str,
+    note: AuditNote,
+) -> Result<(), String> {
     let mut org = ctx
         .db
         .ledger_org()

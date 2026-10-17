@@ -13,6 +13,7 @@ import { exportReconcile } from './reconcile'
 import { exportRejected } from './rejected'
 import { exportReports } from './reports'
 import { exportTransparency } from './transparency'
+import { exportTransparencyFlows } from './transparency-flows'
 import { FIXTURES_DIR } from './paths'
 
 const outArg = process.argv.indexOf('--out')
@@ -29,6 +30,7 @@ exportReports(outDir, { 'demo-books': demo.state, 'commands-final': afterCommand
 exportReconcile(outDir, demo.state, demo.preAutoMatch)
 const rejected = exportRejected(outDir)
 await exportTransparency(outDir)
+await exportTransparencyFlows(outDir)
 
 // Every timestamp the engine writes (audit `at`, entry `created_at` and
 // `posted_at`, approval `at`) and every env `now` must be a frozen now. The
