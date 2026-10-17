@@ -23,14 +23,22 @@ client.create_org_ledger(org_id, "KES", 2026, name);   // Ticket<()>, operator o
 client.import_books(org_id, &state);                   // Ticket<()>, operator only
 client.transparency(org_id)?;                          // OrgTransparency: profile, groups, proofs, campaigns, ...
 client.profiles()?;                                    // Vec<Profile>: own and co-members'
+client.chains()?;                                      // Vec<ChainDetails>: both sides, names and scores
+client.chain_activity(chain_id)?;                      // Vec<ChainActivity>, newest first
+client.service();                                      // Option<ServiceInfo>: when the caller is a service
+client.public_organizations()?;                        // public tables: any connection, anonymous too
+client.public_campaigns()?;
+client.public_badges()?;
 client.disconnect();
 ```
 
 The transparency views (MOD1) take the same path as the books (pre-decision P7): their rows go
 into their own cache (`src/transparency.rs`), `transparency` rebuilds the module's
 `ledger_module::transparency::OrgTransparency` through the module's own row codec, and each
-applied message that touched them sends one `ClientEvent::TransparencyChanged { orgs, profiles }`
-next to the ledger's `Changed`. Proofs arrive already cut to what the caller's access groups
+applied message that touched them sends one `ClientEvent::TransparencyChanged { orgs, profiles,
+chains, public, service }` next to the ledger's `Changed`. MOD2's organisation views (flow nodes,
+transactions, visibility, trust score and history, flags, embed config) are part of
+`OrgTransparency`; chains, the service row and the public tables have their own reads. Proofs arrive already cut to what the caller's access groups
 allow (`visible_as` on each). The client has no write calls for them yet; DT1 to DT4 add what
 their screens need.
 
@@ -91,8 +99,10 @@ cd rust
 cargo test -p ledger-client     # unit tests: rebuild, decoding, cache, token, tickets; offline
 ```
 
-`tests/live_transparency.rs` is step 5 of the MOD1 local proof and only runs from
-`rust/tools/transparency-proof.ts`, which sets `FT_MOD1_DB` and `FT_MOD1_EXPECTED`.
+`tests/live_transparency.rs` (a member's read, MOD2 views included) and `tests/live_public.rs`
+(an anonymous read of the public tables) are steps of the local transparency proof and only run
+from `rust/tools/transparency-proof.ts`, which sets `FT_MOD1_DB`, `FT_MOD1_EXPECTED`,
+`FT_MOD2_DB` and `FT_MOD2_PUBLIC`.
 
 The live test (`tests/live.rs`) is `#[ignore]`d and also needs `LEDGER_CLIENT_LIVE=1`. It
 publishes the module to the local server only (`http://127.0.0.1:3100`) as `ft-s3-test`

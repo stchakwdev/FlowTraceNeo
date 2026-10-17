@@ -13,7 +13,7 @@ use `~/.bun/bin/bun`. Install once with `~/.bun/bin/bun install --frozen-lockfil
 | `bun run coverage` | The fixture coverage assertions alone | `coverage.ts` |
 | `bun run module-replay` | Replays the 37-command fixture through the module on the local server and compares every result and the final books (needs the wasm built) | `rust/crates/ledger-module/README.md` |
 | `bun run integration` | Builds, publishes `ft-s2-<timestamp>`, loads the demo books and command log, checks rows, balances, trial balance, refusals, views and a repeated request id with SQL, deletes the database; under five minutes | `rust/crates/ledger-module/README.md#integration` |
-| `bun run transparency-proof` | MOD1 on the local server: publishes `ft-mod1-<stamp>` (over main's module with `--base-wasm`), loads the transparency fixtures, runs all 19 transparency reducers through `spacetime call`, reads back through SQL and ledger-client, deletes the database | `rust/crates/ledger-module/README.md` |
+| `bun run transparency-proof` | MOD1 and MOD2 on the local server: publishes `ft-mod2-<stamp>` (over main's module with `--base-wasm`), loads the demo books and the transparency fixtures, runs all 19 MOD1 and 23 MOD2 reducers (a service among them, writing over HTTP as itself), reads back through SQL, the public tables with no `Authorization` header, and ledger-client as a member and anonymously, deletes the database | `rust/crates/ledger-module/README.md` |
 | `bun test` | Unit tests of the module tools, offline | `src/*.test.ts` |
 
 `bun test` runs the offline unit tests in `src/*.test.ts` (the remote-mode refusals and flags).

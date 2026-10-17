@@ -15,7 +15,10 @@ use std::time::{Duration, Instant};
 
 use ledger_client::{ClientConfig, ClientEvent, SpacetimeClient};
 use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::chains::ChainDetails;
+use ledger_module::transparency::flows::{FlowNode, Transaction};
 use ledger_module::transparency::plan::redact;
+use ledger_module::transparency::trust::{Flag, TrustHistory, TrustScore};
 use ledger_module::transparency::types::{
     AccessGroup, Campaign, CampaignStat, Donation, DonorUpdate, GroupMember, OrganizationProfile,
     Verification, Visibility,
@@ -164,6 +167,38 @@ fn compare(got: &OrgTransparency, expected: &Value) -> GroupMember {
     mine
 }
 
+/// The MOD2 views against the script's reads (`flow_nodes`, `transactions`, `trust_score`,
+/// `trust_history`, `flags`, `chains`): the same records through the client's typed reads. A
+/// summary line; nothing to check when the script did not send them.
+fn compare_mod2(client: &SpacetimeClient, got: &OrgTransparency, expected: &Value) -> String {
+    if expected.get("flow_nodes").is_none() {
+        return "no MOD2 records expected".to_owned();
+    }
+    let nodes: Vec<FlowNode> = records!(expected["flow_nodes"]);
+    let txns: Vec<Transaction> = records!(expected["transactions"]);
+    let history: Vec<TrustHistory> = records!(expected["trust_history"]);
+    let flags: Vec<Flag> = records!(expected["flags"]);
+    let trust: TrustScore = records!(expected["trust_score"]);
+    let chains: Vec<ChainDetails> = records!(expected["chains"]);
+    assert_eq!(got.flow_nodes, nodes);
+    assert_eq!(got.transactions, txns);
+    assert_eq!(got.trust_history, history);
+    assert_eq!(got.flags, flags);
+    assert_eq!(got.trust.as_ref(), Some(&trust));
+    let read = client.chains().unwrap();
+    assert_eq!(read, chains);
+    format!(
+        "MOD2 views equal: {} flow nodes, {} transactions, {} history rows, {} flags, trust {} ({}), {} chains",
+        nodes.len(),
+        txns.len(),
+        history.len(),
+        flags.len(),
+        trust.score,
+        trust.grade,
+        read.len()
+    )
+}
+
 #[test]
 #[ignore = "step 5 of rust/tools/transparency-proof.ts; needs the database it publishes"]
 fn the_client_reads_the_transparency_views_as_a_donors_group_member() {
@@ -212,6 +247,7 @@ fn the_client_reads_the_transparency_views_as_a_donors_group_member() {
         _ => None,
     });
     let mine = compare(&got, &expected);
+    let mod2 = compare_mod2(&client, &got, &expected);
     println!(
         "client: {} campaigns, {} stats, {} donations, {} donor updates, {} groups, {} group members, {} proofs as thumbnails without object keys, TransparencyChanged received, membership granted by {}",
         got.campaigns.len(),
@@ -223,5 +259,6 @@ fn the_client_reads_the_transparency_views_as_a_donors_group_member() {
         got.verifications.len(),
         mine.granted_by.unwrap_or_default(),
     );
+    println!("client: {mod2}");
     client.disconnect();
 }

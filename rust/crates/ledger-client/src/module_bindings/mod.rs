@@ -12,6 +12,7 @@ pub mod account_row_type;
 pub mod add_access_group_member_reducer;
 pub mod add_member_reducer;
 pub mod add_operator_reducer;
+pub mod approve_chain_reducer;
 pub mod audit_event_row_type;
 pub mod bank_account_row_type;
 pub mod bill_row_type;
@@ -19,19 +20,27 @@ pub mod budget_line_row_type;
 pub mod budget_row_type;
 pub mod campaign_row_type;
 pub mod campaign_stat_row_type;
+pub mod cancel_chain_request_reducer;
+pub mod chain_activity_row_type;
+pub mod chain_row_type;
 pub mod command_result_type;
 pub mod create_access_group_reducer;
 pub mod create_campaign_reducer;
 pub mod create_default_access_groups_reducer;
+pub mod create_flow_node_reducer;
 pub mod create_org_ledger_reducer;
+pub mod create_transaction_reducer;
 pub mod create_verification_reducer;
 pub mod delete_access_group_reducer;
 pub mod delete_campaign_reducer;
 pub mod dimension_row_type;
 pub mod donation_row_type;
 pub mod donor_update_row_type;
+pub mod embed_config_row_type;
 pub mod expense_claim_row_type;
 pub mod fiscal_period_row_type;
+pub mod flag_row_type;
+pub mod flow_node_row_type;
 pub mod fund_row_type;
 pub mod grant_row_type;
 pub mod import_books_reducer;
@@ -40,6 +49,7 @@ pub mod invite_access_group_member_reducer;
 pub mod journal_entry_row_type;
 pub mod journal_line_row_type;
 pub mod ledger_org_type;
+pub mod link_transaction_entries_reducer;
 pub mod log_verification_access_reducer;
 pub mod mark_donor_update_sent_reducer;
 pub mod member_type;
@@ -53,41 +63,82 @@ pub mod my_budget_line_table;
 pub mod my_budget_table;
 pub mod my_campaign_stat_table;
 pub mod my_campaign_table;
+pub mod my_chain_activity_log_table;
 pub mod my_command_result_table;
 pub mod my_dimension_table;
 pub mod my_donation_table;
 pub mod my_donor_update_table;
 pub mod my_expense_claim_table;
 pub mod my_fiscal_period_table;
+pub mod my_flag_table;
+pub mod my_flow_node_table;
 pub mod my_fund_table;
 pub mod my_grant_table;
 pub mod my_journal_entry_table;
 pub mod my_journal_line_table;
 pub mod my_ledger_org_table;
 pub mod my_member_table;
+pub mod my_node_visibility_table;
+pub mod my_organization_chain_table;
 pub mod my_organization_profile_table;
 pub mod my_payment_table;
 pub mod my_profile_table;
+pub mod my_public_embed_config_table;
+pub mod my_service_table;
 pub mod my_statement_line_table;
+pub mod my_transaction_table;
+pub mod my_transaction_visibility_table;
+pub mod my_trust_score_history_table;
+pub mod my_trust_score_table;
 pub mod my_vendor_table;
 pub mod my_verification_access_log_table;
 pub mod my_verification_table;
+pub mod node_visibility_row_type;
 pub mod operator_type;
 pub mod organization_profile_row_type;
 pub mod payment_row_type;
 pub mod post_donor_update_reducer;
 pub mod profile_row_type;
+pub mod public_badge_row_type;
+pub mod public_badge_table;
+pub mod public_campaign_row_type;
+pub mod public_campaign_table;
+pub mod public_organization_row_type;
+pub mod public_organization_table;
+pub mod recompute_trust_reducer;
 pub mod record_donation_reducer;
+pub mod record_flags_reducer;
+pub mod record_rubric_reducer;
+pub mod regenerate_embed_token_reducer;
+pub mod register_service_reducer;
+pub mod reject_chain_reducer;
 pub mod remove_access_group_member_reducer;
 pub mod remove_member_reducer;
+pub mod remove_node_visibility_reducer;
 pub mod remove_operator_reducer;
+pub mod remove_service_reducer;
+pub mod remove_transaction_visibility_reducer;
+pub mod request_chain_reducer;
+pub mod resolve_flag_reducer;
+pub mod revoke_chain_reducer;
 pub mod run_command_reducer;
+pub mod service_row_type;
+pub mod set_node_visibility_reducer;
 pub mod set_profile_reducer;
+pub mod set_transaction_visibility_reducer;
 pub mod statement_line_row_type;
+pub mod transaction_row_type;
+pub mod transaction_visibility_row_type;
+pub mod trust_history_row_type;
+pub mod trust_score_row_type;
 pub mod update_access_group_reducer;
 pub mod update_campaign_reducer;
+pub mod update_chain_permissions_reducer;
 pub mod update_donation_status_reducer;
+pub mod update_flow_node_reducer;
 pub mod update_organization_profile_reducer;
+pub mod update_public_embed_config_reducer;
+pub mod update_transaction_reducer;
 pub mod vendor_row_type;
 pub mod verification_access_row_type;
 pub mod verification_row_type;
@@ -98,6 +149,7 @@ pub use account_row_type::AccountRow;
 pub use add_access_group_member_reducer::add_access_group_member;
 pub use add_member_reducer::add_member;
 pub use add_operator_reducer::add_operator;
+pub use approve_chain_reducer::approve_chain;
 pub use audit_event_row_type::AuditEventRow;
 pub use bank_account_row_type::BankAccountRow;
 pub use bill_row_type::BillRow;
@@ -105,19 +157,27 @@ pub use budget_line_row_type::BudgetLineRow;
 pub use budget_row_type::BudgetRow;
 pub use campaign_row_type::CampaignRow;
 pub use campaign_stat_row_type::CampaignStatRow;
+pub use cancel_chain_request_reducer::cancel_chain_request;
+pub use chain_activity_row_type::ChainActivityRow;
+pub use chain_row_type::ChainRow;
 pub use command_result_type::CommandResult;
 pub use create_access_group_reducer::create_access_group;
 pub use create_campaign_reducer::create_campaign;
 pub use create_default_access_groups_reducer::create_default_access_groups;
+pub use create_flow_node_reducer::create_flow_node;
 pub use create_org_ledger_reducer::create_org_ledger;
+pub use create_transaction_reducer::create_transaction;
 pub use create_verification_reducer::create_verification;
 pub use delete_access_group_reducer::delete_access_group;
 pub use delete_campaign_reducer::delete_campaign;
 pub use dimension_row_type::DimensionRow;
 pub use donation_row_type::DonationRow;
 pub use donor_update_row_type::DonorUpdateRow;
+pub use embed_config_row_type::EmbedConfigRow;
 pub use expense_claim_row_type::ExpenseClaimRow;
 pub use fiscal_period_row_type::FiscalPeriodRow;
+pub use flag_row_type::FlagRow;
+pub use flow_node_row_type::FlowNodeRow;
 pub use fund_row_type::FundRow;
 pub use grant_row_type::GrantRow;
 pub use import_books_reducer::import_books;
@@ -126,6 +186,7 @@ pub use invite_access_group_member_reducer::invite_access_group_member;
 pub use journal_entry_row_type::JournalEntryRow;
 pub use journal_line_row_type::JournalLineRow;
 pub use ledger_org_type::LedgerOrg;
+pub use link_transaction_entries_reducer::link_transaction_entries;
 pub use log_verification_access_reducer::log_verification_access;
 pub use mark_donor_update_sent_reducer::mark_donor_update_sent;
 pub use member_type::Member;
@@ -139,41 +200,82 @@ pub use my_budget_line_table::*;
 pub use my_budget_table::*;
 pub use my_campaign_stat_table::*;
 pub use my_campaign_table::*;
+pub use my_chain_activity_log_table::*;
 pub use my_command_result_table::*;
 pub use my_dimension_table::*;
 pub use my_donation_table::*;
 pub use my_donor_update_table::*;
 pub use my_expense_claim_table::*;
 pub use my_fiscal_period_table::*;
+pub use my_flag_table::*;
+pub use my_flow_node_table::*;
 pub use my_fund_table::*;
 pub use my_grant_table::*;
 pub use my_journal_entry_table::*;
 pub use my_journal_line_table::*;
 pub use my_ledger_org_table::*;
 pub use my_member_table::*;
+pub use my_node_visibility_table::*;
+pub use my_organization_chain_table::*;
 pub use my_organization_profile_table::*;
 pub use my_payment_table::*;
 pub use my_profile_table::*;
+pub use my_public_embed_config_table::*;
+pub use my_service_table::*;
 pub use my_statement_line_table::*;
+pub use my_transaction_table::*;
+pub use my_transaction_visibility_table::*;
+pub use my_trust_score_history_table::*;
+pub use my_trust_score_table::*;
 pub use my_vendor_table::*;
 pub use my_verification_access_log_table::*;
 pub use my_verification_table::*;
+pub use node_visibility_row_type::NodeVisibilityRow;
 pub use operator_type::Operator;
 pub use organization_profile_row_type::OrganizationProfileRow;
 pub use payment_row_type::PaymentRow;
 pub use post_donor_update_reducer::post_donor_update;
 pub use profile_row_type::ProfileRow;
+pub use public_badge_row_type::PublicBadgeRow;
+pub use public_badge_table::*;
+pub use public_campaign_row_type::PublicCampaignRow;
+pub use public_campaign_table::*;
+pub use public_organization_row_type::PublicOrganizationRow;
+pub use public_organization_table::*;
+pub use recompute_trust_reducer::recompute_trust;
 pub use record_donation_reducer::record_donation;
+pub use record_flags_reducer::record_flags;
+pub use record_rubric_reducer::record_rubric;
+pub use regenerate_embed_token_reducer::regenerate_embed_token;
+pub use register_service_reducer::register_service;
+pub use reject_chain_reducer::reject_chain;
 pub use remove_access_group_member_reducer::remove_access_group_member;
 pub use remove_member_reducer::remove_member;
+pub use remove_node_visibility_reducer::remove_node_visibility;
 pub use remove_operator_reducer::remove_operator;
+pub use remove_service_reducer::remove_service;
+pub use remove_transaction_visibility_reducer::remove_transaction_visibility;
+pub use request_chain_reducer::request_chain;
+pub use resolve_flag_reducer::resolve_flag;
+pub use revoke_chain_reducer::revoke_chain;
 pub use run_command_reducer::run_command;
+pub use service_row_type::ServiceRow;
+pub use set_node_visibility_reducer::set_node_visibility;
 pub use set_profile_reducer::set_profile;
+pub use set_transaction_visibility_reducer::set_transaction_visibility;
 pub use statement_line_row_type::StatementLineRow;
+pub use transaction_row_type::TransactionRow;
+pub use transaction_visibility_row_type::TransactionVisibilityRow;
+pub use trust_history_row_type::TrustHistoryRow;
+pub use trust_score_row_type::TrustScoreRow;
 pub use update_access_group_reducer::update_access_group;
 pub use update_campaign_reducer::update_campaign;
+pub use update_chain_permissions_reducer::update_chain_permissions;
 pub use update_donation_status_reducer::update_donation_status;
+pub use update_flow_node_reducer::update_flow_node;
 pub use update_organization_profile_reducer::update_organization_profile;
+pub use update_public_embed_config_reducer::update_public_embed_config;
+pub use update_transaction_reducer::update_transaction;
 pub use vendor_row_type::VendorRow;
 pub use verification_access_row_type::VerificationAccessRow;
 pub use verification_row_type::VerificationRow;
@@ -202,6 +304,14 @@ pub enum Reducer {
     AddOperator {
         identity: __sdk::Identity,
     },
+    ApproveChain {
+        chain_id: String,
+        granted_group_id: String,
+        link_node_id: Option<String>,
+    },
+    CancelChainRequest {
+        chain_id: String,
+    },
     CreateAccessGroup {
         org_id: String,
         group_json: String,
@@ -213,11 +323,19 @@ pub enum Reducer {
     CreateDefaultAccessGroups {
         org_id: String,
     },
+    CreateFlowNode {
+        org_id: String,
+        node_json: String,
+    },
     CreateOrgLedger {
         org_id: String,
         base_currency: String,
         fiscal_year: u32,
         display_name: String,
+    },
+    CreateTransaction {
+        org_id: String,
+        transaction_json: String,
     },
     CreateVerification {
         org_id: String,
@@ -245,6 +363,11 @@ pub enum Reducer {
         email: String,
         valid_until: Option<String>,
     },
+    LinkTransactionEntries {
+        org_id: String,
+        transaction_id: String,
+        entry_ids: Vec<String>,
+    },
     LogVerificationAccess {
         org_id: String,
         verification_id: String,
@@ -258,9 +381,32 @@ pub enum Reducer {
         org_id: String,
         update_json: String,
     },
+    RecomputeTrust {
+        org_id: String,
+    },
     RecordDonation {
         org_id: String,
         donation_json: String,
+    },
+    RecordFlags {
+        org_id: String,
+        batch_json: String,
+    },
+    RecordRubric {
+        org_id: String,
+        rubric_json: String,
+    },
+    RegenerateEmbedToken {
+        org_id: String,
+    },
+    RegisterService {
+        identity: __sdk::Identity,
+        label: String,
+        scopes: Vec<String>,
+    },
+    RejectChain {
+        chain_id: String,
+        reason: Option<String>,
     },
     RemoveAccessGroupMember {
         org_id: String,
@@ -270,17 +416,56 @@ pub enum Reducer {
         org_id: String,
         identity: __sdk::Identity,
     },
+    RemoveNodeVisibility {
+        org_id: String,
+        node_id: String,
+        group_id: String,
+    },
     RemoveOperator {
         identity: __sdk::Identity,
+    },
+    RemoveService {
+        identity: __sdk::Identity,
+    },
+    RemoveTransactionVisibility {
+        org_id: String,
+        transaction_id: String,
+        group_id: String,
+    },
+    RequestChain {
+        source_org_id: String,
+        target_org_id: String,
+        message: Option<String>,
+    },
+    ResolveFlag {
+        org_id: String,
+        flag_id: String,
+        resolution: String,
+        reason: Option<String>,
+    },
+    RevokeChain {
+        chain_id: String,
     },
     RunCommand {
         org_id: String,
         request_id: String,
         command_json: String,
     },
+    SetNodeVisibility {
+        org_id: String,
+        node_id: String,
+        group_id: String,
+        settings_json: String,
+    },
     SetProfile {
         display_name: String,
         email: String,
+    },
+    SetTransactionVisibility {
+        org_id: String,
+        transaction_id: String,
+        group_id: String,
+        settings_json: String,
     },
     UpdateAccessGroup {
         org_id: String,
@@ -292,14 +477,33 @@ pub enum Reducer {
         campaign_id: String,
         patch_json: String,
     },
+    UpdateChainPermissions {
+        chain_id: String,
+        granted_group_id: String,
+        link_node_id: Option<String>,
+    },
     UpdateDonationStatus {
         org_id: String,
         donation_id: String,
         status: String,
         payment_reference: Option<String>,
     },
+    UpdateFlowNode {
+        org_id: String,
+        node_id: String,
+        patch_json: String,
+    },
     UpdateOrganizationProfile {
         org_id: String,
+        patch_json: String,
+    },
+    UpdatePublicEmbedConfig {
+        org_id: String,
+        patch_json: String,
+    },
+    UpdateTransaction {
+        org_id: String,
+        transaction_id: String,
         patch_json: String,
     },
 }
@@ -314,29 +518,52 @@ impl __sdk::Reducer for Reducer {
             Reducer::AddAccessGroupMember { .. } => "add_access_group_member",
             Reducer::AddMember { .. } => "add_member",
             Reducer::AddOperator { .. } => "add_operator",
+            Reducer::ApproveChain { .. } => "approve_chain",
+            Reducer::CancelChainRequest { .. } => "cancel_chain_request",
             Reducer::CreateAccessGroup { .. } => "create_access_group",
             Reducer::CreateCampaign { .. } => "create_campaign",
             Reducer::CreateDefaultAccessGroups { .. } => "create_default_access_groups",
+            Reducer::CreateFlowNode { .. } => "create_flow_node",
             Reducer::CreateOrgLedger { .. } => "create_org_ledger",
+            Reducer::CreateTransaction { .. } => "create_transaction",
             Reducer::CreateVerification { .. } => "create_verification",
             Reducer::DeleteAccessGroup { .. } => "delete_access_group",
             Reducer::DeleteCampaign { .. } => "delete_campaign",
             Reducer::ImportBooks { .. } => "import_books",
             Reducer::ImportTransparency { .. } => "import_transparency",
             Reducer::InviteAccessGroupMember { .. } => "invite_access_group_member",
+            Reducer::LinkTransactionEntries { .. } => "link_transaction_entries",
             Reducer::LogVerificationAccess { .. } => "log_verification_access",
             Reducer::MarkDonorUpdateSent { .. } => "mark_donor_update_sent",
             Reducer::PostDonorUpdate { .. } => "post_donor_update",
+            Reducer::RecomputeTrust { .. } => "recompute_trust",
             Reducer::RecordDonation { .. } => "record_donation",
+            Reducer::RecordFlags { .. } => "record_flags",
+            Reducer::RecordRubric { .. } => "record_rubric",
+            Reducer::RegenerateEmbedToken { .. } => "regenerate_embed_token",
+            Reducer::RegisterService { .. } => "register_service",
+            Reducer::RejectChain { .. } => "reject_chain",
             Reducer::RemoveAccessGroupMember { .. } => "remove_access_group_member",
             Reducer::RemoveMember { .. } => "remove_member",
+            Reducer::RemoveNodeVisibility { .. } => "remove_node_visibility",
             Reducer::RemoveOperator { .. } => "remove_operator",
+            Reducer::RemoveService { .. } => "remove_service",
+            Reducer::RemoveTransactionVisibility { .. } => "remove_transaction_visibility",
+            Reducer::RequestChain { .. } => "request_chain",
+            Reducer::ResolveFlag { .. } => "resolve_flag",
+            Reducer::RevokeChain { .. } => "revoke_chain",
             Reducer::RunCommand { .. } => "run_command",
+            Reducer::SetNodeVisibility { .. } => "set_node_visibility",
             Reducer::SetProfile { .. } => "set_profile",
+            Reducer::SetTransactionVisibility { .. } => "set_transaction_visibility",
             Reducer::UpdateAccessGroup { .. } => "update_access_group",
             Reducer::UpdateCampaign { .. } => "update_campaign",
+            Reducer::UpdateChainPermissions { .. } => "update_chain_permissions",
             Reducer::UpdateDonationStatus { .. } => "update_donation_status",
+            Reducer::UpdateFlowNode { .. } => "update_flow_node",
             Reducer::UpdateOrganizationProfile { .. } => "update_organization_profile",
+            Reducer::UpdatePublicEmbedConfig { .. } => "update_public_embed_config",
+            Reducer::UpdateTransaction { .. } => "update_transaction",
             _ => unreachable!(),
         }
     }
@@ -374,6 +601,20 @@ impl __sdk::Reducer for Reducer {
                     identity: identity.clone(),
                 })
             }
+            Reducer::ApproveChain {
+                chain_id,
+                granted_group_id,
+                link_node_id,
+            } => __sats::bsatn::to_vec(&approve_chain_reducer::ApproveChainArgs {
+                chain_id: chain_id.clone(),
+                granted_group_id: granted_group_id.clone(),
+                link_node_id: link_node_id.clone(),
+            }),
+            Reducer::CancelChainRequest { chain_id } => {
+                __sats::bsatn::to_vec(&cancel_chain_request_reducer::CancelChainRequestArgs {
+                    chain_id: chain_id.clone(),
+                })
+            }
             Reducer::CreateAccessGroup { org_id, group_json } => {
                 __sats::bsatn::to_vec(&create_access_group_reducer::CreateAccessGroupArgs {
                     org_id: org_id.clone(),
@@ -392,6 +633,12 @@ impl __sdk::Reducer for Reducer {
                     org_id: org_id.clone(),
                 },
             ),
+            Reducer::CreateFlowNode { org_id, node_json } => {
+                __sats::bsatn::to_vec(&create_flow_node_reducer::CreateFlowNodeArgs {
+                    org_id: org_id.clone(),
+                    node_json: node_json.clone(),
+                })
+            }
             Reducer::CreateOrgLedger {
                 org_id,
                 base_currency,
@@ -402,6 +649,13 @@ impl __sdk::Reducer for Reducer {
                 base_currency: base_currency.clone(),
                 fiscal_year: fiscal_year.clone(),
                 display_name: display_name.clone(),
+            }),
+            Reducer::CreateTransaction {
+                org_id,
+                transaction_json,
+            } => __sats::bsatn::to_vec(&create_transaction_reducer::CreateTransactionArgs {
+                org_id: org_id.clone(),
+                transaction_json: transaction_json.clone(),
             }),
             Reducer::CreateVerification {
                 org_id,
@@ -448,6 +702,17 @@ impl __sdk::Reducer for Reducer {
                     valid_until: valid_until.clone(),
                 },
             ),
+            Reducer::LinkTransactionEntries {
+                org_id,
+                transaction_id,
+                entry_ids,
+            } => __sats::bsatn::to_vec(
+                &link_transaction_entries_reducer::LinkTransactionEntriesArgs {
+                    org_id: org_id.clone(),
+                    transaction_id: transaction_id.clone(),
+                    entry_ids: entry_ids.clone(),
+                },
+            ),
             Reducer::LogVerificationAccess {
                 org_id,
                 verification_id,
@@ -472,6 +737,11 @@ impl __sdk::Reducer for Reducer {
                 org_id: org_id.clone(),
                 update_json: update_json.clone(),
             }),
+            Reducer::RecomputeTrust { org_id } => {
+                __sats::bsatn::to_vec(&recompute_trust_reducer::RecomputeTrustArgs {
+                    org_id: org_id.clone(),
+                })
+            }
             Reducer::RecordDonation {
                 org_id,
                 donation_json,
@@ -479,6 +749,39 @@ impl __sdk::Reducer for Reducer {
                 org_id: org_id.clone(),
                 donation_json: donation_json.clone(),
             }),
+            Reducer::RecordFlags { org_id, batch_json } => {
+                __sats::bsatn::to_vec(&record_flags_reducer::RecordFlagsArgs {
+                    org_id: org_id.clone(),
+                    batch_json: batch_json.clone(),
+                })
+            }
+            Reducer::RecordRubric {
+                org_id,
+                rubric_json,
+            } => __sats::bsatn::to_vec(&record_rubric_reducer::RecordRubricArgs {
+                org_id: org_id.clone(),
+                rubric_json: rubric_json.clone(),
+            }),
+            Reducer::RegenerateEmbedToken { org_id } => {
+                __sats::bsatn::to_vec(&regenerate_embed_token_reducer::RegenerateEmbedTokenArgs {
+                    org_id: org_id.clone(),
+                })
+            }
+            Reducer::RegisterService {
+                identity,
+                label,
+                scopes,
+            } => __sats::bsatn::to_vec(&register_service_reducer::RegisterServiceArgs {
+                identity: identity.clone(),
+                label: label.clone(),
+                scopes: scopes.clone(),
+            }),
+            Reducer::RejectChain { chain_id, reason } => {
+                __sats::bsatn::to_vec(&reject_chain_reducer::RejectChainArgs {
+                    chain_id: chain_id.clone(),
+                    reason: reason.clone(),
+                })
+            }
             Reducer::RemoveAccessGroupMember { org_id, member_id } => __sats::bsatn::to_vec(
                 &remove_access_group_member_reducer::RemoveAccessGroupMemberArgs {
                     org_id: org_id.clone(),
@@ -491,9 +794,59 @@ impl __sdk::Reducer for Reducer {
                     identity: identity.clone(),
                 })
             }
+            Reducer::RemoveNodeVisibility {
+                org_id,
+                node_id,
+                group_id,
+            } => __sats::bsatn::to_vec(&remove_node_visibility_reducer::RemoveNodeVisibilityArgs {
+                org_id: org_id.clone(),
+                node_id: node_id.clone(),
+                group_id: group_id.clone(),
+            }),
             Reducer::RemoveOperator { identity } => {
                 __sats::bsatn::to_vec(&remove_operator_reducer::RemoveOperatorArgs {
                     identity: identity.clone(),
+                })
+            }
+            Reducer::RemoveService { identity } => {
+                __sats::bsatn::to_vec(&remove_service_reducer::RemoveServiceArgs {
+                    identity: identity.clone(),
+                })
+            }
+            Reducer::RemoveTransactionVisibility {
+                org_id,
+                transaction_id,
+                group_id,
+            } => __sats::bsatn::to_vec(
+                &remove_transaction_visibility_reducer::RemoveTransactionVisibilityArgs {
+                    org_id: org_id.clone(),
+                    transaction_id: transaction_id.clone(),
+                    group_id: group_id.clone(),
+                },
+            ),
+            Reducer::RequestChain {
+                source_org_id,
+                target_org_id,
+                message,
+            } => __sats::bsatn::to_vec(&request_chain_reducer::RequestChainArgs {
+                source_org_id: source_org_id.clone(),
+                target_org_id: target_org_id.clone(),
+                message: message.clone(),
+            }),
+            Reducer::ResolveFlag {
+                org_id,
+                flag_id,
+                resolution,
+                reason,
+            } => __sats::bsatn::to_vec(&resolve_flag_reducer::ResolveFlagArgs {
+                org_id: org_id.clone(),
+                flag_id: flag_id.clone(),
+                resolution: resolution.clone(),
+                reason: reason.clone(),
+            }),
+            Reducer::RevokeChain { chain_id } => {
+                __sats::bsatn::to_vec(&revoke_chain_reducer::RevokeChainArgs {
+                    chain_id: chain_id.clone(),
                 })
             }
             Reducer::RunCommand {
@@ -505,6 +858,17 @@ impl __sdk::Reducer for Reducer {
                 request_id: request_id.clone(),
                 command_json: command_json.clone(),
             }),
+            Reducer::SetNodeVisibility {
+                org_id,
+                node_id,
+                group_id,
+                settings_json,
+            } => __sats::bsatn::to_vec(&set_node_visibility_reducer::SetNodeVisibilityArgs {
+                org_id: org_id.clone(),
+                node_id: node_id.clone(),
+                group_id: group_id.clone(),
+                settings_json: settings_json.clone(),
+            }),
             Reducer::SetProfile {
                 display_name,
                 email,
@@ -512,6 +876,19 @@ impl __sdk::Reducer for Reducer {
                 display_name: display_name.clone(),
                 email: email.clone(),
             }),
+            Reducer::SetTransactionVisibility {
+                org_id,
+                transaction_id,
+                group_id,
+                settings_json,
+            } => __sats::bsatn::to_vec(
+                &set_transaction_visibility_reducer::SetTransactionVisibilityArgs {
+                    org_id: org_id.clone(),
+                    transaction_id: transaction_id.clone(),
+                    group_id: group_id.clone(),
+                    settings_json: settings_json.clone(),
+                },
+            ),
             Reducer::UpdateAccessGroup {
                 org_id,
                 group_id,
@@ -530,6 +907,17 @@ impl __sdk::Reducer for Reducer {
                 campaign_id: campaign_id.clone(),
                 patch_json: patch_json.clone(),
             }),
+            Reducer::UpdateChainPermissions {
+                chain_id,
+                granted_group_id,
+                link_node_id,
+            } => __sats::bsatn::to_vec(
+                &update_chain_permissions_reducer::UpdateChainPermissionsArgs {
+                    chain_id: chain_id.clone(),
+                    granted_group_id: granted_group_id.clone(),
+                    link_node_id: link_node_id.clone(),
+                },
+            ),
             Reducer::UpdateDonationStatus {
                 org_id,
                 donation_id,
@@ -541,12 +929,36 @@ impl __sdk::Reducer for Reducer {
                 status: status.clone(),
                 payment_reference: payment_reference.clone(),
             }),
+            Reducer::UpdateFlowNode {
+                org_id,
+                node_id,
+                patch_json,
+            } => __sats::bsatn::to_vec(&update_flow_node_reducer::UpdateFlowNodeArgs {
+                org_id: org_id.clone(),
+                node_id: node_id.clone(),
+                patch_json: patch_json.clone(),
+            }),
             Reducer::UpdateOrganizationProfile { org_id, patch_json } => __sats::bsatn::to_vec(
                 &update_organization_profile_reducer::UpdateOrganizationProfileArgs {
                     org_id: org_id.clone(),
                     patch_json: patch_json.clone(),
                 },
             ),
+            Reducer::UpdatePublicEmbedConfig { org_id, patch_json } => __sats::bsatn::to_vec(
+                &update_public_embed_config_reducer::UpdatePublicEmbedConfigArgs {
+                    org_id: org_id.clone(),
+                    patch_json: patch_json.clone(),
+                },
+            ),
+            Reducer::UpdateTransaction {
+                org_id,
+                transaction_id,
+                patch_json,
+            } => __sats::bsatn::to_vec(&update_transaction_reducer::UpdateTransactionArgs {
+                org_id: org_id.clone(),
+                transaction_id: transaction_id.clone(),
+                patch_json: patch_json.clone(),
+            }),
             _ => unreachable!(),
         }
     }
@@ -566,25 +978,39 @@ pub struct DbUpdate {
     my_budget_line: __sdk::TableUpdate<BudgetLineRow>,
     my_campaign: __sdk::TableUpdate<CampaignRow>,
     my_campaign_stat: __sdk::TableUpdate<CampaignStatRow>,
+    my_chain_activity_log: __sdk::TableUpdate<ChainActivityRow>,
     my_command_result: __sdk::TableUpdate<CommandResult>,
     my_dimension: __sdk::TableUpdate<DimensionRow>,
     my_donation: __sdk::TableUpdate<DonationRow>,
     my_donor_update: __sdk::TableUpdate<DonorUpdateRow>,
     my_expense_claim: __sdk::TableUpdate<ExpenseClaimRow>,
     my_fiscal_period: __sdk::TableUpdate<FiscalPeriodRow>,
+    my_flag: __sdk::TableUpdate<FlagRow>,
+    my_flow_node: __sdk::TableUpdate<FlowNodeRow>,
     my_fund: __sdk::TableUpdate<FundRow>,
     my_grant: __sdk::TableUpdate<GrantRow>,
     my_journal_entry: __sdk::TableUpdate<JournalEntryRow>,
     my_journal_line: __sdk::TableUpdate<JournalLineRow>,
     my_ledger_org: __sdk::TableUpdate<LedgerOrg>,
     my_member: __sdk::TableUpdate<Member>,
+    my_node_visibility: __sdk::TableUpdate<NodeVisibilityRow>,
+    my_organization_chain: __sdk::TableUpdate<ChainRow>,
     my_organization_profile: __sdk::TableUpdate<OrganizationProfileRow>,
     my_payment: __sdk::TableUpdate<PaymentRow>,
     my_profile: __sdk::TableUpdate<ProfileRow>,
+    my_public_embed_config: __sdk::TableUpdate<EmbedConfigRow>,
+    my_service: __sdk::TableUpdate<ServiceRow>,
     my_statement_line: __sdk::TableUpdate<StatementLineRow>,
+    my_transaction: __sdk::TableUpdate<TransactionRow>,
+    my_transaction_visibility: __sdk::TableUpdate<TransactionVisibilityRow>,
+    my_trust_score: __sdk::TableUpdate<TrustScoreRow>,
+    my_trust_score_history: __sdk::TableUpdate<TrustHistoryRow>,
     my_vendor: __sdk::TableUpdate<VendorRow>,
     my_verification: __sdk::TableUpdate<VerificationRow>,
     my_verification_access_log: __sdk::TableUpdate<VerificationAccessRow>,
+    public_badge: __sdk::TableUpdate<PublicBadgeRow>,
+    public_campaign: __sdk::TableUpdate<PublicCampaignRow>,
+    public_organization: __sdk::TableUpdate<PublicOrganizationRow>,
 }
 
 impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
@@ -623,6 +1049,9 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_campaign_stat" => db_update
                     .my_campaign_stat
                     .append(my_campaign_stat_table::parse_table_update(table_update)?),
+                "my_chain_activity_log" => db_update.my_chain_activity_log.append(
+                    my_chain_activity_log_table::parse_table_update(table_update)?,
+                ),
                 "my_command_result" => db_update
                     .my_command_result
                     .append(my_command_result_table::parse_table_update(table_update)?),
@@ -641,6 +1070,12 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_fiscal_period" => db_update
                     .my_fiscal_period
                     .append(my_fiscal_period_table::parse_table_update(table_update)?),
+                "my_flag" => db_update
+                    .my_flag
+                    .append(my_flag_table::parse_table_update(table_update)?),
+                "my_flow_node" => db_update
+                    .my_flow_node
+                    .append(my_flow_node_table::parse_table_update(table_update)?),
                 "my_fund" => db_update
                     .my_fund
                     .append(my_fund_table::parse_table_update(table_update)?),
@@ -659,6 +1094,12 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_member" => db_update
                     .my_member
                     .append(my_member_table::parse_table_update(table_update)?),
+                "my_node_visibility" => db_update
+                    .my_node_visibility
+                    .append(my_node_visibility_table::parse_table_update(table_update)?),
+                "my_organization_chain" => db_update.my_organization_chain.append(
+                    my_organization_chain_table::parse_table_update(table_update)?,
+                ),
                 "my_organization_profile" => db_update.my_organization_profile.append(
                     my_organization_profile_table::parse_table_update(table_update)?,
                 ),
@@ -668,9 +1109,27 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_profile" => db_update
                     .my_profile
                     .append(my_profile_table::parse_table_update(table_update)?),
+                "my_public_embed_config" => db_update.my_public_embed_config.append(
+                    my_public_embed_config_table::parse_table_update(table_update)?,
+                ),
+                "my_service" => db_update
+                    .my_service
+                    .append(my_service_table::parse_table_update(table_update)?),
                 "my_statement_line" => db_update
                     .my_statement_line
                     .append(my_statement_line_table::parse_table_update(table_update)?),
+                "my_transaction" => db_update
+                    .my_transaction
+                    .append(my_transaction_table::parse_table_update(table_update)?),
+                "my_transaction_visibility" => db_update.my_transaction_visibility.append(
+                    my_transaction_visibility_table::parse_table_update(table_update)?,
+                ),
+                "my_trust_score" => db_update
+                    .my_trust_score
+                    .append(my_trust_score_table::parse_table_update(table_update)?),
+                "my_trust_score_history" => db_update.my_trust_score_history.append(
+                    my_trust_score_history_table::parse_table_update(table_update)?,
+                ),
                 "my_vendor" => db_update
                     .my_vendor
                     .append(my_vendor_table::parse_table_update(table_update)?),
@@ -680,6 +1139,15 @@ impl TryFrom<__ws::v2::TransactionUpdate> for DbUpdate {
                 "my_verification_access_log" => db_update.my_verification_access_log.append(
                     my_verification_access_log_table::parse_table_update(table_update)?,
                 ),
+                "public_badge" => db_update
+                    .public_badge
+                    .append(public_badge_table::parse_table_update(table_update)?),
+                "public_campaign" => db_update
+                    .public_campaign
+                    .append(public_campaign_table::parse_table_update(table_update)?),
+                "public_organization" => db_update
+                    .public_organization
+                    .append(public_organization_table::parse_table_update(table_update)?),
 
                 unknown => {
                     return Err(__sdk::InternalError::unknown_name(
@@ -706,6 +1174,18 @@ impl __sdk::DbUpdate for DbUpdate {
     ) -> AppliedDiff<'_> {
         let mut diff = AppliedDiff::default();
 
+        diff.public_badge = cache
+            .apply_diff_to_table::<PublicBadgeRow>("public_badge", &self.public_badge)
+            .with_updates_by_pk(|row| &row.org_id);
+        diff.public_campaign = cache
+            .apply_diff_to_table::<PublicCampaignRow>("public_campaign", &self.public_campaign)
+            .with_updates_by_pk(|row| &row.campaign_id);
+        diff.public_organization = cache
+            .apply_diff_to_table::<PublicOrganizationRow>(
+                "public_organization",
+                &self.public_organization,
+            )
+            .with_updates_by_pk(|row| &row.org_id);
         diff.my_access_group = cache
             .apply_diff_to_table::<AccessGroupRow>("my_access_group", &self.my_access_group)
             .with_updates_by_pk(|row| &row.key);
@@ -739,6 +1219,10 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.my_campaign_stat = cache
             .apply_diff_to_table::<CampaignStatRow>("my_campaign_stat", &self.my_campaign_stat)
             .with_updates_by_pk(|row| &row.key);
+        diff.my_chain_activity_log = cache.apply_diff_to_table::<ChainActivityRow>(
+            "my_chain_activity_log",
+            &self.my_chain_activity_log,
+        );
         diff.my_command_result = cache
             .apply_diff_to_table::<CommandResult>("my_command_result", &self.my_command_result)
             .with_updates_by_pk(|row| &row.identity);
@@ -757,6 +1241,12 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.my_fiscal_period = cache
             .apply_diff_to_table::<FiscalPeriodRow>("my_fiscal_period", &self.my_fiscal_period)
             .with_updates_by_pk(|row| &row.key);
+        diff.my_flag = cache
+            .apply_diff_to_table::<FlagRow>("my_flag", &self.my_flag)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_flow_node = cache
+            .apply_diff_to_table::<FlowNodeRow>("my_flow_node", &self.my_flow_node)
+            .with_updates_by_pk(|row| &row.key);
         diff.my_fund = cache
             .apply_diff_to_table::<FundRow>("my_fund", &self.my_fund)
             .with_updates_by_pk(|row| &row.key);
@@ -773,6 +1263,14 @@ impl __sdk::DbUpdate for DbUpdate {
             .apply_diff_to_table::<LedgerOrg>("my_ledger_org", &self.my_ledger_org)
             .with_updates_by_pk(|row| &row.org_id);
         diff.my_member = cache.apply_diff_to_table::<Member>("my_member", &self.my_member);
+        diff.my_node_visibility = cache
+            .apply_diff_to_table::<NodeVisibilityRow>(
+                "my_node_visibility",
+                &self.my_node_visibility,
+            )
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_organization_chain = cache
+            .apply_diff_to_table::<ChainRow>("my_organization_chain", &self.my_organization_chain);
         diff.my_organization_profile = cache
             .apply_diff_to_table::<OrganizationProfileRow>(
                 "my_organization_profile",
@@ -783,8 +1281,35 @@ impl __sdk::DbUpdate for DbUpdate {
             .apply_diff_to_table::<PaymentRow>("my_payment", &self.my_payment)
             .with_updates_by_pk(|row| &row.key);
         diff.my_profile = cache.apply_diff_to_table::<ProfileRow>("my_profile", &self.my_profile);
+        diff.my_public_embed_config = cache
+            .apply_diff_to_table::<EmbedConfigRow>(
+                "my_public_embed_config",
+                &self.my_public_embed_config,
+            )
+            .with_updates_by_pk(|row| &row.org_id);
+        diff.my_service = cache
+            .apply_diff_to_table::<ServiceRow>("my_service", &self.my_service)
+            .with_updates_by_pk(|row| &row.identity);
         diff.my_statement_line = cache
             .apply_diff_to_table::<StatementLineRow>("my_statement_line", &self.my_statement_line)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_transaction = cache
+            .apply_diff_to_table::<TransactionRow>("my_transaction", &self.my_transaction)
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_transaction_visibility = cache
+            .apply_diff_to_table::<TransactionVisibilityRow>(
+                "my_transaction_visibility",
+                &self.my_transaction_visibility,
+            )
+            .with_updates_by_pk(|row| &row.key);
+        diff.my_trust_score = cache
+            .apply_diff_to_table::<TrustScoreRow>("my_trust_score", &self.my_trust_score)
+            .with_updates_by_pk(|row| &row.org_id);
+        diff.my_trust_score_history = cache
+            .apply_diff_to_table::<TrustHistoryRow>(
+                "my_trust_score_history",
+                &self.my_trust_score_history,
+            )
             .with_updates_by_pk(|row| &row.key);
         diff.my_vendor = cache
             .apply_diff_to_table::<VendorRow>("my_vendor", &self.my_vendor)
@@ -832,6 +1357,9 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_campaign_stat" => db_update
                     .my_campaign_stat
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_chain_activity_log" => db_update
+                    .my_chain_activity_log
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_command_result" => db_update
                     .my_command_result
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
@@ -849,6 +1377,12 @@ impl __sdk::DbUpdate for DbUpdate {
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_fiscal_period" => db_update
                     .my_fiscal_period
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_flag" => db_update
+                    .my_flag
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_flow_node" => db_update
+                    .my_flow_node
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_fund" => db_update
                     .my_fund
@@ -868,6 +1402,12 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_member" => db_update
                     .my_member
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_node_visibility" => db_update
+                    .my_node_visibility
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_organization_chain" => db_update
+                    .my_organization_chain
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_organization_profile" => db_update
                     .my_organization_profile
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
@@ -877,8 +1417,26 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_profile" => db_update
                     .my_profile
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_public_embed_config" => db_update
+                    .my_public_embed_config
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_service" => db_update
+                    .my_service
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_statement_line" => db_update
                     .my_statement_line
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_transaction" => db_update
+                    .my_transaction
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_transaction_visibility" => db_update
+                    .my_transaction_visibility
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_trust_score" => db_update
+                    .my_trust_score
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "my_trust_score_history" => db_update
+                    .my_trust_score_history
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_vendor" => db_update
                     .my_vendor
@@ -888,6 +1446,15 @@ impl __sdk::DbUpdate for DbUpdate {
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 "my_verification_access_log" => db_update
                     .my_verification_access_log
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "public_badge" => db_update
+                    .public_badge
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "public_campaign" => db_update
+                    .public_campaign
+                    .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
+                "public_organization" => db_update
+                    .public_organization
                     .append(__sdk::parse_row_list_as_inserts(table_rows.rows)?),
                 unknown => {
                     return Err(
@@ -932,6 +1499,9 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_campaign_stat" => db_update
                     .my_campaign_stat
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_chain_activity_log" => db_update
+                    .my_chain_activity_log
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_command_result" => db_update
                     .my_command_result
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
@@ -949,6 +1519,12 @@ impl __sdk::DbUpdate for DbUpdate {
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_fiscal_period" => db_update
                     .my_fiscal_period
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_flag" => db_update
+                    .my_flag
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_flow_node" => db_update
+                    .my_flow_node
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_fund" => db_update
                     .my_fund
@@ -968,6 +1544,12 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_member" => db_update
                     .my_member
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_node_visibility" => db_update
+                    .my_node_visibility
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_organization_chain" => db_update
+                    .my_organization_chain
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_organization_profile" => db_update
                     .my_organization_profile
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
@@ -977,8 +1559,26 @@ impl __sdk::DbUpdate for DbUpdate {
                 "my_profile" => db_update
                     .my_profile
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_public_embed_config" => db_update
+                    .my_public_embed_config
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_service" => db_update
+                    .my_service
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_statement_line" => db_update
                     .my_statement_line
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_transaction" => db_update
+                    .my_transaction
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_transaction_visibility" => db_update
+                    .my_transaction_visibility
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_trust_score" => db_update
+                    .my_trust_score
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "my_trust_score_history" => db_update
+                    .my_trust_score_history
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_vendor" => db_update
                     .my_vendor
@@ -988,6 +1588,15 @@ impl __sdk::DbUpdate for DbUpdate {
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 "my_verification_access_log" => db_update
                     .my_verification_access_log
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "public_badge" => db_update
+                    .public_badge
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "public_campaign" => db_update
+                    .public_campaign
+                    .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
+                "public_organization" => db_update
+                    .public_organization
                     .append(__sdk::parse_row_list_as_deletes(table_rows.rows)?),
                 unknown => {
                     return Err(
@@ -1014,25 +1623,39 @@ pub struct AppliedDiff<'r> {
     my_budget_line: __sdk::TableAppliedDiff<'r, BudgetLineRow>,
     my_campaign: __sdk::TableAppliedDiff<'r, CampaignRow>,
     my_campaign_stat: __sdk::TableAppliedDiff<'r, CampaignStatRow>,
+    my_chain_activity_log: __sdk::TableAppliedDiff<'r, ChainActivityRow>,
     my_command_result: __sdk::TableAppliedDiff<'r, CommandResult>,
     my_dimension: __sdk::TableAppliedDiff<'r, DimensionRow>,
     my_donation: __sdk::TableAppliedDiff<'r, DonationRow>,
     my_donor_update: __sdk::TableAppliedDiff<'r, DonorUpdateRow>,
     my_expense_claim: __sdk::TableAppliedDiff<'r, ExpenseClaimRow>,
     my_fiscal_period: __sdk::TableAppliedDiff<'r, FiscalPeriodRow>,
+    my_flag: __sdk::TableAppliedDiff<'r, FlagRow>,
+    my_flow_node: __sdk::TableAppliedDiff<'r, FlowNodeRow>,
     my_fund: __sdk::TableAppliedDiff<'r, FundRow>,
     my_grant: __sdk::TableAppliedDiff<'r, GrantRow>,
     my_journal_entry: __sdk::TableAppliedDiff<'r, JournalEntryRow>,
     my_journal_line: __sdk::TableAppliedDiff<'r, JournalLineRow>,
     my_ledger_org: __sdk::TableAppliedDiff<'r, LedgerOrg>,
     my_member: __sdk::TableAppliedDiff<'r, Member>,
+    my_node_visibility: __sdk::TableAppliedDiff<'r, NodeVisibilityRow>,
+    my_organization_chain: __sdk::TableAppliedDiff<'r, ChainRow>,
     my_organization_profile: __sdk::TableAppliedDiff<'r, OrganizationProfileRow>,
     my_payment: __sdk::TableAppliedDiff<'r, PaymentRow>,
     my_profile: __sdk::TableAppliedDiff<'r, ProfileRow>,
+    my_public_embed_config: __sdk::TableAppliedDiff<'r, EmbedConfigRow>,
+    my_service: __sdk::TableAppliedDiff<'r, ServiceRow>,
     my_statement_line: __sdk::TableAppliedDiff<'r, StatementLineRow>,
+    my_transaction: __sdk::TableAppliedDiff<'r, TransactionRow>,
+    my_transaction_visibility: __sdk::TableAppliedDiff<'r, TransactionVisibilityRow>,
+    my_trust_score: __sdk::TableAppliedDiff<'r, TrustScoreRow>,
+    my_trust_score_history: __sdk::TableAppliedDiff<'r, TrustHistoryRow>,
     my_vendor: __sdk::TableAppliedDiff<'r, VendorRow>,
     my_verification: __sdk::TableAppliedDiff<'r, VerificationRow>,
     my_verification_access_log: __sdk::TableAppliedDiff<'r, VerificationAccessRow>,
+    public_badge: __sdk::TableAppliedDiff<'r, PublicBadgeRow>,
+    public_campaign: __sdk::TableAppliedDiff<'r, PublicCampaignRow>,
+    public_organization: __sdk::TableAppliedDiff<'r, PublicOrganizationRow>,
     __unused: std::marker::PhantomData<&'r ()>,
 }
 
@@ -1084,6 +1707,11 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
             &self.my_campaign_stat,
             event,
         );
+        callbacks.invoke_table_row_callbacks::<ChainActivityRow>(
+            "my_chain_activity_log",
+            &self.my_chain_activity_log,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<CommandResult>(
             "my_command_result",
             &self.my_command_result,
@@ -1114,6 +1742,12 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
             &self.my_fiscal_period,
             event,
         );
+        callbacks.invoke_table_row_callbacks::<FlagRow>("my_flag", &self.my_flag, event);
+        callbacks.invoke_table_row_callbacks::<FlowNodeRow>(
+            "my_flow_node",
+            &self.my_flow_node,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<FundRow>("my_fund", &self.my_fund, event);
         callbacks.invoke_table_row_callbacks::<GrantRow>("my_grant", &self.my_grant, event);
         callbacks.invoke_table_row_callbacks::<JournalEntryRow>(
@@ -1132,6 +1766,16 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
             event,
         );
         callbacks.invoke_table_row_callbacks::<Member>("my_member", &self.my_member, event);
+        callbacks.invoke_table_row_callbacks::<NodeVisibilityRow>(
+            "my_node_visibility",
+            &self.my_node_visibility,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<ChainRow>(
+            "my_organization_chain",
+            &self.my_organization_chain,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<OrganizationProfileRow>(
             "my_organization_profile",
             &self.my_organization_profile,
@@ -1139,9 +1783,35 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         );
         callbacks.invoke_table_row_callbacks::<PaymentRow>("my_payment", &self.my_payment, event);
         callbacks.invoke_table_row_callbacks::<ProfileRow>("my_profile", &self.my_profile, event);
+        callbacks.invoke_table_row_callbacks::<EmbedConfigRow>(
+            "my_public_embed_config",
+            &self.my_public_embed_config,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<ServiceRow>("my_service", &self.my_service, event);
         callbacks.invoke_table_row_callbacks::<StatementLineRow>(
             "my_statement_line",
             &self.my_statement_line,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<TransactionRow>(
+            "my_transaction",
+            &self.my_transaction,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<TransactionVisibilityRow>(
+            "my_transaction_visibility",
+            &self.my_transaction_visibility,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<TrustScoreRow>(
+            "my_trust_score",
+            &self.my_trust_score,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<TrustHistoryRow>(
+            "my_trust_score_history",
+            &self.my_trust_score_history,
             event,
         );
         callbacks.invoke_table_row_callbacks::<VendorRow>("my_vendor", &self.my_vendor, event);
@@ -1153,6 +1823,21 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         callbacks.invoke_table_row_callbacks::<VerificationAccessRow>(
             "my_verification_access_log",
             &self.my_verification_access_log,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<PublicBadgeRow>(
+            "public_badge",
+            &self.public_badge,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<PublicCampaignRow>(
+            "public_campaign",
+            &self.public_campaign,
+            event,
+        );
+        callbacks.invoke_table_row_callbacks::<PublicOrganizationRow>(
+            "public_organization",
+            &self.public_organization,
             event,
         );
     }
@@ -1825,25 +2510,39 @@ impl __sdk::SpacetimeModule for RemoteModule {
         my_budget_line_table::register_table(client_cache);
         my_campaign_table::register_table(client_cache);
         my_campaign_stat_table::register_table(client_cache);
+        my_chain_activity_log_table::register_table(client_cache);
         my_command_result_table::register_table(client_cache);
         my_dimension_table::register_table(client_cache);
         my_donation_table::register_table(client_cache);
         my_donor_update_table::register_table(client_cache);
         my_expense_claim_table::register_table(client_cache);
         my_fiscal_period_table::register_table(client_cache);
+        my_flag_table::register_table(client_cache);
+        my_flow_node_table::register_table(client_cache);
         my_fund_table::register_table(client_cache);
         my_grant_table::register_table(client_cache);
         my_journal_entry_table::register_table(client_cache);
         my_journal_line_table::register_table(client_cache);
         my_ledger_org_table::register_table(client_cache);
         my_member_table::register_table(client_cache);
+        my_node_visibility_table::register_table(client_cache);
+        my_organization_chain_table::register_table(client_cache);
         my_organization_profile_table::register_table(client_cache);
         my_payment_table::register_table(client_cache);
         my_profile_table::register_table(client_cache);
+        my_public_embed_config_table::register_table(client_cache);
+        my_service_table::register_table(client_cache);
         my_statement_line_table::register_table(client_cache);
+        my_transaction_table::register_table(client_cache);
+        my_transaction_visibility_table::register_table(client_cache);
+        my_trust_score_table::register_table(client_cache);
+        my_trust_score_history_table::register_table(client_cache);
         my_vendor_table::register_table(client_cache);
         my_verification_table::register_table(client_cache);
         my_verification_access_log_table::register_table(client_cache);
+        public_badge_table::register_table(client_cache);
+        public_campaign_table::register_table(client_cache);
+        public_organization_table::register_table(client_cache);
     }
     const ALL_TABLE_NAMES: &'static [&'static str] = &[
         "my_access_group",
@@ -1856,24 +2555,38 @@ impl __sdk::SpacetimeModule for RemoteModule {
         "my_budget_line",
         "my_campaign",
         "my_campaign_stat",
+        "my_chain_activity_log",
         "my_command_result",
         "my_dimension",
         "my_donation",
         "my_donor_update",
         "my_expense_claim",
         "my_fiscal_period",
+        "my_flag",
+        "my_flow_node",
         "my_fund",
         "my_grant",
         "my_journal_entry",
         "my_journal_line",
         "my_ledger_org",
         "my_member",
+        "my_node_visibility",
+        "my_organization_chain",
         "my_organization_profile",
         "my_payment",
         "my_profile",
+        "my_public_embed_config",
+        "my_service",
         "my_statement_line",
+        "my_transaction",
+        "my_transaction_visibility",
+        "my_trust_score",
+        "my_trust_score_history",
         "my_vendor",
         "my_verification",
         "my_verification_access_log",
+        "public_badge",
+        "public_campaign",
+        "public_organization",
     ];
 }

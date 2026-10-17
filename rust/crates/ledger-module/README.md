@@ -13,6 +13,12 @@ nineteen reducers that mirror the demo API (`flowtrace/src/lib/demo/api.ts`) wit
 permission rules. Tables, views, reducers, rules and every point where the demo API and the
 Supabase backend disagree: `../../docs/adr/0004-transparency-tables.md`.
 
+Task MOD2 adds fourteen tables (flow nodes, transactions with their journal entry links, node and
+transaction visibility, the trust score and its history, flags, the public embed config,
+organisation chains and their log, services, and three public tables anyone may read without an
+identity: `public_organization`, `public_campaign`, `public_badge`), eleven views and twenty-three
+reducers: `../../docs/adr/0005-transparency-tables-part-2.md`.
+
 ## The reducers that write books
 
 - `create_org_ledger(org_id, base_currency, fiscal_year, display_name)`: operator only. Seeds the
@@ -50,14 +56,33 @@ from the caller's member row, ids from `ctx.new_uuid_v4()`, time from the reduce
 | `record_donation(org_id, donation_json)` | any member; anyone else only a pending gift to an active public campaign that is open and not full |
 | `import_transparency(org_id, store_json)` | an operator (loads `fixtures/transparency-dataset.json#/store`) |
 
+## The MOD2 reducers
+
+| Reducer | Who |
+|---|---|
+| `create_flow_node(org_id, node_json)`, `update_flow_node(org_id, node_id, patch_json)`, `create_transaction(org_id, transaction_json)`, `update_transaction(org_id, transaction_id, patch_json)`, `link_transaction_entries(org_id, transaction_id, entry_ids)` | any member |
+| `set_node_visibility(org_id, node_id, group_id, settings_json)`, `remove_node_visibility(org_id, node_id, group_id)`, `set_transaction_visibility(org_id, transaction_id, group_id, settings_json)`, `remove_transaction_visibility(org_id, transaction_id, group_id)`, `update_public_embed_config(org_id, patch_json)`, `regenerate_embed_token(org_id)` | a member who can close periods |
+| `request_chain(source_org_id, target_org_id, message)`, `cancel_chain_request(chain_id)` | any member of the source |
+| `approve_chain(chain_id, granted_group_id, link_node_id)`, `reject_chain(chain_id, reason)`, `revoke_chain(chain_id)`, `update_chain_permissions(chain_id, granted_group_id, link_node_id)` | a member of the target who can close periods |
+| `register_service(identity, label, scopes)`, `remove_service(identity)` | an operator |
+| `record_flags(org_id, batch_json)` | a service with the `flags` scope |
+| `record_rubric(org_id, rubric_json)` | a service with the `rubric` scope |
+| `resolve_flag(org_id, flag_id, "dismissed" or "confirmed", reason)` | a member who can approve spend (a dismissal needs a reason; audited as `flag.dismiss` or `flag.confirm`) |
+| `recompute_trust(org_id)` | any member, or a service with the `trust` scope (writes a history snapshot) |
+
+Every transparency write recomputes the trust row when one of its inputs moved and rewrites the
+organisation's public rows; `create_verification` counts the proof towards its transaction.
+
 A new organisation sees no proofs until someone is in an access group: run
 `create_default_access_groups` and add yourself to the Board with `add_access_group_member`.
 
-The local proof publishes `ft-mod1-<stamp>` (over a module built from main with
-`--base-wasm`, to show the schema change is additive), loads the fixtures, runs every reducer once
-through `spacetime call`, reads back through SQL as the owner, a Board member and a stranger and
-through ledger-client as a Donors member (`../ledger-client/tests/live_transparency.rs`), and
-deletes the database; about 3 s with the wasm built:
+The local proof publishes `ft-mod2-<stamp>` (over a module built from main with
+`--base-wasm`, to show the schema change is additive), loads the demo books and the fixtures, runs
+every MOD1 and MOD2 reducer once (a registered service calls its own over HTTP), reads back
+through SQL as the owner, a Board member and a stranger, reads the public tables with no
+`Authorization` header, reads through ledger-client as a Donors member
+(`../ledger-client/tests/live_transparency.rs`) and anonymously (`live_public.rs`), and deletes
+the database; about 21 s with the wasm built, most of it the two client test builds:
 
 ```sh
 cd rust/tools
