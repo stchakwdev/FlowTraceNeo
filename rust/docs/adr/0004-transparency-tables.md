@@ -138,6 +138,9 @@ verification counts and auto-verify), node visibility, the public projection (do
 badges, embeds), `PublicEmbedConfig` (exported in `transparency-dataset.json` for MOD2), chains
 and the service role. These ids are kept as opaque text.
 
+2026-10-17: MOD2 fills these hooks (ADR 0005); a proof's `transaction_id` must now name a
+transaction of the organisation, and the proof counts towards it.
+
 ## Consequences
 
 - The fixture test (`crates/ledger-module/tests/transparency_fixtures.rs`) replays all 47

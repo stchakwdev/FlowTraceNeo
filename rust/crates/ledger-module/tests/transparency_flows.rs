@@ -164,6 +164,10 @@ fn with_nodes(v: &Value) -> TransactionWithNodes {
 
 /// The module's outcome of one call as the JSON of what it returns, or the error text.
 #[expect(clippy::too_many_lines, reason = "one arm per demo API call")]
+#[expect(
+    clippy::many_single_char_names,
+    reason = "r, t, c, a, s as in the MOD1 replay: replay, records, chains, args, string"
+)]
 fn run(
     r: &mut Replay,
     t: &mut OrgTransparency,
@@ -285,23 +289,25 @@ fn run(
         }
         "getChainCounts" => Ok(to_json(chains::chain_counts(&c.chains, s(&a[0])))),
         "getChainActivityLog" => Ok(to_json(chains::activity_of(&c.log, s(&a[0])))),
-        "getChainTrustScore" => Ok(c.chains.iter().find(|x| x.id == s(&a[0])).map_or(
-            Value::Null,
-            |x| {
-                to_json(chains::chain_trust_score(
-                    r.score_of(t, &x.source_org_id),
-                    r.score_of(t, &x.target_org_id),
-                ))
-            },
-        )),
-        "calculateTrustScoreAPI" => match other_org(0) {
-            Some(e) => Err(e),
-            None => {
-                let org = r.org_id.clone();
-                let user = r.user_id.clone();
-                Ok(to_json(trust::recompute(t, &org, &mut r.env, &user)))
+        "getChainTrustScore" => {
+            Ok(c.chains
+                .iter()
+                .find(|x| x.id == s(&a[0]))
+                .map_or(Value::Null, |x| {
+                    to_json(chains::chain_trust_score(
+                        r.score_of(t, &x.source_org_id),
+                        r.score_of(t, &x.target_org_id),
+                    ))
+                }))
+        }
+        "calculateTrustScoreAPI" => {
+            if let Some(e) = other_org(0) {
+                return Err(e);
             }
-        },
+            let org = r.org_id.clone();
+            let user = r.user_id.clone();
+            Ok(to_json(trust::recompute(t, &org, &mut r.env, &user)))
+        }
         "getTrustScoreHistory" => {
             let limit = a.get(1).and_then(Value::as_u64).unwrap_or(12);
             Ok(Value::Array(
@@ -333,13 +339,13 @@ fn expected_result(call: &Value) -> Value {
         "createNode" => to_json(ts::flow_node(v).unwrap()),
         "createTransaction" | "updateTransaction" => to_json(ts::transaction(v).unwrap()),
         "createVerification" => to_json(ts::verification(v).unwrap()),
-        "getFlowDataAPI" => minor(
-            v,
-            &["inflow", "outflow", "balance", "value", "total_flow"],
-        ),
+        "getFlowDataAPI" => minor(v, &["inflow", "outflow", "balance", "value", "total_flow"]),
         "setNodeVisibility" => to_json(ts::node_visibility(v).unwrap()),
         "updatePublicEmbedConfig" => to_json(ts::embed_config(v).unwrap()),
-        "requestChain" | "approveChain" | "rejectChain" | "revokeChain"
+        "requestChain"
+        | "approveChain"
+        | "rejectChain"
+        | "revokeChain"
         | "updateChainPermissions" => to_json(ts::chain(v).unwrap()),
         "getChainActivityLog" => Value::Array(
             v.as_array()
@@ -542,7 +548,8 @@ fn every_mod2_demo_api_call_replays_against_the_module_rules() {
     let calls = fixture("transparency-flows.json");
     let org_id = s(&dataset["demo_org_id"]).to_owned();
     let store = &dataset["store"];
-    let mut t = from_rows(&to_rows(&org_id, &ts::dataset(&org_id, store).unwrap()).unwrap()).unwrap();
+    let mut t =
+        from_rows(&to_rows(&org_id, &ts::dataset(&org_id, store).unwrap()).unwrap()).unwrap();
     let mut c = ts::chains(&org_id, store).unwrap();
     trust::refresh(&mut t, &org_id, NOW, "module");
     let mut expected = t.clone();
@@ -585,9 +592,14 @@ fn every_mod2_demo_api_call_replays_against_the_module_rules() {
             ),
             other => panic!("{name}: outcome {other}"),
         }
-        if let Some(score) = apply_delta(&mut expected, &mut expected_chains, &call["delta"], &org_id)
+        if let Some(score) =
+            apply_delta(&mut expected, &mut expected_chains, &call["delta"], &org_id)
         {
-            assert_eq!(t.trust.as_ref().unwrap().score, score, "{name}: trust score");
+            assert_eq!(
+                t.trust.as_ref().unwrap().score,
+                score,
+                "{name}: trust score"
+            );
         }
         assert_eq!(
             keyed(&t, &c),
@@ -601,5 +613,9 @@ fn every_mod2_demo_api_call_replays_against_the_module_rules() {
     // The run's changes, written as rows over the dataset's rows, read back as the records.
     let mut rows = rows_before.clone();
     apply_write(&mut rows, plan_write(&org_id, &rows_before, &t).unwrap());
-    assert_eq!(from_rows(&rows).unwrap(), t, "the rows read back as the records");
+    assert_eq!(
+        from_rows(&rows).unwrap(),
+        t,
+        "the rows read back as the records"
+    );
 }

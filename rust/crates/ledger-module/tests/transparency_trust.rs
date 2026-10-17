@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 use ledger_core::money::js_round;
 use ledger_module::transparency::trust::{
-    calculate_trust_score, compute, formula, trust_grade, PENALTY_PER_FLAG,
+    PENALTY_PER_FLAG, calculate_trust_score, compute, formula, trust_grade,
 };
 use ledger_module::transparency::ts;
 use serde_json::Value;

@@ -207,7 +207,14 @@ fn a_stranger_can_neither_add_a_node_nor_record_a_transaction() {
         as_caller(None, &mut t, |t, c| flows::create_flow_node(t, c, input)).unwrap_err(),
         "You are not a member of organisation org-1."
     );
-    assert!(as_caller(None, &mut t, |t, c| flows::create_transaction(t, c, new_txn())).is_err());
+    assert!(
+        as_caller(None, &mut t, |t, c| flows::create_transaction(
+            t,
+            c,
+            new_txn()
+        ))
+        .is_err()
+    );
     assert_eq!(t, org());
 }
 
@@ -311,7 +318,10 @@ fn entries_link_only_from_the_books_and_to_one_transaction_each() {
         link(&mut t, "t-2", &["je-2"]).unwrap_err(),
         "Journal entry je-2 already records transaction t-1."
     );
-    assert!(link(&mut t, "t-1", &[]).unwrap().journal_entry_ids.is_empty());
+    assert_eq!(
+        link(&mut t, "t-1", &[]).unwrap().journal_entry_ids,
+        Vec::<String>::new()
+    );
     assert!(link(&mut t, "t-2", &["je-2"]).is_ok());
 }
 
@@ -437,7 +447,7 @@ fn the_first_embed_update_makes_the_config_from_the_column_defaults() {
         .is_err()
     );
     assert_eq!(
-        as_caller(Some(&admin()), &mut t, |t, c| flows::regenerate_embed_token(t, c)).unwrap_err(),
+        as_caller(Some(&admin()), &mut t, flows::regenerate_embed_token).unwrap_err(),
         "Embed settings not found."
     );
     let made = as_caller(Some(&admin()), &mut t, |t, c| {
@@ -503,10 +513,18 @@ fn a_flag_batch_opens_new_flags_and_refreshes_open_ones() {
     )
     .unwrap();
     assert_eq!(made.len(), 2);
-    assert!(made.iter().all(|f| f.state == FlagState::Open && f.raised_by == "service:jev"));
+    assert!(
+        made.iter()
+            .all(|f| f.state == FlagState::Open && f.raised_by == "service:jev")
+    );
     let again = record(
         &mut t,
-        vec![finding(FlagSubject::Transaction, "t-1", "round_amount", 0.8)],
+        vec![finding(
+            FlagSubject::Transaction,
+            "t-1",
+            "round_amount",
+            0.8,
+        )],
     )
     .unwrap();
     assert_eq!(again.len(), 1);
@@ -519,7 +537,12 @@ fn a_flag_batch_never_changes_a_resolved_flag() {
     let mut t = org();
     let f = record(
         &mut t,
-        vec![finding(FlagSubject::Transaction, "t-1", "round_amount", 0.7)],
+        vec![finding(
+            FlagSubject::Transaction,
+            "t-1",
+            "round_amount",
+            0.7,
+        )],
     )
     .unwrap()
     .remove(0);
@@ -530,10 +553,15 @@ fn a_flag_batch_never_changes_a_resolved_flag() {
     let resolved = t.flags[0].clone();
     let written = record(
         &mut t,
-        vec![finding(FlagSubject::Transaction, "t-1", "round_amount", 0.1)],
+        vec![finding(
+            FlagSubject::Transaction,
+            "t-1",
+            "round_amount",
+            0.1,
+        )],
     )
     .unwrap();
-    assert!(written.is_empty());
+    assert_eq!(written, []);
     assert_eq!(t.flags, [resolved]);
 }
 
@@ -560,7 +588,7 @@ fn a_flag_batch_checks_its_subjects_and_values() {
     for (f, message) in cases {
         let mut t = org();
         assert_eq!(record(&mut t, vec![f]).unwrap_err(), message);
-        assert!(t.flags.is_empty());
+        assert_eq!(t.flags, []);
     }
 }
 
@@ -574,7 +602,9 @@ fn only_an_approver_resolves_a_flag_and_a_dismissal_needs_a_reason() {
     .unwrap()
     .remove(0);
     let resolve = |t: &mut OrgTransparency, who: &Member, r: Resolution, why: Option<&str>| {
-        as_caller(Some(who), t, |t, c| trust::resolve_flag(t, c, &f.id, r, why))
+        as_caller(Some(who), t, |t, c| {
+            trust::resolve_flag(t, c, &f.id, r, why)
+        })
     };
     assert_eq!(
         resolve(&mut t, &clerk(), Resolution::Dismissed, Some("fine")).unwrap_err(),
@@ -616,11 +646,19 @@ fn a_confirmed_flag_counts_against_the_score_and_an_open_one_does_not() {
     let before = t.trust.clone().unwrap();
     let f = record(
         &mut t,
-        vec![finding(FlagSubject::Transaction, "t-1", "round_amount", 0.7)],
+        vec![finding(
+            FlagSubject::Transaction,
+            "t-1",
+            "round_amount",
+            0.7,
+        )],
     )
     .unwrap()
     .remove(0);
-    assert!(trust::refresh(&mut t, ORG, NOW, "module"), "open flags are an input");
+    assert!(
+        trust::refresh(&mut t, ORG, NOW, "module"),
+        "open flags are an input"
+    );
     assert_eq!(t.trust.as_ref().unwrap().score, before.score);
     as_caller(Some(&approver()), &mut t, |t, c| {
         trust::resolve_flag(t, c, &f.id, Resolution::Confirmed, None)
@@ -638,9 +676,14 @@ fn an_automatic_recompute_changes_nothing_when_no_input_moved() {
     let mut t = org();
     assert!(trust::refresh(&mut t, ORG, NOW, "module"));
     let row = t.trust.clone();
-    assert!(!trust::refresh(&mut t, ORG, "2026-02-05T09:00:00.000Z", "someone"));
+    assert!(!trust::refresh(
+        &mut t,
+        ORG,
+        "2026-02-05T09:00:00.000Z",
+        "someone"
+    ));
     assert_eq!(t.trust, row, "not even the time moves");
-    assert!(t.trust_history.is_empty());
+    assert_eq!(t.trust_history, []);
 }
 
 #[test]
@@ -667,7 +710,11 @@ fn a_rubric_makes_the_model_count_and_stays_through_later_recomputes() {
     )
     .unwrap();
     assert_eq!(
-        (row.model.source, row.model.rubric_mean, row.components.model),
+        (
+            row.model.source,
+            row.model.rubric_mean,
+            row.components.model
+        ),
         (ModelSource::Rubric, Some(80.0), 80.0)
     );
     t.transactions.push(txn("t-3", TransactionStatus::Verified));
@@ -706,7 +753,15 @@ fn a_chain_is_asked_by_a_member_of_the_source_of_another_organisation_with_books
     let mut env = chain_env();
     let source = member("org-a", "asker", false, false);
     let ask = |c: &mut Chains, env: &mut Clock, who: Option<&Member>, target: &str, exists| {
-        chains::request_chain(c, env, who, "org-a", target, exists, Some("Please".to_owned()))
+        chains::request_chain(
+            c,
+            env,
+            who,
+            "org-a",
+            target,
+            exists,
+            Some("Please".to_owned()),
+        )
     };
     assert_eq!(
         ask(&mut c, &mut env, None, "org-b", true).unwrap_err(),
@@ -721,14 +776,20 @@ fn a_chain_is_asked_by_a_member_of_the_source_of_another_organisation_with_books
         "No ledger for organisation org-z."
     );
     let made = ask(&mut c, &mut env, Some(&source), "org-b", true).unwrap();
-    assert_eq!((made.status, made.requested_by.as_str()), (ChainStatus::Pending, "asker"));
+    assert_eq!(
+        (made.status, made.requested_by.as_str()),
+        (ChainStatus::Pending, "asker")
+    );
     assert_eq!(
         ask(&mut c, &mut env, Some(&source), "org-b", true).unwrap_err(),
         "There is already a pending or active chain to that organisation."
     );
     let target = member("org-b", "boss", true, true);
     chains::reject_chain(&mut c, &mut env, Some(&target), &made.id, None).unwrap();
-    assert!(ask(&mut c, &mut env, Some(&source), "org-b", true).is_ok(), "may ask again");
+    assert!(
+        ask(&mut c, &mut env, Some(&source), "org-b", true).is_ok(),
+        "may ask again"
+    );
 }
 
 #[test]
@@ -751,16 +812,23 @@ fn only_a_manager_of_the_target_answers_and_grants_only_its_own_group_and_node()
         flow_nodes: vec![node("n-b", NodeType::Project)],
         ..OrgTransparency::default()
     };
-    let approve = |c: &mut Chains, env: &mut Clock, who: Option<&Member>, g: &str, n: Option<&str>| {
-        chains::approve_chain(c, env, who, &target_records, &id, g, n.map(str::to_owned))
-    };
+    let approve =
+        |c: &mut Chains, env: &mut Clock, who: Option<&Member>, g: &str, n: Option<&str>| {
+            chains::approve_chain(c, env, who, &target_records, &id, g, n.map(str::to_owned))
+        };
     assert_eq!(
         approve(&mut c, &mut env, None, "g-b", None).unwrap_err(),
         "You are not a member of organisation org-b."
     );
     assert_eq!(
-        approve(&mut c, &mut env, Some(&member("org-b", "clerk", true, false)), "g-b", None)
-            .unwrap_err(),
+        approve(
+            &mut c,
+            &mut env,
+            Some(&member("org-b", "clerk", true, false)),
+            "g-b",
+            None
+        )
+        .unwrap_err(),
         "Only members who can close periods can answer for their organisation's chains."
     );
     let boss = member("org-b", "boss", true, true);
@@ -774,7 +842,11 @@ fn only_a_manager_of_the_target_answers_and_grants_only_its_own_group_and_node()
     );
     let done = approve(&mut c, &mut env, Some(&boss), "g-b", Some("n-b")).unwrap();
     assert_eq!(
-        (done.status, done.approved_by.as_deref(), done.link_node_id.as_deref()),
+        (
+            done.status,
+            done.approved_by.as_deref(),
+            done.link_node_id.as_deref()
+        ),
         (ChainStatus::Active, Some("boss"), Some("n-b"))
     );
     let entry = c.log.last().unwrap();
@@ -804,7 +876,10 @@ fn a_cancel_needs_a_member_of_the_source_and_leaves_other_chains_alone() {
         "You are not a member of organisation org-a."
     );
     chains::cancel_chain_request(&mut c, Some(&member("org-a", "x", false, false)), &id).unwrap();
-    assert!(c.chains.is_empty() && c.log.is_empty(), "the log goes with it");
+    assert!(
+        c.chains.is_empty() && c.log.is_empty(),
+        "the log goes with it"
+    );
     assert!(chains::cancel_chain_request(&mut c, None, "chain-missing").is_ok());
 }
 
@@ -862,11 +937,14 @@ fn each_side_sees_its_chains_once_with_both_names_and_a_stranger_sees_none() {
     assert_eq!(both.len(), 1, "a member of both sides sees it once");
     let details: chains::ChainDetails = serde_json::from_str(&both[0].data).unwrap();
     assert_eq!(
-        (details.source_org.name.as_str(), details.target_org.name.as_str()),
+        (
+            details.source_org.name.as_str(),
+            details.target_org.name.as_str()
+        ),
         ("Name of org-a", "Name of org-b")
     );
     assert_eq!(seen(&[member("org-b", "y", false, false)]).len(), 1);
-    assert!(seen(&[member("org-c", "z", false, false)]).is_empty());
+    assert_eq!(seen(&[member("org-c", "z", false, false)]), []);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -940,7 +1018,13 @@ fn a_private_organisation_publishes_nothing_but_its_open_public_campaigns() {
         ["c-open"]
     );
     let text = serde_json::to_string(&p.campaigns[0]).unwrap();
-    for private in ["\"created_by\"", "\"metadata\"", "donor_name", "donor_email", "\"notes\""] {
+    for private in [
+        "\"created_by\"",
+        "\"metadata\"",
+        "donor_name",
+        "donor_email",
+        "\"notes\"",
+    ] {
         assert!(!text.contains(private), "{private} is not published");
     }
 }
@@ -965,7 +1049,12 @@ fn a_public_organisation_publishes_its_profile_score_and_badge() {
 fn the_public_rows_follow_the_projection_and_go_when_the_organisation_turns_private() {
     let mut t = org();
     t.profile = Some(public_profile(true));
-    t.campaigns = vec![campaign("c-open", true, CampaignStatus::Active, Some("open"))];
+    t.campaigns = vec![campaign(
+        "c-open",
+        true,
+        CampaignStatus::Active,
+        Some("open"),
+    )];
     trust::refresh(&mut t, ORG, NOW, "module");
     let before = public_rows(ORG, &project(ORG, &t)).unwrap();
     let same = plan_public_write(&before, public_rows(ORG, &project(ORG, &t)).unwrap());

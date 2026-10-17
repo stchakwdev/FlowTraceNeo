@@ -42,12 +42,12 @@ and `crypto.randomUUID`; no fixture uses it. Three frozen envs appear:
 | demo | `2026-02-04T09:00:00.000Z` | `demo-` + n in base 36, padded to 4 (`demo-0001`, ..., `demo-000a`) | `flowtrace/src/lib/demo/ledger.ts:118-124` (`seedEnv`) | demo-books, demo-backfill |
 | fixture | `2026-02-04T09:00:00.000Z` | `fx-` + n in decimal, padded to 4 (`fx-0001`) | `rust/tools/src/commands.ts#commandsEnv` | commands-accepted |
 | test | `2026-03-01T00:00:00.000Z` | `id-` + n in decimal (`id-1`) | `engine.test.ts:16-19`, `review-regressions.test.ts:16-19` | rejected-cases, reconcile-auto-match, setup |
-| transparency | `2026-02-04T09:00:00.000Z` | `00000000-0000-4000-8000-` + n left-padded to 12 digits (a UUID shape), one per `crypto.randomUUID()` | `rust/tools/src/transparency.ts#withFrozenClock` (the demo API has no env: it reads `new Date()` and `crypto.randomUUID()`, `flowtrace/src/lib/demo/api.ts:82-83`, so both are replaced while it runs) | transparency-calls |
+| transparency | `2026-02-04T09:00:00.000Z` | `00000000-0000-4000-8000-` + n left-padded to 12 digits (a UUID shape), one per `crypto.randomUUID()` | `rust/tools/src/transparency.ts#withFrozenClock` (the demo API has no env: it reads `new Date()` and `crypto.randomUUID()`, `flowtrace/src/lib/demo/api.ts:82-83`, so both are replaced while it runs) | transparency-calls, transparency-flows, transparency-trust-score (each run its own counter from 1) |
 
-Every counter starts at 1 for each new ledger (and for the transparency run). Each audit event, journal line, statement line,
+Every counter starts at 1 for each new ledger (and for each transparency run). Each audit event, journal line, statement line,
 import batch, coded line and record created without an id draws one id, in call order. No
 timestamp other than these two values appears in any ledger fixture (the exporter checks every
-`at`, `created_at`, `posted_at` and `now`); the two `transparency-*` files also carry the demo
+`at`, `created_at`, `posted_at` and `now`); the `transparency-*` files also carry the demo
 dataset's own timestamps, and every timestamp the demo API writes in them is the frozen now.
 
 ## Files
@@ -85,7 +85,9 @@ and function), `covers` (index exports and `Ledger.<method>` names it exercises)
 | `money.json` | `parseMoney`, `convert`, `fromMajor`, `toMajor`, `sum`, `assertMinor`, including errors | `money.ts` | none |
 | `csv.json` | `parseCsv`, `parseCsvRecords`, `toCsv`, `parseStatementDate` | `csv.ts` | none |
 | `setup.json` | `createOrgLedger('org', 'KES', 2026)` state (the base of every test scenario), `ngoChartOfAccounts`, `defaultSettings`, `emptyLedger`, `accountId`, `normalBalanceOf`, `actorFromPermissions`, `SYSTEM_ACTOR`, `UNRESTRICTED_FUND_ID` | `setup.ts`, `coa-template.ts`, `engine.ts#emptyLedger` | test |
-| `transparency-dataset.json` | The demo dataset for the module's transparency tables (MOD1): organisations, the demo profile, the five access groups and eight members, 21 verifications, 4 campaigns, 25 donations, 3 donor updates (`store`, amounts in major units as the TS types), the public embed config for MOD2, and `VERIFICATION_TRUST_POINTS` | `demo/dataset.ts`, `supabase.ts#VERIFICATION_TRUST_POINTS` | none |
+| `transparency-dataset.json` | The demo dataset for the module's transparency tables: organisations, the demo profile, the five access groups and eight members, 21 verifications, 4 campaigns, 25 donations, 3 donor updates (MOD1), and 22 flow nodes, 16 transactions, 1 node visibility row, 8 trust history rows, 4 chains with 6 log entries and the public embed config (MOD2) (`store`, amounts in major units as the TS types), and `VERIFICATION_TRUST_POINTS` | `demo/dataset.ts`, `supabase.ts#VERIFICATION_TRUST_POINTS` | none |
+| `transparency-flows.json` | 45 demo API calls for MOD2 over the same store, recorded as `transparency-calls.json`: flow nodes, transactions (create, update, a refusal), proof counting and auto-verify at two (`createVerification` on two new transactions), node visibility, the public embed config, chains (request, approve, reject, update the grant, revoke, cancel, refusals), `calculateTrustScoreAPI`, and the reads the module mirrors (`getFlowDataAPI`, `getOrganizationStats`, `getChainCounts`, `getChainActivityLog`, `getChainTrustScore`, `getTrustScoreHistory`, `getCampaignReport` for every campaign) | `demo/api.ts` | transparency |
+| `transparency-trust-score.json` | The web trust formula pinned: `calculateTrustScore` on a 13 x 13 x 13 grid of rates and consistency values (ties included), on the eight seed history rows (with their stored scores), `getTrustGrade` for every score 0 to 100, and `calculateTrustScoreAPI` on the fresh demo store (75, 75, 82: score 77) | `supabase.ts#calculateTrustScore`, `#getTrustGrade`, `demo/api.ts#calculateTrustScoreAPI` | transparency |
 | `transparency-calls.json` | 47 demo API calls over that store, in order: function, arguments, `ok` with the result or `error` with the message, and the store delta (`added` records, `removed` ids, `changed` whole records); every MOD1 write the demo API has (organisation, access groups and members, verifications, campaigns, donations, donor updates), refusals, and the reads the module mirrors (`getCampaignStats`, `getUserPermissions`, `getVerificationVisibility`) | `demo/api.ts`, `supabase.ts#getVerificationVisibility` | transparency |
 
 ## Shapes
@@ -185,6 +187,12 @@ reformatted. Where JSON forces a representation, it is listed here.
   test compares `Math.round(module / 100)` with the TS value. `funding_percentage` is a ratio and
   equal as a double; `days_remaining` and `days_active` depend on the reading day and are computed
   by readers (`ledger_module::transparency::stats`) at the frozen now.
+  MOD2 (`crates/ledger-module/tests/transparency_flows.rs`) converts the flow data (`inflow`,
+  `outflow`, `balance`, `value`, `total_flow`), the campaign report (`received`, `evidenced`,
+  `evidenced_amount`) and transaction amounts the same way; nothing else differs. The trust
+  formula is a float sum rounded by `Math.round`, so `calculate_trust_score` reproduces it float
+  for float rather than in exact arithmetic (2 x 0.4 + 9 x 0.3 is 3.4999999999999996 in a double
+  and rounds to 3), and `transparency_trust.rs` checks every pinned case.
 
 ## Not covered here
 
