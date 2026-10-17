@@ -7,6 +7,8 @@
 //! database = "flowtrace-ledger-dev"
 //! # optional; by default token-<server host> next to this file
 //! token_file = "/home/me/.config/flowtrace-books/token-maincloud.spacetimedb.com"
+//! # optional; the proofs Worker for receipts and bill proof (workers/proofs/README.md)
+//! proofs_url = "https://proofs.example.org"
 //! ```
 //!
 //! The token file is a credential: `ledger_client::TokenFile` writes it with mode 0600 and
@@ -42,6 +44,10 @@ pub struct Config {
     /// Where the auth token lives; [`token_path`] when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub token_file: Option<String>,
+    /// The proofs Worker (`workers/proofs/README.md`). Without it "Attach receipt" and
+    /// "Attach proof" say so instead of uploading.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proofs_url: Option<String>,
 }
 
 /// Why the config could not be read or written.
@@ -144,6 +150,7 @@ impl Config {
             server: Some(settings.host.clone()),
             database: Some(settings.database.clone()),
             token_file: self.token_file.clone(),
+            proofs_url: self.proofs_url.clone(),
         }
     }
 
@@ -212,6 +219,7 @@ mod tests {
             server: Some("http://127.0.0.1:3100".to_owned()),
             database: Some("ft-local".to_owned()),
             token_file: None,
+            proofs_url: None,
         };
         let from_config = config.settings(None, None, &dir()).unwrap();
         assert_eq!(from_config.host, "http://127.0.0.1:3100");
@@ -247,10 +255,12 @@ mod tests {
             server: Some("https://maincloud.spacetimedb.com".to_owned()),
             database: None,
             token_file: Some("/secrets/ft-token".to_owned()),
+            proofs_url: Some("https://proofs.example.org".to_owned()),
         };
         let settings = config.settings(None, None, &dir()).unwrap();
         assert_eq!(settings.token_path, "/secrets/ft-token");
         assert_eq!(config.remember(&settings).token_file, config.token_file);
+        assert_eq!(config.remember(&settings).proofs_url, config.proofs_url);
         assert_eq!(
             with_token(settings.clone(), &dir()).token_path,
             "/secrets/ft-token"
@@ -279,6 +289,7 @@ mod tests {
             server: Some("https://maincloud.spacetimedb.com".to_owned()),
             database: Some("flowtrace-ledger-dev".to_owned()),
             token_file: None,
+            proofs_url: None,
         };
         config.save(&path).unwrap();
         let text = fs::read_to_string(&path).unwrap();
@@ -321,5 +332,17 @@ mod tests {
         if let Some(dir) = config_dir() {
             assert!(dir.ends_with(APP_DIR));
         }
+    }
+
+    #[test]
+    fn the_proofs_worker_is_read_from_the_file() {
+        let config: Config = toml::from_str(
+            "server = \"https://maincloud.spacetimedb.com\"\nproofs_url = \"https://proofs.example.org\"\n",
+        )
+        .unwrap();
+        assert_eq!(
+            config.proofs_url.as_deref(),
+            Some("https://proofs.example.org")
+        );
     }
 }

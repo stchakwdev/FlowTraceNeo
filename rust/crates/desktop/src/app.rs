@@ -71,6 +71,7 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
         database: s.database,
         token_path: s.token_path,
     });
+    let proofs_url = config.proofs_url.clone();
     let connector = connector(config, config_path, dir);
     gpui_kit::application()
         .with_assets(gpui_kit::assets::Assets)
@@ -89,7 +90,11 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
                 cx,
             );
 
-            let store = cx.new(|cx| LedgerStore::new(backend, connector, cx));
+            let store = cx.new(|cx| {
+                let mut store = LedgerStore::new(backend, connector, cx);
+                store.set_proofs_url(proofs_url);
+                store
+            });
             if launch.timings {
                 store.update(cx, |store, _| store.log_timings(started));
             }

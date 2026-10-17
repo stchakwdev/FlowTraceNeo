@@ -1,0 +1,29 @@
+# FlowTrace proofs Worker. https://developers.cloudflare.com/workers/wrangler/configuration/
+name = "flowtrace-proofs"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+# Proof files. Create once with: bunx wrangler r2 bucket create flowtrace-proofs
+[[r2_buckets]]
+binding = "PROOFS"
+bucket_name = "flowtrace-proofs"
+
+# Optional: Cloudflare Images binding for 320 px WebP thumbnails. Without it only originals
+# are stored and uploads return thumbnail_key: null.
+# https://developers.cloudflare.com/images/transform-images/bindings/
+# [images]
+# binding = "IMAGES"
+
+# Custom domain, once the zone is on Cloudflare:
+# routes = [{ pattern = "proofs.example.org", custom_domain = true }]
+
+# Non-secret settings. Secrets (MODULE_TOKEN, URL_SIGNING_KEY) are set with `wrangler secret put`.
+[vars]
+SPACETIMEDB_URL = "https://maincloud.spacetimedb.com"
+SPACETIMEDB_DATABASE = "flowtrace-ledger-dev"
+ALLOWED_ORIGINS = "http://localhost:3000"
+AUTH_MODES = "spacetimedb,workos"
+# Empty turns the WorkOS path off (see README, "When WorkOS tokens arrive").
+WORKOS_ISSUER = ""
+WORKOS_JWKS_URL = ""
+WORKOS_AUDIENCE = ""

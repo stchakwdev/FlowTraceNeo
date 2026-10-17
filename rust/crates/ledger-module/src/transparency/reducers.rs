@@ -533,6 +533,27 @@ pub fn create_verification(
     })
 }
 
+/// [`plan::mark_published`]: shows a proof at the proofs Worker's public path, or takes it back.
+///
+/// # Errors
+///
+/// No books, or a rule of [`plan::mark_published`].
+#[spacetimedb::reducer]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "reducer arguments arrive by value from the SpacetimeDB host"
+)]
+pub fn mark_published(
+    ctx: &ReducerContext,
+    org_id: String,
+    verification_id: String,
+    published: bool,
+) -> Result<(), String> {
+    change(ctx, &org_id, |t, c, _| {
+        plan::mark_published(t, c, &verification_id, published).map(drop)
+    })
+}
+
 /// `logVerificationAccess` (`supabase.ts:554-571`), [`plan::log_verification_access`];
 /// `access_type` is `view` or `download`.
 ///

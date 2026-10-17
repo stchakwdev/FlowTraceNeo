@@ -832,3 +832,99 @@ fn slugify_of_nothing_usable_is_campaign_and_then_a_bare_number() {
 fn slugify_drops_non_ascii_letters_as_the_ts_regex_does() {
     assert_eq!(plan::slugify("Café Ñandú", &|_| false), "caf-and");
 }
+
+/// `proof` linked to the books' `bill-1` instead of a transaction (MOD2 checks transactions
+/// exist).
+fn bill_proof(object_key: Option<&str>, sha256: Option<&str>) -> NewVerification {
+    NewVerification {
+        transaction_id: None,
+        bill_id: Some("bill-1".to_owned()),
+        ..proof(object_key, sha256)
+    }
+}
+
+/// A proof of `bill-1` with its file, made by the clerk.
+fn stored_proof(t: &mut OrgTransparency) -> Verification {
+    as_caller(Some(&clerk()), t, |t, c| {
+        plan::create_verification(t, c, bill_proof(Some("org/org-1/f"), Some(HASH)), &Books)
+    })
+    .unwrap()
+}
+
+#[test]
+fn a_new_proof_is_not_published_and_its_json_has_no_published_key() {
+    let mut t = OrgTransparency::default();
+    let v = stored_proof(&mut t);
+    assert!(!v.published);
+    let json = serde_json::to_value(&v).unwrap();
+    assert!(json.get("published").is_none(), "{json}");
+}
+
+#[test]
+fn an_admin_publishes_and_unpublishes_a_proof() {
+    let mut t = OrgTransparency::default();
+    let v = stored_proof(&mut t);
+    let on = as_caller(Some(&admin()), &mut t, |t, c| {
+        plan::mark_published(t, c, &v.id, true)
+    })
+    .unwrap();
+    assert!(on.published && t.verifications[0].published);
+    let json = serde_json::to_value(&t.verifications[0]).unwrap();
+    assert_eq!(json["published"], serde_json::Value::Bool(true));
+    let off = as_caller(Some(&admin()), &mut t, |t, c| {
+        plan::mark_published(t, c, &v.id, false)
+    })
+    .unwrap();
+    assert!(!off.published && !t.verifications[0].published);
+}
+
+#[test]
+fn a_clerk_cannot_publish_a_proof() {
+    let mut t = OrgTransparency::default();
+    let v = stored_proof(&mut t);
+    let err = as_caller(Some(&clerk()), &mut t, |t, c| {
+        plan::mark_published(t, c, &v.id, true)
+    })
+    .unwrap_err();
+    assert_eq!(
+        err,
+        "Only members who can close periods can publish proofs."
+    );
+    assert!(!t.verifications[0].published);
+}
+
+#[test]
+fn a_non_member_cannot_publish_a_proof() {
+    let mut t = OrgTransparency::default();
+    let v = stored_proof(&mut t);
+    let err = as_caller(None, &mut t, |t, c| plan::mark_published(t, c, &v.id, true)).unwrap_err();
+    assert_eq!(err, "You are not a member of organisation org-1.");
+}
+
+#[test]
+fn an_unknown_proof_cannot_be_published() {
+    let mut t = OrgTransparency::default();
+    let err = as_caller(Some(&admin()), &mut t, |t, c| {
+        plan::mark_published(t, c, "nope", true)
+    })
+    .unwrap_err();
+    assert_eq!(err, "Verification not found.");
+}
+
+#[test]
+fn a_proof_without_a_file_cannot_be_published_but_can_be_unpublished() {
+    let mut t = OrgTransparency::default();
+    let v = as_caller(Some(&clerk()), &mut t, |t, c| {
+        plan::create_verification(t, c, bill_proof(None, None), &Books)
+    })
+    .unwrap();
+    let err = as_caller(Some(&admin()), &mut t, |t, c| {
+        plan::mark_published(t, c, &v.id, true)
+    })
+    .unwrap_err();
+    assert_eq!(err, "Only a proof with a file can be published.");
+    let off = as_caller(Some(&admin()), &mut t, |t, c| {
+        plan::mark_published(t, c, &v.id, false)
+    });
+    assert!(off.is_ok_and(|v| !v.published));
+}

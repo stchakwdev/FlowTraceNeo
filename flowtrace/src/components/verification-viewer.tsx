@@ -5,10 +5,13 @@ import {
   DownloadSimple,
   MagnifyingGlassMinus,
   MagnifyingGlassPlus,
+  SpinnerGap,
+  Warning,
   X,
 } from '@phosphor-icons/react'
 import type { Verification } from '@/lib/supabase'
 import { formatDate, formatDateTime } from '@/lib/format'
+import { useProofSrc } from '@/lib/proofs'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { StatusMark } from '@/components/report'
@@ -102,6 +105,9 @@ export function VerificationViewer({
 
   useEffect(() => setZoom(1), [verification?.id])
 
+  // A stored file's `proof:` reference becomes a signed URL; others pass through.
+  const file = useProofSrc(verification?.file_url)
+
   if (!verification) return null
 
   const v = verification
@@ -164,22 +170,34 @@ export function VerificationViewer({
         </div>
 
         <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 pb-4 sm:px-16">
-          {kind === 'image' && v.file_url ? (
+          {file.status === 'loading' ? (
+            <div
+              role="status"
+              className="flex max-w-sm flex-col items-center text-center"
+            >
+              <SpinnerGap className="size-10 animate-spin opacity-80" />
+              <p className="mt-4 text-sm opacity-80">Opening the file…</p>
+            </div>
+          ) : file.status === 'error' ? (
+            <div className="flex max-w-sm flex-col items-center text-center">
+              <Warning className="size-16 opacity-80" />
+              <p className="mt-4 font-semibold">The file could not be loaded</p>
+              <p className="mt-1 text-sm opacity-80">
+                {file.error} Check your connection and try again.
+              </p>
+            </div>
+          ) : kind === 'image' && file.src ? (
             <img
-              src={v.file_url}
+              src={file.src}
               alt={v.description ?? label}
               className="max-h-full max-w-full object-contain transition-transform duration-150"
               style={{ transform: `scale(${zoom})` }}
             />
-          ) : kind === 'video' && v.file_url ? (
-            <video
-              src={v.file_url}
-              controls
-              className="max-h-full max-w-full"
-            />
-          ) : kind === 'pdf' && v.file_url ? (
+          ) : kind === 'video' && file.src ? (
+            <video src={file.src} controls className="max-h-full max-w-full" />
+          ) : kind === 'pdf' && file.src ? (
             <iframe
-              src={v.file_url}
+              src={file.src}
               className="size-full bg-background"
               title={`${label} document`}
             />
@@ -262,9 +280,9 @@ export function VerificationViewer({
           </Fact>
         </dl>
 
-        {v.file_url && (
+        {file.src && (
           <a
-            href={v.file_url}
+            href={file.src}
             target="_blank"
             rel="noreferrer"
             download

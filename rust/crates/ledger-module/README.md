@@ -64,6 +64,7 @@ from the caller's member row, ids from `ctx.new_uuid_v4()`, time from the reduce
 | `create_default_access_groups(org_id)`, `create_access_group(org_id, group_json)`, `update_access_group(org_id, group_id, patch_json)`, `delete_access_group(org_id, group_id)`, `add_access_group_member(org_id, member_json)`, `invite_access_group_member(org_id, group_id, email, valid_until)`, `remove_access_group_member(org_id, member_id)` | a member who can close periods |
 | `create_verification(org_id, verification_json)`, `create_campaign`, `update_campaign`, `delete_campaign` (drafts), `update_donation_status`, `post_donor_update`, `mark_donor_update_sent` | any member |
 | `log_verification_access(org_id, verification_id, "view" or "download")` | any member who can see the proof |
+| `mark_published(org_id, verification_id, published)` | a member who can close periods; only a proof with a file can be published (STO1: the proofs Worker serves it at `GET /public/<sha256>`) |
 | `record_donation(org_id, donation_json)` | any member; anyone else only a pending gift to an active public campaign that is open and not full |
 | `import_transparency(org_id, store_json)` | an operator (loads `fixtures/transparency-dataset.json#/store`) |
 

@@ -18,6 +18,7 @@ pub mod journal;
 pub mod large_books;
 pub mod model;
 pub mod panels;
+pub mod proofs;
 pub mod reconcile;
 pub mod shell;
 pub mod statements;

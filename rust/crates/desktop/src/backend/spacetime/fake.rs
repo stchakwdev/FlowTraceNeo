@@ -13,6 +13,7 @@ use ledger_client::{
 use ledger_core::demo::build_demo_ledger;
 use ledger_core::types::OrganizationId;
 use ledger_core::{CommandResult, LedgerCommand, LedgerState};
+use ledger_module::transparency::types::{NewVerification, Verification};
 
 use super::{LiveClient, lock};
 use crate::backend::Submission;
@@ -25,6 +26,8 @@ pub struct Fake {
     pub books: Mutex<HashMap<String, LedgerState>>,
     pub events: (Sender<ClientEvent>, Receiver<ClientEvent>),
     pub sent: Mutex<Vec<(String, LedgerCommand)>>,
+    pub proofs_sent: Mutex<Vec<(String, NewVerification)>>,
+    pub proofs: Mutex<HashMap<String, Vec<Verification>>>,
 }
 
 impl Fake {
@@ -34,6 +37,8 @@ impl Fake {
             books: Mutex::new(HashMap::new()),
             events: async_channel::unbounded(),
             sent: Mutex::new(Vec::new()),
+            proofs_sent: Mutex::new(Vec::new()),
+            proofs: Mutex::new(HashMap::new()),
         })
     }
 
@@ -85,6 +90,15 @@ impl LiveClient for Fake {
     }
 
     fn disconnect(&self) {}
+
+    fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission {
+        lock(&self.proofs_sent).push((org.to_owned(), proof.clone()));
+        Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn verifications(&self, org: &str) -> Vec<Verification> {
+        lock(&self.proofs).get(org).cloned().unwrap_or_default()
+    }
 }
 
 pub fn member(identity: &str, user_id: &str, can_post: bool) -> MemberInfo {

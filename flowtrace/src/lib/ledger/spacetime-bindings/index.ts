@@ -56,6 +56,7 @@ import InviteAccessGroupMemberReducer from './invite_access_group_member_reducer
 import LinkTransactionEntriesReducer from './link_transaction_entries_reducer'
 import LogVerificationAccessReducer from './log_verification_access_reducer'
 import MarkDonorUpdateSentReducer from './mark_donor_update_sent_reducer'
+import MarkPublishedReducer from './mark_published_reducer'
 import PostDonorUpdateReducer from './post_donor_update_reducer'
 import RecomputeTrustReducer from './recompute_trust_reducer'
 import RecordDonationReducer from './record_donation_reducer'
@@ -569,6 +570,7 @@ const reducersSchema = __reducers(
   __reducerSchema('link_transaction_entries', LinkTransactionEntriesReducer),
   __reducerSchema('log_verification_access', LogVerificationAccessReducer),
   __reducerSchema('mark_donor_update_sent', MarkDonorUpdateSentReducer),
+  __reducerSchema('mark_published', MarkPublishedReducer),
   __reducerSchema('post_donor_update', PostDonorUpdateReducer),
   __reducerSchema('recompute_trust', RecomputeTrustReducer),
   __reducerSchema('record_donation', RecordDonationReducer),

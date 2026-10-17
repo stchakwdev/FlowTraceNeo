@@ -760,6 +760,7 @@ pub fn create_verification(
         location_name,
         description,
         created_by: Some(user_id),
+        published: false,
         visible_as: None,
     };
     t.verifications.push(row.clone());
@@ -767,6 +768,34 @@ pub fn create_verification(
         super::flows::count_proof(t, id);
     }
     Ok(row)
+}
+
+/// Publishes a proof's file at the proofs Worker's public path, or takes it back (P13, STO1;
+/// `workers/proofs/README.md`). The demo API and Supabase have no such call; publishing to the
+/// public is the organisation's decision, so it takes an admin or manager, as managing access
+/// groups does (`006_access_groups_rls.sql:26-36`). Only a proof with a file can be published;
+/// any proof can be taken back.
+///
+/// # Errors
+///
+/// Not an admin or manager, no such proof, or no file to publish.
+pub fn mark_published(
+    t: &mut OrgTransparency,
+    ctx: &mut Ctx<'_>,
+    verification_id: &str,
+    published: bool,
+) -> Result<Verification, String> {
+    ctx.manager("publish proofs")?;
+    let proof = t
+        .verifications
+        .iter_mut()
+        .find(|v| v.id == verification_id)
+        .ok_or_else(|| not_found("Verification"))?;
+    if published && proof.object_key.is_none() {
+        return Err("Only a proof with a file can be published.".to_owned());
+    }
+    proof.published = published;
+    Ok(proof.clone())
 }
 
 /// `logVerificationAccess` (`supabase.ts:554-571`; the demo has none): one entry by the caller at

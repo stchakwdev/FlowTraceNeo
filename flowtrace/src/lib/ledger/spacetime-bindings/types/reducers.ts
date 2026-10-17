@@ -28,6 +28,7 @@ import InviteAccessGroupMemberReducer from '../invite_access_group_member_reduce
 import LinkTransactionEntriesReducer from '../link_transaction_entries_reducer'
 import LogVerificationAccessReducer from '../log_verification_access_reducer'
 import MarkDonorUpdateSentReducer from '../mark_donor_update_sent_reducer'
+import MarkPublishedReducer from '../mark_published_reducer'
 import PostDonorUpdateReducer from '../post_donor_update_reducer'
 import RecomputeTrustReducer from '../recompute_trust_reducer'
 import RecordDonationReducer from '../record_donation_reducer'
@@ -94,6 +95,7 @@ export type LogVerificationAccessParams = __Infer<
 export type MarkDonorUpdateSentParams = __Infer<
   typeof MarkDonorUpdateSentReducer
 >
+export type MarkPublishedParams = __Infer<typeof MarkPublishedReducer>
 export type PostDonorUpdateParams = __Infer<typeof PostDonorUpdateReducer>
 export type RecomputeTrustParams = __Infer<typeof RecomputeTrustReducer>
 export type RecordDonationParams = __Infer<typeof RecordDonationReducer>

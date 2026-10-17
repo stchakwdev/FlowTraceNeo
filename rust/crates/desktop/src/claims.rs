@@ -523,6 +523,9 @@ pub struct ClaimForm {
     pub purpose: String,
     /// The lines; at least one.
     pub lines: Vec<LineDraft>,
+    /// Names of the receipts attached and in the proof store (`crate::proofs::AttachList`),
+    /// sent as `receipt_names` (`claims.new.tsx:119`).
+    pub receipts: Vec<String>,
 }
 
 impl ClaimForm {
@@ -533,6 +536,7 @@ impl ClaimForm {
             date: iso_to_day_month_year(as_of),
             purpose: String::new(),
             lines: vec![LineDraft::new(state)],
+            receipts: Vec::new(),
         }
     }
 
@@ -707,7 +711,7 @@ impl ClaimForm {
                 fx_rate: 1.0,
                 purpose: self.purpose.trim().to_owned(),
                 lines,
-                receipt_names: Vec::new(),
+                receipt_names: self.receipts.clone(),
                 captured_offline: false,
                 submit: Some(submit),
             },
@@ -1764,6 +1768,18 @@ mod tests {
             panic!("not claim.create");
         };
         assert_eq!(input.submit, Some(false));
+    }
+
+    #[test]
+    fn attached_receipts_go_out_as_receipt_names() {
+        let state = demo();
+        let mut form = filled(&state);
+        form.receipts = vec!["fuel.jpg".into(), "lodging.pdf".into()];
+        let LedgerCommand::ClaimCreate { input } = form.command(&state, &as_of(), true).unwrap()
+        else {
+            panic!("not claim.create");
+        };
+        assert_eq!(input.receipt_names, vec!["fuel.jpg", "lodging.pdf"]);
     }
 
     #[test]

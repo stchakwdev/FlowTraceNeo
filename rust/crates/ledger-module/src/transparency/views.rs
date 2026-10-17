@@ -468,6 +468,7 @@ mod tests {
             location_name: None,
             description: None,
             created_by: None,
+            published: false,
             visible_as: None,
         };
         doc_to_row(org_id, &v, 3).unwrap()
