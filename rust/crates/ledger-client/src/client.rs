@@ -31,30 +31,40 @@ use crate::module_bindings::{
     self as b, DbConnection, MyAccessGroupMemberTableAccess as _, MyAccessGroupTableAccess as _,
     MyAccountTableAccess as _, MyAuditEventTableAccess as _, MyBankAccountTableAccess as _,
     MyBillTableAccess as _, MyBudgetLineTableAccess as _, MyBudgetTableAccess as _,
-    MyCampaignStatTableAccess as _, MyCampaignTableAccess as _, MyCommandResultTableAccess as _,
-    MyDimensionTableAccess as _, MyDonationTableAccess as _, MyDonorUpdateTableAccess as _,
-    MyExpenseClaimTableAccess as _, MyFiscalPeriodTableAccess as _, MyFundTableAccess as _,
+    MyCampaignStatTableAccess as _, MyCampaignTableAccess as _, MyChainActivityLogTableAccess as _,
+    MyCommandResultTableAccess as _, MyDimensionTableAccess as _, MyDonationTableAccess as _,
+    MyDonorUpdateTableAccess as _, MyExpenseClaimTableAccess as _, MyFiscalPeriodTableAccess as _,
+    MyFlagTableAccess as _, MyFlowNodeTableAccess as _, MyFundTableAccess as _,
     MyGrantTableAccess as _, MyJournalEntryTableAccess as _, MyJournalLineTableAccess as _,
-    MyLedgerOrgTableAccess as _, MyMemberTableAccess as _, MyOrganizationProfileTableAccess as _,
-    MyPaymentTableAccess as _, MyProfileTableAccess as _, MyStatementLineTableAccess as _,
-    MyVendorTableAccess as _, MyVerificationAccessLogTableAccess as _,
-    MyVerificationTableAccess as _, create_org_ledger as _, import_books as _, run_command as _,
+    MyLedgerOrgTableAccess as _, MyMemberTableAccess as _, MyNodeVisibilityTableAccess as _,
+    MyOrganizationChainTableAccess as _, MyOrganizationProfileTableAccess as _,
+    MyPaymentTableAccess as _, MyProfileTableAccess as _, MyPublicEmbedConfigTableAccess as _,
+    MyServiceTableAccess as _, MyStatementLineTableAccess as _, MyTransactionTableAccess as _,
+    MyTransactionVisibilityTableAccess as _, MyTrustScoreHistoryTableAccess as _,
+    MyTrustScoreTableAccess as _, MyVendorTableAccess as _,
+    MyVerificationAccessLogTableAccess as _, MyVerificationTableAccess as _,
+    PublicBadgeTableAccess as _, PublicCampaignTableAccess as _,
+    PublicOrganizationTableAccess as _, create_org_ledger as _, import_books as _,
+    run_command as _,
 };
 use crate::status::{
     ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
     TicketSender,
 };
 use crate::token::TokenFile;
-use crate::transparency::TransparencyCache;
+use crate::transparency::{ServiceInfo, TransparencyCache};
 use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
+use ledger_module::transparency::public::{PublicBadge, PublicCampaign, PublicOrganization};
 use ledger_module::transparency::types::Profile;
 
 /// The views the client subscribes to: every `my_*` view, which hold the rows of every
 /// organisation the caller is a member of (`spacetime-backend.ts:105-108`, `LEDGER_TABLES`, plus
-/// `my_member` for the organisation list), then the ten transparency views (MOD1,
-/// `crates/ledger-module/src/transparency/views.rs`). The TS client narrows each query to one
+/// `my_member` for the organisation list), then the ten transparency views of MOD1 and the eleven
+/// of MOD2 (`crates/ledger-module/src/transparency/views.rs`), then the three public tables, which
+/// every connection may read, anonymous included. The TS client narrows each query to one
 /// organisation; the desktop shows all of them, so these do not.
-pub const VIEWS: [&str; 29] = [
+pub const VIEWS: [&str; 43] = [
     "my_ledger_org",
     "my_member",
     "my_journal_entry",
@@ -84,6 +94,20 @@ pub const VIEWS: [&str; 29] = [
     "my_campaign_stat",
     "my_donation",
     "my_donor_update",
+    "my_flow_node",
+    "my_transaction",
+    "my_node_visibility",
+    "my_transaction_visibility",
+    "my_trust_score",
+    "my_trust_score_history",
+    "my_flag",
+    "my_public_embed_config",
+    "my_organization_chain",
+    "my_chain_activity_log",
+    "my_service",
+    "public_organization",
+    "public_campaign",
+    "public_badge",
 ];
 
 /// Where to connect.
@@ -394,6 +418,58 @@ impl SpacetimeClient {
         lock(&self.shared.transparency).profiles()
     }
 
+    /// The chains of the caller's organisations, either side, with both organisations' names and
+    /// scores and the target's node and group (`my_organization_chain`).
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Codec`] when a row does not read.
+    pub fn chains(&self) -> Result<Vec<ChainDetails>, ClientError> {
+        lock(&self.shared.transparency).chains()
+    }
+
+    /// One chain's log, newest first (`my_chain_activity_log`).
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Codec`] when a row does not read.
+    pub fn chain_activity(&self, chain_id: &str) -> Result<Vec<ChainActivity>, ClientError> {
+        lock(&self.shared.transparency).chain_activity(chain_id)
+    }
+
+    /// The caller's own service registration (`my_service`), when the caller is a service.
+    #[must_use]
+    pub fn service(&self) -> Option<ServiceInfo> {
+        lock(&self.shared.transparency).service()
+    }
+
+    /// Every published organisation (`public_organization`), readable by anyone.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Codec`] when a row does not read.
+    pub fn public_organizations(&self) -> Result<Vec<PublicOrganization>, ClientError> {
+        lock(&self.shared.transparency).public_organizations()
+    }
+
+    /// Every published campaign (`public_campaign`), readable by anyone.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Codec`] when a row does not read.
+    pub fn public_campaigns(&self) -> Result<Vec<PublicCampaign>, ClientError> {
+        lock(&self.shared.transparency).public_campaigns()
+    }
+
+    /// Every published trust badge (`public_badge`), readable by anyone.
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Codec`] when a row does not read.
+    pub fn public_badges(&self) -> Result<Vec<PublicBadge>, ClientError> {
+        lock(&self.shared.transparency).public_badges()
+    }
+
     /// A new receiver of change notifications. Its first event is the current
     /// [`ClientEvent::Status`]; after that it gets every event, one [`ClientEvent::Changed`] per
     /// applied message. Drop it to stop.
@@ -542,6 +618,20 @@ fn watch_all(conn: &DbConnection, tx: &InternalTx) {
     watch(&db.my_campaign_stat(), tx);
     watch(&db.my_donation(), tx);
     watch(&db.my_donor_update(), tx);
+    watch(&db.my_flow_node(), tx);
+    watch(&db.my_transaction(), tx);
+    watch(&db.my_node_visibility(), tx);
+    watch(&db.my_transaction_visibility(), tx);
+    watch(&db.my_trust_score(), tx);
+    watch(&db.my_trust_score_history(), tx);
+    watch(&db.my_flag(), tx);
+    watch(&db.my_public_embed_config(), tx);
+    watch_without_key(&db.my_organization_chain(), tx);
+    watch_without_key(&db.my_chain_activity_log(), tx);
+    watch(&db.my_service(), tx);
+    watch(&db.public_organization(), tx);
+    watch(&db.public_campaign(), tx);
+    watch(&db.public_badge(), tx);
 }
 
 fn subscribe_all(conn: &DbConnection, tx: &InternalTx) {
@@ -659,8 +749,14 @@ fn drain(
         lock(&shared.hub).broadcast(&ClientEvent::Changed { orgs: touched });
     }
     if !transparency.is_empty() {
-        let (orgs, profiles) = lock(&shared.transparency).apply_all(transparency);
-        lock(&shared.hub).broadcast(&ClientEvent::TransparencyChanged { orgs, profiles });
+        let b = lock(&shared.transparency).apply_all(transparency);
+        lock(&shared.hub).broadcast(&ClientEvent::TransparencyChanged {
+            orgs: b.orgs,
+            profiles: b.profiles,
+            chains: b.chains,
+            public: b.public,
+            service: b.service,
+        });
     }
     for r in results {
         if let Some(tx) = lock(&shared.pending).remove(&r.request_id) {

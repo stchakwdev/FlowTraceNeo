@@ -11,7 +11,9 @@ use ledger_module::tables;
 use crate::cache::{DocColumns, DocTable, MemberRow, OrgHeader, ResultRow, Row};
 use crate::module_bindings as b;
 use crate::status::MemberInfo;
-use crate::transparency::{TransparencyRow, TransparencyTable};
+use crate::transparency::{
+    ChainActivityColumns, ChainColumns, ServiceInfo, TransparencyRow, TransparencyTable,
+};
 
 /// Moves every listed field of `$from` into a `$to` of the same field names.
 macro_rules! same_fields {
@@ -131,6 +133,86 @@ transparency_rows! {
     CampaignStatRow => CampaignStat;
     DonationRow => Donation;
     DonorUpdateRow => DonorUpdate;
+    FlowNodeRow => FlowNode;
+    TransactionRow => Transaction;
+    NodeVisibilityRow => NodeVisibility;
+    TransactionVisibilityRow => TransactionVisibility;
+    TrustHistoryRow => TrustHistory;
+    FlagRow => Flag;
+}
+
+impl From<b::TrustScoreRow> for Row {
+    fn from(r: b::TrustScoreRow) -> Self {
+        Self::Transparency(TransparencyRow::TrustScore {
+            org_id: r.org_id,
+            data: r.data,
+        })
+    }
+}
+
+impl From<b::EmbedConfigRow> for Row {
+    fn from(r: b::EmbedConfigRow) -> Self {
+        Self::Transparency(TransparencyRow::EmbedConfig {
+            org_id: r.org_id,
+            data: r.data,
+        })
+    }
+}
+
+impl From<b::ChainRow> for Row {
+    fn from(r: b::ChainRow) -> Self {
+        Self::Transparency(TransparencyRow::Chain(same_fields!(r => ChainColumns {
+            id, source_org_id, target_org_id, seq, data,
+        })))
+    }
+}
+
+impl From<b::ChainActivityRow> for Row {
+    fn from(r: b::ChainActivityRow) -> Self {
+        Self::Transparency(TransparencyRow::ChainActivity(
+            same_fields!(r => ChainActivityColumns {
+                id, chain_id, seq, data,
+            }),
+        ))
+    }
+}
+
+impl From<b::ServiceRow> for Row {
+    fn from(r: b::ServiceRow) -> Self {
+        Self::Transparency(TransparencyRow::Service(ServiceInfo {
+            identity: r.identity.to_hex().to_string(),
+            label: r.label,
+            scopes: r.scopes,
+            registered_at: r.registered_at,
+        }))
+    }
+}
+
+impl From<b::PublicOrganizationRow> for Row {
+    fn from(r: b::PublicOrganizationRow) -> Self {
+        Self::Transparency(TransparencyRow::PublicOrganization {
+            org_id: r.org_id,
+            data: r.data,
+        })
+    }
+}
+
+impl From<b::PublicCampaignRow> for Row {
+    fn from(r: b::PublicCampaignRow) -> Self {
+        Self::Transparency(TransparencyRow::PublicCampaign {
+            campaign_id: r.campaign_id,
+            data: r.data,
+        })
+    }
+}
+
+impl From<b::PublicBadgeRow> for Row {
+    fn from(r: b::PublicBadgeRow) -> Self {
+        Self::Transparency(TransparencyRow::PublicBadge {
+            org_id: r.org_id,
+            data: r.data,
+        })
+    }
 }
 
 impl From<b::OrganizationProfileRow> for Row {
