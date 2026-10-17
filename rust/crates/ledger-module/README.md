@@ -19,6 +19,17 @@ organisation chains and their log, services, and three public tables anyone may 
 identity: `public_organization`, `public_campaign`, `public_badge`), eleven views and twenty-three
 reducers: `../../docs/adr/0005-transparency-tables-part-2.md`.
 
+Who may connect (AUTH1, no TS counterpart; rules and sources in `src/auth.rs`): the
+`client_connected` reducer lets operators and registered services in always, device identities (host-signed tokens)
+while `auth_setting` allows them, and any other OpenID Connect token only when its issuer and
+audience match a `trusted_issuer` row. Operators manage those with `add_trusted_issuer(issuer,
+audience, label)`, `remove_trusted_issuer(issuer, audience)` and `set_device_identities(allowed)`;
+`add_member_by_subject(org_id, issuer, subject, name, can_post, can_approve, can_close)` adds a
+person by their token subject (a WorkOS user id) before they first connect. Operator commands:
+`../../docs/module-release.md` section 5. Local proof against a test issuer:
+`cd rust/tools && ~/.bun/bin/bun run auth-proof` (needs the wasm built and `bun install` in
+`flowtrace/`; about 2 s; publishes and deletes `ft-auth1-<timestamp>`).
+
 ## The reducers that write books
 
 - `create_org_ledger(org_id, base_currency, fiscal_year, display_name)`: operator only. Seeds the
@@ -96,7 +107,7 @@ The crate is a workspace member, so the workspace checks cover it on the host ta
 ```sh
 cd rust
 cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked
-cargo test -p ledger-module          # the module's host tests alone (151 unit, 3 fixture replay)
+cargo test -p ledger-module          # the module's host tests alone (240 unit, 11 in the fixture test files)
 ```
 
 ## Build the wasm module

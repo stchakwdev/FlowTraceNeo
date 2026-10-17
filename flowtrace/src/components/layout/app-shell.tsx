@@ -8,7 +8,7 @@ import type { AuthUser } from '@/lib/auth'
 import { useAppAuth } from '@/lib/auth-context'
 import { DEV_MODE, getUserDisplayName, getUserInitials } from '@/lib/auth'
 import { useOrg } from '@/lib/org-context'
-import { DEMO_BOOKS } from '@/lib/ledger-client'
+import { DEMO_BOOKS, useMastheadOrgName } from '@/lib/ledger-client'
 import { isNavItemActive, navSections } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -58,6 +58,7 @@ export function AppShell({
 }: AppShellProps) {
   const { signOut } = useAppAuth()
   const { organization } = useOrg()
+  const orgName = useMastheadOrgName(organization?.name)
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [collapsed, setCollapsed] = useSidebarState()
@@ -75,7 +76,7 @@ export function AppShell({
             className="hidden h-6 w-px bg-masthead-foreground/25 sm:block"
           />
           <p className="hidden min-w-0 truncate text-sm font-semibold sm:block">
-            {organization?.name ?? 'Your organisation'}
+            {orgName}
           </p>
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle className={mastheadButton} />

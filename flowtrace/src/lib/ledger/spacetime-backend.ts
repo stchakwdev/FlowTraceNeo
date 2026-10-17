@@ -9,9 +9,14 @@
 //   rolls back on a LedgerError, which is rebuilt here with its issues.
 //
 // Config: VITE_SPACETIMEDB_URI (e.g. wss://maincloud.spacetimedb.com) and
-// VITE_SPACETIMEDB_MODULE (the database name). The connection token is kept
-// in localStorage so the browser keeps one identity across visits.
+// VITE_SPACETIMEDB_MODULE (the database name). The token the connection
+// presents follows the auth mode (spacetime-auth.ts): in dummy mode a device
+// token kept in localStorage, so the browser keeps one identity across
+// visits; in workos mode the signed-in person's WorkOS access token, never
+// stored, fetched fresh for every connection.
+import { AUTH_MODE } from '../auth'
 import { DbConnection } from './spacetime-bindings'
+import { connectionToken, refusalMessage, workosAccessToken } from './spacetime-auth'
 import {
   DOC_COLLECTIONS,
   DOC_COLLECTION_KEYS,
@@ -76,30 +81,45 @@ function saveToken(token: string) {
 let connection: Promise<DbConnection> | null = null
 let membership: Promise<void> | null = null
 
-function connect(): Promise<DbConnection> {
-  if (typeof window === 'undefined') {
-    return Promise.reject(new Error('The SpacetimeDB ledger runs in the browser only.'))
-  }
-  connection ??= new Promise<DbConnection>((resolve, reject) => {
-    const { uri, moduleName } = config()
+async function open(): Promise<DbConnection> {
+  const { uri, moduleName } = config()
+  const { token, saveReturned } = await connectionToken(AUTH_MODE, {
+    device: readToken,
+    workos: () => workosAccessToken(),
+  })
+  return new Promise<DbConnection>((resolve, reject) => {
+    let connected = false
     DbConnection.builder()
       .withUri(uri)
       .withDatabaseName(moduleName)
-      .withToken(readToken())
-      .onConnect((conn, _identity, token) => {
-        saveToken(token)
+      .withToken(token)
+      .onConnect((conn, _identity, returned) => {
+        connected = true
+        // Only a device identity's token is kept; a WorkOS token never touches storage.
+        if (saveReturned) saveToken(returned)
         resolve(conn)
       })
-      .onConnectError((_ctx, error) => {
-        connection = null
-        reject(error)
-      })
+      .onConnectError((_ctx, error) => reject(error))
       .onDisconnect(() => {
         connection = null
         subscriptions.clear()
         membership = null
+        // The module's client_connected refused it: the host closes the socket before
+        // onConnect, with no reason the SDK passes on.
+        if (!connected) reject(new Error(refusalMessage(AUTH_MODE, token)))
       })
       .build()
+  })
+}
+
+function connect(): Promise<DbConnection> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('The SpacetimeDB ledger runs in the browser only.'))
+  }
+  // A refused or failed connection is not kept, so the next call tries again with a new token.
+  connection ??= open().catch((error: unknown) => {
+    connection = null
+    throw error
   })
   return connection
 }
@@ -309,6 +329,27 @@ interface MemberRow {
 export interface SpacetimeMembership {
   orgId: string
   actor: Actor
+  /** The organisation's profile name (MOD1's `my_organization_profile`), when it has one. */
+  orgName: string | null
+}
+
+interface ProfileRow {
+  orgId: string
+  data: string
+}
+
+/** Organisation id to profile name, from `organization_profile` rows (JSON `{ id, name, ... }`). */
+export function organisationNames(rows: Iterable<ProfileRow>): Map<string, string> {
+  const names = new Map<string, string>()
+  for (const row of rows) {
+    try {
+      const name = (JSON.parse(row.data) as { name?: unknown }).name
+      if (typeof name === 'string' && name.trim()) names.set(row.orgId, name.trim())
+    } catch {
+      // A malformed profile names nothing; the masthead shows the organisation id.
+    }
+  }
+  return names
 }
 
 /** The member row as the actor the module derives for run_command (rust/crates/ledger-module/src/rules.rs:136, actor_of). */
@@ -332,8 +373,18 @@ function ensureMembership(conn: DbConnection): Promise<void> {
         reject(ctx.event ?? new Error('SpacetimeDB subscription failed.'))
       })
       .subscribe(['SELECT * FROM my_member'])
+    // Organisation names on their own, so a database published before MOD1 (no
+    // my_organization_profile) still lists memberships; the names just stay absent.
+    conn
+      .subscriptionBuilder()
+      .onError(() => {})
+      .subscribe(['SELECT * FROM my_organization_profile'])
   })
   return membership
+}
+
+function profileRows(conn: DbConnection): Iterable<ProfileRow> {
+  return view<ProfileRow>(conn, 'organizationProfile').iter()
 }
 
 /**
@@ -348,13 +399,18 @@ export async function spacetimeMemberships(): Promise<{
   const conn = await connect()
   await ensureMembership(conn)
   const identity = conn.identity?.toHexString() ?? null
+  const names = organisationNames(profileRows(conn))
   const memberships = [...view<MemberRow>(conn, 'member').iter()]
     .filter((row) => row.identity.toHexString() === identity)
-    .map((row) => ({ orgId: row.orgId, actor: actorFromMember(row) }))
+    .map((row) => ({
+      orgId: row.orgId,
+      actor: actorFromMember(row),
+      orgName: names.get(row.orgId) ?? null,
+    }))
   return { identity, memberships }
 }
 
-/** Calls back when this identity is added to, changed in or removed from an organisation. */
+/** Calls back when this identity's memberships, or its organisations' names, change. */
 export function onSpacetimeMembershipChange(onChange: () => void): () => void {
   let stopped = false
   let detach = () => {}
@@ -364,14 +420,18 @@ export function onSpacetimeMembershipChange(onChange: () => void): () => void {
     .then(async (conn) => {
       await ensureMembership(conn)
       if (stopped) return
-      const members = view<MemberRow>(conn, 'member')
-      members.onInsert(onRow)
-      members.onUpdate(onUpdate)
-      members.onDelete(onRow)
+      const watched = [view<MemberRow>(conn, 'member'), view<ProfileRow>(conn, 'organizationProfile')]
+      for (const v of watched as Array<ViewHandle<unknown>>) {
+        v.onInsert(onRow)
+        v.onUpdate(onUpdate)
+        v.onDelete(onRow)
+      }
       detach = () => {
-        members.removeOnInsert(onRow)
-        members.removeOnUpdate(onUpdate)
-        members.removeOnDelete(onRow)
+        for (const v of watched as Array<ViewHandle<unknown>>) {
+          v.removeOnInsert(onRow)
+          v.removeOnUpdate(onUpdate)
+          v.removeOnDelete(onRow)
+        }
       }
     })
     .catch(() => {

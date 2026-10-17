@@ -10,6 +10,24 @@ import {
   type Infer as __Infer,
 } from 'spacetimedb'
 
+export const AccessGroupMemberRow = __t.object('AccessGroupMemberRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type AccessGroupMemberRow = __Infer<typeof AccessGroupMemberRow>
+
+export const AccessGroupRow = __t.object('AccessGroupRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type AccessGroupRow = __Infer<typeof AccessGroupRow>
+
 export const AccountRow = __t.object('AccountRow', {
   key: __t.string(),
   orgId: __t.string(),
@@ -27,6 +45,14 @@ export const AuditEventRow = __t.object('AuditEventRow', {
   data: __t.string(),
 })
 export type AuditEventRow = __Infer<typeof AuditEventRow>
+
+export const AuthSetting = __t.object('AuthSetting', {
+  id: __t.u8(),
+  allowDeviceIdentities: __t.bool(),
+  changedBy: __t.identity(),
+  changedAt: __t.timestamp(),
+})
+export type AuthSetting = __Infer<typeof AuthSetting>
 
 export const BankAccountRow = __t.object('BankAccountRow', {
   key: __t.string(),
@@ -64,6 +90,41 @@ export const BudgetRow = __t.object('BudgetRow', {
 })
 export type BudgetRow = __Infer<typeof BudgetRow>
 
+export const CampaignRow = __t.object('CampaignRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type CampaignRow = __Infer<typeof CampaignRow>
+
+export const CampaignStatRow = __t.object('CampaignStatRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type CampaignStatRow = __Infer<typeof CampaignStatRow>
+
+export const ChainActivityRow = __t.object('ChainActivityRow', {
+  id: __t.string(),
+  chainId: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type ChainActivityRow = __Infer<typeof ChainActivityRow>
+
+export const ChainRow = __t.object('ChainRow', {
+  id: __t.string(),
+  sourceOrgId: __t.string(),
+  targetOrgId: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type ChainRow = __Infer<typeof ChainRow>
+
 export const CommandResult = __t.object('CommandResult', {
   identity: __t.identity(),
   orgId: __t.string(),
@@ -82,6 +143,30 @@ export const DimensionRow = __t.object('DimensionRow', {
 })
 export type DimensionRow = __Infer<typeof DimensionRow>
 
+export const DonationRow = __t.object('DonationRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type DonationRow = __Infer<typeof DonationRow>
+
+export const DonorUpdateRow = __t.object('DonorUpdateRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type DonorUpdateRow = __Infer<typeof DonorUpdateRow>
+
+export const EmbedConfigRow = __t.object('EmbedConfigRow', {
+  orgId: __t.string(),
+  data: __t.string(),
+})
+export type EmbedConfigRow = __Infer<typeof EmbedConfigRow>
+
 export const ExpenseClaimRow = __t.object('ExpenseClaimRow', {
   key: __t.string(),
   orgId: __t.string(),
@@ -99,6 +184,24 @@ export const FiscalPeriodRow = __t.object('FiscalPeriodRow', {
   data: __t.string(),
 })
 export type FiscalPeriodRow = __Infer<typeof FiscalPeriodRow>
+
+export const FlagRow = __t.object('FlagRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type FlagRow = __Infer<typeof FlagRow>
+
+export const FlowNodeRow = __t.object('FlowNodeRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type FlowNodeRow = __Infer<typeof FlowNodeRow>
 
 export const FundRow = __t.object('FundRow', {
   key: __t.string(),
@@ -182,11 +285,26 @@ export const Member = __t.object('Member', {
 })
 export type Member = __Infer<typeof Member>
 
+export const NodeVisibilityRow = __t.object('NodeVisibilityRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type NodeVisibilityRow = __Infer<typeof NodeVisibilityRow>
+
 export const Operator = __t.object('Operator', {
   identity: __t.identity(),
   addedAt: __t.timestamp(),
 })
 export type Operator = __Infer<typeof Operator>
+
+export const OrganizationProfileRow = __t.object('OrganizationProfileRow', {
+  orgId: __t.string(),
+  data: __t.string(),
+})
+export type OrganizationProfileRow = __Infer<typeof OrganizationProfileRow>
 
 export const PaymentRow = __t.object('PaymentRow', {
   key: __t.string(),
@@ -197,6 +315,42 @@ export const PaymentRow = __t.object('PaymentRow', {
 })
 export type PaymentRow = __Infer<typeof PaymentRow>
 
+export const ProfileRow = __t.object('ProfileRow', {
+  identity: __t.identity(),
+  data: __t.string(),
+})
+export type ProfileRow = __Infer<typeof ProfileRow>
+
+export const PublicBadgeRow = __t.object('PublicBadgeRow', {
+  orgId: __t.string(),
+  data: __t.string(),
+})
+export type PublicBadgeRow = __Infer<typeof PublicBadgeRow>
+
+export const PublicCampaignRow = __t.object('PublicCampaignRow', {
+  campaignId: __t.string(),
+  orgId: __t.string(),
+  slug: __t.string(),
+  data: __t.string(),
+})
+export type PublicCampaignRow = __Infer<typeof PublicCampaignRow>
+
+export const PublicOrganizationRow = __t.object('PublicOrganizationRow', {
+  orgId: __t.string(),
+  slug: __t.string(),
+  data: __t.string(),
+})
+export type PublicOrganizationRow = __Infer<typeof PublicOrganizationRow>
+
+export const ServiceRow = __t.object('ServiceRow', {
+  identity: __t.identity(),
+  label: __t.string(),
+  scopes: __t.array(__t.string()),
+  registeredBy: __t.identity(),
+  registeredAt: __t.string(),
+})
+export type ServiceRow = __Infer<typeof ServiceRow>
+
 export const StatementLineRow = __t.object('StatementLineRow', {
   key: __t.string(),
   orgId: __t.string(),
@@ -206,6 +360,49 @@ export const StatementLineRow = __t.object('StatementLineRow', {
 })
 export type StatementLineRow = __Infer<typeof StatementLineRow>
 
+export const TransactionRow = __t.object('TransactionRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type TransactionRow = __Infer<typeof TransactionRow>
+
+export const TransactionVisibilityRow = __t.object('TransactionVisibilityRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type TransactionVisibilityRow = __Infer<typeof TransactionVisibilityRow>
+
+export const TrustHistoryRow = __t.object('TrustHistoryRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type TrustHistoryRow = __Infer<typeof TrustHistoryRow>
+
+export const TrustScoreRow = __t.object('TrustScoreRow', {
+  orgId: __t.string(),
+  data: __t.string(),
+})
+export type TrustScoreRow = __Infer<typeof TrustScoreRow>
+
+export const TrustedIssuer = __t.object('TrustedIssuer', {
+  id: __t.u64(),
+  issuer: __t.string(),
+  audience: __t.string(),
+  label: __t.string(),
+  addedBy: __t.identity(),
+  addedAt: __t.timestamp(),
+})
+export type TrustedIssuer = __Infer<typeof TrustedIssuer>
+
 export const VendorRow = __t.object('VendorRow', {
   key: __t.string(),
   orgId: __t.string(),
@@ -214,3 +411,21 @@ export const VendorRow = __t.object('VendorRow', {
   data: __t.string(),
 })
 export type VendorRow = __Infer<typeof VendorRow>
+
+export const VerificationAccessRow = __t.object('VerificationAccessRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type VerificationAccessRow = __Infer<typeof VerificationAccessRow>
+
+export const VerificationRow = __t.object('VerificationRow', {
+  key: __t.string(),
+  orgId: __t.string(),
+  id: __t.string(),
+  seq: __t.u64(),
+  data: __t.string(),
+})
+export type VerificationRow = __Infer<typeof VerificationRow>

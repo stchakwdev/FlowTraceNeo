@@ -283,3 +283,32 @@ re-subscribes; `LedgerView::offline_notice` drives the notice above every screen
 backend is not connected, and `SpacetimeBackend::send` refuses writes then with
 `BackendError::Offline`. Ledger refusals map onto the same `BackendError::Command` the
 in-process books raise, so override boxes and issue lists work alike.
+
+## 2026-10-16: one identity per person (AUTH1)
+
+Pre-decision P11 makes a WorkOS login one identity on every client. What that rests on, from the
+SpacetimeDB 2.12 host (`crates/core/src/auth/token_validation.rs` and `crates/auth/src/identity.rs`
+at v2.12.0) and the local proof (`rust/tools/auth-proof.ts`):
+
+- **The identity is `Identity::from_claims(iss, sub)`**, a blake3 hash of `"{iss}|{sub}"` with the
+  `c200` prefix. Two tokens with the same issuer and subject are the same identity whatever else
+  they carry (`iat`, `exp`, `jti`, `aud`); the proof connected three different tokens for one
+  subject and got one identity. The module can compute it too, which is how
+  `add_member_by_subject` adds a person before they first connect.
+- **The host verifies any issuer and decides nothing.** A token the host did not sign is checked
+  against the keys named by `{iss}/.well-known/openid-configuration`, for any http(s) issuer, with
+  no per-database setting and no audience check. So the module decides who connects, in
+  `client_connected` (`crates/ledger-module/src/auth.rs`): operators and registered services
+  (MOD2) always; host-issued device tokens (issuer `localhost`, on both the local server and maincloud) while the database allows
+  them; any other token only when its issuer and audience match a `trusted_issuer` row an operator
+  added. Membership stays keyed by identity, so nothing else in the module changed.
+- **Clients choose the token, not the module.** The desktop keeps its device token file until
+  AUTH2 adds the browser sign-in; the web presents the WorkOS AuthKit access token in workos mode
+  and the saved device token in dummy mode (`flowtrace/src/lib/ledger/spacetime-auth.ts`). A
+  WorkOS token is never stored by the client; it is fetched fresh for each connection, so a
+  reconnect after expiry gets a refreshed one. ledger-client needs no change for AUTH2 beyond
+  passing a different token: the token file already holds whatever token it is given.
+- **A refusal reaches the client without its reason.** The host closes the WebSocket before
+  `onConnect` and the SDK passes no message; over HTTP the caller gets 403 with the text. The web
+  therefore names the token's issuer and audience itself, which is also what an operator needs to
+  register the issuer (`rust/docs/module-release.md` section 5).
