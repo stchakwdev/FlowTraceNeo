@@ -833,10 +833,20 @@ fn slugify_drops_non_ascii_letters_as_the_ts_regex_does() {
     assert_eq!(plan::slugify("Café Ñandú", &|_| false), "caf-and");
 }
 
-/// A proof of `txn-1` with its file, made by the clerk.
+/// `proof` linked to the books' `bill-1` instead of a transaction (MOD2 checks transactions
+/// exist).
+fn bill_proof(object_key: Option<&str>, sha256: Option<&str>) -> NewVerification {
+    NewVerification {
+        transaction_id: None,
+        bill_id: Some("bill-1".to_owned()),
+        ..proof(object_key, sha256)
+    }
+}
+
+/// A proof of `bill-1` with its file, made by the clerk.
 fn stored_proof(t: &mut OrgTransparency) -> Verification {
     as_caller(Some(&clerk()), t, |t, c| {
-        plan::create_verification(t, c, proof(Some("org/org-1/f"), Some(HASH)), &Books)
+        plan::create_verification(t, c, bill_proof(Some("org/org-1/f"), Some(HASH)), &Books)
     })
     .unwrap()
 }
@@ -905,7 +915,7 @@ fn an_unknown_proof_cannot_be_published() {
 fn a_proof_without_a_file_cannot_be_published_but_can_be_unpublished() {
     let mut t = OrgTransparency::default();
     let v = as_caller(Some(&clerk()), &mut t, |t, c| {
-        plan::create_verification(t, c, proof(None, None), &Books)
+        plan::create_verification(t, c, bill_proof(None, None), &Books)
     })
     .unwrap();
     let err = as_caller(Some(&admin()), &mut t, |t, c| {

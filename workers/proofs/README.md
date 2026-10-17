@@ -97,12 +97,21 @@ A token whose `iss` equals `WORKOS_ISSUER` is verified against those keys. Its `
 a `member.user_id` in the organisation, so each person's member row needs their WorkOS user id.
 To stop accepting SpacetimeDB tokens later, set `AUTH_MODES = "workos"`.
 
-## MOD2's service role (P17)
+## Moving to a service identity (P17)
 
-`MODULE_TOKEN` is today the owner identity's token, which can read every private table. When
-MOD2 adds a `service` role, create a token for an identity with only that role and replace the
-secret (`bunx wrangler secret put MODULE_TOKEN`). The single place that picks the token is
-`moduleToken()` in `src/module.ts`.
+`MODULE_TOKEN` is today the owner identity's token, which can read every private table. MOD2
+(PR #43) added the service role, so the switch now works like this: an operator registers a
+new identity as a service with `register_service(identity, label, scopes)` (for example
+`spacetime call -s maincloud <database> register_service '"0x<identity>"' '"proofs-worker"'
+'["..."]'`), and that identity's token replaces the secret (`bunx wrangler secret put
+MODULE_TOKEN`). The single place that picks the token is `moduleToken()` in `src/module.ts`.
+One gap first: the Worker reads `member`, `access_group`, `access_group_member` and
+`verification` over SQL, and SpacetimeDB lets only the database owner read private tables
+that way. MOD2's scopes (`flags`, `rubric`, `trust`) and views give a service no read access
+to those rows, so a service token alone would fail every lookup. The switch needs a read path
+for the Worker in the module first (for example a `proofs` scope with views returning those
+rows to services that hold it). That and the switch itself are left to JV1 or a follow-up;
+this PR keeps the owner token.
 
 ## Known limits
 

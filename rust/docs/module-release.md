@@ -250,8 +250,10 @@ The module keeps only each file's R2 object key and SHA-256 on its `verification
   `verification` to check membership and the caller's proof visibility (the same rules as the
   `my_verification` view). Those tables are private, so on dev `MODULE_TOKEN` is the token of the
   identity that owns the database (the operator CLI login; never print `cli.toml`, copy the token
-  into the Worker secret by hand). MOD2 adds a `service` role (pre-decision P17); then the
-  Worker gets that role's token instead and nothing else changes.
+  into the Worker secret by hand). MOD2 added the `service` role (pre-decision P17,
+  `register_service`), but a service cannot read these private tables over SQL, so the
+  Worker keeps the owner token until the module gives services a read path for them
+  (`workers/proofs/README.md`, "Moving to a service identity").
 - **Callers.** The Worker accepts a SpacetimeDB token (checked at
   `GET /v1/identity/:identity/verify`, members matched by identity) and, once AUTH1 sets
   `WORKOS_ISSUER`, `WORKOS_JWKS_URL` and `WORKOS_AUDIENCE`, a WorkOS access token (members matched

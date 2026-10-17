@@ -29,9 +29,10 @@ export interface Verification {
 
 /**
  * The token the Worker reads the module with.
- * P17: swap to the service-role token when MOD2 lands. On dev this is the operator (owner) CLI
- * identity's token; MOD2 adds a `service` role that may read the private tables, and only this
- * function needs to change.
+ * P17: on dev this is the operator (owner) CLI identity's token. MOD2's `service` role
+ * (`register_service`) exists, but gives a service no read access to the private tables read
+ * here, so the swap to a service token waits for a module read path (README, "Moving to a
+ * service identity"); once it exists only this function and the secret change.
  */
 export function moduleToken(env: Env): string {
   return env.MODULE_TOKEN
