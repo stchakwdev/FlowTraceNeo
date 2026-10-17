@@ -17,6 +17,7 @@ use ledger_module::transparency::types::{NewVerification, Verification};
 use crate::backend::{BackendError, BackendEvent, ConnectSettings, LedgerBackend, Submission};
 use crate::model::LedgerView;
 use crate::proofs::{LinkKind, ProofsClient, ProofsError};
+use crate::signin::state::{Card, SignInState};
 
 /// Makes the backend for a connect from the Connect screen: in the app, a
 /// [`crate::backend::SpacetimeBackend`] on those settings.
@@ -32,6 +33,7 @@ pub struct StoreCore {
     timings: Option<Timings>,
     /// The proofs Worker from `config.toml` (`proofs_url`).
     proofs_url: Option<String>,
+    signin: SignInState,
 }
 
 /// Start-up and round-trip times written to stderr with `--timings on`.
@@ -39,6 +41,8 @@ struct Timings {
     started: Instant,
     books_seen: bool,
     submitted: Option<Instant>,
+    /// The last sign-in line written, so each change is written once.
+    signin: String,
 }
 
 impl StoreCore {
@@ -55,6 +59,7 @@ impl StoreCore {
             connector,
             timings: None,
             proofs_url: None,
+            signin: SignInState::new(false),
         };
         let rx = core.open();
         (core, rx)
@@ -76,9 +81,11 @@ impl StoreCore {
             started,
             books_seen: false,
             submitted: None,
+            signin: String::new(),
         });
         eprintln!("desktop: status {:?}", self.view.status());
         self.note_books();
+        self.note_signin();
     }
 
     /// What the shell and the screens render from.
@@ -95,6 +102,17 @@ impl StoreCore {
             .and_then(|org| self.backend.actor(&org.id))
     }
 
+    /// The WorkOS sign-in as the Connect screen shows it.
+    #[must_use]
+    pub fn signin(&self) -> &SignInState {
+        &self.signin
+    }
+
+    /// The sign-in, to change; the store's sign-in steps drive it.
+    pub fn signin_mut(&mut self) -> &mut SignInState {
+        &mut self.signin
+    }
+
     /// Applies a drained batch; when the selected organisation changed under it, loads that
     /// organisation's books. Returns whether anything shown changed.
     pub fn apply(&mut self, batch: Vec<BackendEvent>) -> bool {
@@ -105,11 +123,22 @@ impl StoreCore {
         if self.timings.is_some() {
             // The identity is public (`spacetime sql` shows it in `member`); the token never is.
             for event in &batch {
-                if let BackendEvent::Status(status) = event {
-                    eprintln!("desktop: status {status:?}");
+                match event {
+                    BackendEvent::Status(status) => eprintln!("desktop: status {status:?}"),
+                    BackendEvent::Organisations(orgs) => {
+                        let names: Vec<&str> = orgs.iter().map(|o| o.name.as_str()).collect();
+                        eprintln!("desktop: organisations {names:?}");
+                    }
+                    BackendEvent::Ledger { .. } => {}
                 }
             }
         }
+        for event in &batch {
+            if let BackendEvent::Status(status) = event {
+                self.signin.on_status(status);
+            }
+        }
+        self.note_signin();
         let mut changed = self.view.apply(batch);
         if self.view.snapshot().is_none()
             && let Some(org) = self.view.selected().map(|org| org.id.clone())
@@ -128,6 +157,32 @@ impl StoreCore {
         }
         self.note_books();
         changed
+    }
+
+    /// With `--timings on`, writes the sign-in section's text to stderr when it changes: the
+    /// phase, the person, the identity, a failure or the module's refusal. Never a token.
+    pub fn note_signin(&mut self) {
+        let Some(t) = &mut self.timings else {
+            return;
+        };
+        let card = Card::of(&self.signin);
+        let mut parts = vec![format!(
+            "sign-in {:?}: {}",
+            self.signin.phase(),
+            card.status
+        )];
+        parts.extend(
+            card.details
+                .iter()
+                .map(|(label, value)| format!("{label}: {value}")),
+        );
+        parts.extend(card.refusal.iter().map(|r| format!("refused: {r}")));
+        parts.extend(card.error.iter().map(|e| format!("error: {e}")));
+        let line = parts.join(" | ");
+        if line != t.signin {
+            eprintln!("desktop: {line}");
+            t.signin = line;
+        }
     }
 
     fn note_books(&mut self) {
@@ -228,6 +283,7 @@ impl StoreCore {
         settings: ConnectSettings,
     ) -> Result<Receiver<BackendEvent>, BackendError> {
         self.backend = (self.connector)(settings)?;
+        self.signin.connecting();
         Ok(self.open())
     }
 
@@ -243,20 +299,35 @@ impl StoreCore {
 pub struct LedgerStore {
     core: StoreCore,
     pump_task: Task<()>,
+    session: session::Sessions,
 }
 
 impl LedgerStore {
-    /// Opens the store on `backend` with its first organisation selected.
+    /// Opens the store on `backend` with its first organisation selected. With `signin` the
+    /// Connect screen offers the WorkOS sign-in, and when `settings` name a server with a saved
+    /// sign-in ([`SignInSetup::has_saved`]) the store resumes it at once; the app then passes an
+    /// unconnected backend, so no device connection opens first.
     pub fn new(
         backend: Box<dyn LedgerBackend>,
         connector: Connector,
+        settings: Option<ConnectSettings>,
+        signin: Option<SignInSetup>,
         cx: &mut Context<Self>,
     ) -> Self {
-        let (core, rx) = StoreCore::new(backend, connector);
-        Self {
+        let (mut core, rx) = StoreCore::new(backend, connector);
+        *core.signin_mut() = SignInState::new(signin.is_some());
+        let resume = settings
+            .clone()
+            .filter(|s| signin.as_ref().is_some_and(|setup| setup.has_saved(s)));
+        let mut store = Self {
             core,
             pump_task: pump(rx, cx),
+            session: session::Sessions::new(signin, settings),
+        };
+        if let Some(settings) = resume {
+            store.resume(settings, cx);
         }
+        store
     }
 
     /// Writes start-up and round-trip times to stderr (`--timings on`).
@@ -290,6 +361,9 @@ impl LedgerStore {
     }
 
     /// Connects to the server `settings` names, replacing the backend ([`StoreCore::connect`]).
+    /// Signed in, the connection presents the session's access token, refreshed first when it
+    /// is about to expire; with a sign-in saved for that server the store resumes it; otherwise
+    /// it connects with the device identity.
     ///
     /// # Errors
     ///
@@ -299,10 +373,25 @@ impl LedgerStore {
         settings: ConnectSettings,
         cx: &mut Context<Self>,
     ) -> Result<(), BackendError> {
+        self.connect_signed_in_or_device(settings, cx)
+    }
+
+    /// Connects with exactly `settings` (their access token, if any).
+    fn open_backend(
+        &mut self,
+        settings: ConnectSettings,
+        cx: &mut Context<Self>,
+    ) -> Result<(), BackendError> {
         let rx = self.core.connect(settings)?;
         self.pump_task = pump(rx, cx);
         cx.notify();
         Ok(())
+    }
+
+    /// The WorkOS sign-in as the Connect screen shows it.
+    #[must_use]
+    pub fn signin(&self) -> &SignInState {
+        self.core.signin()
     }
 
     /// Closes the connection, keeping the last books.
@@ -355,6 +444,9 @@ fn pump(rx: Receiver<BackendEvent>, cx: &mut Context<LedgerStore>) -> Task<()> {
         }
     })
 }
+
+mod session;
+pub use session::SignInSetup;
 
 #[cfg(test)]
 mod tests;

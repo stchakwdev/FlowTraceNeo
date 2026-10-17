@@ -429,6 +429,7 @@ impl ConnectForm {
             host: host.to_owned(),
             database: database.to_owned(),
             token_path: self.token_path.trim().to_owned(),
+            access_token: None,
         })
     }
 }
@@ -756,6 +757,7 @@ mod tests {
                 host: DEFAULT_HOST.to_owned(),
                 database: DEFAULT_DATABASE.to_owned(),
                 token_path: String::new(),
+                access_token: None,
             }
         );
 

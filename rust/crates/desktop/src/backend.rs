@@ -20,6 +20,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_channel::{Receiver, Sender};
+use ledger_client::AccessToken;
 use ledger_core::demo::{build_demo_ledger, demo_actor};
 use ledger_core::env::fixed::{self, FixedEnv};
 use ledger_core::setup::create_org_ledger;
@@ -89,6 +90,9 @@ pub struct ConnectSettings {
     pub database: String,
     /// Path of the file holding the auth token; empty for none.
     pub token_path: String,
+    /// A WorkOS sign-in's access token, presented instead of the token file's device token
+    /// (`crate::signin`); memory only, and its `Debug` hides it.
+    pub access_token: Option<AccessToken>,
 }
 
 /// One change a backend reports. A store drains these in batches (ADR 0002, decision 4).
@@ -806,6 +810,7 @@ mod tests {
             host: "http://127.0.0.1:3100".to_owned(),
             database: "ft-u1-test".to_owned(),
             token_path: "/home/me/.config/flowtrace/token".to_owned(),
+            access_token: None,
         };
         backend.connect(settings.clone()).unwrap();
         assert_eq!(backend.settings(), Some(&settings));

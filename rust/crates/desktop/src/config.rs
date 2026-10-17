@@ -9,11 +9,18 @@
 //! token_file = "/home/me/.config/flowtrace-books/token-maincloud.spacetimedb.com"
 //! # optional; the proofs Worker for receipts and bill proof (workers/proofs/README.md)
 //! proofs_url = "https://proofs.example.org"
+//! # optional: sign in with WorkOS AuthKit through the system browser (crate::signin)
+//! workos_client_id = "client_01..."
+//! # optional; by default https://api.workos.com/user_management/<workos_client_id>
+//! workos_issuer = "https://api.workos.com/user_management/client_01..."
+//! # optional; by default https://api.workos.com (the local proof points it at a test server)
+//! workos_api = "https://api.workos.com"
 //! ```
 //!
 //! The token file is a credential: `ledger_client::TokenFile` writes it with mode 0600 and
 //! nothing here reads or prints it. Keeping it per server host means a local server and
-//! maincloud each keep their own identity.
+//! maincloud each keep their own identity. A WorkOS sign-in keeps its refresh token in the same
+//! way, in the token file's path with `.workos` appended ([`crate::signin::refresh_file`]).
 
 use std::fs;
 use std::io;
@@ -23,6 +30,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::backend::ConnectSettings;
 use crate::model::DEFAULT_DATABASE;
+use crate::signin::WorkosSettings;
 
 /// The app's folder under the platform config dir.
 pub const APP_DIR: &str = "flowtrace-books";
@@ -48,6 +56,16 @@ pub struct Config {
     /// "Attach proof" say so instead of uploading.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proofs_url: Option<String>,
+    /// The WorkOS environment's client id. With it the Connect screen offers "Sign in with
+    /// WorkOS"; without it the app connects with its device identity only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workos_client_id: Option<String>,
+    /// The `iss` of that environment's access tokens ([`WorkosSettings::issuer`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workos_issuer: Option<String>,
+    /// The WorkOS API host ([`WorkosSettings::api`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workos_api: Option<String>,
 }
 
 /// Why the config could not be read or written.
@@ -143,15 +161,27 @@ impl Config {
         fs::write(path, text).map_err(io)
     }
 
-    /// The config with `server` and `database` from a connect, keeping a set token file.
+    /// The config with `server` and `database` from a connect, keeping every other key.
     #[must_use]
     pub fn remember(&self, settings: &ConnectSettings) -> Self {
         Self {
             server: Some(settings.host.clone()),
             database: Some(settings.database.clone()),
-            token_file: self.token_file.clone(),
-            proofs_url: self.proofs_url.clone(),
+            ..self.clone()
         }
+    }
+
+    /// The WorkOS sign-in settings, when a non-blank `workos_client_id` is set.
+    #[must_use]
+    pub fn workos(&self) -> Option<WorkosSettings> {
+        let client_id = self.workos_client_id.as_deref()?.trim();
+        (!client_id.is_empty()).then(|| {
+            WorkosSettings::new(
+                client_id,
+                self.workos_issuer.as_deref(),
+                self.workos_api.as_deref(),
+            )
+        })
     }
 
     /// The server to open, flags first: `None` (the in-process demo) when neither the flags nor
@@ -177,6 +207,7 @@ impl Config {
             host,
             database,
             token_path,
+            access_token: None,
         })
     }
 }
@@ -220,6 +251,7 @@ mod tests {
             database: Some("ft-local".to_owned()),
             token_file: None,
             proofs_url: None,
+            ..Config::default()
         };
         let from_config = config.settings(None, None, &dir()).unwrap();
         assert_eq!(from_config.host, "http://127.0.0.1:3100");
@@ -256,6 +288,7 @@ mod tests {
             database: None,
             token_file: Some("/secrets/ft-token".to_owned()),
             proofs_url: Some("https://proofs.example.org".to_owned()),
+            ..Config::default()
         };
         let settings = config.settings(None, None, &dir()).unwrap();
         assert_eq!(settings.token_path, "/secrets/ft-token");
@@ -290,6 +323,7 @@ mod tests {
             database: Some("flowtrace-ledger-dev".to_owned()),
             token_file: None,
             proofs_url: None,
+            ..Config::default()
         };
         config.save(&path).unwrap();
         let text = fs::read_to_string(&path).unwrap();
@@ -325,6 +359,41 @@ mod tests {
             settings.token_path,
             "/home/me/.config/flowtrace-books/token-maincloud.spacetimedb.com"
         );
+    }
+
+    #[test]
+    fn the_workos_keys_turn_sign_in_on_and_survive_a_connect() {
+        assert_eq!(Config::default().workos(), None);
+        let blank = Config {
+            workos_client_id: Some("  ".to_owned()),
+            ..Config::default()
+        };
+        assert_eq!(blank.workos(), None, "a blank client id is no sign-in");
+
+        let text = "server = \"http://127.0.0.1:3100\"\nworkos_client_id = \"client_01TEST\"\n";
+        let config: Config = toml::from_str(text).unwrap();
+        let workos = config.workos().unwrap();
+        assert_eq!(workos.client_id, "client_01TEST");
+        assert_eq!(
+            workos.issuer,
+            "https://api.workos.com/user_management/client_01TEST"
+        );
+        assert_eq!(workos.api, "https://api.workos.com");
+
+        let local: Config = toml::from_str(
+            "workos_client_id = \"client_01TEST\"\nworkos_issuer = \"http://127.0.0.1:4000/trusted\"\nworkos_api = \"http://127.0.0.1:4000/trusted\"\n",
+        )
+        .unwrap();
+        assert_eq!(
+            local.workos().unwrap().issuer,
+            "http://127.0.0.1:4000/trusted"
+        );
+        assert_eq!(local.workos().unwrap().api, "http://127.0.0.1:4000/trusted");
+
+        let settings = config
+            .settings(Some("https://maincloud.spacetimedb.com"), None, &dir())
+            .unwrap();
+        assert_eq!(config.remember(&settings).workos(), config.workos());
     }
 
     #[test]

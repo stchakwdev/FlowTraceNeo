@@ -19,7 +19,7 @@ use crate::panels::general_ledger::GlLaunch;
 use crate::panels::grants::GrantsView;
 use crate::shell::Shell;
 use crate::statements::ReportKind;
-use crate::store::{Connector, LedgerStore};
+use crate::store::{Connector, LedgerStore, SignInSetup};
 use crate::theme;
 
 /// The window title.
@@ -49,6 +49,11 @@ pub struct Launch {
     pub database: Option<String>,
     /// `--timings on`: write start-up and round-trip times to stderr.
     pub timings: bool,
+    /// `--config <path>`: the config file, over `flowtrace-books/config.toml` in the platform
+    /// config dir; default token files go next to it.
+    pub config: Option<PathBuf>,
+    /// `--sign-in on`: start the WorkOS sign-in at launch, as the Connect screen's button does.
+    pub sign_in: bool,
 }
 
 /// Opens the window and runs until it closes.
@@ -58,20 +63,42 @@ pub struct Launch {
 /// When the in-process books cannot be built.
 pub fn run(launch: Launch) -> anyhow::Result<()> {
     let started = Instant::now();
-    let dir = config::config_dir().unwrap_or_else(|| PathBuf::from(config::APP_DIR));
-    let config_path = dir.join(CONFIG_FILE);
+    let (dir, config_path) = if let Some(path) = &launch.config {
+        (
+            path.parent().map_or_else(PathBuf::new, PathBuf::from),
+            path.clone(),
+        )
+    } else {
+        let dir = config::config_dir().unwrap_or_else(|| PathBuf::from(config::APP_DIR));
+        let path = dir.join(CONFIG_FILE);
+        (dir, path)
+    };
     let config = Config::load(&config_path).unwrap_or_else(|err| {
         eprintln!("desktop: {err}; starting without the config file");
         Config::default()
     });
     let settings = config.settings(launch.server.as_deref(), launch.database.as_deref(), &dir);
-    let backend = open_backend(settings.as_ref(), launch.large_books)?;
-    let form = settings.map_or_else(ConnectForm::default, |s| ConnectForm {
-        host: s.host,
-        database: s.database,
-        token_path: s.token_path,
+    let signin = config.workos().map(|workos| SignInSetup {
+        workos,
+        dir: dir.clone(),
     });
     let proofs_url = config.proofs_url.clone();
+    // A saved WorkOS sign-in is resumed by the store; no device connection opens first.
+    let resumes = settings
+        .as_ref()
+        .is_some_and(|s| signin.as_ref().is_some_and(|setup| setup.has_saved(s)));
+    let backend: Box<dyn LedgerBackend> = if resumes {
+        Box::new(SpacetimeBackend::new())
+    } else {
+        open_backend(settings.as_ref(), launch.large_books)?
+    };
+    let form = settings
+        .clone()
+        .map_or_else(ConnectForm::default, |s| ConnectForm {
+            host: s.host,
+            database: s.database,
+            token_path: s.token_path,
+        });
     let connector = connector(config, config_path, dir);
     gpui_kit::application()
         .with_assets(gpui_kit::assets::Assets)
@@ -91,12 +118,15 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
             );
 
             let store = cx.new(|cx| {
-                let mut store = LedgerStore::new(backend, connector, cx);
+                let mut store = LedgerStore::new(backend, connector, settings, signin, cx);
                 store.set_proofs_url(proofs_url);
                 store
             });
             if launch.timings {
                 store.update(cx, |store, _| store.log_timings(started));
+            }
+            if launch.sign_in {
+                store.update(cx, |store, cx| store.sign_in(None, cx));
             }
             let options = WindowOptions {
                 titlebar: Some(TitlebarOptions {

@@ -26,6 +26,7 @@ use ledger_module::transparency::types::NewVerification;
 use spacetimedb_sdk::__codegen::InternalError;
 use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
 
+use crate::auth::AccessToken;
 use crate::cache::{Row, RowCache, RowChange};
 use crate::error::{ClientError, decode_reducer_error, is_valid_org_id};
 use crate::module_bindings::{
@@ -121,6 +122,9 @@ pub struct ClientConfig {
     pub database: String,
     /// Where the token is kept; `None` connects anonymously with a new identity every time.
     pub token_file: Option<TokenFile>,
+    /// A sign-in's access token. When set it is presented instead of the token file's, and the
+    /// token the host returns is not saved: the file keeps the device identity for later.
+    pub access_token: Option<AccessToken>,
     /// How long a call waits for its result ([`RESULT_TIMEOUT`] by default).
     pub result_timeout: Duration,
 }
@@ -133,8 +137,37 @@ impl ClientConfig {
             uri: uri.into(),
             database: database.into(),
             token_file: None,
+            access_token: None,
             result_timeout: RESULT_TIMEOUT,
         }
+    }
+
+    /// The same config, presenting `token` from a sign-in ([`ClientConfig::access_token`]).
+    #[must_use]
+    pub fn with_access_token(mut self, token: AccessToken) -> Self {
+        self.access_token = Some(token);
+        self
+    }
+
+    /// The token to present and whether to save the one the host returns: a sign-in's access
+    /// token, never saved, else the token file's device token (none on a first run), saved
+    /// (`flowtrace/src/lib/ledger/spacetime-auth.ts`, `connectionToken`: `saveReturned` only for
+    /// device identities).
+    ///
+    /// # Errors
+    ///
+    /// [`ClientError::Token`] when the token file exists but cannot be read.
+    pub fn presented_token(&self) -> Result<(Option<String>, bool), ClientError> {
+        if let Some(token) = &self.access_token {
+            return Ok((Some(token.expose().to_owned()), false));
+        }
+        let saved = self
+            .token_file
+            .as_ref()
+            .map(TokenFile::load)
+            .transpose()?
+            .flatten();
+        Ok((saved, self.token_file.is_some()))
     }
 
     /// The same config, keeping the token in `file`.
@@ -221,12 +254,7 @@ impl SpacetimeClient {
     /// [`ClientError::Token`] when the token file exists but cannot be read, or
     /// [`ClientError::Sdk`] when the thread cannot start.
     pub fn connect(config: ClientConfig) -> Result<Self, ClientError> {
-        let token = config
-            .token_file
-            .as_ref()
-            .map(TokenFile::load)
-            .transpose()?
-            .flatten();
+        let (token, _) = config.presented_token()?;
         let shared = Arc::new(Shared {
             hub: Mutex::new(Hub {
                 status: ConnectionStatus::Connecting,
@@ -807,7 +835,7 @@ fn drain(
                 *lock(&shared.request_prefix) = conn
                     .try_connection_id()
                     .map_or_else(|| identity.clone(), |c| c.to_hex().to_string());
-                if let Some(file) = &config.token_file
+                if let (Some(file), None) = (&config.token_file, &config.access_token)
                     && let Err(e) = file.save(&token)
                 {
                     lock(&shared.hub).broadcast(&ClientEvent::Error(e.to_string()));

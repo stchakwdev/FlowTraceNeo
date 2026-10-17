@@ -312,3 +312,39 @@ at v2.12.0) and the local proof (`rust/tools/auth-proof.ts`):
   `onConnect` and the SDK passes no message; over HTTP the caller gets 403 with the text. The web
   therefore names the token's issuer and audience itself, which is also what an operator needs to
   register the issuer (`rust/docs/module-release.md` section 5).
+
+## 2026-10-17: the desktop signs in through the system browser (AUTH2)
+
+Pre-decision P11, desktop half. Decisions and what they rest on:
+
+- **Authorization code with PKCE, loopback redirect, system browser** (RFC 8252). AuthKit takes a
+  public client's `code_challenge` (S256) on `GET /user_management/authorize` and its
+  `code_verifier` instead of a secret on `POST /user_management/authenticate`
+  (<https://workos.com/docs/reference/authkit/authentication/code>); the refresh grant is sent
+  without a secret as the WorkOS Node SDK's public client mode does. The redirect is
+  `http://127.0.0.1:<ephemeral port>/callback`, which WorkOS accepts with a wildcard port in
+  sandbox environments and refuses in production (no http, no localhost); see
+  `module-release.md` section 5 for what production needs. No embedded web view.
+- **The access token never touches the disk.** `ledger_client::ClientConfig::with_access_token`
+  presents it and skips saving the token the host returns, so the device token file is left as
+  it was and a sign-out returns to the same device identity. Only the refresh token is stored,
+  in `<token file>.workos`, mode 0600. A separate file rather than the device token file: one
+  file holding either kind of token would make a sign-out lose the device identity.
+- **Every blocking step runs on its own thread** (the loopback wait, the two WorkOS calls, the
+  token file) and comes back to the store entity in a `cx.spawn` task; a generation number drops
+  answers that a later sign-in, sign-out or connect replaced. The refresh is a timer task on the
+  store, at four fifths of the token's life (at most a minute early). It does not reconnect: the
+  host checks a token only when a connection opens, so the open connection outlives the token,
+  and a reconnect presents the newest one.
+- **A saved sign-in is resumed before any connection opens**, so a signed-in person never
+  briefly connects as their device at launch.
+- **Name and email come from the WorkOS user object**, not an id token: the authenticate answer
+  has none (it carries `user`, `access_token`, `refresh_token`, `organization_id`).
+- **A refusal is recognised by its shape**, as on the web: a signed-in connection that fails
+  before it opens. The SDK reports "Failed to connect: Connection closed before receiving the
+  initial connection message" with no reason, so the screen names the token's issuer and
+  audience with the web's own sentence.
+- **Identity continuity is tested**, not assumed: `signin::tests` checks that the identity the
+  desktop derives for a subject equals `ledger_module::auth::member_identity` (what
+  `add_member_by_subject` writes), and the local proof connected as that member row's identity.
+

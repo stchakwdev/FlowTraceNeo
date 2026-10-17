@@ -66,8 +66,9 @@ changing either once production books exist means a migration.
   `reports`. It has no counterpart for the transparency side: dashboard, flows, chains,
   campaigns, transactions, trust score, donate pages, badges and embeds, or settings and access
   groups.
-- Sign-in is a SpacetimeDB identity (a token file), not WorkOS AuthKit as on the web. Auth
-  providers are the user's decision.
+- Sign-in: with `workos_client_id` in `config.toml` the desktop signs in with WorkOS AuthKit
+  through the system browser (AUTH2, `crates/desktop/README.md`); without it, it connects with a
+  device identity (a token file). Auth providers are the user's decision.
 - The desktop cannot open books for a new organisation or manage members on a live server:
   those are `create_org_ledger`, `add_member` and `remove_member` calls from the CLI
   (`module-release.md`, section 3). `ledger-client` has `create_org_ledger` and `import_books`

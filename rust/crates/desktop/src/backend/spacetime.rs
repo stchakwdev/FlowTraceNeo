@@ -321,15 +321,18 @@ impl SpacetimeBackend {
 
     /// The client config for `settings`: the token file is the settings' path, so a reconnect
     /// with the same path is the same identity (`ledger_client::TokenFile`); an empty path
-    /// connects anonymously.
+    /// connects anonymously. A sign-in's access token is presented instead of the file's token
+    /// and the file is left as it is (`ClientConfig::with_access_token`).
     #[must_use]
     pub fn client_config(settings: &ConnectSettings) -> ClientConfig {
-        let config = ClientConfig::new(settings.host.clone(), settings.database.clone());
-        if settings.token_path.is_empty() {
-            config
-        } else {
-            config.with_token_file(TokenFile::new(&settings.token_path))
+        let mut config = ClientConfig::new(settings.host.clone(), settings.database.clone());
+        if !settings.token_path.is_empty() {
+            config = config.with_token_file(TokenFile::new(&settings.token_path));
         }
+        if let Some(token) = &settings.access_token {
+            config = config.with_access_token(token.clone());
+        }
+        config
     }
 
     /// The settings of the last [`LedgerBackend::connect`].

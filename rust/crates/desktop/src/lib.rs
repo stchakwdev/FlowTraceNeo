@@ -21,6 +21,7 @@ pub mod panels;
 pub mod proofs;
 pub mod reconcile;
 pub mod shell;
+pub mod signin;
 pub mod statements;
 pub mod store;
 pub mod theme;

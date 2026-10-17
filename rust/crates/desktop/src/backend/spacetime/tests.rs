@@ -340,6 +340,7 @@ fn the_token_path_reaches_the_client() {
         host: "https://maincloud.spacetimedb.com".to_owned(),
         database: "flowtrace-ledger-dev".to_owned(),
         token_path: "/home/me/.config/flowtrace-books/token-maincloud.spacetimedb.com".to_owned(),
+        access_token: None,
     };
     let config = SpacetimeBackend::client_config(&settings);
     assert_eq!(config.uri, settings.host);
@@ -347,6 +348,18 @@ fn the_token_path_reaches_the_client() {
     assert_eq!(
         config.token_file.unwrap().path(),
         std::path::Path::new(&settings.token_path)
+    );
+
+    assert!(config.access_token.is_none(), "a device identity");
+
+    let signed_in = SpacetimeBackend::client_config(&ConnectSettings {
+        access_token: Some(ledger_client::AccessToken::new("eyJ.access.sig")),
+        ..settings.clone()
+    });
+    assert_eq!(
+        signed_in.presented_token().unwrap(),
+        (Some("eyJ.access.sig".to_owned()), false),
+        "a WorkOS sign-in presents its access token and saves nothing in the token file"
     );
 
     let anonymous = SpacetimeBackend::client_config(&ConnectSettings {
