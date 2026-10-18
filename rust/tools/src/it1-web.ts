@@ -55,10 +55,13 @@ export interface WebPerson {
   close: () => Promise<void>
 }
 
-/** A browser context signed in as `key` (dummy mode: its device token in local storage). */
-export async function webPerson(browser: Browser, key: string, token: string, shotsDir: string): Promise<WebPerson> {
+/**
+ * A browser context for `key`: in dummy mode signed in by its device token in local storage; with
+ * no token (WorkOS) the caller signs it in.
+ */
+export async function webPerson(browser: Browser, key: string, token: string | undefined, shotsDir: string): Promise<WebPerson> {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
-  await context.addInitScript(([k, t]) => localStorage.setItem(k, t), [TOKEN_KEY, token] as const)
+  if (token !== undefined) await context.addInitScript(([k, t]) => localStorage.setItem(k, t), [TOKEN_KEY, token] as const)
   const page = await context.newPage()
   const commands: Array<WebCommand> = []
   const errors: Array<string> = []

@@ -23,6 +23,13 @@
 //      rust/fixtures/demo-books.json), normalised and required byte-identical;
 //   h. the summary table, written to summary.md and printed.
 //
+// `--auth workos` (src/it1-workos.ts): Alice and Bob are WorkOS users (rust/tools/.env.it1) who
+// join by subject; Alice and Bob sign in on AuthKit in the browser, and Bob signs in on the
+// desktop through its "Sign in with WorkOS" flow, the system browser being an `xdg-open` wrapper
+// that hands the URL to this run. Carol has no WorkOS user, so her web refusal runs on a second
+// web app in dummy mode (port 3001) with her device token. The issuer must be trusted first
+// (`add_trusted_issuer`, an operator's step: rust/docs/integration-test.md, "WorkOS mode").
+//
 // Guards (src/it1-flags.ts): only a database whose name ends in `-dev`, or with `--local` an
 // ft- database of the run's own on the local server (published here, deleted at the end unless
 // `--keep`). A database that is not local is reached through `remoteServer`
@@ -34,12 +41,14 @@ import path from 'node:path'
 import type { Browser } from 'playwright-core'
 import { parseIt1Flags } from './src/it1-flags'
 import type { It1Flags } from './src/it1-flags'
-import { PEOPLE, actorOf, openIt1Org } from './src/it1-org'
-import type { It1Org } from './src/it1-org'
+import { actorOf, openIt1Org, runPeople } from './src/it1-org'
+import type { BySubject, It1Org } from './src/it1-org'
 import { compareThree, fromDom, fromProbe } from './src/it1-report'
 import type { DomReport, ProbeReports } from './src/it1-report'
 import { addAccount, claimPage, enterBill, fillClaim, importStatement, launchBrowser, mainText, payBill, postEntry, readReport, settled, webPerson } from './src/it1-web'
 import type { WebPerson } from './src/it1-web'
+import { authkitSignIn, devServerArgs, installXdgOpen, jwtClaims, openedUrls, parseEnvText, passwordToken, redactAuthorizeUrl, secondsLeft, signInOnWeb, workosValues } from './src/it1-workos'
+import type { WorkosIt1 } from './src/it1-workos'
 import { WASM, localServer, remoteServer } from './src/module-server'
 import type { Json, ModuleServer, Row } from './src/module-server'
 import { OUT_DIR, REPO_DIR, RUST_DIR, TOOLS_DIR } from './src/paths'
@@ -91,6 +100,7 @@ async function step(id: string, name: string, fn: () => Promise<string> | string
   let status: Result['status'] = 'pass'
   let detail: string
   try {
+    await freshTokens()
     detail = await fn()
   } catch (e) {
     status = 'FAIL'
@@ -124,6 +134,34 @@ interface LogStep {
   issues?: Json
 }
 const commandLog: Array<LogStep> = []
+
+// ---------------------------------------------------------------------------
+// WorkOS mode: the values, and fresh access tokens for the run's own reads and the probe
+// ---------------------------------------------------------------------------
+
+const WORKOS_API = 'https://api.workos.com'
+let workos: WorkosIt1 | undefined
+let workosApiKey = ''
+/** Set by preflight in workos mode: the trusted issuer Alice and Bob join at. */
+let bySubject: BySubject | undefined
+
+/**
+ * Before every step once the organisation is open: an access token for Alice and Bob with at
+ * least 90 s left (AuthKit's last five minutes), checked against the issuer and subject they
+ * joined with, in their Who and token file (mode 0600, the probe's `--token-file`).
+ */
+async function freshTokens() {
+  if (!workos || !bySubject || !opened) return
+  for (const key of ['alice', 'bob'] as const) {
+    const who = org.people[key]
+    if (who.token !== '' && secondsLeft(who.token) > 90) continue
+    const token = await passwordToken(WORKOS_API, workos.clientId, workosApiKey, workos[key])
+    const claims = jwtClaims(token)
+    expect(claims.iss === bySubject.issuer && claims.sub === workos[key].id, `${key}'s token has issuer ${String(claims.iss)} and subject ${String(claims.sub)}, not the ones ${key} joined with`)
+    who.token = token
+    fs.writeFileSync(org.tokenFiles[key], token, { mode: 0o600 })
+  }
+}
 
 /** Appends what a web person sent since `from`, once each has its result. */
 async function logWeb(p: WebPerson, from: number, label: string, refused = false) {
@@ -170,11 +208,11 @@ function mustSend(who: string, label: string, command: Json): ProbeOutcome {
  * The desktop binary on `who`'s token file, until it shows the books (`--timings on` prints
  * "books visible ... after launch") or 60 s pass; its stderr is kept as `desktop-<who>.log`.
  */
-async function launchDesktop(who: string, extra: Array<string>): Promise<string> {
+async function launchDesktop(who: string, extra: Array<string>, givenConfig?: string): Promise<string> {
   const dir = path.join(OUT, `desktop-${who}`)
   fs.mkdirSync(dir, { recursive: true })
-  const config = path.join(dir, 'config.toml')
-  fs.writeFileSync(config, `server = ${JSON.stringify(flags.url)}\ndatabase = ${JSON.stringify(flags.db)}\ntoken_file = ${JSON.stringify(org.tokenFiles[who as 'bob'])}\n`)
+  const config = givenConfig ?? path.join(dir, 'config.toml')
+  if (givenConfig === undefined) fs.writeFileSync(config, `server = ${JSON.stringify(flags.url)}\ndatabase = ${JSON.stringify(flags.db)}\ntoken_file = ${JSON.stringify(org.tokenFiles[who as 'bob'])}\n`)
   const stderrPath = path.join(OUT, `desktop-${who}.log`)
   const env = { ...process.env, XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR ?? `/run/user/${os.userInfo().uid}`, WAYLAND_DISPLAY: process.env.WAYLAND_DISPLAY ?? 'wayland-1' }
   const child = Bun.spawn([flags.desktop, '--config', config, '--timings', 'on', ...extra], { env, stdout: 'ignore', stderr: Bun.file(stderrPath) })
@@ -196,6 +234,74 @@ async function launchDesktop(who: string, extra: Array<string>): Promise<string>
     child.kill()
     await child.exited
   }
+}
+
+/**
+ * Workos mode: Bob signs in on the desktop, then the desktop opens the books as him.
+ *
+ * 1. The desktop starts with `--sign-in on` (the Connection screen's "Sign in with WorkOS",
+ *    rust/crates/desktop/src/main.rs) on a fresh device token file, with an `xdg-open` wrapper
+ *    first on PATH; the wrapper hands the AuthKit URL to this run, which signs Bob in on it in its
+ *    own browser context. AuthKit sends that browser to the desktop's loopback callback; the
+ *    desktop trades the code (PKCE) and reconnects as Bob (`status Connected` with Bob's identity).
+ * 2. The desktop is closed and started again without the flag: it trades the refresh token it
+ *    saved (`<token file>.workos`) before connecting, so it opens the books as Bob from the start.
+ */
+async function signInDesktop(who: 'bob'): Promise<string> {
+  expect(workos !== undefined && browser !== undefined, 'workos mode only')
+  const dir = path.join(OUT, `desktop-${who}`)
+  fs.mkdirSync(dir, { recursive: true })
+  const config = path.join(dir, 'config.toml')
+  const deviceFile = path.join(OUT, 'tokens', `${who}-desktop`)
+  fs.writeFileSync(config, `server = ${JSON.stringify(flags.url)}\ndatabase = ${JSON.stringify(flags.db)}\ntoken_file = ${JSON.stringify(deviceFile)}\nworkos_client_id = ${JSON.stringify(workos.clientId)}\n`)
+  const urls = path.join(dir, 'xdg-open.urls')
+  const env = {
+    ...process.env,
+    PATH: installXdgOpen(path.join(dir, 'bin'), urls),
+    XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR ?? `/run/user/${os.userInfo().uid}`,
+    WAYLAND_DISPLAY: process.env.WAYLAND_DISPLAY ?? 'wayland-1',
+  }
+  const expected = org.people[who].identity
+  const signInLog = path.join(OUT, `desktop-${who}-signin.log`)
+  const t = performance.now()
+  const child = Bun.spawn([flags.desktop, '--config', config, '--timings', 'on', '--sign-in', 'on'], { env, stdout: 'ignore', stderr: Bun.file(signInLog) })
+  let signedIn = 0
+  try {
+    const end = Date.now() + 60000
+    while (openedUrls(urls).length === 0) {
+      if (child.exitCode !== null) throw new Error(`the desktop exited with ${child.exitCode}: ${fs.readFileSync(signInLog, 'utf8').trim().split('\n').slice(-3).join(' / ')}`)
+      expect(Date.now() < end, 'the desktop opened no sign-in URL within 60 s')
+      await Bun.sleep(200)
+    }
+    const authorize = openedUrls(urls)[0]
+    log(`  the desktop opened ${redactAuthorizeUrl(authorize)}`)
+    const context = await browser.newContext()
+    try {
+      const page = await context.newPage()
+      await page.goto(authorize)
+      await authkitSignIn(page, workos[who])
+      await page.waitForURL(/^http:\/\/127\.0\.0\.1:\d+\/callback/, { timeout: 30000 })
+      await page.getByText('Signed in').first().waitFor({ timeout: 15000 })
+    } finally {
+      await context.close()
+    }
+    for (;;) {
+      const text = fs.existsSync(signInLog) ? fs.readFileSync(signInLog, 'utf8') : ''
+      if (text.includes(`status Connected { identity: "${expected}" }`)) break
+      const refused = /refused: (.*)/.exec(text)?.[1]
+      if (refused) throw new Error(`the desktop's sign-in was refused: ${refused}`)
+      if (child.exitCode !== null) throw new Error(`the desktop exited with ${child.exitCode}`)
+      expect(Date.now() < end + 60000, `the desktop did not connect as ${who} within 60 s of signing in: ${text.trim().split('\n').slice(-3).join(' / ')}`)
+      await Bun.sleep(200)
+    }
+    signedIn = Math.round(performance.now() - t)
+  } finally {
+    child.kill()
+    await child.exited
+  }
+  expect(fs.existsSync(`${deviceFile}.workos`), 'the desktop saved no refresh token')
+  const books = await launchDesktop(who, ['--report', 'trial-balance'], config)
+  return `signed in on AuthKit through the desktop's sign-in (xdg-open wrapper), connected as ${who} (identity 0x${expected.slice(0, 12)}...) ${signedIn} ms after launch; relaunched on the saved refresh token: ${books}`
 }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +330,10 @@ async function claims(who: string): Promise<Array<Record<string, Json>>> {
 // ---------------------------------------------------------------------------
 
 let devServer: ReturnType<typeof Bun.spawn> | undefined
+/** Workos mode: Carol's dummy-mode web app. */
+let carolServer: ReturnType<typeof Bun.spawn> | undefined
+const CAROL_PORT = '3001'
+const carolUrl = `http://localhost:${CAROL_PORT}`
 
 async function reachable(url: string) {
   try {
@@ -237,15 +347,31 @@ async function ensureWeb(): Promise<string> {
   if (await reachable(flags.webUrl)) return `using the web app already at ${flags.webUrl}: it must run with VITE_LEDGER_BACKEND=spacetimedb on ${flags.db} (else the members see no books and step b fails)`
   expect(/^http:\/\/localhost:3000\/?$/.test(flags.webUrl), `nothing answers at ${flags.webUrl}; start the web app there, or leave --web-url out and the run starts one`)
   const ws = flags.url.replace(/^http/, 'ws')
-  const env = { ...process.env, VITE_LEDGER_BACKEND: 'spacetimedb', VITE_SPACETIMEDB_URI: ws, VITE_SPACETIMEDB_MODULE: flags.db, VITE_SPACETIMEDB_ORG: ORG }
-  const args = ['run', 'dev', ...(flags.offline === 'phone' ? ['--', '--host'] : [])]
-  devServer = Bun.spawn([process.execPath, ...args], { cwd: path.join(REPO_DIR, 'flowtrace'), env, stdout: Bun.file(path.join(OUT, 'web-dev.log')), stderr: 'pipe' })
+  // The auth mode is set here, over flowtrace/.env.local (Vite keeps variables already set).
+  const env = { ...process.env, VITE_LEDGER_BACKEND: 'spacetimedb', VITE_SPACETIMEDB_URI: ws, VITE_SPACETIMEDB_MODULE: flags.db, VITE_SPACETIMEDB_ORG: ORG, VITE_AUTH_MODE: flags.auth }
+  const args = devServerArgs(flags.auth, flags.offline === 'phone' ? ['--host'] : [])
+  // stderr goes to a file: an unread pipe fills and stops vite (under bun --bun it writes more there).
+  devServer = Bun.spawn([process.execPath, ...args], { cwd: path.join(REPO_DIR, 'flowtrace'), env, stdout: Bun.file(path.join(OUT, 'web-dev.log')), stderr: Bun.file(path.join(OUT, 'web-dev.err.log')) })
+  await answers(flags.webUrl, 'web-dev.log')
+  let note = `started the web app on ${flags.webUrl} (vite dev${flags.auth === 'workos' ? ' under bun --bun, workos auth' : ''}) against ${flags.db} on ${ws}, organisation ${ORG}`
+  if (flags.auth === 'workos') {
+    // Carol has no WorkOS user: her refusal on the web runs on a dummy-mode app with her device token.
+    // The vite binary itself: `bun run vite` waits silently here, and `run dev` already fixes the
+    // port. NODE_ENV=test keeps the TanStack devtools event bus off: the first app holds its port
+    // 42069 (@tanstack/devtools-event-bus starts only under NODE_ENV=development).
+    carolServer = Bun.spawn([path.join(REPO_DIR, 'flowtrace/node_modules/.bin/vite'), 'dev', '--port', CAROL_PORT], { cwd: path.join(REPO_DIR, 'flowtrace'), env: { ...env, VITE_AUTH_MODE: 'dummy', NODE_ENV: 'test' }, stdout: Bun.file(path.join(OUT, 'web-dev-carol.log')), stderr: Bun.file(path.join(OUT, 'web-dev-carol.err.log')) })
+    await answers(carolUrl, 'web-dev-carol.log')
+    note += `; Carol's dummy-mode app on ${carolUrl}`
+  }
+  return note
+}
+
+async function answers(url: string, logName: string) {
   const end = Date.now() + 90000
-  while (!(await reachable(flags.webUrl))) {
-    expect(Date.now() < end, 'the web dev server did not answer within 90 s; see web-dev.log')
+  while (!(await reachable(url))) {
+    expect(Date.now() < end, `the web dev server did not answer within 90 s; see ${logName}`)
     await Bun.sleep(500)
   }
-  return `started the web app on ${flags.webUrl} (vite dev) against ${flags.db} on ${ws}, organisation ${ORG}`
 }
 
 // ---------------------------------------------------------------------------
@@ -265,16 +391,24 @@ let comparison: ReturnType<typeof compareThree> | undefined
 log(`it1: ${ORG} on ${flags.db} at ${flags.url}${flags.local ? ' (local: published and deleted by this run)' : ' (existing database: calls and reads only)'}; auth ${flags.auth}; offline claim ${flags.offline}; output ${path.relative(RUST_DIR, OUT)}`)
 
 if (flags.auth === 'workos') {
-  const envFile = path.join(TOOLS_DIR, '.env.it1')
-  const values = fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8') : ''
-  const need = ['WORKOS_CLIENT_ID', 'IT1_WORKOS_ALICE_ID', 'IT1_WORKOS_BOB_ID']
-  const missing = need.filter((k) => !new RegExp(`^${k}=\\S+`, 'm').test(values))
-  if (missing.length > 0) {
-    skip('-', 'WorkOS mode', `skipped: rust/tools/.env.it1 lacks ${missing.join(', ')} (and flowtrace/.env.local needs the AUTH1 values); nothing was written. See rust/docs/integration-test.md, "WorkOS mode".`)
-  } else {
-    skip('-', 'WorkOS mode', 'the values are present, but v1 drives dummy auth only: the AuthKit sign-in driver is the next step (rust/docs/integration-test.md, "WorkOS mode"); nothing was written.')
+  const read = (file: string) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
+  const got = workosValues(read(path.join(TOOLS_DIR, '.env.it1')))
+  const web = parseEnvText(read(path.join(REPO_DIR, 'flowtrace/.env.local')))
+  const missing = [
+    ...(got.ok ? [] : got.missing.map((k) => `rust/tools/.env.it1 ${k}`)),
+    ...['WORKOS_CLIENT_ID', 'WORKOS_API_KEY', 'WORKOS_COOKIE_PASSWORD', 'WORKOS_REDIRECT_URI'].filter((k) => (web.get(k) ?? '') === '').map((k) => `flowtrace/.env.local ${k}`),
+  ]
+  if (!got.ok || missing.length > 0) {
+    skip('-', 'WorkOS mode', `skipped: missing ${missing.join(', ')}; nothing was written. See rust/docs/integration-test.md, "WorkOS mode".`)
+    process.exit(0)
   }
-  process.exit(0)
+  if (web.get('WORKOS_CLIENT_ID') !== got.values.clientId) {
+    skip('-', 'WorkOS mode', 'skipped: WORKOS_CLIENT_ID differs between rust/tools/.env.it1 and flowtrace/.env.local; nothing was written.')
+    process.exit(0)
+  }
+  expect(/^http:\/\/localhost:3000\/?$/.test(flags.webUrl), 'workos mode needs the web app on http://localhost:3000, the redirect URI registered at WorkOS')
+  workos = got.values
+  workosApiKey = web.get('WORKOS_API_KEY') ?? ''
 }
 
 try {
@@ -295,12 +429,31 @@ try {
       expect(probeTable.ok, `${flags.db} does not carry main's module yet (no trusted_issuer table): publish main to it first. ${probeTable.text.split('\n')[0]}`)
     }
     const webNote = await ensureWeb()
-    return `${flags.local ? `published ${flags.db} on the local server; ` : ''}${webNote}`
+    let trust = ''
+    if (workos) {
+      // Alice and Bob join at the issuer an operator trusts for this client id. With none, Alice
+      // signs in on the web once so the module's refusal names the issuer and audience to register.
+      const row = ownerRows('SELECT issuer, audience FROM trusted_issuer').find((r) => r[1] === workos?.clientId)
+      if (!row) {
+        browser ??= await launchBrowser(flags.headed)
+        const page = await (await browser.newContext()).newPage()
+        await signInOnWeb(page, `${flags.webUrl.replace(/\/+$/, '')}/ledger/accounts`, workos.alice, page.getByRole('button', { name: 'Add an account' }))
+        throw new Error('no trusted_issuer row has this client id as audience, and the web was not refused')
+      }
+      bySubject = { issuer: row[0], subjects: { alice: workos.alice.id, bob: workos.bob.id } }
+      trust = `; trusted issuer ${row[0]} for audience ${row[1]}`
+    }
+    return `${flags.local ? `published ${flags.db} on the local server; ` : ''}${webNote}${trust}`
   })
 
   await step('a', 'open the organisation', async () => {
-    org = await openIt1Org(server, ORG, OUT)
+    const memberKey = (userId: string) => {
+      expect(/^[A-Za-z0-9_-]+$/.test(userId), `unexpected user id ${userId}`)
+      return ownerRows(`SELECT key FROM member WHERE org_id = '${ORG}' AND user_id = '${userId}'`)[0]?.[0] ?? ''
+    }
+    org = await openIt1Org(server, ORG, OUT, bySubject, memberKey)
     opened = true
+    await freshTokens()
     const members = count('member')
     expect(members === 4, `${members} members`)
     if (YEAR > 2026) {
@@ -309,16 +462,27 @@ try {
       expect(r.ok, `year.open ${YEAR}: ${r.text}`)
       commandLog.push({ label: `year.open ${YEAR}`, actor: 'alice', command: { type: 'year.open', year: YEAR }, ok: true, result: { type: 'none' } })
     }
-    return `${ORG}: demo books loaded (import_books), members Alice (post, approve, close), Bob (post, approve), Carol (none) and the run's operator; ${bookCounts()}`
+    const joined = bySubject ? `Alice and Bob by WorkOS subject at ${bySubject.issuer} (identities 0x${org.people.alice.identity.slice(0, 12)}..., 0x${org.people.bob.identity.slice(0, 12)}...), Carol by device identity` : 'each a device identity'
+    return `${ORG}: demo books loaded (import_books), members Alice (post, approve, close), Bob (post, approve), Carol (none) and the run's operator, ${joined}; ${bookCounts()}`
   })
 
-  browser = await launchBrowser(flags.headed)
-  const tokens = Object.fromEntries(PEOPLE.map((p) => [p.key, org.people[p.key].token]))
+  browser ??= await launchBrowser(flags.headed)
+  // Workos mode: Alice and Bob sign in on AuthKit, so their contexts start with no token.
+  const tokens: Record<string, string | undefined> = Object.fromEntries(runPeople(bySubject).map((p) => [p.key, bySubject?.subjects[p.key] ? undefined : org.people[p.key].token]))
   web.alice = await webPerson(browser, 'alice', tokens.alice, SHOTS)
   const alice = web.alice
   const base = flags.webUrl.replace(/\/+$/, '')
   let claimId = ''
   let billId = ''
+
+  if (workos) {
+    const person = workos.alice
+    await step('w1', 'web, Alice: sign in with WorkOS', async () => {
+      const ms = await signInOnWeb(alice.page, `${base}/ledger/accounts`, person, alice.page.getByRole('button', { name: 'Add an account' }))
+      await alice.shot('signed-in')
+      return `AuthKit email and password, back on ${base}, books of ${ORG} loaded as Alice ${ms} ms after opening the page`
+    })
+  }
 
   await step('b1', 'web, Alice: add an account', async () => {
     const from = alice.commands.length
@@ -360,7 +524,8 @@ try {
     return `${path.relative(RUST_DIR, STATEMENT)} into ${BANK}: "${label}" -> ${((c.result as { ids: Array<string> }).ids ?? []).length} new lines (one repeats a demo line and is skipped by the engine's dedupe)`
   })
 
-  await step('c1', 'desktop, Bob: open the books', () => launchDesktop('bob', ['--report', 'trial-balance']))
+  if (workos) await step('c1', 'desktop, Bob: sign in with WorkOS, then open the books', () => signInDesktop('bob'))
+  else await step('c1', 'desktop, Bob: open the books', () => launchDesktop('bob', ['--report', 'trial-balance']))
   await step('c2', "desktop, Bob: approve Alice's claim", () => {
     const r = mustSend('bob', 'desktop: claim.approve', { type: 'claim.approve', claimId })
     return `claim.approve ${claimId} -> ${JSON.stringify(r.outcome.result)} in ${r.ms} ms (ledger-client as 0x${r.identity.slice(0, 12)}...)`
@@ -378,6 +543,13 @@ try {
 
   web.bob = await webPerson(browser, 'bob', tokens.bob, SHOTS)
   const bob = web.bob
+  if (workos) {
+    const person = workos.bob
+    await step('w2', 'web, Bob: sign in with WorkOS', async () => {
+      const ms = await signInOnWeb(bob.page, `${base}/spend/claims/${claimId}`, person, bob.page.getByRole('heading', { name: 'What happens next' }))
+      return `AuthKit email and password, back on ${base}, the claim page loaded as Bob ${ms} ms after opening the page`
+    })
+  }
   await step('d1', 'web, Bob: the claim shows posted', async () => {
     const text = await claimPage(bob, base, claimId)
     await bob.shot('claim-posted')
@@ -397,10 +569,12 @@ try {
   const reason = 'Carol does not have permission to post to the ledger.'
   web.carol = await webPerson(browser, 'carol', tokens.carol, SHOTS)
   const carol = web.carol
+  // Workos mode: Carol has no WorkOS user, so she is refused on the dummy-mode app.
+  const carolBase = workos ? carolUrl : base
   await step('e1', 'refusal, web: Carol posts an entry', async () => {
     const before = bookCounts()
     const from = carol.commands.length
-    await postEntry(carol, base, { memo: `IT1 ${stamp} Carol tries`, debit: '7100', credit: '1110', amount: '1' })
+    await postEntry(carol, carolBase, { memo: `IT1 ${stamp} Carol tries`, debit: '7100', credit: '1110', amount: '1' })
     await carol.page.getByText('Not saved or posted').waitFor({ timeout: 15000 })
     const sent = await logWeb(carol, from, 'web: entry.post by Carol', true)
     const text = await mainText(carol.page)
@@ -522,7 +696,7 @@ try {
     return `desktop::statements::statement on the books ledger-client rebuilt as Bob: ${Object.keys(desktopReports).join(', ')}`
   })
   await step('g3', 'reports, oracle: the command log replayed through ledger-core', () => {
-    const actors = Object.fromEntries([...PEOPLE.map((p) => [p.key, actorOf(p)]), ['phone', { id: 'it1-alice-phone', name: 'Alice (phone)', can_post: true, can_approve: false, can_close: false }]])
+    const actors = Object.fromEntries([...runPeople(bySubject).map((p) => [p.key, actorOf(p)]), ['phone', { id: 'it1-alice-phone', name: 'Alice (phone)', can_post: true, can_approve: false, can_close: false }]])
     const logFile = path.join(OUT, 'command-log.json')
     fs.writeFileSync(logFile, JSON.stringify({ org: ORG, now: new Date().toISOString(), actors, steps: commandLog }, null, 1))
     const out = probe(['oracle', '--log', logFile, '--from', FROM, '--to', TODAY]) as { steps: Array<{ step: number; label: string; agrees: boolean; detail: string }>; reports: ProbeReports }
@@ -552,9 +726,11 @@ try {
     if (p?.errors.length) log(`browser console errors (${p.key}): ${p.errors.slice(0, 5).join(' | ')}`)
   }
   await browser?.close()
-  if (devServer) {
-    devServer.kill()
-    await devServer.exited
+  for (const s of [devServer, carolServer]) {
+    if (s) {
+      s.kill()
+      await s.exited
+    }
   }
   // The run's operator is withdrawn; the organisation stays (rust/docs/integration-test.md).
   if (opened) {
