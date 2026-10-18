@@ -88,7 +88,7 @@ the end unless `--keep`:
 | `--url`, `--db` | The server and database; required unless `--local`. The database name must end in `-dev`; `flowtrace-ledger` (production) and anything else is refused |
 | `--local` | The local server (`http://127.0.0.1:3100`) and a database of the run's own |
 | `--keep` | With `--local`: keep the database |
-| `--auth dummy\|workos` | Default `dummy` (device identities the run mints); `workos` is below |
+| `--auth dummy\|workos` | Default `dummy` (device identities the run mints); `workos` (Alice and Bob sign in with WorkOS) is below |
 | `--offline-emulated` | Step f in a Playwright context set offline, then online |
 | `--phone` | Step f on the user's Android phone (below); excludes `--offline-emulated` |
 | `--web-url` | Default `http://localhost:3000`. If nothing answers there, the run starts `vite dev` itself on the run's database and organisation, and stops it at the end. An app already running there must use `VITE_LEDGER_BACKEND=spacetimedb` on the same database |
@@ -128,15 +128,56 @@ and Bob approves it on the desktop.
 
 ## WorkOS mode
 
-`--auth workos` needs, untracked and never committed: `rust/tools/.env.it1` with
-`WORKOS_CLIENT_ID` (staging) and the two WorkOS user ids `IT1_WORKOS_ALICE_ID` and
-`IT1_WORKOS_BOB_ID`, and `flowtrace/.env.local` per AUTH1's steps (`flowtrace/README.md`,
-"Signing in with WorkOS against dev"). Without them the run says what is missing and writes
-nothing. v1 stops there even with the values present: the sign-in driver (Playwright through
-AuthKit for the web, the desktop's "Sign in with WorkOS" button, or the fallback of a test-mode
-WorkOS user with a long-lived token) is the next step and needs the user's staging values to be
-built against. As operator the run would then call `add_trusted_issuer` once and
-`add_member_by_subject` for Alice and Bob.
+`--auth workos` runs the same steps with Alice and Bob as WorkOS users; the code is
+`../tools/src/it1-workos.ts`. It needs these values, untracked and never committed (both files
+are gitignored):
+
+- `rust/tools/.env.it1`: `WORKOS_CLIENT_ID` (the sandbox environment) and, for Alice and Bob,
+  `IT1_WORKOS_<ALICE|BOB>_ID` (the WorkOS user id), `_EMAIL` and `_PASSWORD`;
+- `flowtrace/.env.local` per AUTH1 (`flowtrace/README.md`, "Signing in with WorkOS against dev"):
+  the same `WORKOS_CLIENT_ID`, `WORKOS_API_KEY`, `WORKOS_COOKIE_PASSWORD` and
+  `WORKOS_REDIRECT_URI=http://localhost:3000/api/auth/callback`.
+
+If anything is missing, the run names the missing keys (never a value) and writes nothing. In the
+WorkOS dashboard the environment needs the redirects `http://localhost:3000/api/auth/callback` (web)
+and `http://127.0.0.1:*/callback` (desktop), and email and password sign-in. **The test users'
+email domain must not be claimed by an organisation with an SSO connection.** The sandbox's
+"Test Organization" claims `example.com`, so users on that domain are sent to the test identity
+provider instead of a password page (a password sign-in answers `sso_required`). The run says so
+in plain words.
+
+**Trust first (an operator, once per database).** The run looks for a `trusted_issuer` row whose
+audience is the client id. Without one, preflight signs Alice in on the web, and the Books
+screens' refusal names the issuer and audience to register. The run then stops with:
+
+```sh
+~/.local/bin/spacetime call -s maincloud flowtrace-ledger-dev add_trusted_issuer '"<issuer>"' '"<audience>"' '"WorkOS staging"'
+```
+
+**What changes in the steps.**
+
+| Step | Workos mode |
+|---|---|
+| 0 | the web app runs under `bun --bun` (below), with a second app in dummy mode on port 3001 for Carol |
+| a | Alice and Bob join by subject (`add_member_by_subject` at the trusted issuer, their WorkOS user ids as user ids); Carol is a device identity, as she has no WorkOS user |
+| w1 | web, Alice signs in on the hosted AuthKit page: email, "Continue with email", password, Continue; back on the app, the books load as her |
+| c1 | desktop, Bob: "Sign in with WorkOS" (`--sign-in on`). An `xdg-open` wrapper first on PATH hands the AuthKit URL to the run, which signs Bob in on it in its own browser context. AuthKit sends that browser to the desktop's loopback callback, and the desktop connects as Bob. The desktop is then started again without the flag: it trades the refresh token it saved and opens the books as Bob |
+| w2 | web, Bob signs in on AuthKit before step d1 |
+| e1 | Carol is refused on the dummy-mode app (port 3001) |
+| other steps | as in dummy mode |
+
+The run's own reads and the probe's ledger-client calls as Alice or Bob use an access token from
+WorkOS's password authentication (`grant_type=password` with the API key). That is the same
+environment, so the issuer, subject and identity are the same as their browser sign-ins. Each
+token is checked against the issuer and subject the person joined with, and renewed when it has
+under 90 s left. The tokens stay in the run's `tokens/` folder (mode 0600) and never reach the
+transcript.
+
+**Why `bun --bun`.** Under Node 26, Nitro's dev worker (nitro 3.0.1-alpha.1, srvx 0.10.1) delivers
+every response without its headers. Dummy mode does not notice, but the web's sign-in redirect
+arrives as a bare 307 with no Location, and the browser shows a blank page. Under Bun's runtime,
+the same request carries its Location. The production build is not affected by this dev-only
+problem.
 
 ## Nightly (IT2)
 
@@ -158,7 +199,9 @@ already run in the `fixtures` job's `bun test`.
 
 One organisation `it1-<stamp>` per run, with the demo books (about 450 rows), the run's postings
 and four members (the run's operator, withdrawn from the operator table at the end, stays a
-member of its organisation). Nothing else changes, and nothing is ever written to production. The
+member of its organisation). In workos mode Alice's and Bob's member rows are by subject, and
+the desktop's WorkOS refresh token stays in the run's gitignored `tokens/` folder. Nothing else
+changes, and nothing is ever written to production. The
 run never publishes, deletes or renames on maincloud: off the local server it goes through
 `remoteServer` (`src/module-server.ts`), which allows only `call` and `sql`. While fiscal year
 2026 is the demo books' only year, a run in a later year opens its own year first (`year.open`,

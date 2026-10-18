@@ -1,0 +1,2 @@
+# IT1 WorkOS values: test users and passwords (rust/docs/integration-test.md, "WorkOS mode"); never commit
+.env.it1
