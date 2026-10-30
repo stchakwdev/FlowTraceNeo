@@ -16,39 +16,21 @@ import { useOrg } from './org-context'
 import { useUserPermissions } from './queries'
 import { DEMO_ACTOR, DEMO_AS_OF, demoLedgerBackend } from './demo/ledger'
 import { Ledger, actorFromPermissions } from './ledger'
-import type * as SpacetimeBackendModule from './ledger/spacetime-backend'
+import {
+  BACKEND,
+  BooksNotConnectedError,
+  CONFIGURED_ORG,
+  ledgerOrgId,
+  loadSpacetime,
+  useSpacetimeMemberships,
+} from './spacetime-session'
+import type { LedgerBackendKind } from './spacetime-session'
 import type {
   Actor,
   CommandResult,
   LedgerBackend,
   LedgerCommand,
 } from './ledger'
-
-export type LedgerBackendKind = 'demo' | 'spacetimedb' | 'none'
-
-/** VITE_LEDGER_BACKEND wins; unset, dummy auth mode means the demo books. */
-export function ledgerBackendKind(
-  setting: string | undefined,
-  devMode: boolean,
-): LedgerBackendKind {
-  if (setting === 'spacetimedb') return 'spacetimedb'
-  if (setting === 'demo' || devMode) return 'demo'
-  return 'none'
-}
-
-/** Whose books the screens show; null when this identity belongs to none yet. */
-export function ledgerOrgId(input: {
-  kind: LedgerBackendKind
-  contextOrgId: string | null
-  configured: string | undefined
-  memberOrgs: Array<string>
-}): string | null {
-  if (input.kind !== 'spacetimedb') return input.contextOrgId
-  if (input.configured) return input.configured
-  if (input.contextOrgId && input.memberOrgs.includes(input.contextOrgId))
-    return input.contextOrgId
-  return [...input.memberOrgs].sort().at(0) ?? null
-}
 
 /**
  * The organisation the masthead names. With WorkOS sign-in on SpacetimeDB it
@@ -67,27 +49,8 @@ export function mastheadOrgName(input: {
   return input.organizationName ?? 'Your organisation'
 }
 
-const BACKEND = ledgerBackendKind(
-  import.meta.env.VITE_LEDGER_BACKEND as string | undefined,
-  DEV_MODE,
-)
 /** The books are the bundled demo snapshot (tag them "Demo data"). */
 export const DEMO_BOOKS = BACKEND === 'demo'
-const CONFIGURED_ORG =
-  (import.meta.env.VITE_SPACETIMEDB_ORG as string | undefined) || undefined
-
-type SpacetimeModule = typeof SpacetimeBackendModule
-
-// Lazy, so the demo bundle never loads the SpacetimeDB SDK.
-const spacetimeLoaders = import.meta.glob<SpacetimeModule>(
-  './ledger/spacetime-backend.ts',
-)
-
-function loadSpacetime(): Promise<SpacetimeModule> {
-  const load = Object.values(spacetimeLoaders).at(0)
-  if (!load) throw new Error('The SpacetimeDB ledger backend is not built into this app.')
-  return load()
-}
 
 let backendPromise: Promise<LedgerBackend | null> | null = null
 
@@ -101,51 +64,18 @@ export function getLedgerBackend(): Promise<LedgerBackend | null> {
 }
 
 export const ledgerKey = (orgId: string) => ['ledger', orgId] as const
-const membershipKey = ['ledger', 'membership'] as const
 
 /** The date the books are reported "as of". The demo is a snapshot. */
 export function useLedgerAsOf() {
   return BACKEND === 'demo' ? DEMO_AS_OF : new Date().toISOString().slice(0, 10)
 }
 
-export class BooksNotConnectedError extends Error {
-  /** This browser's SpacetimeDB identity, to hand to an operator. */
-  readonly identity: string | null
-
-  constructor(identity: string | null = null) {
-    super('The books are not connected for this organisation yet.')
-    this.name = 'BooksNotConnectedError'
-    this.identity = identity
-  }
-}
-
-/** This browser's SpacetimeDB identity and memberships, kept fresh. */
-function useSpacetimeMemberships() {
-  const queryClient = useQueryClient()
-  const enabled = BACKEND === 'spacetimedb'
-  const query = useQuery({
-    queryKey: membershipKey,
-    queryFn: async () => (await loadSpacetime()).spacetimeMemberships(),
-    enabled,
-    staleTime: Infinity,
-  })
-  useEffect(() => {
-    if (!enabled) return
-    let unsubscribe: (() => void) | undefined
-    let cancelled = false
-    void loadSpacetime().then((m) => {
-      if (cancelled) return
-      unsubscribe = m.onSpacetimeMembershipChange(() =>
-        queryClient.invalidateQueries({ queryKey: membershipKey }),
-      )
-    })
-    return () => {
-      cancelled = true
-      unsubscribe?.()
-    }
-  }, [enabled, queryClient])
-  return query
-}
+export {
+  BooksNotConnectedError,
+  ledgerBackendKind,
+  ledgerOrgId,
+} from './spacetime-session'
+export type { LedgerBackendKind } from './spacetime-session'
 
 /** The organisation whose books the screens read, once it is known. */
 function useLedgerTarget() {

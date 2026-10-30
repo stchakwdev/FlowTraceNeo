@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { BadgeStyle } from '@/lib/badge-utils'
-import { getOrganization } from '@/lib/data'
+import { getPublicOrganization } from '@/lib/data'
 import { TrustBadgePreview } from '@/components/trust-badge-preview'
 
 // Search params are optional and undefined when absent, so a bare URL renders
@@ -42,7 +42,7 @@ function TrustBadgePage() {
 
   const org = useQuery({
     queryKey: ['organization', orgId],
-    queryFn: () => getOrganization(orgId),
+    queryFn: () => getPublicOrganization(orgId),
   })
   const orgName = org.data?.name
 
@@ -54,6 +54,7 @@ function TrustBadgePage() {
         <div className="flex min-h-48 w-full items-center justify-center overflow-hidden border border-border bg-card px-6 py-12 sm:min-h-56">
           <TrustBadgePreview
             organizationId={orgId}
+            published
             style={search.style ?? 'flat'}
             label={search.label ?? 'Trust Score'}
             scale={2.5}

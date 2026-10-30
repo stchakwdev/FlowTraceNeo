@@ -18,9 +18,9 @@ import {
 } from '@/components/public-campaign-header'
 import { PublicDonationForm } from '@/components/public-donation-form'
 import { SocialShareButtons } from '@/components/social-share-buttons'
-import { useCampaignStats, usePublicCampaign } from '@/lib/queries'
-import { getCampaignReport } from '@/lib/data'
-import { DEV_MODE } from '@/lib/auth'
+import { usePublicCampaign, usePublicCampaignStats } from '@/lib/queries'
+import { getPublicCampaignReport } from '@/lib/data'
+import { DEMO_BOOKS } from '@/lib/ledger-client'
 import { formatDate } from '@/lib/format'
 
 export const Route = createFileRoute('/donate/$slug')({
@@ -40,10 +40,10 @@ export const Route = createFileRoute('/donate/$slug')({
 function PublicCampaignPage() {
   const { slug } = Route.useParams()
   const { data: campaign, isLoading, error } = usePublicCampaign(slug)
-  const { data: stats } = useCampaignStats(campaign?.id ?? '')
+  const { data: stats } = usePublicCampaignStats(campaign?.id ?? '')
   const report = useQuery({
     queryKey: ['campaign-report', campaign?.id, campaign?.current_amount],
-    queryFn: () => getCampaignReport(campaign!.id),
+    queryFn: () => getPublicCampaignReport(campaign!.id),
     enabled: !!campaign,
     staleTime: 30 * 1000,
   })
@@ -61,7 +61,7 @@ function PublicCampaignPage() {
             </Link>
             .
           </p>
-          {DEV_MODE && <DemoTag />}
+          {DEMO_BOOKS && <DemoTag />}
         </div>
       </footer>
     </div>
@@ -112,7 +112,7 @@ function PublicCampaignPage() {
           <span className={timing.ended ? 'font-semibold text-foreground' : undefined}>
             {timing.label}
           </span>
-          {DEV_MODE && <DemoTag />}
+          {DEMO_BOOKS && <DemoTag />}
         </p>
       </div>
 

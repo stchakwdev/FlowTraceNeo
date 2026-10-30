@@ -1,12 +1,22 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouterState } from '@tanstack/react-router'
 import { useAppAuth } from './auth-context'
-import { DEV_MODE, DEV_ORG_ID, supabase } from './supabase'
+import { AUTH_MODE, DEV_MODE } from './auth'
+import { DEV_ORG_ID } from './supabase'
 import { demoOrganization, profiles as demoProfiles } from './demo/dataset'
+import { loadTransparency } from './data'
+import { orgContextFrom } from './ledger/transparency-model'
+import {
+  BACKEND,
+  BooksNotConnectedError,
+  CONFIGURED_ORG,
+} from './spacetime-session'
 import type { AuthUser } from './auth'
 import type { ReactNode } from 'react'
-import type { Organization, Profile } from './supabase'
+import type { Organization, Profile } from './types'
 
 interface OrgContextValue {
   organizationId: string | null
@@ -28,145 +38,182 @@ const OrgContext = createContext<OrgContextValue>({
   refetch: async () => {},
 })
 
-// Dummy auth mode: the demo org and its admin profile from the bundled dataset
+// The demo books: the demo org and its admin profile from the bundled dataset
 const DEV_ORGANIZATION: Organization = demoOrganization
 const DEV_PROFILE: Profile = demoProfiles[0]
 
-export function OrgProvider({ children }: { children: ReactNode }) {
+/** The query roots of the records the module serves (queries.ts queryKeys), refreshed on any change. */
+const MODULE_QUERY_ROOTS = new Set([
+  'organization',
+  'campaigns',
+  'campaign',
+  'campaign-slug',
+  'campaign-stats',
+  'campaign-counts',
+  'underfunded-campaigns',
+  'campaign-report',
+  'donations',
+  'donation',
+  'donor-donations',
+  'donor-updates',
+  'campaign-updates',
+])
+
+export const orgContextKey = ['ledger', 'org-context'] as const
+
+/**
+ * On SpacetimeDB the organisation and the person come from the module, never from the client:
+ * the organisation and role from this identity's member row (`my_member`), the organisation
+ * from `my_organization_profile` and `my_trust_score`, the person from `my_profile`. An
+ * identity with no membership gets no organisation, only the not-connected notice with its
+ * identity (as the books screens show it); nothing is provisioned.
+ */
+function ModuleOrgProvider({ children }: { children: ReactNode }) {
   const { user, organizationId: authOrgId, loading: authLoading } = useAppAuth()
-  const [state, setState] = useState<Omit<OrgContextValue, 'refetch' | 'user'>>(
-    {
-      organizationId: DEV_MODE ? DEV_ORG_ID : null,
-      organization: DEV_MODE ? DEV_ORGANIZATION : null,
-      profile: DEV_MODE ? DEV_PROFILE : null,
-      isLoading: !DEV_MODE,
-      error: null,
-    },
-  )
+  const queryClient = useQueryClient()
+  // Only the signed-in app connects: the donate page, embed and badge read the public tables
+  // over HTTP (ledger/public-sql.ts) and must not open a connection or mint an identity.
+  const inApp = useRouterState({
+    select: (r) => r.matches.some((m) => m.routeId === '/_authenticated'),
+  })
+  const enabled = inApp && (DEV_MODE || (!authLoading && !!user))
+  const snapshot = useQuery({
+    queryKey: orgContextKey,
+    queryFn: async () => (await loadTransparency()).orgSnapshot(),
+    enabled,
+    staleTime: Infinity,
+  })
 
-  const loadOrgContext = async () => {
-    // Dev bypass mode - use mock organization
-    if (DEV_MODE) {
-      setState({
-        organizationId: DEV_ORG_ID,
-        organization: DEV_ORGANIZATION,
-        profile: DEV_PROFILE,
-        isLoading: false,
-        error: null,
+  useEffect(() => {
+    if (!enabled) return
+    let unsubscribe: (() => void) | undefined
+    let cancelled = false
+    void loadTransparency().then((m) => {
+      if (cancelled) return
+      unsubscribe = m.onTransparencyChange(() => {
+        void queryClient.invalidateQueries({ queryKey: orgContextKey })
+        void queryClient.invalidateQueries({
+          predicate: (q) => MODULE_QUERY_ROOTS.has(String(q.queryKey[0])),
+        })
       })
-      return
+    })
+    return () => {
+      cancelled = true
+      unsubscribe?.()
     }
+  }, [enabled, queryClient])
 
-    // Wait for auth to load
-    if (authLoading) return
+  const data = snapshot.data
+  const ctx = data
+    ? orgContextFrom({
+        memberships: data.memberships,
+        configured: CONFIGURED_ORG,
+        contextOrgId: authOrgId,
+      })
+    : null
 
-    // Not authenticated - clear org context
-    if (!user) {
-      setState((prev) => ({
-        ...prev,
+  // A WorkOS person's name and email go to their module profile once, so co-members see who
+  // they are. A dummy-mode device identity is nobody in particular, so it sets none.
+  const needsProfile =
+    AUTH_MODE === 'workos' && !!ctx && !!data && !data.person && !!user
+  useEffect(() => {
+    if (!needsProfile) return
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ')
+    void loadTransparency()
+      .then((m) => m.setProfile(name, user.email))
+      .catch(() => {
+        // Not fatal: the member row's name stands in.
+      })
+  }, [needsProfile, user])
+
+  const value = useMemo((): OrgContextValue => {
+    const refetch = async () => {
+      await snapshot.refetch()
+    }
+    if (!enabled)
+      return {
         organizationId: null,
         organization: null,
         profile: null,
+        user,
+        isLoading: authLoading,
+        error: null,
+        refetch,
+      }
+    if (!data)
+      return {
+        organizationId: null,
+        organization: null,
+        profile: null,
+        user,
+        isLoading: snapshot.isLoading,
+        error: snapshot.error,
+        refetch,
+      }
+    if (!ctx)
+      return {
+        organizationId: null,
+        organization: null,
+        profile: null,
+        user,
         isLoading: false,
-      }))
-      return
+        error: new BooksNotConnectedError(data.identity),
+        refetch,
+      }
+    const actor = ctx.membership.actor
+    return {
+      organizationId: ctx.orgId,
+      organization: data.organizations.get(ctx.orgId) ?? null,
+      profile: {
+        id: actor.id,
+        organization_id: ctx.orgId,
+        email: user?.email ?? '',
+        full_name: data.person?.display_name ?? actor.name,
+        phone: null,
+        role: ctx.role,
+        created_at: '',
+      },
+      user,
+      isLoading: false,
+      error: null,
+      refetch,
     }
+  }, [enabled, data, ctx, user, authLoading, snapshot])
 
-    try {
-      // Try to load profile from Supabase using the auth user ID
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+  return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>
+}
 
-      let orgId = profile?.organization_id ?? authOrgId ?? null
-
-      // If no profile or no org, auto-provision: create profile + link to demo org
-      if (!profile || !orgId) {
-        orgId = DEV_ORG_ID
-        const { data: upsertedProfile } = await supabase
-          .from('profiles')
-          .upsert(
-            {
-              id: user.id,
-              email: user.email,
-              full_name:
-                [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-                null,
-              organization_id: orgId,
-              role: 'admin' as const,
-            },
-            { onConflict: 'id' },
-          )
-          .select()
-          .single()
-
-        if (upsertedProfile) {
-          const { data: org } = await supabase
-            .from('organizations')
-            .select('*')
-            .eq('id', orgId)
-            .single()
-
-          setState({
-            organizationId: orgId,
-            organization: org ?? DEV_ORGANIZATION,
-            profile: upsertedProfile,
+/** The demo books serve the demo organisation; with no backend there is none (Supabase is gone). */
+function StaticOrgProvider({ children }: { children: ReactNode }) {
+  const { user } = useAppAuth()
+  const value = useMemo(
+    (): OrgContextValue =>
+      BACKEND === 'demo'
+        ? {
+            organizationId: DEV_ORG_ID,
+            organization: DEV_ORGANIZATION,
+            profile: DEV_PROFILE,
+            user,
             isLoading: false,
             error: null,
-          })
-          return
-        }
-      }
-
-      // Load organization from Supabase
-      if (orgId) {
-        const { data: org } = await supabase
-          .from('organizations')
-          .select('*')
-          .eq('id', orgId)
-          .single()
-
-        setState({
-          organizationId: orgId,
-          organization: org ?? DEV_ORGANIZATION,
-          profile,
-          isLoading: false,
-          error: null,
-        })
-      } else {
-        // No org found anywhere — fall back to demo org
-        setState({
-          organizationId: DEV_ORG_ID,
-          organization: DEV_ORGANIZATION,
-          profile: null,
-          isLoading: false,
-          error: null,
-        })
-      }
-    } catch {
-      // Supabase unreachable — fall back to demo org so the UI still works
-      setState({
-        organizationId: DEV_ORG_ID,
-        organization: DEV_ORGANIZATION,
-        profile: null,
-        isLoading: false,
-        error: null,
-      })
-    }
-  }
-
-  useEffect(() => {
-    loadOrgContext()
-  }, [user?.id, authLoading])
-
-  return (
-    <OrgContext.Provider value={{ ...state, user, refetch: loadOrgContext }}>
-      {children}
-    </OrgContext.Provider>
+            refetch: async () => {},
+          }
+        : {
+            organizationId: null,
+            organization: null,
+            profile: null,
+            user,
+            isLoading: false,
+            error: new BooksNotConnectedError(),
+            refetch: async () => {},
+          },
+    [user],
   )
+  return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>
 }
+
+export const OrgProvider =
+  BACKEND === 'spacetimedb' ? ModuleOrgProvider : StaticOrgProvider
 
 export function useOrg() {
   return useContext(OrgContext)

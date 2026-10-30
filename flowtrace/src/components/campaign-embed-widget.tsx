@@ -5,7 +5,7 @@ import { campaignTiming } from './campaign-status-badge'
 import { FlowTraceMark } from '@/components/layout/wordmark'
 import { CoverageBar } from '@/components/report'
 import { buttonVariants } from '@/components/ui/button'
-import { getCampaignReport } from '@/lib/data'
+import { getPublicCampaignReport } from '@/lib/data'
 import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -31,7 +31,7 @@ export function CampaignEmbedWidget({
 }: CampaignEmbedWidgetProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['campaign-report', campaignId, 'embed'],
-    queryFn: () => getCampaignReport(campaignId),
+    queryFn: () => getPublicCampaignReport(campaignId),
     enabled: !!campaignId,
     staleTime: 60 * 1000,
   })
