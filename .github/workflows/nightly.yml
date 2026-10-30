@@ -24,6 +24,9 @@ on:
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
+  # SPIKE, removed before the PR: workflow_dispatch needs the file on main.
+  push:
+    branches: ['hp/flowtrace/t-0046-it2-nightly-run-and-screen-parity']
 
 concurrency:
   group: nightly-${{ github.ref }}
