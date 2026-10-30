@@ -437,7 +437,9 @@ try {
       if (!row) {
         browser ??= await launchBrowser(flags.headed)
         const page = await (await browser.newContext()).newPage()
-        await signInOnWeb(page, `${flags.webUrl.replace(/\/+$/, '')}/ledger/accounts`, workos.alice, page.getByRole('button', { name: 'Add an account' }))
+        // Wait for the refusal itself: the Books screen shows "Add an account" before the module
+        // closes the socket, so that button proves nothing here (seen on dev 2026-10-30).
+        await signInOnWeb(page, `${flags.webUrl.replace(/\/+$/, '')}/ledger/accounts`, workos.alice, page.getByText(/must trust issuer \S+ for audience \S+/))
         throw new Error('no trusted_issuer row has this client id as audience, and the web was not refused')
       }
       bySubject = { issuer: row[0], subjects: { alice: workos.alice.id, bob: workos.bob.id } }

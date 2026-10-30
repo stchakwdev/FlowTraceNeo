@@ -148,9 +148,9 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
   /**
    * The app at /books redirects to /authkit (email, then password, two forms as AuthKit's), which
    * sends a correct sign-in back to /books with a session cookie. /books shows the books, or the
-   * module's refusal sentence for `refused`.
+   * module's refusal sentence for `refused` (after the books for `'late'`).
    */
-  function standIn(refused: boolean) {
+  function standIn(refused: boolean | 'late') {
     return Bun.serve({
       port: 0,
       hostname: '127.0.0.1',
@@ -159,7 +159,12 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
         const html = (body: string) => new Response(`<!doctype html><html><body>${body}</body></html>`, { headers: { 'content-type': 'text/html' } })
         if (url.pathname === '/books') {
           if (!(req.headers.get('cookie') ?? '').includes('session=1')) return Response.redirect(`${url.origin}/authkit`, 307)
-          return html(refused ? '<p>SpacetimeDB refused this sign-in: an operator must trust issuer https://issuer.test/x for audience client_01TEST on this database</p>' : '<button>Add an account</button>')
+          const sentence = 'SpacetimeDB refused this sign-in: an operator must trust issuer https://issuer.test/x for audience client_01TEST on this database'
+          if (refused === 'late') {
+            // As the web does: the Books screen first, the refusal once the module closes the socket.
+            return html(`<button>Add an account</button><script>setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<p>${sentence}</p>'), 500)</script>`)
+          }
+          return html(refused ? `<p>${sentence}</p>` : '<button>Add an account</button>')
         }
         if (url.pathname === '/authkit' && req.method === 'GET') {
           return html('<h1>Sign in</h1><form method="post"><input type="email" name="email"><button type="submit">Continue with email</button></form>')
@@ -235,6 +240,19 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
     try {
       const page = await (await browser.newContext()).newPage()
       const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByRole('button', { name: 'Add an account' }), 15000)
+      await expect(run).rejects.toThrow('add_trusted_issuer "https://issuer.test/x" "client_01TEST"')
+    } finally {
+      await browser.close()
+      void server.stop(true)
+    }
+  }, 30000)
+
+  test.skipIf(chromiumPath() === undefined)('names the issuer and audience when the refusal comes after the books show (the preflight waits for it)', async () => {
+    const server = standIn('late')
+    const browser = await launchBrowser(false)
+    try {
+      const page = await (await browser.newContext()).newPage()
+      const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByText(/must trust issuer \S+ for audience \S+/), 15000)
       await expect(run).rejects.toThrow('add_trusted_issuer "https://issuer.test/x" "client_01TEST"')
     } finally {
       await browser.close()
