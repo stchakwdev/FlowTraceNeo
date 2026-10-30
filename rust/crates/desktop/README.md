@@ -54,7 +54,9 @@ when the app closes.
 | `campaigns` | Campaigns view models (DT1): `CampaignList` (rows, counts, figures, search, `StatusFilter`), `campaign_timing`, `NewCampaignForm`, `CampaignPage` (coverage, figures, donations, spending, details, earmarks, `StatusAction`s), `DonationForm`, `confirm_payment`, `PreviewCard`, `donate_url`, `EmbedOptions`, `embed_snippet` | no |
 | `flows` | Flows view models (DT2), `flow-graph.ts` ported function by function: `PERIODS`, `period_window`, `filter_by_period`, `MapNodeType` and `BANDS`, `wrap_name`, `build_flow_graph` (`FlowGraph` with nodes, edges, `EdgePath`, columns, totals; `hit` and `focus_order`), `connected_set`; the page (`FlowPage`: lede, `Body`, key figures), `Zoom`, `Details` (the side panel), `LedgerLink` (to a `GlFilter`), `edge_dash`, `node_amount` | no |
 | `chains` | Chains view models (DT2): `ChainsView` (incoming and outgoing rows, counts, linked targets), `ChainRow` (when line, access, Chain Trust Score, actions), `describe_access`, `Confirm`, `search` and `OrgOption` for the request dialog, `Review` and `group_hint` for the review dialog, `status_label`, `LEGEND` | no |
-| `web_format` | the web's `lib/format.ts` over minor units: `format_amount`, `format_money`, `format_compact`, `format_date`, `format_short_date` | no |
+| `transactions` | Transactions view models (DT3): `Filter` (with the web's aliases), `List` (lede, `Counts`, `Row`s, search, `Footer` for one currency, `Notice`), `Detail` (movement, `Side`s, "about USD", the Record `Fact`s, notes), `NewForm` (the web's checks and texts, `Errors`, `parse_amount` into minor units, `amount_hint`, `input`), `node_groups`, `CATEGORIES`, `CURRENCIES`, `default_date`, `added_transaction` (finds the saved row) | no |
+| `verification` | the web's proof vocabulary and proof-screen rules (DT3): `type_label`, `visibility_label` and `visibility_description`, `state_label`, `trust_points`, `MediaKind`, `ATTACH_TYPES`, `accepted` and `describe_accepted`, `format_file_size`, `validate_proof_file`, `read_proof_file`, `ProofRow`, `proofs_meta`, `AttachForm` (typed GPS, `check`), `attach_label`, `attach_failure`, `Zoom`, `viewer_facts`, `viewer_body`, `publish_label` | no |
+| `web_format` | the web's `lib/format.ts` over minor units: `format_amount`, `format_money`, `format_compact`, `format_date`, `format_short_date`, `format_date_time` (UTC) and `format_date_time_eat` | no |
 | `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
 | `store` | `StoreCore` (backend, `LedgerView`, sign-in state, connect, disconnect, submit; no GPUI) and `LedgerStore`, the one store entity that drains the change channel in batches; `store/session.rs` runs the sign-in steps off the UI thread | `LedgerStore` only |
@@ -63,10 +65,10 @@ when the app closes.
 | `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
 | `entry_form` | Manual entry form and CSV import view models: `EntryForm` (lines, `set_debit`/`set_credit`, `set_fund`, `balance`, `field_errors`, `issues`, `summary`, `save_command`, `post_commands`, `from_draft`), `Balance`, `account_choices`, `tag_choices`, `ImportPreview`, `read_import_file` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign`; `panels::flows::FlowsPanel` and `panels::chains::ChainsPanel` (DT2), `panels::write_flow`, `panels::write_chain` | yes |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign`; `panels::flows::FlowsPanel` and `panels::chains::ChainsPanel` (DT2), `panels::write_flow`, `panels::write_chain`; `panels::transactions::TransactionsPanel` (DT3, with the `new_form` child module) and `panels::proof_section::ProofsSection` (gallery, `attach` panel and `viewer`, shared by the transaction, claim and bill pages) | yes |
 | `reconcile` | Reconcile view models: `bank_rows`, `overview`, `NewBankForm`, `ImportPreview` (parse, skipped rows, money in and out, `repeats` as the engine dedupes), `LineStatus` and `status_of`, `line_rows`, `candidates`, `position`, `auto_match_summary`, the `bank.add` and `statement.*` command builders, `PostForm`, `post_accounts` | no |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
-| `proofs` | proof files through the proofs Worker (`../../../workers/proofs/README.md`): `sniff`, `check`, `read_file` (25 MB, photos and PDF), `ProofsClient` (`upload`, `signed_url`, over ureq), `AttachList` (the files on a form), `new_verification` (the record for `create_verification`) | no |
+| `proofs` | proof files through the proofs Worker (`../../../workers/proofs/README.md`): `sniff`, `check`, `read_file` (25 MB, photos and PDF), `SCREEN_MAX_BYTES` (10 MB), `ProofsClient` (`upload`, `signed_url`, `fetch_bytes`, over ureq), `AttachList` (the files on a form), `LinkKind` (claim, bill, transaction), `ProofDetails` and `Gps`, `new_verification` and `new_verification_for` (the record for `create_verification`) | no |
 | `app` | start-up: gpui-kit init, theme, store, window (`app_id` `flowtrace-books`) | yes |
 
 Everything under "no" is unit-tested (`cargo test -p desktop`); rendering code stays thin and
@@ -600,3 +602,98 @@ header). Shots (when a display is available): `docs/screens/dt2-flows.png`,
 `dt2-flow-edge.png`, `dt2-chains.png`, `dt2-chain-approve.png`, taken as in Screenshots above
 with `--entry flows --flows month`, `--entry flows --flows month:3` (the month's three donors come first, so item 3 is the first line), `--entry chains` and
 `--entry chains --chains approve`.
+
+## Transactions and proofs (DT3)
+
+**Transactions** (no key, the digits are spent; second in the rail after Dashboard, as in the
+web's `navigation.ts`; `--entry transactions`; `--transactions list|new|evidenced|awaiting-proof|flagged|<id>`)
+is the web's `routes/_authenticated/transactions/`. The list has the lede ("16 movements recorded
+· 3 awaiting proof · 1 flagged"), "Record a transaction", the Movements section with the proof
+legend, the four status filters with their counts, the search over description, reference,
+category and node names, the columns Date, Description (reference or "No reference"), From →
+To ("Unassigned"), Amount, Proofs and Status, the "Total:"/"Shown: n transaction(s)" footer when
+the rows shown share one currency, and the empty and no-match notices with their buttons. A
+transaction's page has the back link, its title, state, date and reference, the Movement (amount,
+"about USD", the from and to drawing with the state's line), the Proofs section, and the Record
+(Date, Reference "None recorded", Category "Uncategorised", Status, Recorded and Last changed in
+EAT) and Notes ("No notes recorded."), or the not-found notice. "Record a transaction" (also on
+the Dashboard's header) has the web's sections, fields, hints, checks and texts ("Fix this/these
+before saving", "Not saved"), the From and To lists grouped by node type (or "Add nodes first"),
+and optional proof files of the six kinds the web offers, checked at once (type, 10 MB, five at
+once) and uploaded once the transaction is saved; the page then opens with "n file(s) did not
+upload" when any failed. The module's reducer returns no id, so the screen finds its new row
+when the records come back (`transactions::added_transaction`). Keys: `n` new, `l` list, `f` the
+next filter, Up and Down then Enter open a row, Esc back, Enter saves the form.
+
+**The Proofs section** (`panels::proof_section::ProofsSection`) is the same on a transaction, a
+claim and a bill page (it replaced STO1's file list): "Proofs" with "n proof(s) · +x trust
+points" and "Attach proof", each proof as the web's `ProofEntry` (tile with the photo when it
+loads, else the type's short name; type, "+n trust points", description, state, "Added … by
+…", the audience when not the full file), or "No proof attached yet". **Attach proof** (`a` on
+a transaction; the button on a claim or bill, whose `a` is taken) is the web's `AttachProof`:
+the kind of proof with its points (locked once files are added), "Browse files" (`b`) with the
+web's accepted types per kind, 10 MB (the web's limit on this screen; the Worker allows 25) and
+five files, each uploaded at once with "size · Uploading…"/"Uploaded" or the web's error, "What
+it shows", "Captured by", "Who can see the file" with its description, and a typed GPS reading
+(latitude, longitude, accuracy, place: the desktop has no geolocation). Attach records one proof
+per stored file, or one record without a file for a GPS reading (`useAttachProofs`), and shows
+"The proof was not attached: … Your files are still here; try again." on a refusal. **The
+viewer** (`v` on a transaction, `o` on a claim or bill, or a click on a row) takes the page:
+"Proof i of n", the photo drawn in the app from its signed link's bytes
+(`ProofsClient::fetch_bytes`, `img(ImageSource::Image(..))`) with Zoom out, the percentage and
+Zoom in (50% to 300%, `-` and `=`), the file states ("Opening the file…", "The file could not be
+loaded", "This file type cannot be previewed here. Download it to open it.", "This proof is a
+record without an attached file."), and the record: type, description, state, "+n" "trust points
+toward the organisation's score", Captured by, Location (5 decimals, "(±n m)"), Added, Verified,
+Who can see it, and "Download original" (`d`, the ten-minute link in the system browser). Esc
+closes, Left and Right step. Opening a file logs a view and downloading a download
+(`log_verification_access`). A manager (`can_close`) also gets "Publish at the public link" /
+"Take off the public link" (`p`, `mark_published`), which the web lacks; the Worker's
+`GET /public/<sha256>` then serves the file.
+
+**Which token the Worker gets.** Signed in with WorkOS, the store hands the Worker the session's
+access token, the refreshed one after each renewal (`StoreCore::proofs_client`), and the live
+backend's own `proofs_token` returns the access token the connection presented; otherwise the
+token file's SpacetimeDB token. The Worker must be deployed with `WORKOS_ISSUER`,
+`WORKOS_JWKS_URL` and `WORKOS_AUDIENCE` to accept WorkOS tokens (the user's deploy setting).
+
+**Local Worker recipe** (the live check, nothing touches Cloudflare or maincloud):
+
+```sh
+cd rust
+cargo build --release --locked --target wasm32-unknown-unknown -p ledger-module
+S=~/.local/bin/spacetime; DB=ft-dt3-$(date +%Y%m%d%H%M)
+$S publish -s local -b target/wasm32-unknown-unknown/release/ledger_module.wasm -y $DB
+export DT3_LIVE_DB=$DB DT3_LIVE_ORG=dt3-org DT3_LIVE_TOKEN=$PWD/out/dt3-token
+cargo test -p desktop --test live_proofs -- --ignored --nocapture identity   # prints <identity>
+$S call -s local $DB create_org_ledger '"dt3-org"' '"KES"' 2026 '"DT3 Owner"'
+$S call -s local $DB add_member '"dt3-org"' '"0x<identity>"' '"dt3-manager"' '"Achieng Manager"' true true true
+$S call -s local $DB create_default_access_groups '"dt3-org"'
+$S sql -s local $DB "SELECT id, data FROM access_group"          # the Board's id
+$S call -s local $DB add_access_group_member '"dt3-org"' '"{\"group_id\":\"<board id>\",\"user_id\":\"dt3-manager\"}"'
+cd ../workers/proofs && bun install
+# .dev.vars (untracked; never commit): MODULE_TOKEN = the CLI login's token (it owns the
+# database), URL_SIGNING_KEY = openssl rand -hex 32, SPACETIMEDB_URL=http://127.0.0.1:3100,
+# SPACETIMEDB_DATABASE=$DB, AUTH_MODES=spacetimedb
+bun run dev                                                       # http://localhost:8787
+cd ../../rust && cargo test -p desktop --test live_proofs -- --ignored --nocapture transactions_and_proofs
+$S delete -s local $DB -y; rm ../workers/proofs/.dev.vars
+```
+
+For the app itself on that database, put `proofs_url = "http://localhost:8787"` in
+`config.toml` and launch with `--server http://127.0.0.1:3100 --database $DB`. Thumbnails stay
+null locally (the Worker's Images binding).
+
+Tests: `src/transactions/tests.rs` (the demo list, filters, search, notices, footer, detail, the
+form's checks, node groups, finding the saved row), `src/verification/tests.rs` (every label,
+the trust points read from `flowtrace/src/lib/types.ts`, accepted types, file checks, rows, the
+attach checks, zoom, viewer facts and body, publish), `src/proofs/tests.rs` (transaction link,
+`new_verification_for`, `fetch_bytes`), the store tests (in-process attach, publish and access
+log on a demo transaction; the WorkOS token and its refresh with the fake client), and
+`ledger-client`'s wrapper tests. `tests/live_proofs.rs` is the live check (ignored; see its
+header). Shots (when a display is available, as in Screenshots above):
+`docs/screens/dt3-transactions.png` (`--entry transactions`), `dt3-transaction-detail.png`
+(`--entry transactions --transactions b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01`),
+`dt3-attach-proof.png` (the same, then key `a`) and `dt3-proof-viewer.png` (the same, then key
+`v`; a photo needs the live database and Worker above).
+
