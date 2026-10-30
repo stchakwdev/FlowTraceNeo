@@ -143,8 +143,10 @@ WorkOS dashboard the environment needs the redirects `http://localhost:3000/api/
 and `http://127.0.0.1:*/callback` (desktop), and email and password sign-in. **The test users'
 email domain must not be claimed by an organisation with an SSO connection.** The sandbox's
 "Test Organization" claims `example.com`, so users on that domain are sent to the test identity
-provider instead of a password page (a password sign-in answers `sso_required`). The run says so
-in plain words.
+provider instead of a password page (a password sign-in answers `sso_required`). **Their emails
+must also be marked verified** (or email verification turned off): otherwise AuthKit asks for a
+code mailed to the address after the password (`email_verification_required`), and a domain such
+as `example.net` receives no mail. The run says either in plain words.
 
 **Trust first (an operator, once per database).** The run looks for a `trusted_issuer` row whose
 audience is the client id. Without one, preflight signs Alice in on the web, and the Books

@@ -14,6 +14,7 @@ import {
   ENV_IT1_KEYS,
   devServerArgs,
   installXdgOpen,
+  isEmailVerification,
   jwtClaims,
   onAuthKit,
   openedUrls,
@@ -126,6 +127,12 @@ describe("the desktop's system browser", () => {
     expect(onAuthKit('https://sample-env-staging.authkit.app/?client_id=x')).toBe(true)
     expect(onAuthKit('http://localhost:3000/ledger/accounts')).toBe(false)
   })
+
+  test("knows AuthKit's email verification step by its path", () => {
+    expect(isEmailVerification('https://sample-env-staging.authkit.app/email-verification?state=x')).toBe(true)
+    expect(isEmailVerification('https://sample-env-staging.authkit.app/email-verification-help')).toBe(false)
+    expect(isEmailVerification('http://localhost:3000/api/auth/callback?code=x')).toBe(false)
+  })
 })
 
 describe('the web dev server', () => {
@@ -141,9 +148,9 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
   /**
    * The app at /books redirects to /authkit (email, then password, two forms as AuthKit's), which
    * sends a correct sign-in back to /books with a session cookie. /books shows the books, or the
-   * module's refusal sentence for `refused`.
+   * module's refusal sentence for `refused` (after the books for `'late'`).
    */
-  function standIn(refused: boolean) {
+  function standIn(refused: boolean | 'late') {
     return Bun.serve({
       port: 0,
       hostname: '127.0.0.1',
@@ -152,7 +159,12 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
         const html = (body: string) => new Response(`<!doctype html><html><body>${body}</body></html>`, { headers: { 'content-type': 'text/html' } })
         if (url.pathname === '/books') {
           if (!(req.headers.get('cookie') ?? '').includes('session=1')) return Response.redirect(`${url.origin}/authkit`, 307)
-          return html(refused ? '<p>SpacetimeDB refused this sign-in: an operator must trust issuer https://issuer.test/x for audience client_01TEST on this database</p>' : '<button>Add an account</button>')
+          const sentence = 'SpacetimeDB refused this sign-in: an operator must trust issuer https://issuer.test/x for audience client_01TEST on this database'
+          if (refused === 'late') {
+            // As the web does: the Books screen first, the refusal once the module closes the socket.
+            return html(`<button>Add an account</button><script>setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<p>${sentence}</p>'), 500)</script>`)
+          }
+          return html(refused ? `<p>${sentence}</p>` : '<button>Add an account</button>')
         }
         if (url.pathname === '/authkit' && req.method === 'GET') {
           return html('<h1>Sign in</h1><form method="post"><input type="email" name="email"><button type="submit">Continue with email</button></form>')
@@ -203,12 +215,44 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
     }
   }, 30000)
 
+  test.skipIf(chromiumPath() === undefined)('says so when AuthKit asks for an email verification code instead of signing in', async () => {
+    const server = standIn(false)
+    const browser = await launchBrowser(false)
+    try {
+      const page = await (await browser.newContext()).newPage()
+      // The stand-in's unverified case: the password form sends the browser to AuthKit's
+      // email verification step, which waits for a code mailed to the address.
+      await page.route('**/authkit', async (route) => {
+        if (route.request().method() !== 'POST' || !(route.request().postData() ?? '').includes('password=')) return route.continue()
+        return route.fulfill({ status: 302, headers: { location: `http://127.0.0.1:${server.port}/email-verification?state=s` } })
+      })
+      const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByRole('button', { name: 'Add an account' }), 15000)
+      await expect(run).rejects.toThrow(/^AuthKit asked <user>@flowtrace\.test for an email verification code instead of signing in: .*\(email_verification_required\)/)
+    } finally {
+      await browser.close()
+      void server.stop(true)
+    }
+  }, 30000)
+
   test.skipIf(chromiumPath() === undefined)('fails with the issuer and audience when the module refuses the sign-in', async () => {
     const server = standIn(true)
     const browser = await launchBrowser(false)
     try {
       const page = await (await browser.newContext()).newPage()
       const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByRole('button', { name: 'Add an account' }), 15000)
+      await expect(run).rejects.toThrow('add_trusted_issuer "https://issuer.test/x" "client_01TEST"')
+    } finally {
+      await browser.close()
+      void server.stop(true)
+    }
+  }, 30000)
+
+  test.skipIf(chromiumPath() === undefined)('names the issuer and audience when the refusal comes after the books show (the preflight waits for it)', async () => {
+    const server = standIn('late')
+    const browser = await launchBrowser(false)
+    try {
+      const page = await (await browser.newContext()).newPage()
+      const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByText(/must trust issuer \S+ for audience \S+/), 15000)
       await expect(run).rejects.toThrow('add_trusted_issuer "https://issuer.test/x" "client_01TEST"')
     } finally {
       await browser.close()
