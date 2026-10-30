@@ -187,9 +187,11 @@ problem.
 `ubuntu-latest` with a 60-minute limit, in dummy auth with `--offline-emulated` (no WorkOS
 secrets in CI). It builds the desktop, `it1_probe` and the module from the same commit, installs
 bun 1.4.2, Playwright's Chromium for playwright-core 1.64.0 and the SpacetimeDB CLI 2.12, and
-gives the desktop a display: weston's headless backend (`--backend=headless
---renderer=pixman`) on `wayland-1`, with Mesa's software Vulkan (lavapipe, `VK_ICD_FILENAMES`)
-for GPUI, so step c1 launches the real binary as it does on a desktop.
+gives the desktop a display: sway's headless backend (`WLR_BACKENDS=headless`,
+`WLR_RENDERER=pixman`, an empty config) with Mesa's software Vulkan (lavapipe,
+`VK_ICD_FILENAMES`) for GPUI, so step c1 launches the real binary as it does on a desktop.
+weston's headless backend does not do: it offers no `wl_seat`, and GPUI 0.3.9 panics without one
+("Wayland compositor does not provide wl_seat"); sway always creates `seat0`.
 
 Two variants run in the one job:
 
@@ -214,7 +216,7 @@ separate SpacetimeDB account that owns only dev (dev republished under it).
 line `it1: passed|FAILED (<ids>) in N s; out/it1/<stamp>`) and the dev skip notice. The artifact
 `it1-nightly-<run id>` (14 days) holds `rust/out/it1/` for both variants: `summary.md`,
 `transcript.log`, `command-log.json`, the three report readings, `report-diff.txt` on a
-mismatch, `shots/`, the desktop and web logs, plus `weston.log` and `spacetime.log`. Every `tokens/` folder is left out of the upload. On `main`, a
+mismatch, `shots/`, the desktop and web logs, plus `sway.log` and `spacetime.log`. Every `tokens/` folder is left out of the upload. On `main`, a
 failed run opens or comments on one issue titled "Nightly integration run failing", labelled
 `nightly-failure`; the next passing run closes it. Runs on other branches open no issue.
 
