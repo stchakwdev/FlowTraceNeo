@@ -1,8 +1,8 @@
 // In-memory implementation of the data API for dummy auth mode.
-// Same names, arguments and return shapes as the live functions in
-// ../supabase.ts; data.ts picks one or the other. Mutations change module
+// Same names, arguments and return shapes as the module's functions in
+// ../ledger/spacetime-transparency.ts; data.ts picks one or the other. Mutations change module
 // state, so the demo reacts for the rest of the session (a reload resets it).
-import { VERIFICATION_TRUST_POINTS, calculateTrustScore } from '../supabase'
+import { VERIFICATION_TRUST_POINTS, calculateTrustScore, getTrustGrade } from '../types'
 import * as seed from './dataset'
 import { postDemoTransaction } from './ledger'
 import type {
@@ -26,6 +26,7 @@ import type {
   GroupMember,
   GroupMemberWithDetails,
   NodeVisibility,
+  OrgMember,
   OrgStats,
   Organization,
   OrganizationChain,
@@ -38,9 +39,11 @@ import type {
   TransactionWithNodes,
   TrustScoreHistory,
   TrustScoreResult,
+  TrustScoreSummary,
   Verification,
+  VerificationAccessLog,
   VisibilityContext,
-} from '../supabase'
+} from '../types'
 
 // ---------------------------------------------------------------------------
 // Store
@@ -156,7 +159,10 @@ export function getOrganization(id: string) {
 
 /** Organisation profile fields an admin can edit in Settings. */
 export type OrganizationProfileUpdate = Partial<
-  Pick<Organization, 'name' | 'type' | 'country' | 'currency' | 'public_slug'>
+  Pick<
+    Organization,
+    'name' | 'type' | 'country' | 'currency' | 'public_slug' | 'is_public'
+  >
 >
 
 export function updateOrganization(
@@ -347,6 +353,41 @@ export function deleteVerificationFile(filePath: string): Promise<void> {
   return settle(undefined)
 }
 
+export function publishVerification(verificationId: string, published: boolean) {
+  const v = db.verifications.find((x) => x.id === verificationId)
+  if (!v) return Promise.reject(new Error('Proof not found in the demo data.'))
+  v.published = published
+  return settle(v)
+}
+
+// Looks at proofs, for this session only.
+const accessLog: Array<VerificationAccessLog> = []
+
+export async function logVerificationAccess(
+  verificationId: string,
+  accessType: 'view' | 'download',
+): Promise<void> {
+  accessLog.push({
+    id: newId(),
+    verification_id: verificationId,
+    accessed_by: seed.DEMO_USER_ID,
+    access_type: accessType,
+    access_level: 'full',
+    ip_address: null,
+    user_agent: null,
+    accessed_at: now(),
+  })
+  await settle(null)
+}
+
+export function getVerificationAccessLog(verificationId: string) {
+  return settle(
+    accessLog
+      .filter((a) => a.verification_id === verificationId)
+      .sort((a, b) => byDateDesc(a.accessed_at, b.accessed_at)),
+  )
+}
+
 export function processReceiptOCR(
   _organizationId: string,
   transactionId: string,
@@ -401,6 +442,38 @@ export function getTrustScoreHistory(organizationId: string, limit = 12) {
     .slice(0, limit)
     .reverse()
   return settle(rows)
+}
+
+/**
+ * The demo's current score: the organisation's score with the latest snapshot's three
+ * components at the web's weights (types.ts calculateTrustScore: 40/30/30).
+ */
+export function getTrustScore(
+  organizationId: string,
+): Promise<TrustScoreSummary | null> {
+  const o = db.organizations.find((x) => x.id === organizationId)
+  const latest = db.trustScoreHistory
+    .filter((h) => h.organization_id === organizationId)
+    .sort((a, b) => byDateDesc(a.calculated_at, b.calculated_at))
+    .at(0)
+  if (!o && !latest) return settle(null)
+  const score = o?.trust_score ?? latest?.score ?? 0
+  return settle({
+    score,
+    grade: getTrustGrade(score),
+    components: [
+      { key: 'verification', value: latest?.verification_rate ?? 0, weight: 40 },
+      { key: 'documentation', value: latest?.documentation_rate ?? 0, weight: 30 },
+      { key: 'consistency', value: latest?.consistency_score ?? 0, weight: 30 },
+    ],
+    computed_at: latest?.calculated_at ?? null,
+  })
+}
+
+/** "Recalculate score" in the demo: a new snapshot, then the current score. */
+export async function recomputeTrustScore(organizationId: string) {
+  await calculateTrustScoreAPI(organizationId)
+  return getTrustScore(organizationId)
 }
 
 export function calculateTrustScoreAPI(
@@ -622,6 +695,21 @@ const profileRef = (userId: string | null) => {
   return p ? { id: p.id, email: p.email, full_name: p.full_name } : null
 }
 
+/** The demo organisation's people, as a group member can be picked. */
+export function getOrgMembers(organizationId: string): Promise<Array<OrgMember>> {
+  return settle(
+    db.profiles
+      .filter((p) => p.organization_id === organizationId)
+      .map((p) => ({ user_id: p.id, name: p.full_name ?? p.email }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  )
+}
+
+/** The demo starts with its default groups, so this only lists them. */
+export function createDefaultAccessGroups(organizationId: string) {
+  return getAccessGroups(organizationId)
+}
+
 export function getGroupMembers(groupId: string) {
   return settle(
     db.groupMembers
@@ -766,6 +854,21 @@ export function updatePublicEmbedConfig(
       new Error('Embed settings not found in the demo data.'),
     )
   Object.assign(c, config, { updated_at: now() })
+  return settle(c)
+}
+
+export function regenerateEmbedToken(organizationId: string) {
+  const c = db.publicEmbedConfigs.find(
+    (x) => x.organization_id === organizationId,
+  )
+  if (!c)
+    return Promise.reject(
+      new Error('Embed settings not found in the demo data.'),
+    )
+  c.embed_token = Array.from({ length: 32 }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join('')
+  c.updated_at = now()
   return settle(c)
 }
 

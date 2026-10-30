@@ -1,6 +1,5 @@
 // The app's record types (the shapes the Supabase schema had, which the demo API and the
-// SpacetimeDB module's transparency tables keep) and the pure helpers on them. Moved out of
-// supabase.ts, which re-exports them so older imports keep working.
+// SpacetimeDB module's transparency tables keep) and the pure helpers on them.
 
 // Database types (matching migration schema)
 export interface Organization {
@@ -13,6 +12,8 @@ export interface Organization {
   verified: boolean
   public_slug: string | null
   logo_url: string | null
+  /** Shown on public pages (the module's `public_organization` and `public_badge`). */
+  is_public?: boolean
   created_at: string
   updated_at: string
 }
@@ -125,6 +126,10 @@ export interface Verification {
   location_name: string | null
   description: string | null
   created_by: string | null
+  /** Shown to anyone at the proofs Worker's public path (STO1); module only. */
+  published?: boolean
+  /** How much of the proof this reader was given; set by the module's `my_verification`. */
+  visible_as?: VerificationVisibility
 }
 
 // Verification access log for audit trail
@@ -148,6 +153,29 @@ export interface TrustScoreHistory {
   documentation_rate: number | null
   consistency_score: number | null
   calculated_at: string
+}
+
+/** One part of the Trust Score: its value out of 100 and its weight in percent. */
+export interface TrustComponent {
+  key: 'verification' | 'documentation' | 'consistency' | 'model'
+  value: number
+  weight: number
+  /** False for the model part while no review has scored it (`model.source` neutral, P16). */
+  scored?: boolean
+}
+
+/** The organisation's current Trust Score and how it is made. */
+export interface TrustScoreSummary {
+  score: number
+  grade: string
+  components: Array<TrustComponent>
+  computed_at: string | null
+}
+
+/** A member of the organisation, as an access group member can be picked. */
+export interface OrgMember {
+  user_id: string
+  name: string
 }
 
 export interface AccessGroupPermissions {

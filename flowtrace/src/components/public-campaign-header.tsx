@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { SealCheck } from '@phosphor-icons/react'
 import type { CampaignReport, CampaignReportEarmark } from '@/lib/data'
-import type { TransactionWithNodes } from '@/lib/supabase'
+import type { TransactionWithNodes } from '@/lib/types'
 import { Wordmark } from '@/components/layout/wordmark'
 import { CoverageBar, StatusMark } from '@/components/report'
 import { formatDate, formatMoney, formatShortDate } from '@/lib/format'

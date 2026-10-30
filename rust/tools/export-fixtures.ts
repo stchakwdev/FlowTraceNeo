@@ -5,10 +5,9 @@
 // Usage: bun export-fixtures.ts [--out <dir>]   (default: rust/fixtures)
 //
 // The work runs in a child process with a fixed environment:
-// - NODE_PATH points at this folder's node_modules, so the one package the
-//   demo module pulls in (@supabase/supabase-js, via demo/dataset.ts ->
-//   supabase.ts) resolves to the version pinned here (2.89.0, the version in
-//   flowtrace/bun.lock) and is never auto-installed;
+// - NODE_PATH points at this folder's node_modules, so any package the
+//   flowtrace modules pull in resolves to the version pinned here and is
+//   never auto-installed;
 // - TZ=UTC and LC_ALL=C.UTF-8, and no VITE_* variables, so nothing in the
 //   output can depend on the machine.
 import path from 'node:path'

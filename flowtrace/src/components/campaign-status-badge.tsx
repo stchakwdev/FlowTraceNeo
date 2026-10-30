@@ -1,4 +1,4 @@
-import type { Campaign, CampaignStatus, PaymentStatus } from '@/lib/supabase'
+import type { Campaign, CampaignStatus, PaymentStatus } from '@/lib/types'
 import { StatusMark } from '@/components/report'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'

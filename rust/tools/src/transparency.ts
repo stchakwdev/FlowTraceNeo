@@ -14,7 +14,7 @@ import type { FrozenEnv } from './fixture'
 
 const API = 'flowtrace/src/lib/demo/api.ts'
 const DATASET = 'flowtrace/src/lib/demo/dataset.ts'
-const SUPABASE = 'flowtrace/src/lib/supabase.ts'
+const TYPES = 'flowtrace/src/lib/types.ts'
 
 export const TRANSPARENCY_NOW = '2026-02-04T09:00:00.000Z'
 
@@ -96,7 +96,7 @@ export function delta(before: Store, after: Store): Record<string, Json> {
 
 export async function exportTransparency(outDir: string) {
   const seed = await import('../../../flowtrace/src/lib/demo/dataset.ts')
-  const supabase = await import('../../../flowtrace/src/lib/supabase.ts')
+  const types = await import('../../../flowtrace/src/lib/types.ts')
 
   writeFixture(outDir, 'transparency-dataset', {
     description:
@@ -105,12 +105,12 @@ export async function exportTransparency(outDir: string) {
       'them before any call (amounts in major units, as the TS types); and for MOD2 the flow nodes, transactions, ' +
       'node visibility, trust score history, organisation chains with their activity log and the public embed ' +
       'config. Also the trust points per verification type.',
-    sources: [`${DATASET}`, `${SUPABASE}#VERIFICATION_TRUST_POINTS`],
+    sources: [`${DATASET}`, `${TYPES}#VERIFICATION_TRUST_POINTS`],
     covers: ['transparency dataset'],
     env: null,
     demo_org_id: seed.DEMO_ORG_ID,
     demo_user_id: seed.DEMO_USER_ID,
-    verification_trust_points: supabase.VERIFICATION_TRUST_POINTS,
+    verification_trust_points: types.VERIFICATION_TRUST_POINTS,
     in_scope: IN_SCOPE,
     store: {
       organizations: seed.organizations,
@@ -140,7 +140,7 @@ export async function exportTransparency(outDir: string) {
       '(`added` records, `removed` ids, `changed` whole new records). Covers every MOD1 write the demo API has and ' +
       'the reads whose rules the module mirrors (campaign stats, user permissions and verification visibility). ' +
       'The `transactions` delta of createVerification belongs to MOD2.',
-    sources: [API, `${SUPABASE}#getVerificationVisibility`],
+    sources: [API, `${TYPES}#getVerificationVisibility`],
     covers: [...new Set(calls.map((c) => String(c.fn)))],
     env: TRANSPARENCY_ENV,
     store: 'transparency-dataset.json#/store',
@@ -150,7 +150,7 @@ export async function exportTransparency(outDir: string) {
 
 async function runCalls(seed: typeof import('../../../flowtrace/src/lib/demo/dataset.ts')) {
   const api = await import('../../../flowtrace/src/lib/demo/api.ts')
-  const { getVerificationVisibility } = await import('../../../flowtrace/src/lib/supabase.ts')
+  const { getVerificationVisibility } = await import('../../../flowtrace/src/lib/types.ts')
   api.resetDemoStore()
   const ORG = seed.DEMO_ORG_ID
   const USER = seed.DEMO_USER_ID
@@ -276,7 +276,7 @@ async function runCalls(seed: typeof import('../../../flowtrace/src/lib/demo/dat
   const partner = member(G('d04'), 'user_partner', 'partners@majisafi.example.org')
   await call('addGroupMember', [partner], () => api.addGroupMember(partner))
 
-  // Who sees a proof how (getUserPermissions api.ts:772-791, getVerificationVisibility supabase.ts:573-588).
+  // Who sees a proof how (getUserPermissions api.ts:772-791, getVerificationVisibility types.ts).
   const proof = seed.verifications[0]
   for (const user of [USER, 'user_grants', 'user_donor', 'user_partner', 'user_nobody']) {
     const perms = await call('getUserPermissions', [user, ORG], () => api.getUserPermissions(user, ORG))

@@ -2,9 +2,9 @@
 
 ## Overview
 
-> Superseded: the Supabase project is deleted; the books, campaigns, donations and organisation profile run on the SpacetimeDB module (Docs/adr/0001-native-ledger.md, flowtrace/README.md).
+> Superseded: the Supabase project is deleted and the web app's Supabase client, edge function calls and `VITE_SUPABASE_*` settings are removed (RW3). Every record (books, campaigns, donations, the organisation profile, transactions, flows, chains, proofs, access groups, the trust score, the embed settings) runs on the SpacetimeDB module (Docs/adr/0001-native-ledger.md, rust/docs/adr/0004-transparency-tables.md, flowtrace/README.md). The text below is kept as history; `flowtrace/supabase/migrations/` keeps the old RLS rules the module mirrors.
 
-FlowTrace uses **Supabase** for database, storage, and real-time features. Authentication is handled by **WorkOS AuthKit** (see flowtrace-architecture.md).
+FlowTrace used **Supabase** for database, storage, and real-time features (historical). Authentication is handled by **WorkOS AuthKit** (see flowtrace-architecture.md).
 
 ---
 
@@ -147,6 +147,8 @@ CREATE POLICY "Anyone can view public orgs"
 ---
 
 ## Supabase Client Setup
+
+> Removed in RW3: there is no `src/lib/supabase.ts` and no `@supabase/supabase-js` dependency.
 
 ```typescript
 // src/lib/supabase.ts

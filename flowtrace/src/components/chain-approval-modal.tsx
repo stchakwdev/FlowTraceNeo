@@ -3,7 +3,7 @@ import { CircleNotch } from '@phosphor-icons/react'
 import type {
   AccessGroupPermissions,
   OrganizationChainWithDetails,
-} from '@/lib/supabase'
+} from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {

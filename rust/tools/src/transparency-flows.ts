@@ -2,7 +2,7 @@
 // (flowtrace/src/lib/demo/api.ts) over flow nodes, transactions, proof counting, node
 // visibility, the public embed config, organisation chains and the trust score, recorded call by
 // call with its result and the store delta; and the trust formula's outputs
-// (flowtrace/src/lib/supabase.ts calculateTrustScore and getTrustGrade) pinned on a grid of
+// (flowtrace/src/lib/types.ts calculateTrustScore and getTrustGrade) pinned on a grid of
 // inputs and on the demo data.
 //
 // Same frozen clock and counted ids as transparency.ts (withFrozenClock); each run starts from a
@@ -14,7 +14,7 @@ import { TRANSPARENCY_ENV, delta, withFrozenClock } from './transparency'
 import type { Rec, Store } from './transparency'
 
 const API = 'flowtrace/src/lib/demo/api.ts'
-const SUPABASE = 'flowtrace/src/lib/supabase.ts'
+const TYPES = 'flowtrace/src/lib/types.ts'
 
 type Seed = typeof import('../../../flowtrace/src/lib/demo/dataset.ts')
 type Api = typeof import('../../../flowtrace/src/lib/demo/api.ts')
@@ -25,7 +25,7 @@ const GRID = [0, 1, 2, 5, 9, 33, 50, 58, 67, 82, 85, 92, 100]
 export async function exportTransparencyFlows(outDir: string) {
   const seed = await import('../../../flowtrace/src/lib/demo/dataset.ts')
   const api = await import('../../../flowtrace/src/lib/demo/api.ts')
-  const { calculateTrustScore, getTrustGrade } = await import('../../../flowtrace/src/lib/supabase.ts')
+  const { calculateTrustScore, getTrustGrade } = await import('../../../flowtrace/src/lib/types.ts')
 
   // The demo's own trust inputs and score before any call (calculateTrustScoreAPI, api.ts:406-472).
   api.resetDemoStore()
@@ -49,7 +49,7 @@ export async function exportTransparencyFlows(outDir: string) {
       'consistency_score, score]; the seed history rows as [verification, documentation, consistency, formula ' +
       'score, stored score]; getTrustGrade for every score 0 to 100; and calculateTrustScoreAPI on the fresh demo ' +
       'store, whose inputs the module feeds its 32/24/24/20 formula with.',
-    sources: [`${SUPABASE}#calculateTrustScore`, `${SUPABASE}#getTrustGrade`, `${API}#calculateTrustScoreAPI`],
+    sources: [`${TYPES}#calculateTrustScore`, `${TYPES}#getTrustGrade`, `${API}#calculateTrustScoreAPI`],
     covers: ['calculateTrustScore', 'getTrustGrade', 'calculateTrustScoreAPI'],
     env: TRANSPARENCY_ENV,
     grid_values: GRID,

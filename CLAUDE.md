@@ -41,10 +41,9 @@ bun add -d <package>           # Add dev dependency
 
 **Backend:**
 - **Auth**: WorkOS AuthKit (SSO for nonprofits)
-- **Database**: Supabase PostgreSQL with PostGIS, pgvector
-- **Storage**: Supabase Storage for receipts/documents
-- **Functions**: Supabase Edge Functions (Deno)
-- **Real-time**: Supabase Realtime subscriptions
+- **Database**: the SpacetimeDB module (`rust/crates/ledger-module`) on maincloud; the web app reads its `my_*` views and calls its reducers (`flowtrace/src/lib/ledger/spacetime-transparency.ts`), and serves the bundled demo dataset otherwise. Supabase is gone; `flowtrace/supabase/migrations/` is kept only as the record of the old RLS rules.
+- **Storage**: the proofs Worker in front of Cloudflare R2 (`workers/proofs`, `VITE_PROOFS_URL`)
+- **Real-time**: SpacetimeDB subscriptions
 
 ## Architecture
 

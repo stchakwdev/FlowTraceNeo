@@ -1,4 +1,4 @@
-import type { TransactionWithNodes } from '@/lib/supabase'
+import type { TransactionWithNodes } from '@/lib/types'
 import type { ProofStatus } from '@/components/report'
 
 // ---------------------------------------------------------------------------

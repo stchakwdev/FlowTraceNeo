@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, X } from '@phosphor-icons/react'
 import { NODE_TYPE_LABEL, UNASSIGNED_ID } from './flow-graph'
-import type { TransactionWithNodes } from '@/lib/supabase'
+import type { TransactionWithNodes } from '@/lib/types'
 import type { FlowGraph, Selection } from './flow-graph'
 import { StatusMark } from '@/components/report'
 import { Button } from '@/components/ui/button'

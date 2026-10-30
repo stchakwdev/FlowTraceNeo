@@ -3,7 +3,7 @@
 // keeping their ids so public routes (/donate/<slug>, /campaigns/<id>) resolve.
 // Rows the seed leaves to triggers or omits (default access groups, proofs
 // behind verification_count, donor updates) are filled in consistently.
-import { VERIFICATION_TRUST_POINTS } from '../supabase'
+import { VERIFICATION_TRUST_POINTS } from '../types'
 import type {
   AccessGroup,
   AccessGroupPermissions,
@@ -22,7 +22,7 @@ import type {
   TrustScoreHistory,
   Verification,
   VerificationType,
-} from '../supabase'
+} from '../types'
 
 export const DEMO_ORG_ID = '550e8400-e29b-41d4-a716-446655440000'
 export const DEMO_USER_ID = 'user_dummy'

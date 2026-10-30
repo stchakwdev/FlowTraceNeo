@@ -1,7 +1,7 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { ArrowRight, MagnifyingGlass, Plus } from '@phosphor-icons/react'
-import type { TransactionWithNodes } from '@/lib/supabase'
+import type { TransactionWithNodes } from '@/lib/types'
 import { useTransactions } from '@/lib/queries'
 import { formatAmount, formatDate, formatShortDate } from '@/lib/format'
 import { cn } from '@/lib/utils'

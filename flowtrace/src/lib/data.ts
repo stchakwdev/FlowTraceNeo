@@ -1,81 +1,15 @@
-// Data access for the app. In dummy auth mode (DEV_MODE) every call is
-// served from the bundled demo dataset, so the app works with no backend;
-// otherwise it goes to Supabase. Each export keeps the live signature.
-//
-// Campaigns, donations, donor updates and the organisation profile (RW1), and
-// transactions, flow nodes, node visibility, the flow data, the organisation
-// stats and chains (RW2) are served by the SpacetimeDB module when VITE_LEDGER_BACKEND=spacetimedb
-// (ledger/spacetime-transparency.ts, loaded lazily with the SDK), by the demo
-// dataset when the books are the demo's, and by nothing otherwise: Supabase
-// is gone (Docs/adr/0001-native-ledger.md). Public pages read the module's
-// public tables anonymously (ledger/public-sql.ts).
-import { DEV_MODE } from './auth'
+// Data access for the app. Every record is served by the SpacetimeDB module
+// when VITE_LEDGER_BACKEND=spacetimedb (ledger/spacetime-transparency.ts,
+// loaded lazily with the SDK), by the bundled demo dataset when the books are
+// the demo's, and by nothing otherwise: Supabase is gone (RW1-RW3,
+// Docs/adr/0001-native-ledger.md). Public pages read the module's public
+// tables anonymously (ledger/public-sql.ts).
 import * as demo from './demo/api'
-import * as live from './supabase'
 import * as publicReads from './ledger/public-sql'
 import { BACKEND, BooksNotConnectedError } from './spacetime-session'
 import type { LedgerBackendKind } from './spacetime-session'
 import type * as TransparencyModule from './ledger/spacetime-transparency'
 
-export const addGroupMember: typeof live.addGroupMember = DEV_MODE
-  ? demo.addGroupMember
-  : live.addGroupMember
-export const calculateTrustScoreAPI: typeof live.calculateTrustScoreAPI =
-  DEV_MODE ? demo.calculateTrustScoreAPI : live.calculateTrustScoreAPI
-export const createAccessGroup: typeof live.createAccessGroup = DEV_MODE
-  ? demo.createAccessGroup
-  : live.createAccessGroup
-export const createVerification: typeof live.createVerification = DEV_MODE
-  ? demo.createVerification
-  : live.createVerification
-export const deleteAccessGroup: typeof live.deleteAccessGroup = DEV_MODE
-  ? demo.deleteAccessGroup
-  : live.deleteAccessGroup
-export const deleteVerificationFile: typeof live.deleteVerificationFile =
-  DEV_MODE ? demo.deleteVerificationFile : live.deleteVerificationFile
-export const getAccessGroup: typeof live.getAccessGroup = DEV_MODE
-  ? demo.getAccessGroup
-  : live.getAccessGroup
-export const getAccessGroups: typeof live.getAccessGroups = DEV_MODE
-  ? demo.getAccessGroups
-  : live.getAccessGroups
-export const getGroupMembers: typeof live.getGroupMembers = DEV_MODE
-  ? demo.getGroupMembers
-  : live.getGroupMembers
-export const getPublicEmbedConfig: typeof live.getPublicEmbedConfig = DEV_MODE
-  ? demo.getPublicEmbedConfig
-  : live.getPublicEmbedConfig
-export const getTrustScoreHistory: typeof live.getTrustScoreHistory = DEV_MODE
-  ? demo.getTrustScoreHistory
-  : live.getTrustScoreHistory
-export const getUserGroups: typeof live.getUserGroups = DEV_MODE
-  ? demo.getUserGroups
-  : live.getUserGroups
-export const getUserPermissions: typeof live.getUserPermissions = DEV_MODE
-  ? demo.getUserPermissions
-  : live.getUserPermissions
-export const getVerifications: typeof live.getVerifications = DEV_MODE
-  ? demo.getVerifications
-  : live.getVerifications
-export const getVisibilityContext: typeof live.getVisibilityContext = DEV_MODE
-  ? demo.getVisibilityContext
-  : live.getVisibilityContext
-export const inviteMemberByEmail: typeof live.inviteMemberByEmail = DEV_MODE
-  ? demo.inviteMemberByEmail
-  : live.inviteMemberByEmail
-export const processReceiptOCR: typeof live.processReceiptOCR = DEV_MODE
-  ? demo.processReceiptOCR
-  : live.processReceiptOCR
-export const removeGroupMember: typeof live.removeGroupMember = DEV_MODE
-  ? demo.removeGroupMember
-  : live.removeGroupMember
-export const updateAccessGroup: typeof live.updateAccessGroup = DEV_MODE
-  ? demo.updateAccessGroup
-  : live.updateAccessGroup
-export const updatePublicEmbedConfig: typeof live.updatePublicEmbedConfig =
-  DEV_MODE ? demo.updatePublicEmbedConfig : live.updatePublicEmbedConfig
-export const uploadVerificationFile: typeof live.uploadVerificationFile =
-  DEV_MODE ? demo.uploadVerificationFile : live.uploadVerificationFile
 // ---------------------------------------------------------------------------
 // Campaigns, donations, donor updates, organisation profile (RW1)
 // ---------------------------------------------------------------------------
@@ -173,7 +107,7 @@ export const updateChainPermissions = served('updateChainPermissions', demo.upda
 export const getChainActivityLog = served('getChainActivityLog', demo.getChainActivityLog)
 export const getChainCounts = served('getChainCounts', demo.getChainCounts)
 export const getChainTrustScore = served('getChainTrustScore', demo.getChainTrustScore)
-/** The access groups a chain approval can grant, read from the module (RW3 moves their screens). */
+/** The access groups a chain approval can grant. */
 export const getChainAccessGroups = served('getChainAccessGroups', demo.getAccessGroups)
 /** Organisations a chain can be asked of: the module's published ones (public_organization). */
 export const searchOrganizations = publicly(publicReads.searchPublicOrganizations, demo.searchOrganizations)
@@ -206,3 +140,37 @@ export const getPublicTrustScore = publicly(publicReads.getPublicBadge, async (o
     calculated_at: latest?.calculated_at ?? null,
   }
 })
+
+// ---------------------------------------------------------------------------
+// Proofs, access groups, trust score, embed settings (RW3)
+// ---------------------------------------------------------------------------
+
+export const getVerifications = served('getVerifications', demo.getVerifications)
+/** After the file went to the proofs Worker (proofs.ts storeProofFile). */
+export const createVerification = served('createVerification', demo.createVerification)
+export const publishVerification = served('publishVerification', demo.publishVerification)
+export const logVerificationAccess = served('logVerificationAccess', demo.logVerificationAccess)
+export const getVerificationAccessLog = served('getVerificationAccessLog', demo.getVerificationAccessLog)
+// Receipt reading (the process-receipt-ocr edge function) has no module counterpart; it is gone.
+
+export const getAccessGroups = served('getAccessGroups', demo.getAccessGroups)
+export const getAccessGroup = served('getAccessGroup', demo.getAccessGroup)
+export const createDefaultAccessGroups = served('createDefaultAccessGroups', demo.createDefaultAccessGroups)
+export const createAccessGroup = served('createAccessGroup', demo.createAccessGroup)
+export const updateAccessGroup = served('updateAccessGroup', demo.updateAccessGroup)
+export const deleteAccessGroup = served('deleteAccessGroup', demo.deleteAccessGroup)
+export const getGroupMembers = served('getGroupMembers', demo.getGroupMembers)
+export const getOrgMembers = served('getOrgMembers', demo.getOrgMembers)
+export const addGroupMember = served('addGroupMember', demo.addGroupMember)
+export const inviteMemberByEmail = served('inviteMemberByEmail', demo.inviteMemberByEmail)
+export const removeGroupMember = served('removeGroupMember', demo.removeGroupMember)
+
+/** The current score; the module also refreshes it on every change. */
+export const getTrustScore = served('getTrustScore', demo.getTrustScore)
+/** "Recalculate score": records a history snapshot (recompute_trust, any member). */
+export const recomputeTrustScore = served('recomputeTrustScore', demo.recomputeTrustScore)
+export const getTrustScoreHistory = served('getTrustScoreHistory', demo.getTrustScoreHistory)
+
+export const getPublicEmbedConfig = served('getPublicEmbedConfig', demo.getPublicEmbedConfig)
+export const updatePublicEmbedConfig = served('updatePublicEmbedConfig', demo.updatePublicEmbedConfig)
+export const regenerateEmbedToken = served('regenerateEmbedToken', demo.regenerateEmbedToken)

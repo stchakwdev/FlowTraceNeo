@@ -10,7 +10,7 @@ import {
   Plus,
   Trash,
 } from '@phosphor-icons/react'
-import type { CampaignStatus } from '@/lib/supabase'
+import type { CampaignStatus } from '@/lib/types'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,

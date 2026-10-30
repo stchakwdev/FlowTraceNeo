@@ -2,20 +2,20 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { ArrowRight, ArrowsClockwise } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
-import type { TrustScoreHistory } from '@/lib/supabase'
-import { DEV_MODE } from '@/lib/auth'
+import type { TrustComponent, TrustScoreHistory } from '@/lib/types'
 import { useOrg } from '@/lib/org-context'
 import {
   useOrgStats,
   useRecalculateTrustScore,
   useTransactions,
   useTrustHistory,
+  useTrustSummary,
 } from '@/lib/queries'
-import { getTrustGrade } from '@/lib/supabase'
+import { getTrustGrade } from '@/lib/types'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { ledgerSignals } from '@/lib/ledger'
-import { useLedger, useLedgerAsOf } from '@/lib/ledger-client'
+import { DEMO_BOOKS, useLedger, useLedgerAsOf } from '@/lib/ledger-client'
 import { Button } from '@/components/ui/button'
 import {
   AsOf,
@@ -32,28 +32,38 @@ export const Route = createFileRoute('/_authenticated/trust-score')({
   component: TrustScore,
 })
 
-const COMPONENTS = [
-  {
-    key: 'verification',
+/**
+ * What each part of the score means. The weights come with the score: the module's four
+ * (verification 32, documentation 24, consistency 24, model 20; P16), or the demo's three
+ * (40/30/30, types.ts calculateTrustScore).
+ */
+const COMPONENT_TEXT: Record<
+  TrustComponent['key'],
+  { label: string; explain: string }
+> = {
+  verification: {
     label: 'Verification',
-    weight: 40,
     explain: 'Share of movements whose proof has been checked and accepted.',
   },
-  {
-    key: 'documentation',
+  documentation: {
     label: 'Documentation',
-    weight: 30,
     explain: 'Share of movements with at least one proof attached.',
   },
-  {
-    key: 'consistency',
+  consistency: {
     label: 'Consistency',
-    weight: 30,
     explain: 'How well amounts, dates and parties agree across the records.',
   },
-] as const
+  model: {
+    label: 'Independent review',
+    explain:
+      'A review of the records against a fixed rubric, less 5 points for each confirmed flag. Until the first review it matches the other three, so it does not move the score.',
+  },
+}
 
-type ComponentKey = (typeof COMPONENTS)[number]['key']
+const weightOf = (
+  components: Array<TrustComponent>,
+  key: TrustComponent['key'],
+) => components.find((c) => c.key === key)?.weight ?? 0
 
 function TrustScore() {
   const {
@@ -65,27 +75,26 @@ function TrustScore() {
   } = useOrg()
   const statsQuery = useOrgStats()
   const historyQuery = useTrustHistory()
+  const summaryQuery = useTrustSummary()
   const txQuery = useTransactions()
   const recalculate = useRecalculateTrustScore()
 
   const loading =
-    orgLoading || statsQuery.isLoading || historyQuery.isLoading
-  const error = orgError ?? statsQuery.error ?? historyQuery.error
+    orgLoading ||
+    statsQuery.isLoading ||
+    historyQuery.isLoading ||
+    summaryQuery.isLoading
+  const error =
+    orgError ?? statsQuery.error ?? historyQuery.error ?? summaryQuery.error
 
   const history = historyQuery.data ?? []
   const latest = history.at(-1)
   const stats = statsQuery.data
-  const score = organization?.trust_score ?? latest?.score ?? 0
-  const grade = getTrustGrade(score)
-
-  const componentScores: Record<ComponentKey, number | null> = {
-    verification: latest?.verification_rate ?? stats?.verificationRate ?? null,
-    documentation:
-      latest?.documentation_rate ??
-      stats?.proofStats.proofCoverageRate ??
-      null,
-    consistency: latest?.consistency_score ?? null,
-  }
+  const summary = summaryQuery.data ?? null
+  const score = summary?.score ?? organization?.trust_score ?? latest?.score ?? 0
+  const grade = summary?.grade ?? getTrustGrade(score)
+  const components = summary?.components ?? []
+  const calculatedAt = summary?.computed_at ?? latest?.calculated_at ?? null
 
   const flaggedId = useMemo(() => {
     const flagged = (txQuery.data ?? []).filter(
@@ -94,19 +103,11 @@ function TrustScore() {
     return flagged.length === 1 ? flagged[0].id : null
   }, [txQuery.data])
 
-  const handleRecalculate = async () => {
-    try {
-      await recalculate.mutateAsync()
-      await Promise.all([refetchOrg(), historyQuery.refetch()])
-    } catch {
-      // Error is surfaced through recalculate.error below.
-    }
-  }
-
   const retry = () => {
     void refetchOrg()
     void statsQuery.refetch()
     void historyQuery.refetch()
+    void summaryQuery.refetch()
   }
 
   return (
@@ -116,19 +117,21 @@ function TrustScore() {
           <h1 className="text-4xl sm:text-5xl">Trust Score</h1>
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             {organization?.name && <span>{organization.name}</span>}
-            {latest && (
-              <span>
-                calculated {formatDate(latest.calculated_at)}
-              </span>
+            {calculatedAt && (
+              <span>calculated {formatDate(calculatedAt)}</span>
             )}
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
+          </p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            The score updates by itself each time a movement or a proof is
+            recorded or changed. Recalculate adds today's score to the history.
           </p>
         </div>
         {!loading && !error && organizationId && (
           <Button
             variant="outline"
             className="h-10"
-            onClick={handleRecalculate}
+            onClick={() => recalculate.mutate()}
             disabled={recalculate.isPending}
           >
             <ArrowsClockwise
@@ -143,8 +146,7 @@ function TrustScore() {
         <p role="alert" className="mb-6 text-sm text-destructive">
           The score could not be recalculated
           {recalculate.error.message ? ` (${recalculate.error.message})` : ''}.
-          The figures below are from the last successful calculation; try again
-          in a moment.
+          The figures below are still current; try again in a moment.
         </p>
       )}
 
@@ -200,11 +202,18 @@ function TrustScore() {
               className="lg:col-span-8"
               meta={<span>weighted</span>}
             >
+              {components.length === 0 ? (
+                <ReportNotice title="Not yet calculated">
+                  The score is worked out when the first movement is recorded.
+                </ReportNotice>
+              ) : (
               <ul className="divide-y divide-border">
-                {COMPONENTS.map((c) => {
-                  const value = componentScores[c.key]
+                {components.map((part) => {
+                  const c = { ...COMPONENT_TEXT[part.key], weight: part.weight }
+                  const value = part.value
+                  const scored = part.scored !== false
                   return (
-                    <li key={c.key} className="py-4">
+                    <li key={part.key} className="py-4">
                       <div className="flex items-baseline justify-between gap-4">
                         <p className="font-semibold">
                           {c.label}{' '}
@@ -213,11 +222,7 @@ function TrustScore() {
                           </span>
                         </p>
                         <p className="shrink-0 text-sm whitespace-nowrap tabular-nums">
-                          {value === null ? (
-                            <span className="text-muted-foreground">
-                              Not yet calculated
-                            </span>
-                          ) : (
+                          {scored ? (
                             <>
                               <span className="figure text-2xl">
                                 {Math.round(value)}
@@ -227,29 +232,33 @@ function TrustScore() {
                                 / 100
                               </span>
                             </>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Not yet scored
+                            </span>
                           )}
                         </p>
                       </div>
                       <CoverageBar
                         className="mt-2"
                         total={100}
-                        filled={value ?? 0}
-                        evidenced={value ?? 0}
+                        filled={scored ? value : 0}
+                        evidenced={scored ? value : 0}
                         label={
-                          value === null
-                            ? `${c.label}: not yet calculated`
-                            : `${c.label}: ${Math.round(value)} of 100`
+                          scored
+                            ? `${c.label}: ${Math.round(value)} of 100`
+                            : `${c.label}: not yet scored`
                         }
                       />
                       <p className="mt-1.5 text-xs text-muted-foreground">
                         {c.explain}
-                        {value !== null &&
-                          ` Adds ${Math.round((value * c.weight) / 100)} points.`}
+                        {` Adds ${Math.round((value * c.weight) / 100)} points.`}
                       </p>
                     </li>
                   )
                 })}
               </ul>
+              )}
             </ReportSection>
           </div>
 
@@ -265,9 +274,9 @@ function TrustScore() {
             >
               {history.length === 0 ? (
                 <ReportNotice title="No history yet">
-                  Each time the score is calculated it is added here, so you
-                  can see it move. Use Recalculate score to record the first
-                  point.
+                  Each recalculation adds a point here, so you can see the
+                  score move. Use Recalculate score to record the first point;
+                  the score above is already current.
                 </ReportNotice>
               ) : (
                 <HistoryChart history={history} />
@@ -280,6 +289,8 @@ function TrustScore() {
             >
               <RaiseActions
                 stats={stats}
+                verificationWeight={weightOf(components, 'verification')}
+                documentationWeight={weightOf(components, 'documentation')}
                 flaggedId={flaggedId}
                 statsFailed={statsQuery.isError}
               />
@@ -504,10 +515,14 @@ interface Action {
 
 function RaiseActions({
   stats,
+  verificationWeight,
+  documentationWeight,
   flaggedId,
   statsFailed,
 }: {
   stats: ReturnType<typeof useOrgStats>['data']
+  verificationWeight: number
+  documentationWeight: number
   flaggedId: string | null
   statsFailed: boolean
 }) {
@@ -523,9 +538,9 @@ function RaiseActions({
   const { total, pending, flagged, proofStats } = stats
   const unproven = Math.max(0, total - proofStats.transactionsWithProofs)
   // Each newly evidenced movement lifts the verification rate by 100/total
-  // points, which carries 40% weight in the score.
+  // points, which carries the verification weight in the score.
   const pointsFor = (count: number) =>
-    total > 0 ? Math.round((count / total) * 100 * 0.4) : 0
+    total > 0 ? Math.round((count / total) * verificationWeight) : 0
   const plural = (n: number, one: string, many: string) =>
     `${n} ${n === 1 ? one : many}`
 
@@ -584,7 +599,7 @@ function RaiseActions({
       key: 'unproven',
       mark: <StatusLine status="pending" width={22} />,
       title: `${plural(unproven, 'movement has', 'movements have')} no proof attached`,
-      detail: `Documentation is ${proofStats.proofCoverageRate}% covered and counts for 30% of the score.`,
+      detail: `Documentation is ${proofStats.proofCoverageRate}% covered and counts for ${documentationWeight}% of the score.`,
     })
   }
   if (proofStats.pendingProofs > 0) {
@@ -644,7 +659,7 @@ function LedgerSignals() {
       meta={
         <>
           <AsOf date={asOf} />
-          {DEV_MODE && <DemoTag />}
+          {DEMO_BOOKS && <DemoTag />}
         </>
       }
     >

@@ -9,9 +9,10 @@ import {
   Warning,
   X,
 } from '@phosphor-icons/react'
-import type { Verification } from '@/lib/supabase'
+import type { Verification } from '@/lib/types'
 import { formatDate, formatDateTime } from '@/lib/format'
 import { useProofSrc } from '@/lib/proofs'
+import { useLogVerificationAccess } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { StatusMark } from '@/components/report'
@@ -31,11 +32,24 @@ const VISIBILITY_DESCRIPTION = {
   hidden: 'Not shown outside the organisation.',
 } as const
 
+/** What a reader's access group lets them see of a proof (`visible_as`, plan.rs:639 `redact`). */
+const SEEN_AS = {
+  full: null,
+  thumbnail:
+    'Your access group sees a low-resolution version, not the original file.',
+  summary: 'Your access group sees that this proof is attached, not the file.',
+  hidden: null,
+} as const
+
 interface VerificationViewerProps {
   verification: Verification | null
   verifications?: Array<Verification>
   onClose: () => void
   onNavigate?: (verification: Verification) => void
+  /** Shows or hides the proof's file to the public; given only to those who may. */
+  onPublish?: (verification: Verification, published: boolean) => void
+  publishing?: boolean
+  publishError?: string | null
   className?: string
 }
 
@@ -45,8 +59,12 @@ export function VerificationViewer({
   verifications = [],
   onClose,
   onNavigate,
+  onPublish,
+  publishing = false,
+  publishError = null,
   className,
 }: VerificationViewerProps) {
+  const logAccess = useLogVerificationAccess()
   const [zoom, setZoom] = useState(1)
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -105,8 +123,19 @@ export function VerificationViewer({
 
   useEffect(() => setZoom(1), [verification?.id])
 
-  // A stored file's `proof:` reference becomes a signed URL; others pass through.
-  const file = useProofSrc(verification?.file_url)
+  // Each opening is one look in the access log (log_verification_access); the ref keeps a
+  // re-run of the effect (React's development double run) from logging it twice.
+  const openedId = verification?.id
+  const logged = useRef<string | null>(null)
+  useEffect(() => {
+    if (!openedId || logged.current === openedId) return
+    logged.current = openedId
+    logAccess.mutate({ id: openedId, accessType: 'view' })
+  }, [openedId])
+
+  // A stored file's `proof:` reference becomes a signed URL; others pass through. A reader
+  // given the thumbnail only has no original, so the thumbnail is what they see.
+  const file = useProofSrc(verification?.file_url ?? verification?.thumbnail_url)
 
   if (!verification) return null
 
@@ -114,6 +143,7 @@ export function VerificationViewer({
   const TypeIcon = PROOF_TYPE_ICON[v.type]
   const kind = proofMediaKind(v)
   const label = PROOF_TYPE_LABEL[v.type]
+  const seenAs = v.visible_as ? SEEN_AS[v.visible_as] : null
 
   return (
     <div
@@ -208,7 +238,8 @@ export function VerificationViewer({
               <p className="mt-1 text-sm opacity-80">
                 {v.file_url
                   ? 'This file type cannot be previewed here. Download it to open it.'
-                  : 'This proof is a record without an attached file.'}
+                  : (seenAs ??
+                    'This proof is a record without an attached file.')}
               </p>
             </div>
           )}
@@ -278,13 +309,38 @@ export function VerificationViewer({
               {VISIBILITY_DESCRIPTION[v.visibility_level]}
             </span>
           </Fact>
+          {seenAs && <Fact term="What you see">{seenAs}</Fact>}
+          {v.published && (
+            <Fact term="Public">
+              Anyone with the proof's public link can open the file.
+            </Fact>
+          )}
         </dl>
 
-        {file.src && (
+        {onPublish && v.file_url && (
+          <div className="mt-5">
+            <Button
+              variant="outline"
+              className="h-10 w-full"
+              disabled={publishing}
+              onClick={() => onPublish(v, !v.published)}
+            >
+              {v.published ? 'Stop showing publicly' : 'Publish this proof'}
+            </Button>
+            {publishError && (
+              <p role="alert" className="mt-2 text-sm text-destructive">
+                {publishError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {file.src && v.file_url && (
           <a
             href={file.src}
             target="_blank"
             rel="noreferrer"
+            onClick={() => logAccess.mutate({ id: v.id, accessType: 'download' })}
             download
             className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 border border-foreground/70 text-sm font-semibold hover:bg-muted"
           >

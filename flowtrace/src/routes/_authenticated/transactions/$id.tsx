@@ -6,10 +6,15 @@ import type {
   Verification,
   VerificationType,
   VerificationVisibility,
-} from '@/lib/supabase'
+} from '@/lib/types'
 import type { UploadedFile } from '@/components/file-upload'
-import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
-import { useTransaction, useVerifications } from '@/lib/queries'
+import { VERIFICATION_TRUST_POINTS } from '@/lib/types'
+import {
+  usePublishVerification,
+  useTransaction,
+  useVerifications,
+} from '@/lib/queries'
+import { useHasRole } from '@/lib/org-context'
 import { formatAmount, formatDate, formatDateTimeEAT } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -64,6 +69,9 @@ function TransactionDetail() {
   const { attach, failed } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const [selected, setSelected] = useState<Verification | null>(null)
+  // Publishing a proof is an admin's or manager's call (plan.rs:782 mark_published).
+  const canPublish = useHasRole(['admin', 'manager'])
+  const publish = usePublishVerification()
 
   const { data: transaction, isLoading, error, refetch } = useTransaction(id)
   const {
@@ -287,10 +295,18 @@ function TransactionDetail() {
 
       {selected && (
         <VerificationViewer
-          verification={selected}
+          verification={proofs.find((p) => p.id === selected.id) ?? selected}
           verifications={proofs}
           onClose={() => setSelected(null)}
           onNavigate={setSelected}
+          onPublish={
+            canPublish
+              ? (v, published) =>
+                  publish.mutate({ id: v.id, published, transactionId: id })
+              : undefined
+          }
+          publishing={publish.isPending}
+          publishError={publish.error?.message ?? null}
         />
       )}
     </div>

@@ -57,7 +57,7 @@
   ],
   "sources": [
     "flowtrace/src/lib/demo/dataset.ts",
-    "flowtrace/src/lib/supabase.ts#VERIFICATION_TRUST_POINTS"
+    "flowtrace/src/lib/types.ts#VERIFICATION_TRUST_POINTS"
   ],
   "store": {
     "accessGroups": [
