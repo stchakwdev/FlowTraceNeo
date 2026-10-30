@@ -63,9 +63,22 @@ changing either once production books exist means a migration.
 ### Scope
 
 - Books covers the web app's finance area: `ledger/*`, `spend/*`, `grants/*`, `reconcile/*`,
-  `reports`. It has no counterpart for the transparency side: dashboard, flows, chains,
-  campaigns, transactions, trust score, donate pages, badges and embeds, or settings and access
-  groups.
+  `reports`, and since DT1 the Dashboard and Campaigns (list, new, manage, record and confirm
+  donations, preview card, link and embed code). It has no counterpart yet for flows, chains,
+  transactions, the trust score page, donate pages, badges, or settings and access groups.
+- DT1, deliberate difference (P20): the desktop manages and previews campaigns, and puts
+  **Copy link** and **Copy embed code** on the campaign it manages; the web keeps the embed code
+  under Settings > Embed and the copy-link button on the public donate page. The snippet and the
+  link are the web's (`embed-code-generator.tsx`, `/donate/<slug>`) on `web_url` from
+  `config.toml` (default `https://flowtrace.app`, the web's fallback origin).
+- DT1: a pending gift has a **Confirm payment** button (`update_donation_status` to confirmed),
+  which the web page lacks; without it a gift recorded by hand could never count toward the
+  raised amount. Payment status stays a recorded field, nothing is charged (P19).
+- DT1: as on the web, a campaign's name, target and dates cannot be edited after it is saved
+  (`update_campaign` takes any field, but neither app has an edit form); the Dashboard leaves
+  out the web's "Record a transaction" and "Open the flow map" links (no such screens yet).
+- DT1 nav: Dashboard is key `0` at the top of the rail and Campaigns key `8` under
+  "Transparency"; keys `1` to `7` keep their screens. The app still opens on Accounts.
 - Sign-in: with `workos_client_id` in `config.toml` the desktop signs in with WorkOS AuthKit
   through the system browser (AUTH2, `crates/desktop/README.md`); without it, it connects with a
   device identity (a token file). Auth providers are the user's decision.
