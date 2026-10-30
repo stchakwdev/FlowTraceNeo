@@ -30,7 +30,9 @@ use gpui_kit::{
 use ledger_core::LedgerCommand;
 
 use crate::accounts::Failure;
-use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, Submission, SubmitResult};
+use crate::backend::{
+    CampaignWrite, ChainWrite, FlowWrite, SettingsWrite, Submission, SubmitResult,
+};
 use crate::model::{LedgerView, NavEntry};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
@@ -101,6 +103,19 @@ pub(crate) fn write_chain<T: 'static>(
     then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
 ) {
     let submission = store.update(cx, |store, _| store.write_chain(write));
+    settle(this, submission, cx, then);
+}
+
+/// [`submit`] for a profile, access group, embed or trust write
+/// ([`LedgerStore::write_settings`]).
+pub(crate) fn write_settings<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    write: SettingsWrite,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.write_settings(write));
     settle(this, submission, cx, then);
 }
 

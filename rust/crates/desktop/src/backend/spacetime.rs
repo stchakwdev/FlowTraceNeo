@@ -26,12 +26,12 @@ use ledger_core::types::{Actor, ActorId, OrganizationId};
 use ledger_core::{CommandError, CommandResult, LedgerCommand, LedgerState};
 use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
-use ledger_module::transparency::public::PublicOrganization;
+use ledger_module::transparency::public::{PublicBadge, PublicOrganization};
 use ledger_module::transparency::types::{AccessType, NewVerification, Verification};
 
 use super::{
     BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, ConnectionStatus,
-    FlowWrite, LedgerBackend, Organisation, Submission,
+    FlowWrite, LedgerBackend, Organisation, SettingsWrite, Submission,
 };
 
 /// What [`SpacetimeBackend`] needs of a client: [`SpacetimeClient`] in the app, a fake in tests.
@@ -93,6 +93,12 @@ pub trait LiveClient: Send + Sync {
     /// Sends one chain write without waiting ([`SpacetimeClient::request_chain`] and the other
     /// five).
     fn write_chain(&self, write: &ChainWrite) -> Submission;
+    /// Sends one profile, access group, embed or trust write without waiting
+    /// ([`SpacetimeClient::update_organization_profile`] and the other ten).
+    fn write_settings(&self, org: &str, write: &SettingsWrite) -> Submission;
+    /// The published trust badges ([`SpacetimeClient::public_badges`]); empty when they do not
+    /// read.
+    fn public_badges(&self) -> Vec<PublicBadge>;
 }
 
 /// A reducer ticket as a [`Submission`]: resolved once the server answered and the changed rows
@@ -227,6 +233,36 @@ impl LiveClient for SpacetimeClient {
                 Self::update_chain_permissions(self, id, group, node.as_deref())
             }
         })
+    }
+
+    fn write_settings(&self, org: &str, write: &SettingsWrite) -> Submission {
+        submission(match write {
+            SettingsWrite::UpdateProfile(patch) => {
+                Self::update_organization_profile(self, org, patch)
+            }
+            SettingsWrite::CreateDefaultGroups => Self::create_default_access_groups(self, org),
+            SettingsWrite::CreateGroup(input) => Self::create_access_group(self, org, input),
+            SettingsWrite::UpdateGroup { id, patch } => {
+                Self::update_access_group(self, org, id, patch)
+            }
+            SettingsWrite::DeleteGroup { id } => Self::delete_access_group(self, org, id),
+            SettingsWrite::AddMember(input) => Self::add_access_group_member(self, org, input),
+            SettingsWrite::InviteMember {
+                group,
+                email,
+                valid_until,
+            } => Self::invite_access_group_member(self, org, group, email, valid_until.as_deref()),
+            SettingsWrite::RemoveMember { id } => Self::remove_access_group_member(self, org, id),
+            SettingsWrite::UpdateEmbedConfig(patch) => {
+                Self::update_public_embed_config(self, org, patch)
+            }
+            SettingsWrite::RegenerateEmbedToken => Self::regenerate_embed_token(self, org),
+            SettingsWrite::RecomputeTrust => Self::recompute_trust(self, org),
+        })
+    }
+
+    fn public_badges(&self) -> Vec<PublicBadge> {
+        Self::public_badges(self).unwrap_or_default()
     }
 }
 
@@ -671,6 +707,20 @@ impl LedgerBackend for SpacetimeBackend {
             }
             _ => Submission::ready(Err(BackendError::Offline)),
         }
+    }
+
+    fn write_settings(&mut self, org: &OrganizationId, write: SettingsWrite) -> Submission {
+        match self.writable(org) {
+            Ok(client) => client.write_settings(org.as_str(), &write),
+            Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
+    fn public_badges(&self) -> Vec<PublicBadge> {
+        self.client
+            .as_ref()
+            .map(|c| c.public_badges())
+            .unwrap_or_default()
     }
 
     fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {

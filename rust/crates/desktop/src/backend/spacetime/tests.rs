@@ -529,3 +529,57 @@ fn flow_and_chain_writes_go_to_the_client_only_while_connected() {
     *lock(&fake.public) = public.clone();
     assert_eq!(backend.public_organizations(), public);
 }
+
+#[test]
+fn settings_writes_go_to_the_client_only_while_connected() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![member(ME, "me", true)]);
+    let mut backend = SpacetimeBackend::new();
+    let rx = backend.subscribe();
+    let org = OrganizationId::from("org-a");
+    let write = SettingsWrite::InviteMember {
+        group: "g1".to_owned(),
+        email: "a@example.org".to_owned(),
+        valid_until: None,
+    };
+    assert_eq!(
+        backend.write_settings(&org, write.clone()).now().unwrap(),
+        Err(BackendError::Offline)
+    );
+
+    backend.attach(fake.clone()).unwrap();
+    fake.emit(ready());
+    while !matches!(
+        next(&rx),
+        BackendEvent::Status(ConnectionStatus::Connected { .. })
+    ) {}
+    assert_eq!(
+        backend
+            .write_settings(
+                &OrganizationId::from("org-b"),
+                SettingsWrite::RecomputeTrust
+            )
+            .now()
+            .unwrap(),
+        Err(BackendError::UnknownOrganisation("org-b".to_owned()))
+    );
+    for w in [write.clone(), SettingsWrite::RecomputeTrust] {
+        assert_eq!(
+            backend.write_settings(&org, w).now().unwrap(),
+            Ok(CommandResult::None)
+        );
+    }
+    assert_eq!(
+        *lock(&fake.settings_writes),
+        [
+            ("org-a".to_owned(), write),
+            ("org-a".to_owned(), SettingsWrite::RecomputeTrust)
+        ]
+    );
+
+    let badges = crate::backend::InProcessBackend::with_demo_and_empty()
+        .unwrap()
+        .public_badges();
+    *lock(&fake.badges) = badges.clone();
+    assert_eq!(backend.public_badges(), badges);
+}
