@@ -65,13 +65,13 @@ changing either once production books exist means a migration.
 
 ### Scope
 
-- Books covers the web app's finance area: `ledger/*`, `spend/*`, `grants/*`, `reconcile/*`,
-  `reports`, and since DT1 the Dashboard and Campaigns (list, new, manage, record and confirm
-  donations, preview card, link and embed code), and since DT2 Flows (the flow map, its details
-  panel and ledger links) and Chains (list, request, approve, reject, revoke, cancel), and since
-  DT3 Transactions (list, page, record) with proofs (gallery, attach panel, viewer), and since
-  DT4 the Trust Score page, Settings (profile and "Show on public pages"), Access groups and the
-  Trust Score badge. It has no counterpart for the public donate, badge and embed pages.
+- `screen-parity.md` maps every web route to its desktop entry, row by row, and
+  `crates/desktop/tests/screen_parity.rs` fails when a web route is added without a row. Books
+  covers the web app's finance area (`ledger/*`, `spend/*`, `grants/*`, `reconcile/*`,
+  `reports`), the Dashboard and Campaigns (DT1), Flows and Chains (DT2), Transactions with
+  proofs (DT3), and the Trust Score page, Settings (profile and "Show on public pages"), Access
+  groups and Embed & badges (DT4). The public pages (`/`, donate, badge, embed) and the web's
+  sign-in callback and sign-out have no desktop counterpart by design (P20).
 - DT1, deliberate difference (P20): the desktop manages and previews campaigns, and puts
   **Copy link** and **Copy embed code** on the campaign it manages; the web keeps the embed code
   under Settings > Embed and the copy-link button on the public donate page. The snippet and the

@@ -12,6 +12,11 @@ on:
       # rust/fixtures are exported from these; the fixtures job below catches a missed re-export.
       - 'flowtrace/src/lib/ledger/**'
       - 'flowtrace/src/lib/demo/**'
+      # crates/desktop/tests/screen_parity.rs reads the web routes and rail as text
+      # (rust/docs/screen-parity.md).
+      - 'flowtrace/src/routes/**'
+      - 'flowtrace/src/routeTree.gen.ts'
+      - 'flowtrace/src/lib/navigation.ts'
   pull_request:
     paths:
       - 'rust/**'
@@ -19,6 +24,11 @@ on:
       # rust/fixtures are exported from these; the fixtures job below catches a missed re-export.
       - 'flowtrace/src/lib/ledger/**'
       - 'flowtrace/src/lib/demo/**'
+      # crates/desktop/tests/screen_parity.rs reads the web routes and rail as text
+      # (rust/docs/screen-parity.md).
+      - 'flowtrace/src/routes/**'
+      - 'flowtrace/src/routeTree.gen.ts'
+      - 'flowtrace/src/lib/navigation.ts'
   workflow_dispatch:
 
 concurrency:

@@ -1,13 +1,13 @@
 # desktop: FlowTrace Books
 
-The GPUI desktop app on gpui-kit 0.7.3. U1 built the shell: a masthead, a nav rail with the
-organisation picker and seven entries, one placeholder panel per entry, a connect screen and a
-status bar, over an in-process backend that runs `ledger-core` in the app. Each screen task
-(U2 to U9) replaces one placeholder; U10 added the SpacetimeDB backend behind the same trait
-(Configuration, below). DT1 added Dashboard and Campaigns over the module's transparency
-records (Dashboard and Campaigns (DT1), below); DT2 added Flows and Chains (Flows and Chains
-(DT2), below); DT4 added Trust Score, Settings, Access groups and Embed & badges (Trust Score,
-Settings, Access groups and badges (DT4), below).
+The GPUI desktop app on gpui-kit 0.7.3: a masthead, a nav rail with the organisation picker
+and one entry per screen (`NavEntry::ALL` in `src/model.rs`), a connect screen and a status
+bar, over either an in-process backend that runs `ledger-core` in the app or the SpacetimeDB
+module (Configuration, below). U1 built the shell, U2 to U9 the books screens, U10 the live
+backend, DT1 Dashboard and Campaigns, DT2 Flows and Chains, DT3 Transactions and proofs, DT4
+Trust Score, Settings, Access groups and Embed & badges; each has its section below.
+`rust/docs/screen-parity.md` maps every web route to the entry that holds it, and
+`tests/screen_parity.rs` keeps that table complete.
 
 ## Run
 
@@ -20,6 +20,7 @@ cargo run -p desktop -- --report activities        # Reports, on the statement o
 cargo run -p desktop -- --entry 8 --campaigns preview:e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01
 cargo run -p desktop -- --entry flows --flows year:3     # the flow map on the year, 4th item selected
 cargo run -p desktop -- --entry chains --chains approve  # Chains with the approve dialog open
+cargo run -p desktop -- --entry transactions             # Transactions, which has no key
 cargo run -p desktop -- --entry trust-score               # also settings, access-groups, embed-badges
 cargo run -p desktop -- --server https://maincloud.spacetimedb.com --database flowtrace-ledger-dev
 cargo run -p desktop -- --server http://127.0.0.1:9 --timings on   # offline at once, times on stderr
@@ -31,7 +32,8 @@ ledger, Spend, Grants, Reconcile, Reports, the keys they had before DT1; `8` Cam
 Flows). Chains, Transactions and DT4's four screens have no key, the digits being spent: they
 open from the rail or with `--entry`. `--entry` takes a digit or an entry's name, its label in
 lower case with hyphens and an `&` dropped (`dashboard`, `flows`, `general-ledger`,
-`campaigns`, `chains`, `trust-score`, `settings`, `access-groups`, `embed-badges`). Keys work while the books show and no field has focus (the shell only handles keys
+`campaigns`, `chains`, `trust-score`, `settings`, `access-groups`, `embed-badges`; every name is
+in the Desktop entry column of `rust/docs/screen-parity.md`). Keys work while the books show and no field has focus (the shell only handles keys
 while its own focus handle is focused, so typing in a field never switches screens). Other
 keys go to the screen showing, except `Page Up`, `Page Down`, `Home` and `End`, which scroll
 the content. On Accounts, `a` opens the chart, `p` the periods and `n` the

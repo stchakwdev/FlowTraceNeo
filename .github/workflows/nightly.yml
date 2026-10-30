@@ -1,0 +1,212 @@
+# The nightly integration run (task IT2): IT1 (rust/tools/it1.ts, rust/docs/integration-test.md)
+# with the web app, the desktop and it1_probe built from this commit, in dummy auth with the
+# offline claim emulated. Two variants in one job:
+#
+# - local: a SpacetimeDB server started in the job, the module built from this commit and
+#   published as ft-nightly-<run id>, deleted at the end. Needs no secret; always runs.
+# - dev: flowtrace-ledger-dev on maincloud. Runs only on main and only when the repository secret
+#   SPACETIMEDB_DEV_CLI_TOML holds the content of the database owner's
+#   ~/.config/spacetime/cli.toml; otherwise skipped with a notice. RISK: that login is the
+#   SpacetimeDB account that owns both flowtrace-ledger-dev and the production database
+#   flowtrace-ledger, and its token is a full login, not scoped to dev. IT1's guards
+#   (src/it1-flags.ts, src/module-server.ts) only call reducers and run SQL on a -dev database,
+#   but anyone who can push a workflow to this repository could use the secret for anything
+#   that account may do, publish and delete included. Adding the secret is the user's decision.
+#   Each dev run leaves one it1-<stamp> organisation on dev: the module has no reducer that
+#   deletes an organisation.
+#
+# Evidence: each summary.md goes to the job summary; rust/out/it1/ is uploaded without any
+# tokens/ folder (device tokens, never uploaded); a failed run on main opens or updates one issue
+# labelled nightly-failure, and the next passing run closes it.
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  it1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SPACETIME: /home/runner/.local/bin/spacetime
+      # The desktop's display: sway's headless backend below (WAYLAND_DISPLAY is set when it is
+      # up), drawn by Mesa's software Vulkan (lavapipe), so GPUI renders with no GPU and no screen.
+      XDG_RUNTIME_DIR: /tmp/nightly-xdg
+      VK_ICD_FILENAMES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+    steps:
+      - uses: actions/checkout@v5
+
+      # GPUI system libraries as in rust.yml; then sway and lavapipe for the headless display.
+      - name: Install GPUI libraries, sway and lavapipe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libfontconfig-dev \
+            libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev \
+            sway mesa-vulkan-drivers libvulkan1 vulkan-tools fonts-dejavu-core
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
+        with:
+          rust-src-dir: rust
+          target: wasm32-unknown-unknown
+          cache: false
+
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: rust
+          key: nightly
+          # The release build is most of the job's time; keep it when IT1 fails.
+          cache-on-failure: true
+
+      - name: Build the desktop, it1_probe and the module
+        working-directory: rust
+        run: |
+          cargo build --release --locked -p desktop --bin desktop --example it1_probe
+          cargo build --release --locked --target wasm32-unknown-unknown -p ledger-module
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.4.2
+
+      - name: Install rust/tools and flowtrace
+        run: |
+          (cd rust/tools && bun install --frozen-lockfile)
+          (cd flowtrace && bun install --frozen-lockfile)
+
+      # The Chromium revision playwright-core 1.64.0 in rust/tools drives; IT1 finds it in
+      # ~/.cache/ms-playwright (src/it1-web.ts).
+      - name: Install Chromium
+        working-directory: rust/tools
+        run: bunx playwright@1.64.0 install --with-deps chromium
+
+      # https://spacetimedb.com/install: the installer, then the version the module is built with.
+      - name: Install the SpacetimeDB CLI 2.12
+        run: |
+          curl -sSfL https://install.spacetimedb.com -o "$RUNNER_TEMP/spacetime-install.sh"
+          sh "$RUNNER_TEMP/spacetime-install.sh" --yes
+          "$SPACETIME" version install 2.12.0
+          "$SPACETIME" version use 2.12.0
+          "$SPACETIME" --version
+
+      # sway, not weston: GPUI panics without a wl_seat ("Wayland compositor does not provide
+      # wl_seat", gpui-pre-linux 0.3.9 platform.rs:366), and weston's headless backend has none,
+      # while sway always creates seat0. An empty config keeps sway from starting a bar.
+      - name: Start the headless display
+        env:
+          WLR_BACKENDS: headless
+          WLR_RENDERER: pixman
+          WLR_LIBINPUT_NO_DEVICES: '1'
+        run: |
+          mkdir -p -m 0700 "$XDG_RUNTIME_DIR"
+          : > "$RUNNER_TEMP/sway.conf"
+          sway -c "$RUNNER_TEMP/sway.conf" > "$RUNNER_TEMP/sway.log" 2>&1 &
+          for _ in $(seq 50); do ls "$XDG_RUNTIME_DIR"/wayland-? > /dev/null 2>&1 && break; sleep 0.2; done
+          socket=$(ls "$XDG_RUNTIME_DIR"/wayland-? 2>/dev/null | head -1)
+          [ -n "$socket" ] || { cat "$RUNNER_TEMP/sway.log"; exit 1; }
+          echo "WAYLAND_DISPLAY=$(basename "$socket")" >> "$GITHUB_ENV"
+          vulkaninfo --summary 2>/dev/null | grep -E 'deviceName|driverName' || true
+
+      # IT1's --local target is http://127.0.0.1:3100, the CLI's server nickname `local`.
+      - name: Start a SpacetimeDB server
+        run: |
+          "$SPACETIME" start --listen-addr 127.0.0.1:3100 --in-memory > "$RUNNER_TEMP/spacetime.log" 2>&1 &
+          for _ in $(seq 60); do curl -sf http://127.0.0.1:3100/v1/ping > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:3100/v1/ping > /dev/null || { cat "$RUNNER_TEMP/spacetime.log"; exit 1; }
+          "$SPACETIME" server edit local --url http://127.0.0.1:3100 --yes
+
+      - name: IT1, local
+        id: local
+        working-directory: rust/tools
+        run: bun run it1 --local --db "ft-nightly-${{ github.run_id }}" --offline-emulated
+
+      - name: IT1, dev (gated)
+        id: dev
+        if: always() && steps.local.conclusion != 'cancelled'
+        working-directory: rust/tools
+        env:
+          CLI_TOML: ${{ secrets.SPACETIMEDB_DEV_CLI_TOML }}
+          ON_MAIN: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          if [ -z "$CLI_TOML" ] || [ "$ON_MAIN" != true ]; then
+            why="the repository secret SPACETIMEDB_DEV_CLI_TOML is not set"
+            [ -n "$CLI_TOML" ] && why="the run is not on main"
+            echo "::notice title=Dev variant skipped::IT1 on flowtrace-ledger-dev did not run: $why. See rust/docs/integration-test.md, Nightly (IT2)."
+            printf '### IT1, dev: skipped\n\n%s.\n\n' "$why" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Mask every quoted value (the login token) before anything else runs; never print the file.
+          printf '%s\n' "$CLI_TOML" | sed -n 's/^[^=]*= *"\(.*\)"$/\1/p' | while IFS= read -r v; do
+            [ -n "$v" ] && echo "::add-mask::$v"
+          done
+          install -d -m 0700 ~/.config/spacetime
+          (umask 077 && printf '%s\n' "$CLI_TOML" > ~/.config/spacetime/cli.toml)
+          bun run it1 --url https://maincloud.spacetimedb.com --db flowtrace-ledger-dev --offline-emulated
+
+      - name: Forget the dev login
+        if: always()
+        run: rm -f ~/.config/spacetime/cli.toml
+
+      - name: Summary
+        if: always()
+        run: |
+          for f in rust/out/it1/*/summary.md; do
+            [ -f "$f" ] || continue
+            { echo "### $(dirname "${f#rust/}")"; echo; cat "$f"; echo; } >> "$GITHUB_STEP_SUMMARY"
+          done
+          for f in "$RUNNER_TEMP/sway.log" "$RUNNER_TEMP/spacetime.log"; do
+            [ -f "$f" ] && cp "$f" rust/out/it1/ 2>/dev/null || true
+          done
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: it1-nightly-${{ github.run_id }}
+          path: |
+            rust/out/it1/
+            !rust/out/it1/**/tokens/
+            !rust/out/it1/**/tokens/**
+          retention-days: 14
+          if-no-files-found: warn
+
+  # One open issue labelled nightly-failure while main's nightly fails, as vercel-deploy-status.yml
+  # does for deployments.
+  issue:
+    needs: it1
+    if: always() && github.ref == 'refs/heads/main' && needs.it1.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open, update or close the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULT: ${{ needs.it1.result }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Nightly integration run failing"
+          existing=$(gh issue list --state open --label nightly-failure --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ "$RESULT" = success ]; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Passing again at \`${SHA:0:7}\`: $RUN_URL"
+            fi
+            exit 0
+          fi
+          body="The nightly IT1 run at \`${SHA:0:7}\` ended with ${RESULT}.
+
+          Run, job summary and the it1 artifact: $RUN_URL"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh label create nightly-failure --color B60205 --description "Nightly integration run failed" 2>/dev/null || true
+            gh issue create --title "$title" --label nightly-failure --body "$body"
+          fi
