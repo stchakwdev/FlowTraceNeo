@@ -4,9 +4,9 @@
 // Authorization header (https://spacetimedb.com/docs/http/database). Public tables answer; a
 // private one is refused with 400 and its reason as text. No WebSocket and no identity, so the
 // donate page, the campaign embed and the trust badge stay anonymous.
-import { campaignStats } from './transparency-model'
+import { campaignStats, matchOrganizations } from './transparency-model'
 import { toMajor } from './money'
-import type { StoredStat } from './transparency-model'
+import type { OrganizationMatch, StoredStat } from './transparency-model'
 import type { CampaignReport } from '../demo/api'
 import type {
   CampaignStats,
@@ -235,4 +235,30 @@ export async function getPublicBadge(orgId: string) {
     verification_rate: null,
     calculated_at: (b?.calculated_at as string | undefined) ?? null,
   }
+}
+
+/**
+ * `searchOrganizations` for a chain request: the module keeps no directory of every
+ * organisation, so a chain can be asked only of one that publishes its profile
+ * (`public_organization`), matched by name as the demo matches (api.ts:177-185).
+ */
+export async function searchPublicOrganizations(
+  query: string,
+  excludeOrgId: string,
+): Promise<Array<OrganizationMatch>> {
+  const rows = await publicSql('SELECT * FROM public_organization')
+  const published = rows.flatMap((r) => {
+    if (typeof r.data !== 'string') return []
+    const o = JSON.parse(r.data) as Row
+    return [
+      {
+        id: o.id as string,
+        name: o.name as string,
+        trust_score: (o.trust_score as number | null) ?? 0,
+        type: (o.type as Organization['type']) ?? null,
+        country: o.country as string,
+      },
+    ]
+  })
+  return matchOrganizations(published, query, excludeOrgId)
 }

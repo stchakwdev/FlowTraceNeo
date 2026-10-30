@@ -29,6 +29,7 @@ import {
   getCampaignUpdates,
   getChain,
   getChainActivityLog,
+  getChainAccessGroups,
   getChainCounts,
   getChainTrustScore,
   getDonation,
@@ -136,6 +137,7 @@ export const queryKeys = {
   chainCounts: (orgId: string) => ['chain-counts', orgId] as const,
   chainActivityLog: (chainId: string) => ['chain-activity', chainId] as const,
   chainTrustScore: (chainId: string) => ['chain-trust-score', chainId] as const,
+  chainAccessGroups: (orgId: string) => ['chain-access-groups', orgId] as const,
   orgSearch: (query: string, excludeOrgId: string) =>
     ['org-search', query, excludeOrgId] as const,
   // Campaigns & Donations
@@ -931,6 +933,18 @@ export function useChainTrustScore(chainId: string) {
     queryFn: () => getChainTrustScore(chainId),
     enabled: !!chainId,
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+/** The groups a chain approval can grant: the organisation's access groups, read only. */
+export function useChainAccessGroups() {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.chainAccessGroups(organizationId || ''),
+    queryFn: () => getChainAccessGroups(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 60 * 1000,
   })
 }
 

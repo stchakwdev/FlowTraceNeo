@@ -77,6 +77,31 @@ The module keeps money in minor units; the web converts at the boundary. Every g
 pending: on the campaign page a member presses "Confirm received" once the money has arrived,
 and only confirmed gifts count towards the raised amount and the figures (as in the demo).
 
+### Transactions, flows and chains
+
+With `VITE_LEDGER_BACKEND=spacetimedb` the module also serves transactions (list, detail, record,
+update), flow nodes and their visibility per access group, the dashboard, the flow map, the
+organisation's proof figures (trust score page) and organisation chains (outgoing, incoming,
+request, approve, reject, revoke, cancel, regrant, activity log, counts, chain trust score), from
+the `my_transaction`, `my_flow_node`, `my_node_visibility`, `my_organization_chain` and
+`my_chain_activity_log` views. Where this differs from the web's Supabase version
+(`rust/docs/adr/0005-transparency-tables-part-2.md`, "Where the module differs"):
+
+- Recording a transaction does not post it to the books; posting stays a ledger command, and
+  `link_transaction_entries` records which entries belong to it (difference 1).
+- The module checks what the web did not: an amount above zero, a `YYYY-MM-DD` date, nodes of the
+  organisation, a node name (difference 2).
+- Changing who sees a node, and approving, rejecting, revoking or regranting a chain, need a
+  member of the organisation who can close periods; the module's refusal text is shown as is.
+- A rejected or revoked pair may ask again; only a pending or active chain blocks a second
+  request (difference 4). A cancelled request disappears with its log.
+- The flow map data is computed in the browser from the nodes, transactions and proofs, as the
+  demo computes it; the `generate-flow-data` edge function is gone.
+- A chain can be asked only of an organisation that publishes its profile (`public_organization`,
+  `is_public` set): the module keeps no directory of every organisation.
+- The chain approval's group list reads the organisation's access groups from the module; the
+  access group screens and proofs themselves stay on their current backend until RW3.
+
 The public pages (`/donate/<link>`, `/embed/campaign/<id>`, `/badge/trust/<org>`) read the
 module's public tables `public_campaign`, `public_organization` and `public_badge` over HTTP SQL
 (`POST https://maincloud.spacetimedb.com/v1/database/<name>/sql`, no Authorization header;

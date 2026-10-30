@@ -2,8 +2,9 @@
 // served from the bundled demo dataset, so the app works with no backend;
 // otherwise it goes to Supabase. Each export keeps the live signature.
 //
-// Campaigns, donations, donor updates and the organisation profile (RW1) are
-// served by the SpacetimeDB module when VITE_LEDGER_BACKEND=spacetimedb
+// Campaigns, donations, donor updates and the organisation profile (RW1), and
+// transactions, flow nodes, node visibility, the flow data, the organisation
+// stats and chains (RW2) are served by the SpacetimeDB module when VITE_LEDGER_BACKEND=spacetimedb
 // (ledger/spacetime-transparency.ts, loaded lazily with the SDK), by the demo
 // dataset when the books are the demo's, and by nothing otherwise: Supabase
 // is gone (Docs/adr/0001-native-ledger.md). Public pages read the module's
@@ -19,23 +20,11 @@ import type * as TransparencyModule from './ledger/spacetime-transparency'
 export const addGroupMember: typeof live.addGroupMember = DEV_MODE
   ? demo.addGroupMember
   : live.addGroupMember
-export const approveChain: typeof live.approveChain = DEV_MODE
-  ? demo.approveChain
-  : live.approveChain
 export const calculateTrustScoreAPI: typeof live.calculateTrustScoreAPI =
   DEV_MODE ? demo.calculateTrustScoreAPI : live.calculateTrustScoreAPI
-export const cancelChainRequest: typeof live.cancelChainRequest = DEV_MODE
-  ? demo.cancelChainRequest
-  : live.cancelChainRequest
 export const createAccessGroup: typeof live.createAccessGroup = DEV_MODE
   ? demo.createAccessGroup
   : live.createAccessGroup
-export const createNode: typeof live.createNode = DEV_MODE
-  ? demo.createNode
-  : live.createNode
-export const createTransaction: typeof live.createTransaction = DEV_MODE
-  ? demo.createTransaction
-  : live.createTransaction
 export const createVerification: typeof live.createVerification = DEV_MODE
   ? demo.createVerification
   : live.createVerification
@@ -50,48 +39,12 @@ export const getAccessGroup: typeof live.getAccessGroup = DEV_MODE
 export const getAccessGroups: typeof live.getAccessGroups = DEV_MODE
   ? demo.getAccessGroups
   : live.getAccessGroups
-export const getChain: typeof live.getChain = DEV_MODE
-  ? demo.getChain
-  : live.getChain
-export const getChainActivityLog: typeof live.getChainActivityLog = DEV_MODE
-  ? demo.getChainActivityLog
-  : live.getChainActivityLog
-export const getChainCounts: typeof live.getChainCounts = DEV_MODE
-  ? demo.getChainCounts
-  : live.getChainCounts
-export const getChainTrustScore: typeof live.getChainTrustScore = DEV_MODE
-  ? demo.getChainTrustScore
-  : live.getChainTrustScore
-export const getFlowDataAPI: typeof live.getFlowDataAPI = DEV_MODE
-  ? demo.getFlowDataAPI
-  : live.getFlowDataAPI
 export const getGroupMembers: typeof live.getGroupMembers = DEV_MODE
   ? demo.getGroupMembers
   : live.getGroupMembers
-export const getIncomingChains: typeof live.getIncomingChains = DEV_MODE
-  ? demo.getIncomingChains
-  : live.getIncomingChains
-export const getNodes: typeof live.getNodes = DEV_MODE
-  ? demo.getNodes
-  : live.getNodes
-export const getNodeVisibility: typeof live.getNodeVisibility = DEV_MODE
-  ? demo.getNodeVisibility
-  : live.getNodeVisibility
-export const getOrganizationStats: typeof live.getOrganizationStats = DEV_MODE
-  ? demo.getOrganizationStats
-  : live.getOrganizationStats
-export const getOutgoingChains: typeof live.getOutgoingChains = DEV_MODE
-  ? demo.getOutgoingChains
-  : live.getOutgoingChains
 export const getPublicEmbedConfig: typeof live.getPublicEmbedConfig = DEV_MODE
   ? demo.getPublicEmbedConfig
   : live.getPublicEmbedConfig
-export const getTransaction: typeof live.getTransaction = DEV_MODE
-  ? demo.getTransaction
-  : live.getTransaction
-export const getTransactions: typeof live.getTransactions = DEV_MODE
-  ? demo.getTransactions
-  : live.getTransactions
 export const getTrustScoreHistory: typeof live.getTrustScoreHistory = DEV_MODE
   ? demo.getTrustScoreHistory
   : live.getTrustScoreHistory
@@ -113,37 +66,14 @@ export const inviteMemberByEmail: typeof live.inviteMemberByEmail = DEV_MODE
 export const processReceiptOCR: typeof live.processReceiptOCR = DEV_MODE
   ? demo.processReceiptOCR
   : live.processReceiptOCR
-export const rejectChain: typeof live.rejectChain = DEV_MODE
-  ? demo.rejectChain
-  : live.rejectChain
 export const removeGroupMember: typeof live.removeGroupMember = DEV_MODE
   ? demo.removeGroupMember
   : live.removeGroupMember
-export const removeNodeVisibility: typeof live.removeNodeVisibility = DEV_MODE
-  ? demo.removeNodeVisibility
-  : live.removeNodeVisibility
-export const requestChain: typeof live.requestChain = DEV_MODE
-  ? demo.requestChain
-  : live.requestChain
-export const revokeChain: typeof live.revokeChain = DEV_MODE
-  ? demo.revokeChain
-  : live.revokeChain
-export const searchOrganizations: typeof live.searchOrganizations = DEV_MODE
-  ? demo.searchOrganizations
-  : live.searchOrganizations
-export const setNodeVisibility: typeof live.setNodeVisibility = DEV_MODE
-  ? demo.setNodeVisibility
-  : live.setNodeVisibility
 export const updateAccessGroup: typeof live.updateAccessGroup = DEV_MODE
   ? demo.updateAccessGroup
   : live.updateAccessGroup
-export const updateChainPermissions: typeof live.updateChainPermissions =
-  DEV_MODE ? demo.updateChainPermissions : live.updateChainPermissions
 export const updatePublicEmbedConfig: typeof live.updatePublicEmbedConfig =
   DEV_MODE ? demo.updatePublicEmbedConfig : live.updatePublicEmbedConfig
-export const updateTransaction: typeof live.updateTransaction = DEV_MODE
-  ? demo.updateTransaction
-  : live.updateTransaction
 export const uploadVerificationFile: typeof live.uploadVerificationFile =
   DEV_MODE ? demo.uploadVerificationFile : live.uploadVerificationFile
 // ---------------------------------------------------------------------------
@@ -214,6 +144,39 @@ export const getCampaignUpdates = served('getCampaignUpdates', demo.getCampaignU
 export const createDonorUpdate = served('createDonorUpdate', demo.createDonorUpdate)
 export const markUpdateSent = served('markUpdateSent', demo.markUpdateSent)
 export const getOrganization = served('getOrganization', demo.getOrganization)
+
+// ---------------------------------------------------------------------------
+// Transactions, flow nodes, node visibility, flow data, chains (RW2)
+// ---------------------------------------------------------------------------
+
+export const getTransactions = served('getTransactions', demo.getTransactions)
+export const getTransaction = served('getTransaction', demo.getTransaction)
+export const createTransaction = served('createTransaction', demo.createTransaction)
+export const updateTransaction = served('updateTransaction', demo.updateTransaction)
+export const getNodes = served('getNodes', demo.getNodes)
+export const createNode = served('createNode', demo.createNode)
+export const getOrganizationStats = served('getOrganizationStats', demo.getOrganizationStats)
+/** Computed from the flow nodes and transactions; the module has no flow-data function. */
+export const getFlowDataAPI = served('getFlowDataAPI', demo.getFlowDataAPI)
+export const getNodeVisibility = served('getNodeVisibility', demo.getNodeVisibility)
+export const setNodeVisibility = served('setNodeVisibility', demo.setNodeVisibility)
+export const removeNodeVisibility = served('removeNodeVisibility', demo.removeNodeVisibility)
+export const getOutgoingChains = served('getOutgoingChains', demo.getOutgoingChains)
+export const getIncomingChains = served('getIncomingChains', demo.getIncomingChains)
+export const getChain = served('getChain', demo.getChain)
+export const requestChain = served('requestChain', demo.requestChain)
+export const approveChain = served('approveChain', demo.approveChain)
+export const rejectChain = served('rejectChain', demo.rejectChain)
+export const revokeChain = served('revokeChain', demo.revokeChain)
+export const cancelChainRequest = served('cancelChainRequest', demo.cancelChainRequest)
+export const updateChainPermissions = served('updateChainPermissions', demo.updateChainPermissions)
+export const getChainActivityLog = served('getChainActivityLog', demo.getChainActivityLog)
+export const getChainCounts = served('getChainCounts', demo.getChainCounts)
+export const getChainTrustScore = served('getChainTrustScore', demo.getChainTrustScore)
+/** The access groups a chain approval can grant, read from the module (RW3 moves their screens). */
+export const getChainAccessGroups = served('getChainAccessGroups', demo.getAccessGroups)
+/** Organisations a chain can be asked of: the module's published ones (public_organization). */
+export const searchOrganizations = publicly(publicReads.searchPublicOrganizations, demo.searchOrganizations)
 export const updateOrganization = served('updateOrganization', demo.updateOrganization)
 
 // Campaign report: the org behind a campaign, where money can be earmarked,
