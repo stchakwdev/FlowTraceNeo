@@ -763,7 +763,7 @@ impl NewForm {
             None => fields.push((Field::Date, "Enter the date the money moved.".to_owned())),
             Some(Err(message)) => fields.push((Field::Date, message)),
             Some(Ok(day)) if day.as_str() > today.as_str() => {
-                fields.push((Field::Date, "The date cannot be in the future.".to_owned()))
+                fields.push((Field::Date, "The date cannot be in the future.".to_owned()));
             }
             Some(Ok(_)) => {}
         }

@@ -370,3 +370,55 @@ fn only_a_manager_publishes_and_only_a_file() {
     v.object_key = None;
     assert_eq!(publish_label(&v, true), None);
 }
+
+#[test]
+fn a_file_is_read_only_when_its_kind_takes_it() {
+    let dir = std::env::temp_dir().join(format!("ft-dt3-read-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let png = dir.join("site.png");
+    let mut bytes = vec![0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+    bytes.extend_from_slice(&[0; 40]);
+    std::fs::write(&png, &bytes).unwrap();
+    let file = read_proof_file(&png, VerificationType::Photo, 10).unwrap();
+    assert_eq!(
+        (file.name.as_str(), file.content_type),
+        ("site.png", "image/png")
+    );
+    assert_eq!(file.bytes, bytes);
+    assert_eq!(
+        read_proof_file(&png, VerificationType::Audit, 10).unwrap_err(),
+        "site.png is not a PDF file."
+    );
+    let text = dir.join("notes.txt");
+    std::fs::write(&text, "hello").unwrap();
+    assert_eq!(
+        read_proof_file(&text, VerificationType::Receipt, 10).unwrap_err(),
+        "notes.txt is not a JPG, PNG, WebP or PDF file."
+    );
+    let big = dir.join("big.png");
+    let mut large = bytes.clone();
+    large.resize(2 * 1024 * 1024, 0);
+    std::fs::write(&big, &large).unwrap();
+    assert_eq!(
+        read_proof_file(&big, VerificationType::Photo, 1).unwrap_err(),
+        "big.png is 2 MB; the limit is 1 MB."
+    );
+    assert!(
+        read_proof_file(&dir.join("missing.png"), VerificationType::Photo, 10)
+            .unwrap_err()
+            .starts_with("missing.png could not be read")
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn a_failed_upload_reads_as_the_webs() {
+    assert_eq!(
+        upload_failure("r.png", "The proof store could not be reached: refused."),
+        "r.png did not upload: The proof store could not be reached: refused. Check your connection and try again."
+    );
+    assert_eq!(
+        upload_failure("r.png", ""),
+        "r.png did not upload. Check your connection and try again."
+    );
+}

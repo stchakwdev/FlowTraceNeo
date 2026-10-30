@@ -362,6 +362,8 @@ pub struct AttachRow {
     pub id: u64,
     /// The file name.
     pub name: String,
+    /// Its size in bytes, when known.
+    pub size: u64,
     /// Where it stands.
     pub state: AttachState,
 }
@@ -378,13 +380,26 @@ pub struct AttachList {
 impl AttachList {
     /// Adds `name` as uploading and returns its id.
     pub fn start(&mut self, name: &str) -> u64 {
+        self.start_sized(name, 0)
+    }
+
+    /// Adds `name` of `size` bytes as uploading and returns its id.
+    pub fn start_sized(&mut self, name: &str, size: u64) -> u64 {
         self.next += 1;
         self.rows.push(AttachRow {
             id: self.next,
             name: name.to_owned(),
+            size,
             state: AttachState::Uploading,
         });
         self.next
+    }
+
+    /// Marks row `id` as not sent, with `message` as the reason shown.
+    pub fn fail(&mut self, id: u64, message: String) {
+        if let Some(row) = self.rows.iter_mut().find(|r| r.id == id) {
+            row.state = AttachState::Failed(message);
+        }
     }
 
     /// Records how the upload of row `id` went; a row removed meanwhile stays removed.

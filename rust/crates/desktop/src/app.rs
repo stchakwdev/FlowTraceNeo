@@ -49,6 +49,9 @@ pub struct Launch {
     /// What Flows shows first: a period (`week`, `month`, `quarter`, `year`), optionally with
     /// `:<n>` to select the nth node or line in money order.
     pub flows: Option<String>,
+    /// What Transactions shows first: `list`, `new`, a status filter (`evidenced`,
+    /// `awaiting-proof`, `flagged`) or a transaction id.
+    pub transactions: Option<String>,
     /// The dialog Chains opens on: `request`, `approve`, `reject`, `revoke` or `cancel`.
     pub chains: Option<String>,
     /// `--server`: the SpacetimeDB server, over the config file's.
@@ -163,7 +166,8 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Opens what the launch flags name (`--report`, `--grants`, `--campaigns`, `--flows`,
+/// Opens what the launch flags name (`--report`, `--grants`, `--campaigns`, `--transactions`,
+/// `--flows`,
 /// `--chains`, the `--gl-*` flags)
 /// and hands Campaigns the web address its links point to.
 fn show_launch(
@@ -189,6 +193,16 @@ fn show_launch(
             panel.show(CampaignsView::from_launch(value), window, cx);
         }
     });
+    if let Some(value) = &launch.transactions {
+        let panel = shell.read(cx).transactions().clone();
+        panel.update(cx, |panel, cx| {
+            let (view, filter) = crate::panels::transactions::TransactionsView::from_launch(value);
+            if let Some(filter) = filter {
+                panel.set_filter(filter, cx);
+            }
+            panel.show(view, window, cx);
+        });
+    }
     if let Some(value) = &launch.flows {
         let flows = shell.read(cx).flows().clone();
         flows.update(cx, |panel, cx| panel.launch(value, cx));

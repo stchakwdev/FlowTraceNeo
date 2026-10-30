@@ -1,12 +1,11 @@
-//! "Attach receipt" on the claim form and "Attach proof" on the bill form, and the recorded
-//! proofs on a claim's or bill's page. The rules live in [`crate::proofs`]; this file picks
+//! "Attach receipt" on the claim form and "Attach proof" on the bill form. The recorded proofs
+//! on a claim's or bill's page are the shared Proofs section (`super::proof_section`, DT3). The rules live in [`crate::proofs`]; this file picks
 //! files with the platform chooser (`App::prompt_for_paths`, as the journal import does), runs
 //! the Worker calls on GPUI's background executor, and draws the lists.
 //!
 //! Files upload as soon as they are chosen (the web's `FileUpload`,
 //! `flowtrace/src/components/file-upload.tsx`); once the claim or bill is saved and has an id,
-//! [`record`] writes each one's key and hash to the books. Opening a recorded proof asks the
-//! Worker for a ten-minute link and hands it to the system browser (`App::open_url`).
+//! [`record`] writes each one's key and hash to the books.
 
 use std::path::PathBuf;
 
@@ -17,10 +16,9 @@ use gpui_kit::{
     AnyElement, AppContext as _, ClickEvent, Context, Entity, IntoElement, ParentElement as _,
     PathPromptOptions, SharedString, Styled as _, Window, div, px,
 };
-use ledger_module::transparency::types::{Verification, Visibility};
 
 use crate::panels::section_header;
-use crate::proofs::{AttachList, AttachState, LinkKind, ProofsError, new_verification, read_file};
+use crate::proofs::{AttachList, AttachState, LinkKind, new_verification, read_file};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space};
 
@@ -144,34 +142,6 @@ pub(crate) fn record<T: HasProofs>(this: &mut T, kind: LinkKind, id: &str, cx: &
     .detach();
 }
 
-/// Asks the Worker for a ten-minute link to `key` and opens it in the system browser.
-pub(crate) fn open<T: HasProofs>(this: &mut T, key: String, cx: &mut Context<T>) {
-    let client = match this.proofs_store().read(cx).proofs_client() {
-        Ok((client, _)) => client,
-        Err(e) => {
-            *this.proof_note() = Some(e.to_string());
-            cx.notify();
-            return;
-        }
-    };
-    cx.spawn(async move |view, cx| {
-        let outcome: Result<String, ProofsError> = cx
-            .background_spawn(async move { client.signed_url(&key) })
-            .await;
-        let _ = view.update(cx, |this, cx| {
-            match outcome {
-                Ok(url) => {
-                    *this.proof_note() = None;
-                    cx.open_url(&url);
-                }
-                Err(e) => *this.proof_note() = Some(e.to_string()),
-            }
-            cx.notify();
-        });
-    })
-    .detach();
-}
-
 /// The files on a form: name, where each stands, Remove, and the attach button.
 pub(crate) fn attach_section<T: HasProofs>(
     title: &str,
@@ -236,70 +206,6 @@ pub(crate) fn attach_section<T: HasProofs>(
                         .child("Photos (JPEG, PNG, WebP, GIF, HEIC) or PDF, up to 25 MB each."),
                 ),
         )
-        .when_some(note.map(str::to_owned), |v, note| {
-            v.child(div().text_color(p.rejection_red.to_hsla()).child(note))
-        })
-        .into_any_element()
-}
-
-/// The proofs recorded on a claim or bill, each with Open when the viewer may see the file.
-pub(crate) fn recorded_section<T: HasProofs>(
-    title: &str,
-    proofs: &[Verification],
-    note: Option<&str>,
-    cx: &mut Context<T>,
-) -> AnyElement {
-    let p = palette(cx.theme().mode);
-    let items: Vec<AnyElement> = proofs
-        .iter()
-        .map(|v| {
-            let name = v
-                .metadata
-                .get("file_name")
-                .and_then(|n| n.as_str())
-                .map(str::to_owned)
-                .or_else(|| v.description.clone())
-                .unwrap_or_else(|| v.id.clone());
-            let key = match v.visible_as {
-                Some(Visibility::Thumbnail) => v.thumbnail_key.clone(),
-                _ => v.object_key.clone(),
-            };
-            let row = h_flex()
-                .py(px(8.0))
-                .gap(px(12.0))
-                .border_b_1()
-                .border_color(p.hairline.to_hsla())
-                .child(div().flex_1().child(name));
-            match key {
-                Some(key) => row.child(
-                    Button::new(SharedString::from(format!("proof-open-{}", v.id)))
-                        .outline()
-                        .small()
-                        .label("Open")
-                        .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                            open(this, key.clone(), cx);
-                        })),
-                ),
-                None => row.child(
-                    div()
-                        .text_color(p.ink_muted.to_hsla())
-                        .child("Your access shows that it is attached, not the file."),
-                ),
-            }
-            .into_any_element()
-        })
-        .collect();
-    v_flex()
-        .child(section_header(title, div(), cx))
-        .when(items.is_empty(), |v| {
-            v.child(
-                div()
-                    .py(px(8.0))
-                    .text_color(p.ink_muted.to_hsla())
-                    .child("No files recorded on it."),
-            )
-        })
-        .children(items)
         .when_some(note.map(str::to_owned), |v, note| {
             v.child(div().text_color(p.rejection_red.to_hsla()).child(note))
         })

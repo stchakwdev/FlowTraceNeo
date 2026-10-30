@@ -16,7 +16,11 @@ use ledger_module::transparency::types::{
     Verification, VerificationStatus, VerificationType, Visibility,
 };
 
-use crate::proofs::{Gps, ProofDetails};
+use std::fmt::Write as _;
+use std::io::Read as _;
+use std::path::Path;
+
+use crate::proofs::{Gps, ProofDetails, ProofFile, sniff};
 use crate::web_format::{format_date, format_date_time};
 
 /// `ATTACH_TYPES` (`transactions/$id.tsx:388-400`): the kinds the attach panel offers, in order.
@@ -233,10 +237,10 @@ pub fn describe_accepted(types: &[&str]) -> String {
 /// by `toFixed(1)`, a trailing `.0` dropped by `parseFloat`.
 #[must_use]
 pub fn format_file_size(bytes: u64) -> String {
+    const SIZES: [&str; 4] = ["B", "KB", "MB", "GB"];
     if bytes == 0 {
         return "0 B".to_owned();
     }
-    const SIZES: [&str; 4] = ["B", "KB", "MB", "GB"];
     #[expect(
         clippy::cast_precision_loss,
         reason = "a JS number, as the web holds it"
@@ -276,6 +280,55 @@ pub fn validate_proof_file(
         ));
     }
     None
+}
+
+/// Reads the file at `path` as proof of `kind` on a screen with a `max_mb` limit, refusing it in
+/// the web's words ([`validate_proof_file`]) before more than its first bytes are read.
+///
+/// # Errors
+///
+/// The line the file's row shows.
+pub fn read_proof_file(
+    path: &Path,
+    kind: VerificationType,
+    max_mb: u64,
+) -> Result<ProofFile, String> {
+    let name = path.file_name().map_or_else(
+        || path.display().to_string(),
+        |n| n.to_string_lossy().into_owned(),
+    );
+    let unreadable = |e: std::io::Error| format!("{name} could not be read: {e}");
+    let mut file = std::fs::File::open(path).map_err(unreadable)?;
+    let size = file.metadata().map_err(unreadable)?.len();
+    let mut head = Vec::with_capacity(16);
+    (&mut file)
+        .take(16)
+        .read_to_end(&mut head)
+        .map_err(unreadable)?;
+    if let Some(problem) = validate_proof_file(&name, sniff(&head), size, accepted(kind), max_mb) {
+        return Err(problem);
+    }
+    let mut bytes = head;
+    file.take(max_mb * 1024 * 1024)
+        .read_to_end(&mut bytes)
+        .map_err(unreadable)?;
+    let content_type = sniff(&bytes).ok_or_else(|| format!("{name} is empty."))?;
+    Ok(ProofFile {
+        name,
+        content_type,
+        bytes,
+    })
+}
+
+/// A file's row when the upload failed (`FileUpload`, `uploadFile`).
+#[must_use]
+pub fn upload_failure(name: &str, message: &str) -> String {
+    let message = message.trim().trim_end_matches('.');
+    if message.is_empty() {
+        format!("{name} did not upload. Check your connection and try again.")
+    } else {
+        format!("{name} did not upload: {message}. Check your connection and try again.")
+    }
 }
 
 /// The upload hint (`FileUpload`, `file-upload.tsx`): `Receipt: JPG, PNG, WebP or PDF, up to 10
@@ -357,7 +410,7 @@ impl ProofRow {
             .collect();
         let mut added = format!("Added {}", format_date(&v.created_at));
         if !who.is_empty() {
-            added.push_str(&format!(" by {}", who.join(", ")));
+            let _ = write!(added, " by {}", who.join(", "));
         }
         Self {
             id: v.id.clone(),
@@ -668,7 +721,7 @@ pub fn viewer_facts(v: &Verification) -> Vec<Fact> {
             (Some(lat), Some(lon)) => {
                 let mut line = format!("{}, {}", coordinate(lat), coordinate(lon));
                 if let Some(acc) = v.gps_accuracy {
-                    line.push_str(&format!(" (\u{b1}{} m)", acc.round()));
+                    let _ = write!(line, " (\u{b1}{} m)", acc.round());
                 }
                 Some(line)
             }

@@ -58,7 +58,7 @@ fn a_filter_and_a_search_narrow_the_rows_and_the_footer_says_shown() {
         "{:?}",
         found.rows
     );
-    assert!(!found.rows.is_empty());
+    assert_ne!(found.rows.len(), 0);
     let by_node = List::of(&t, Filter::All, "harambee");
     assert!(
         by_node

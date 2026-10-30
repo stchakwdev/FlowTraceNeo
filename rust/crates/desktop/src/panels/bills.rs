@@ -37,6 +37,7 @@ use crate::bills::{
     status_label, status_tone, vendor_rows, vendors_meta,
 };
 use crate::claims::{cash_accounts, format_whole, grant_choices};
+use crate::panels::proof_section::ProofsSection;
 use crate::panels::proofs::{self as proof_ui, HasProofs};
 use crate::panels::{
     Pick, PickState, choice, demo_tag, failure_box, field, form_buttons, hint, section_header,
@@ -77,6 +78,8 @@ struct LineWidgets {
 /// The bills, payments and vendors screen.
 pub struct BillsPanel {
     store: Entity<LedgerStore>,
+    /// The Proofs section of the bill on show (DT3).
+    proof_section: Entity<ProofsSection>,
     seen: Option<(Option<OrganizationId>, u64)>,
     books: Option<Arc<LedgerState>>,
     demo: bool,
@@ -188,7 +191,9 @@ impl BillsPanel {
         let pay_reference = input("EFT, cheque or M-Pesa code", window, cx);
         let vendor_pick = new_pick(window, cx, Vec::new(), None);
         let pay_cash = new_pick(window, cx, Vec::new(), None);
+        let proof_section = cx.new(|cx| ProofsSection::new(store.clone(), window, cx));
         let subscriptions = vec![
+            cx.observe(&proof_section, |_, _, cx| cx.notify()),
             cx.observe_in(&store, window, |this, _, window, cx| {
                 this.refresh(window, cx);
             }),
@@ -204,6 +209,7 @@ impl BillsPanel {
             }),
         ];
         let mut panel = Self {
+            proof_section,
             store,
             seen: None,
             books: None,
@@ -335,6 +341,19 @@ impl BillsPanel {
     /// `n` a new bill, `f` the next status filter, `j`/`k` or Down/Up move through the list,
     /// Enter opens the bill, Escape goes back to the list.
     pub fn press_key(&mut self, key: &str, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        if self.tab == Tab::Bills && matches!(self.page, Page::Detail(_)) {
+            let section = self.proof_section.read(cx);
+            if (section.viewing() || section.attaching())
+                && self
+                    .proof_section
+                    .update(cx, |s, cx| s.press_key(key, window, cx))
+            {
+                return true;
+            }
+            if key == "o" {
+                return self.proof_section.update(cx, ProofsSection::open_first);
+            }
+        }
         match key {
             "b" => {
                 self.tab = Tab::Bills;
@@ -1370,10 +1389,12 @@ impl BillsPanel {
             .into_any_element()
     }
 
-    /// The proof files recorded on bill `id` ([`crate::panels::proofs::recorded_section`]).
+    /// The Proofs section of bill `id` ([`ProofsSection`], shared with transactions and claims;
+    /// `o` opens the viewer).
     fn proof_files(&self, id: &str, cx: &mut Context<Self>) -> AnyElement {
-        let proofs = self.store.read(cx).proofs_of(LinkKind::Bill, id);
-        proof_ui::recorded_section::<Self>("Proof files", &proofs, self.proof_note.as_deref(), cx)
+        let link = Some((LinkKind::Bill, id.to_owned()));
+        self.proof_section.update(cx, |s, cx| s.show(link, cx));
+        self.proof_section.clone().into_any_element()
     }
 
     fn detail_view(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -2013,6 +2034,9 @@ impl BillsPanel {
                 (Tab::Vendors, _) => self.vendors_tab(cx),
                 (Tab::Bills, Page::List) => self.list(cx),
                 (Tab::Bills, Page::New) => self.new_form(cx),
+                (Tab::Bills, Page::Detail(_)) if self.proof_section.read(cx).viewing() => {
+                    self.proof_section.clone().into_any_element()
+                }
                 (Tab::Bills, Page::Detail(_)) => self.detail_view(cx),
             }
         };
