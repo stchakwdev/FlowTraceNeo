@@ -400,6 +400,32 @@ fn a_transparency_change_rereads_the_named_records_and_keeps_them() {
 }
 
 #[test]
+fn an_organisation_without_records_reads_empty_ones_once_its_books_arrive() {
+    let fake = Fake::new();
+    fake.add_org("org-new", vec![]);
+    lock(&fake.transparency).insert("org-new".to_owned(), OrgTransparency::default());
+    let mut live = Live::default();
+    let out = live.apply(ready(), fake.as_ref());
+    assert!(
+        kinds(&out).contains(&"transparency org-new".to_owned()),
+        "{:?}",
+        kinds(&out)
+    );
+    assert_eq!(*live.transparency["org-new"], OrgTransparency::default());
+
+    let again = live.apply(
+        ClientEvent::Changed {
+            orgs: ["org-new".to_owned()].into_iter().collect(),
+        },
+        fake.as_ref(),
+    );
+    assert!(
+        !kinds(&again).contains(&"transparency org-new".to_owned()),
+        "read once; later changes come as TransparencyChanged"
+    );
+}
+
+#[test]
 fn campaign_writes_go_to_the_client_only_while_connected() {
     let fake = Fake::new();
     fake.add_org("org-a", vec![member(ME, "me", true)]);

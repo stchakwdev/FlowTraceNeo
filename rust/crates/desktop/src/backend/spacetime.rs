@@ -427,8 +427,19 @@ impl Live {
                 let state = Arc::new(state);
                 self.books.insert(id.clone(), Arc::clone(&state));
                 out.push(BackendEvent::Ledger {
-                    org: OrganizationId::from(id),
+                    org: OrganizationId::from(id.clone()),
                     state,
+                });
+            }
+            // An organisation with no transparency rows yet (new books, DT4's Settings and
+            // Access groups start there) sends no `TransparencyChanged`; read its empty records
+            // once so the screens can write the first ones (pre-decision P7).
+            if !self.transparency.contains_key(&id)
+                && let Some(t) = client.transparency(&id)
+            {
+                self.transparency.insert(id.clone(), Arc::new(t));
+                out.push(BackendEvent::Transparency {
+                    org: OrganizationId::from(id),
                 });
             }
         }
