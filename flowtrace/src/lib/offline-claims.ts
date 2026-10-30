@@ -6,6 +6,7 @@
 // created twice: the ledger answers DUPLICATE and the queue drops it.
 import { useCallback, useEffect, useState } from 'react'
 import { LedgerError } from './ledger'
+import { randomId } from './random-id'
 import { useLedgerActor, useLedgerCommand } from './ledger-client'
 import type { LedgerCommand } from './ledger'
 
@@ -82,14 +83,9 @@ function notify() {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHANGE_EVENT))
 }
 
-function newId() {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
-  return `offline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-}
-
 /** Keeps a claim on this device until it can be sent. */
 export async function enqueueClaim(input: ClaimInput): Promise<QueuedClaim> {
-  const id = input.id ?? newId()
+  const id = input.id ?? randomId()
   const item: QueuedClaim = {
     key: id,
     queued_at: new Date().toISOString(),

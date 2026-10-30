@@ -10,6 +10,43 @@ const fake = vi.hoisted(() => {
   const built: Array<Built> = []
   // When set, the host refuses: the SDK closes the socket without ever calling onConnect.
   const state = { refuse: false }
+  // The request ids run_command was called with; each call is answered with a result row.
+  const requestIds: Array<string> = []
+  const results: Array<{ requestId: string; resultJson: string }> = []
+  const view = (rows: Array<unknown>) => ({
+    iter: () => rows[Symbol.iterator](),
+    onInsert: () => {},
+    onUpdate: () => {},
+    removeOnInsert: () => {},
+    removeOnUpdate: () => {},
+  })
+  const conn = (identity: unknown) => ({
+    identity,
+    db: new Proxy({} as Record<string, unknown>, {
+      get: (_t, name) => view(name === 'myCommandResult' ? results : []),
+    }),
+    subscriptionBuilder: () => {
+      const sb = {
+        onApplied: (cb: () => void) => {
+          queueMicrotask(cb)
+          return sb
+        },
+        onError: () => sb,
+        subscribe: () => sb,
+      }
+      return sb
+    },
+    reducers: {
+      runCommand: ({ requestId }: { requestId: string }) => {
+        requestIds.push(requestId)
+        results.push({
+          requestId,
+          resultJson: JSON.stringify({ type: 'none' }),
+        })
+        return Promise.resolve()
+      },
+    },
+  })
   const builder = () => {
     let token: string | undefined
     let onConnect: (
@@ -42,13 +79,13 @@ const fake = vi.hoisted(() => {
           return
         }
         queueMicrotask(() =>
-          onConnect({ identity }, identity, token ?? 'host-minted-token'),
+          onConnect(conn(identity), identity, token ?? 'host-minted-token'),
         )
       },
     }
     return b
   }
-  return { built, builder, state }
+  return { built, builder, state, requestIds, results }
 })
 
 vi.mock('./spacetime-bindings', () => ({
@@ -81,6 +118,8 @@ const storedValues = () => [...stored.values()]
 beforeEach(() => {
   fake.built.length = 0
   fake.state.refuse = false
+  fake.requestIds.length = 0
+  fake.results.length = 0
   stored.clear()
   vi.stubGlobal('localStorage', memoryStorage)
 })
@@ -199,5 +238,33 @@ describe('organisationNames', () => {
         { orgId: 'org-c', data: 'not json' },
       ]),
     ).toEqual(new Map([['web1', 'Web One NGO']]))
+  })
+})
+
+describe('a command on plain HTTP, where crypto.randomUUID is missing', () => {
+  it('is sent with a UUID v4 request id and its result is read back', async () => {
+    const real = globalThis.crypto
+    vi.stubGlobal('crypto', {
+      getRandomValues: real.getRandomValues.bind(real),
+    })
+    const { backend } = await load('dummy')
+    // SpacetimeDB ignores the actor and takes it from the caller's identity.
+    const actor = {
+      id: 'bob',
+      name: 'Bob',
+      can_post: true,
+      can_approve: true,
+      can_close: false,
+    }
+    const result = await backend.spacetimeLedgerBackend.run(
+      'org-a',
+      { type: 'claim.approve', claimId: 'claim-1' },
+      actor,
+    )
+    expect(result).toEqual({ type: 'none' })
+    expect(fake.requestIds).toHaveLength(1)
+    expect(fake.requestIds[0]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    )
   })
 })

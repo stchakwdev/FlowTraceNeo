@@ -90,7 +90,7 @@ the end unless `--keep`:
 | `--keep` | With `--local`: keep the database |
 | `--auth dummy\|workos` | Default `dummy` (device identities the run mints); `workos` (Alice and Bob sign in with WorkOS) is below |
 | `--offline-emulated` | Step f in a Playwright context set offline, then online |
-| `--phone` | Step f on the user's Android phone (below); excludes `--offline-emulated` |
+| `--phone` | Step f on the user's phone (below); excludes `--offline-emulated` |
 | `--web-url` | Default `http://localhost:3000`. If nothing answers there, the run starts `vite dev` itself on the run's database and organisation, and stops it at the end. An app already running there must use `VITE_LEDGER_BACKEND=spacetimedb` on the same database |
 | `--desktop` | The desktop binary; default `rust/target/release/desktop` |
 | `--headed` | Show the browser |
@@ -108,7 +108,7 @@ never copy it anywhere. The transcript never holds a token.
 
 ## The phone step
 
-`--phone` replaces the emulated offline claim with the user's Android phone, once by hand. The
+`--phone` replaces the emulated offline claim with the user's phone, once by hand. The
 web app must be reachable from the phone, so this works against maincloud dev (the phone cannot
 reach a local SpacetimeDB on 127.0.0.1) with the run's own dev server, which it then starts with
 `--host`. The run prints these steps and waits:
