@@ -1,4 +1,4 @@
-//! Proof files (receipts on claims, proof on bills) through the proofs Worker
+//! Proof files (receipts on claims, proof on bills and transactions) through the proofs Worker
 //! (`workers/proofs/README.md`): the file goes to R2 behind the Worker, which answers with the
 //! object key and SHA-256; the app then records both on the books with the module's
 //! `create_verification` reducer (pre-decision P13; the Worker never writes to the module).
@@ -25,6 +25,11 @@ use sha2::{Digest, Sha256};
 /// The Worker's upload limit (`workers/proofs/README.md`, 25 MB).
 pub const MAX_BYTES: u64 = 25 * 1024 * 1024;
 
+/// The limit on the Transactions screens: the web's `MAX_PROOF_MB` of `transactions/new.tsx` and
+/// the `FileUpload` default of the detail page (`file-upload.tsx`, `maxSizeMB = 10`), under the
+/// Worker's 25 MB.
+pub const SCREEN_MAX_BYTES: u64 = 10 * 1024 * 1024;
+
 /// How long one request may take before the app gives up.
 const TIMEOUT: Duration = Duration::from_secs(120);
 
@@ -35,6 +40,8 @@ pub enum LinkKind {
     Claim,
     /// A bill (`proof_ids` on the bill).
     Bill,
+    /// A movement of money on the flow map (`flowtrace/src/lib/proofs.ts`, `ProofLinkKind`).
+    Transaction,
 }
 
 impl LinkKind {
@@ -44,15 +51,17 @@ impl LinkKind {
         match self {
             Self::Claim => "claim",
             Self::Bill => "bill",
+            Self::Transaction => "transaction",
         }
     }
 
-    /// The proof type recorded on the books: a receipt for a claim, an invoice for a bill
-    /// (`VerificationType`, `flowtrace/src/lib/supabase.ts:95-107`).
+    /// The proof type a claim or bill form records: a receipt for a claim, an invoice for a
+    /// bill (`VerificationType`, `flowtrace/src/lib/supabase.ts:95-107`); for a transaction the
+    /// attach panel's first choice, a receipt (`transactions/$id.tsx`, `AttachProof`).
     #[must_use]
     pub const fn proof_type(self) -> VerificationType {
         match self {
-            Self::Claim => VerificationType::Receipt,
+            Self::Claim | Self::Transaction => VerificationType::Receipt,
             Self::Bill => VerificationType::Invoice,
         }
     }
@@ -229,41 +238,109 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
         })
 }
 
-/// The proof record for an uploaded file, for `create_verification` (ADR 0004, Reducers):
-/// linked to the claim or bill `link_id`, pending, shown in full to those allowed, the file name
-/// as its description and in its metadata as the web writes it (`file_name`, `mime_type`,
-/// `size`; `flowtrace/src/components/file-upload.tsx`, `useAttachProofs`).
+/// A place typed on the attach panel: the web reads it from the browser
+/// (`file-upload.tsx`, `GPSLocation`, `useGPSCapture`); the desktop has no geolocation, so the
+/// fields are typed by hand.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Gps {
+    /// Latitude in degrees.
+    pub latitude: f64,
+    /// Longitude in degrees.
+    pub longitude: f64,
+    /// Accuracy in metres, when given.
+    pub accuracy: Option<f64>,
+    /// Place name, when one was given.
+    pub location_name: Option<String>,
+}
+
+/// What travels with a proof besides its file (`EnhancedUploadForm`, `file-upload.tsx`): the kind
+/// of proof, who may see it, what it shows, who captured it and where.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProofDetails {
+    /// The kind of proof.
+    pub kind: VerificationType,
+    /// Who can see the file.
+    pub visibility: Visibility,
+    /// What it shows, as typed; blank means the file name.
+    pub description: String,
+    /// Captured by, as typed; blank means none.
+    pub executor: String,
+    /// Where, when given.
+    pub gps: Option<Gps>,
+}
+
+impl ProofDetails {
+    /// A proof of `kind` with the panel's defaults: full visibility, nothing typed.
+    #[must_use]
+    pub const fn of(kind: VerificationType) -> Self {
+        Self {
+            kind,
+            visibility: Visibility::Full,
+            description: String::new(),
+            executor: String::new(),
+            gps: None,
+        }
+    }
+}
+
+/// The proof record for an uploaded file on a claim or bill form: a receipt or an invoice, shown
+/// in full, the file name as its description ([`new_verification_for`]).
 #[must_use]
 pub fn new_verification(kind: LinkKind, link_id: &str, a: &Attachment) -> NewVerification {
+    new_verification_for(kind, link_id, &ProofDetails::of(kind.proof_type()), Some(a))
+}
+
+/// The proof record for `create_verification` (ADR 0004, Reducers) as `useAttachProofs` writes it
+/// (`flowtrace/src/components/file-upload.tsx`, `record`): linked to the claim, bill or
+/// transaction `link_id`, pending, with `details`; with a file, its key and hash, and its
+/// `file_name`, `mime_type`, `size`, `object_key` and `sha256` in the metadata; the description
+/// trimmed, else the file name; captured-by trimmed, else none. Without a file (a GPS reading)
+/// the record holds no key and empty metadata. The 8 inputs of the brief travel as
+/// [`ProofDetails`] to stay under clippy's argument limit.
+#[must_use]
+pub fn new_verification_for(
+    link: LinkKind,
+    link_id: &str,
+    details: &ProofDetails,
+    file: Option<&Attachment>,
+) -> NewVerification {
     let mut metadata = serde_json::Map::new();
-    metadata.insert("file_name".to_owned(), a.name.clone().into());
-    metadata.insert(
-        "mime_type".to_owned(),
-        a.uploaded.content_type.clone().into(),
-    );
-    metadata.insert("size".to_owned(), a.uploaded.size.into());
-    let (claim_id, bill_id) = match kind {
-        LinkKind::Claim => (Some(link_id.to_owned()), None),
-        LinkKind::Bill => (None, Some(link_id.to_owned())),
+    if let Some(a) = file {
+        metadata.insert("file_name".to_owned(), a.name.clone().into());
+        metadata.insert(
+            "mime_type".to_owned(),
+            a.uploaded.content_type.clone().into(),
+        );
+        metadata.insert("size".to_owned(), a.uploaded.size.into());
+        metadata.insert("object_key".to_owned(), a.uploaded.key.clone().into());
+        metadata.insert("sha256".to_owned(), a.uploaded.sha256.clone().into());
+    }
+    let id = Some(link_id.to_owned());
+    let (transaction_id, claim_id, bill_id) = match link {
+        LinkKind::Transaction => (id, None, None),
+        LinkKind::Claim => (None, id, None),
+        LinkKind::Bill => (None, None, id),
     };
+    let typed = |s: &str| Some(s.trim().to_owned()).filter(|s| !s.is_empty());
+    let gps = details.gps.as_ref();
     NewVerification {
-        transaction_id: None,
+        transaction_id,
         claim_id,
         bill_id,
-        kind: kind.proof_type(),
-        object_key: Some(a.uploaded.key.clone()),
-        sha256: Some(a.uploaded.sha256.clone()),
-        thumbnail_key: a.uploaded.thumbnail_key.clone(),
+        kind: details.kind,
+        object_key: file.map(|a| a.uploaded.key.clone()),
+        sha256: file.map(|a| a.uploaded.sha256.clone()),
+        thumbnail_key: file.and_then(|a| a.uploaded.thumbnail_key.clone()),
         ocr_data: None,
         metadata,
         status: VerificationStatus::Pending,
-        visibility_level: Visibility::Full,
-        executor_name: None,
-        gps_latitude: None,
-        gps_longitude: None,
-        gps_accuracy: None,
-        location_name: None,
-        description: Some(a.name.clone()),
+        visibility_level: details.visibility,
+        executor_name: typed(&details.executor),
+        gps_latitude: gps.map(|g| g.latitude),
+        gps_longitude: gps.map(|g| g.longitude),
+        gps_accuracy: gps.and_then(|g| g.accuracy),
+        location_name: gps.and_then(|g| g.location_name.clone()),
+        description: typed(&details.description).or_else(|| file.map(|a| a.name.clone())),
     }
 }
 
@@ -406,6 +483,12 @@ impl ProofsClient {
         }
     }
 
+    /// The bearer this client sends, for tests of which token the store picks.
+    #[cfg(test)]
+    pub(crate) fn bearer_for_test(&self) -> &str {
+        &self.token
+    }
+
     /// Uploads `file` for the organisation `org`, linked to the claim or bill `link_id`
     /// (`POST /upload`), and checks the Worker's hash against the file's own.
     ///
@@ -465,6 +548,39 @@ impl ProofsClient {
             .map_err(|e| ProofsError::Network(e.to_string()))?;
         let signed: SignedUrl = read_reply(response)?;
         Ok(signed.url)
+    }
+
+    /// The bytes behind a signed link from [`ProofsClient::signed_url`] (`GET /signed/<key>`,
+    /// which needs no token, `workers/proofs/README.md`), at most [`MAX_BYTES`]; for drawing a
+    /// photo in the app.
+    ///
+    /// # Errors
+    ///
+    /// [`ProofsError::Refused`] with the Worker's message (an expired or forged link),
+    /// [`ProofsError::Network`].
+    pub fn fetch_bytes(&self, url: &str) -> Result<Vec<u8>, ProofsError> {
+        let mut response = self
+            .agent
+            .get(url)
+            .call()
+            .map_err(|e| ProofsError::Network(e.to_string()))?;
+        let status = response.status().as_u16();
+        if !(200..300).contains(&status) {
+            // A refusal always reads as an error; the arm after it only keeps the match whole.
+            return Err(match read_reply::<serde_json::Value>(response) {
+                Err(e) => e,
+                Ok(_) => ProofsError::Refused {
+                    status,
+                    message: format!("The proof store refused the request (HTTP {status})."),
+                },
+            });
+        }
+        response
+            .body_mut()
+            .with_config()
+            .limit(MAX_BYTES)
+            .read_to_vec()
+            .map_err(|e| ProofsError::Network(e.to_string()))
     }
 }
 

@@ -72,7 +72,9 @@ chain writes the same way (`create_flow_node`, `update_flow_node`, `create_trans
 `update_chain_permissions`), their JSON arguments `ledger_module::transparency::flows::{NewFlowNode,
 FlowNodePatch, NewTransaction, TransactionPatch, NodeVisibilitySettings,
 TransactionVisibilitySettings}`; chain calls take no organisation, the module finds the side
-that acts. DT3 and DT4 add what their screens need.
+that acts. DT3 added `log_verification_access` (the caller opened or downloaded a proof's
+file; `AccessType::View` or `Download`, the level recorded by the module) and the desktop's use
+of `mark_published`; DT4 adds what its screens need.
 
 A subscriber's first event is the current `ClientEvent::Status`. After that it gets one
 `ClientEvent::Changed { orgs }` per applied message (initial subscription or transaction).

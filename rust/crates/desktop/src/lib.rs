@@ -29,4 +29,6 @@ pub mod signin;
 pub mod statements;
 pub mod store;
 pub mod theme;
+pub mod transactions;
+pub mod verification;
 pub mod web_format;

@@ -448,3 +448,156 @@ fn a_flow_write_reaches_the_selected_organisations_records() {
         before + 1
     );
 }
+
+#[test]
+fn a_transaction_proof_is_attached_published_and_its_view_logged_in_process() {
+    let (mut store, rx) = demo_store();
+    let txn = store.view().transparency().unwrap().transactions[0]
+        .id
+        .clone();
+    let before = store.proofs_of(LinkKind::Transaction, &txn).len();
+    store
+        .attach_proof(proof_of(LinkKind::Transaction, &txn))
+        .now()
+        .unwrap()
+        .unwrap();
+    store.apply(std::iter::from_fn(|| rx.try_recv().ok()).collect());
+    let proofs = store.proofs_of(LinkKind::Transaction, &txn);
+    assert_eq!(proofs.len(), before + 1);
+    let mine = proofs
+        .iter()
+        .find(|v| v.sha256.as_deref() == Some("b".repeat(64).as_str()))
+        .unwrap()
+        .clone();
+    assert!(!mine.published);
+    assert!(
+        store.actor().unwrap().can_close,
+        "the demo user is a manager"
+    );
+    store.mark_published(&mine.id, true).now().unwrap().unwrap();
+    store
+        .log_verification_access(&mine.id, AccessType::View)
+        .now()
+        .unwrap()
+        .unwrap();
+    store.apply(std::iter::from_fn(|| rx.try_recv().ok()).collect());
+    let records = store.view().transparency().unwrap().clone();
+    let now = records
+        .verifications
+        .iter()
+        .find(|v| v.id == mine.id)
+        .unwrap();
+    assert!(now.published);
+    let logged = records.access_log.last().unwrap();
+    assert_eq!(
+        (logged.verification_id.as_str(), logged.access_type),
+        (mine.id.as_str(), AccessType::View)
+    );
+    assert_eq!(
+        store
+            .log_verification_access("nope", AccessType::View)
+            .now()
+            .unwrap(),
+        Err(BackendError::Connection(
+            "Verification not found.".to_owned()
+        ))
+    );
+}
+
+fn signed_in_session(token: &str) -> crate::signin::Session {
+    crate::signin::Session {
+        access_token: ledger_client::AccessToken::new(token),
+        claims: crate::signin::TokenClaims {
+            issuer: "https://api.workos.com/user_management/client_1".to_owned(),
+            subject: "user_1".to_owned(),
+            audience: None,
+            expires_at: Some(1_900_000_000),
+        },
+        user: crate::signin::SignedInUser {
+            id: "user_1".to_owned(),
+            name: "Alice Achieng".to_owned(),
+            email: "alice@example.org".to_owned(),
+        },
+        organization_id: None,
+    }
+}
+
+#[test]
+fn a_workos_connection_sends_its_access_token_to_the_worker_and_the_refreshed_one_after() {
+    let dir = std::env::temp_dir().join(format!("ft-dt3-store-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let token_path = dir.join("token");
+    ledger_client::TokenFile::new(&token_path)
+        .save("device-token")
+        .unwrap();
+    let fake = Fake::new();
+    fake.add_org("org-live", vec![member(ME, "me", true)]);
+    let connector: Connector = {
+        let fake = Arc::clone(&fake);
+        Box::new(move |s| {
+            let mut backend = SpacetimeBackend::new();
+            backend.remember(s);
+            backend.attach(fake.clone())?;
+            Ok(Box::new(backend) as Box<dyn LedgerBackend>)
+        })
+    };
+    let (mut store, _demo_rx) = StoreCore::new(
+        Box::new(InProcessBackend::with_demo_and_empty().unwrap()),
+        connector,
+    );
+    let mut live = settings();
+    live.token_path = token_path.to_string_lossy().into_owned();
+    live.access_token = Some(ledger_client::AccessToken::new("workos-at-connect"));
+    let rx = store.connect(live).unwrap();
+    fake.emit(ready());
+    pump_until(&mut store, &rx, |s| s.view().offline_notice().is_none());
+    store.set_proofs_url(Some("https://proofs.example.org".to_owned()));
+    let bearer = |store: &StoreCore| {
+        let (client, _) = store.proofs_client().unwrap();
+        client.bearer_for_test().to_owned()
+    };
+    assert_eq!(bearer(&store), "workos-at-connect", "not the device token");
+
+    store
+        .signin_mut()
+        .signed_in(signed_in_session("workos-first"));
+    assert_eq!(bearer(&store), "workos-first");
+    store
+        .signin_mut()
+        .refreshed(signed_in_session("workos-refreshed"));
+    assert_eq!(bearer(&store), "workos-refreshed");
+    store.signin_mut().signed_out();
+    assert_eq!(bearer(&store), "workos-at-connect");
+
+    store.mark_published("v1", true).now().unwrap().unwrap();
+    store
+        .log_verification_access("v1", AccessType::Download)
+        .now()
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        fake.published.lock().unwrap().clone(),
+        [("org-live".to_owned(), "v1".to_owned(), true)]
+    );
+    assert_eq!(
+        fake.accesses.lock().unwrap().clone(),
+        [("org-live".to_owned(), "v1".to_owned(), AccessType::Download)]
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn a_device_connection_sends_the_token_file() {
+    let dir = std::env::temp_dir().join(format!("ft-dt3-device-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let token_path = dir.join("token");
+    ledger_client::TokenFile::new(&token_path)
+        .save("device-token")
+        .unwrap();
+    let mut backend = SpacetimeBackend::new();
+    let mut s = settings();
+    s.token_path = token_path.to_string_lossy().into_owned();
+    backend.remember(s);
+    assert_eq!(backend.proofs_token().as_deref(), Some("device-token"));
+    std::fs::remove_dir_all(&dir).unwrap();
+}

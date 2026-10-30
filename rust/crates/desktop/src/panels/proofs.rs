@@ -60,7 +60,7 @@ pub(crate) fn choose<T: HasProofs>(
         prompt: Some(
             match kind {
                 LinkKind::Claim => "Choose receipts",
-                LinkKind::Bill => "Choose proof files",
+                LinkKind::Bill | LinkKind::Transaction => "Choose proof files",
             }
             .into(),
         ),

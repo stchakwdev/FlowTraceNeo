@@ -87,9 +87,59 @@ pub fn format_short_date(value: &str) -> String {
     day_of(value).map_or_else(|| value.to_owned(), |d| format_iso_short(&d))
 }
 
+/// `formatDateTime(value)` (`format.ts:31-39`) of a UTC timestamp: `18 Jan 2026, 14:05`. The
+/// web writes the viewer's local time; the desktop writes UTC, as `claims::format_date_time`
+/// does, so a record reads the same on every machine. The value as given when it is not one.
+#[must_use]
+pub fn format_date_time(value: &str) -> String {
+    match (day_of(value), value.get(11..16)) {
+        (Some(day), Some(time)) if time.as_bytes().get(2) == Some(&b':') => {
+            format!("{}, {time}", format_iso_date(&day))
+        }
+        (Some(day), _) => format!("{}, 00:00", format_iso_date(&day)),
+        _ => value.to_owned(),
+    }
+}
+
+/// `formatDateTimeEAT(value)` (`format.ts:68-79`) of a UTC timestamp: the time in East Africa
+/// Time (UTC+3, no daylight saving) with the zone named, `18 Jan 2026, 07:00 EAT`, the day
+/// moving on past midnight. The value as given when it is not a timestamp.
+#[must_use]
+pub fn format_date_time_eat(value: &str) -> String {
+    let Some(day) = day_of(value) else {
+        return value.to_owned();
+    };
+    let hour: u32 = value.get(11..13).and_then(|h| h.parse().ok()).unwrap_or(0);
+    let minute = value.get(14..16).unwrap_or("00");
+    let (day, hour) = if hour + 3 >= 24 {
+        (crate::bills::add_days(&day, 1), hour + 3 - 24)
+    } else {
+        (day, hour + 3)
+    };
+    format!("{}, {hour:02}:{minute} EAT", format_iso_date(&day))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn date_times_are_utc_and_eat_moves_three_hours_on() {
+        assert_eq!(
+            format_date_time("2026-02-04T09:00:00.000Z"),
+            "4 Feb 2026, 09:00"
+        );
+        assert_eq!(format_date_time("2026-02-04"), "4 Feb 2026, 00:00");
+        assert_eq!(format_date_time("soon"), "soon");
+        assert_eq!(
+            format_date_time_eat("2026-02-04T09:05:00.000Z"),
+            "4 Feb 2026, 12:05 EAT"
+        );
+        assert_eq!(
+            format_date_time_eat("2025-12-31T22:30:00.000Z"),
+            "1 Jan 2026, 01:30 EAT"
+        );
+    }
 
     #[test]
     fn amounts_are_whole_units_grouped_by_three() {
