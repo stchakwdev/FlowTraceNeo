@@ -11,23 +11,39 @@
 // - Joins and figures the module does not keep (target node, donation details, counts,
 //   underfunded campaigns, the members' campaign report) are built here the way the demo API
 //   builds them (flowtrace/src/lib/demo/api.ts:1040-1443).
+// - Flows and chains (RW2, ADR 0005): the transaction list with its node references, the flow map
+//   data the `generate-flow-data` edge function served (the module has none, so it is computed
+//   here as flows.rs `flow_data` and the demo's getFlowDataAPI do, api.ts:475-566), the proof
+//   figures, chain counts and the chain trust score, and the inputs of the flow and chain
+//   reducers (flows.rs:286-440).
 import { ledgerOrgId } from '../spacetime-session'
 import { fromMajor, toMajor } from './money'
 import type { SpacetimeMembership } from './spacetime-backend'
 import type {
+  AccessGroup,
   Campaign,
   CampaignCounts,
   CampaignStats,
   CampaignWithDetails,
+  ChainActivityLog,
+  ChainCounts,
+  ChainTrustScore,
   Donation,
   DonationWithDetails,
   DonorUpdate,
   DonorUpdateWithDetails,
+  FlowDataEdge,
+  FlowDataNode,
+  FlowDataResult,
   FlowNode,
+  NodeVisibility,
+  OrgStats,
   Organization,
+  OrganizationChainWithDetails,
   Profile,
   Transaction,
   TransactionWithNodes,
+  Verification,
 } from '../types'
 import type { CampaignReport } from '../demo/api'
 
@@ -529,4 +545,385 @@ export function orgContextFrom(input: {
       ? 'member'
       : 'viewer'
   return { orgId, membership, role }
+}
+
+// ---------------------------------------------------------------------------
+// Flow nodes and transactions (RW2; flows.rs:286-440, ADR 0005)
+// ---------------------------------------------------------------------------
+
+/** `NewFlowNode` (flows.rs:286): name, type and metadata; the module sets the balance to zero. */
+export function flowNodeInput(n: Partial<FlowNode>): Json {
+  return pick(n, ['name', 'type', 'metadata'], [])
+}
+
+const TRANSACTION_FIELDS = [
+  'from_node_id',
+  'to_node_id',
+  'amount',
+  'currency',
+  'exchange_rate',
+  'amount_usd',
+  'description',
+  'category',
+  'reference',
+  'notes',
+  'verification_status',
+  'transaction_date',
+]
+const TRANSACTION_NULLABLE = [
+  'from_node_id',
+  'to_node_id',
+  'exchange_rate',
+  'amount_usd',
+  'category',
+  'reference',
+  'notes',
+]
+const TRANSACTION_MONEY = ['amount', 'amount_usd']
+
+/**
+ * `NewTransaction` (flows.rs:320): no organisation, `created_by` (the caller) or proof count;
+ * minor units. Creating it does not post it to the books (ADR 0005, difference 1).
+ */
+export function transactionInput(t: Partial<Transaction>): Json {
+  return minorOf(
+    pick(t, TRANSACTION_FIELDS, TRANSACTION_NULLABLE),
+    TRANSACTION_MONEY,
+  )
+}
+
+/** `TransactionPatch` (flows.rs:358): the same fields; the proof count and author never. */
+export function transactionPatch(u: Partial<Transaction>): Json {
+  return minorOf(
+    pick(u, TRANSACTION_FIELDS, TRANSACTION_NULLABLE),
+    TRANSACTION_MONEY,
+  )
+}
+
+/** `NodeVisibilitySettings` (flows.rs:401): `null` means the group's own setting. */
+export function nodeVisibilitySettings(s: Partial<NodeVisibility>): Json {
+  return pick(
+    s,
+    [
+      'can_view',
+      'can_view_amounts',
+      'can_view_proofs',
+      'can_view_executor',
+      'display_name',
+    ],
+    [
+      'can_view_amounts',
+      'can_view_proofs',
+      'can_view_executor',
+      'display_name',
+    ],
+  )
+}
+
+export const decodeNodeVisibility = (row: Pick<DocRowLike, 'data'>) =>
+  parse(row.data) as unknown as NodeVisibility
+
+export type NodeVisibilityWithGroup = NodeVisibility & {
+  group: Pick<AccessGroup, 'id' | 'name' | 'slug' | 'color'>
+}
+
+/** `getNodeVisibility` (api.ts:690-705): each row with its group, or a removed-group stand-in. */
+export function nodeVisibilityWithGroups(
+  rows: Array<NodeVisibility>,
+  groups: Array<AccessGroup>,
+): Array<NodeVisibilityWithGroup> {
+  return rows.map((v) => {
+    const g = groups.find((x) => x.id === v.group_id)
+    return {
+      ...v,
+      group: g
+        ? { id: g.id, name: g.name, slug: g.slug, color: g.color }
+        : {
+            id: v.group_id,
+            name: 'Removed group',
+            slug: 'removed',
+            color: '#94a3b8',
+          },
+    }
+  })
+}
+
+/** `withNodes` (api.ts:196-200, flows.rs:1029). */
+export const withNodes = (
+  t: Transaction,
+  nodes: Array<FlowNode>,
+): TransactionWithNodes => ({
+  ...t,
+  from_node: nodeRef(nodes, t.from_node_id),
+  to_node: nodeRef(nodes, t.to_node_id),
+})
+
+/** `getTransactions` (api.ts:202-209): newest date first, equal dates in recorded order. */
+export function transactionsWithNodes(
+  transactions: Array<Transaction>,
+  nodes: Array<FlowNode>,
+): Array<TransactionWithNodes> {
+  return [...transactions]
+    .sort((a, b) => byDateDesc(a.transaction_date, b.transaction_date))
+    .map((t) => withNodes(t, nodes))
+}
+
+/** What the flow figures read of a proof (the module's `Verification`, types.rs:282). */
+export type ProofLike = Pick<Verification, 'status' | 'trust_points'> & {
+  transaction_id: string | null
+}
+
+/**
+ * `getFlowDataAPI` (api.ts:475-566; flows.rs:1110 `flow_data`): every transaction that is not
+ * rejected, within the dates when given (compared as `YYYY-MM-DD`), summed onto its nodes and
+ * onto one edge per ordered node pair, with each node's proof figures. `currency` is the
+ * organisation's.
+ */
+export function flowData(input: {
+  nodes: Array<FlowNode>
+  transactions: Array<Transaction>
+  proofs: Array<ProofLike>
+  currency: string
+  startDate?: string
+  endDate?: string
+}): FlowDataResult {
+  const { startDate, endDate } = input
+  const txns = input.transactions.filter(
+    (t) =>
+      t.verification_status !== 'rejected' &&
+      (!startDate || t.transaction_date >= startDate.slice(0, 10)) &&
+      (!endDate || t.transaction_date <= endDate.slice(0, 10)),
+  )
+  const nodes = new Map<string, FlowDataNode>()
+  const touch = (id: string | null) => {
+    if (!id || nodes.has(id)) return
+    const n = input.nodes.find((x) => x.id === id)
+    if (!n) return
+    nodes.set(id, {
+      id: n.id,
+      name: n.name,
+      type: n.type,
+      inflow: 0,
+      outflow: 0,
+      balance: n.balance,
+      verification_count: 0,
+      verified_count: 0,
+      pending_count: 0,
+      rejected_count: 0,
+      trust_points: 0,
+    })
+  }
+  const edges = new Map<string, FlowDataEdge>()
+  for (const t of txns) {
+    touch(t.from_node_id)
+    touch(t.to_node_id)
+    const from = t.from_node_id ? nodes.get(t.from_node_id) : undefined
+    const to = t.to_node_id ? nodes.get(t.to_node_id) : undefined
+    if (from) from.outflow += t.amount
+    if (to) to.inflow += t.amount
+    const proofs = input.proofs.filter((p) => p.transaction_id === t.id)
+    const count = (s: ProofLike['status']) =>
+      proofs.filter((p) => p.status === s).length
+    for (const n of [from, to]) {
+      if (!n) continue
+      n.verification_count = (n.verification_count ?? 0) + proofs.length
+      n.verified_count = (n.verified_count ?? 0) + count('verified')
+      n.pending_count = (n.pending_count ?? 0) + count('pending')
+      n.rejected_count = (n.rejected_count ?? 0) + count('rejected')
+      n.trust_points =
+        (n.trust_points ?? 0) + proofs.reduce((s, p) => s + p.trust_points, 0)
+    }
+    if (t.from_node_id && t.to_node_id) {
+      const key = `${t.from_node_id}->${t.to_node_id}`
+      const edge = edges.get(key)
+      if (edge) {
+        edge.value += t.amount
+        edge.count += 1
+      } else {
+        edges.set(key, {
+          source: t.from_node_id,
+          target: t.to_node_id,
+          value: t.amount,
+          count: 1,
+          currency: t.currency,
+        })
+      }
+    }
+  }
+  const edgeList = [...edges.values()]
+  return {
+    nodes: [...nodes.values()],
+    edges: edgeList,
+    summary: {
+      total_nodes: nodes.size,
+      total_edges: edgeList.length,
+      total_flow: edgeList.reduce((s, e) => s + e.value, 0),
+      transaction_count: txns.length,
+      currency: input.currency,
+    },
+  }
+}
+
+/** `getOrganizationStats` (api.ts:120-148): transaction states and the proof figures. */
+export function orgStats(
+  transactions: Array<Transaction>,
+  allProofs: Array<ProofLike>,
+): OrgStats {
+  const ids = new Set(transactions.map((t) => t.id))
+  const proofs = allProofs.filter(
+    (p) => p.transaction_id !== null && ids.has(p.transaction_id),
+  )
+  const total = transactions.length
+  const withState = (s: Transaction['verification_status']) =>
+    transactions.filter((t) => t.verification_status === s).length
+  const verified = withState('verified')
+  const withProofs = new Set(proofs.map((p) => p.transaction_id)).size
+  const proofsIn = (s: ProofLike['status']) =>
+    proofs.filter((p) => p.status === s).length
+  return {
+    total,
+    verified,
+    pending: withState('pending'),
+    flagged: withState('flagged'),
+    verificationRate: total > 0 ? Math.round((verified / total) * 100) : 0,
+    proofStats: {
+      totalProofs: proofs.length,
+      verifiedProofs: proofsIn('verified'),
+      pendingProofs: proofsIn('pending'),
+      rejectedProofs: proofsIn('rejected'),
+      totalTrustPoints: proofs.reduce((sum, p) => sum + p.trust_points, 0),
+      transactionsWithProofs: withProofs,
+      proofCoverageRate: total > 0 ? Math.round((withProofs / total) * 100) : 0,
+    },
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Organisation chains (chains.rs, ADR 0005)
+// ---------------------------------------------------------------------------
+
+interface ChainOrgRef {
+  id: string
+  name: string
+  logo_key?: string | null
+  trust_score: number
+  type: Organization['type']
+  country: string
+}
+
+const chainOrg = (o: ChainOrgRef) => ({
+  id: o.id,
+  name: o.name,
+  // The module keeps an R2 object key (P13), not a URL.
+  logo_url: null,
+  trust_score: o.trust_score,
+  type: o.type,
+  country: o.country,
+})
+
+/**
+ * A `my_organization_chain` row (`ChainDetails`, chains.rs:637): the chain with both
+ * organisations' name, type, country and trust score, the target's linked node and granted group.
+ */
+export function decodeChain(
+  row: Pick<DocRowLike, 'data'>,
+): OrganizationChainWithDetails {
+  const c = parse(row.data) as unknown as OrganizationChainWithDetails & {
+    source_org: ChainOrgRef
+    target_org: ChainOrgRef
+  }
+  return {
+    ...c,
+    source_org: chainOrg(c.source_org),
+    target_org: chainOrg(c.target_org),
+  }
+}
+
+export const decodeChainActivity = (row: Pick<DocRowLike, 'data'>) =>
+  parse(row.data) as unknown as ChainActivityLog
+
+/** `getOutgoingChains` / `getIncomingChains` (api.ts:842-858): newest request first. */
+export function chainsOf(
+  chains: Array<OrganizationChainWithDetails>,
+  orgId: string,
+  side: 'outgoing' | 'incoming',
+): Array<OrganizationChainWithDetails> {
+  return chains
+    .filter((c) =>
+      side === 'outgoing'
+        ? c.source_org_id === orgId
+        : c.target_org_id === orgId,
+    )
+    .sort((a, b) => byDateDesc(a.requested_at, b.requested_at))
+}
+
+/** `getChainCounts` (api.ts:1000-1016, chains.rs:505). */
+export function chainCounts(
+  chains: Array<
+    Pick<
+      OrganizationChainWithDetails,
+      'source_org_id' | 'target_org_id' | 'status'
+    >
+  >,
+  orgId: string,
+): ChainCounts {
+  const n = (side: 'source_org_id' | 'target_org_id', status: string) =>
+    chains.filter((c) => c[side] === orgId && c.status === status).length
+  return {
+    outgoing_pending: n('source_org_id', 'pending'),
+    outgoing_active: n('source_org_id', 'active'),
+    incoming_pending: n('target_org_id', 'pending'),
+    incoming_active: n('target_org_id', 'active'),
+  }
+}
+
+/**
+ * `getChainTrustScore` (api.ts:1018-1031): the rounded mean of the two organisations' scores,
+ * which the module's chain row carries (chains.rs:563, ADR 0005 difference 6); null for an
+ * unknown chain.
+ */
+export function chainTrustScore(
+  chain:
+    | Pick<OrganizationChainWithDetails, 'source_org' | 'target_org'>
+    | undefined,
+): ChainTrustScore | null {
+  if (!chain) return null
+  const source = chain.source_org.trust_score
+  const target = chain.target_org.trust_score
+  return {
+    aggregated_score: Math.round((source + target) / 2),
+    org_count: 2,
+    scores: { source_org: source, target_org: target },
+  }
+}
+
+export type OrganizationMatch = Pick<
+  Organization,
+  'id' | 'name' | 'logo_url' | 'trust_score' | 'type' | 'country'
+>
+
+/**
+ * `searchOrganizations` (api.ts:177-185) over the organisations the module publishes
+ * (`public_organization`): the module has no directory of every organisation, so only public
+ * ones can be found. Name contains the query, any case; at most ten; never the caller's own.
+ */
+export function matchOrganizations(
+  published: Array<
+    Pick<Organization, 'id' | 'name' | 'trust_score' | 'type' | 'country'>
+  >,
+  query: string,
+  excludeOrgId: string,
+): Array<OrganizationMatch> {
+  const q = query.toLowerCase()
+  return published
+    .filter((o) => o.id !== excludeOrgId && o.name.toLowerCase().includes(q))
+    .slice(0, 10)
+    .map((o) => ({
+      id: o.id,
+      name: o.name,
+      logo_url: null,
+      trust_score: o.trust_score,
+      type: o.type,
+      country: o.country,
+    }))
 }

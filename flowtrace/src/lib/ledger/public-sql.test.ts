@@ -256,3 +256,54 @@ describe('anonymous reads over HTTP SQL', () => {
     )
   })
 })
+
+describe('finding an organisation to ask for a chain', () => {
+  const published = (id: string, name: string, score: number | null) => [
+    id,
+    'slug-' + id,
+    JSON.stringify({
+      id,
+      name,
+      type: 'NGO',
+      country: 'KE',
+      currency: 'KES',
+      verified: false,
+      public_slug: 'slug-' + id,
+      description: null,
+      logo_key: null,
+      trust_score: score,
+      grade: null,
+      updated_at: 'x',
+    }),
+  ]
+
+  it('matches published organisations by name, any case, never the caller', async () => {
+    const sql = await load()
+    fetchMock.mockResolvedValue(
+      ok(
+        answer(
+          ['org_id', 'slug', 'data'],
+          [
+            published('rw1', 'RW1 Water Trust', 24),
+            published('rw2', 'RW2 Water Partners', null),
+            published('rw3', 'Afya Clinic', 60),
+          ],
+        ),
+      ),
+    )
+    const found = await sql.searchPublicOrganizations('water', 'rw1')
+    expect((fetchMock.mock.calls[0] as [string, RequestInit])[1].body).toBe(
+      'SELECT * FROM public_organization',
+    )
+    expect(found).toEqual([
+      {
+        id: 'rw2',
+        name: 'RW2 Water Partners',
+        logo_url: null,
+        trust_score: 0,
+        type: 'NGO',
+        country: 'KE',
+      },
+    ])
+  })
+})

@@ -57,6 +57,19 @@ const MODULE_QUERY_ROOTS = new Set([
   'donor-donations',
   'donor-updates',
   'campaign-updates',
+  // RW2: transactions, flow nodes and their visibility, the flow data, chains.
+  'transactions',
+  'transaction',
+  'nodes',
+  'org-stats',
+  'flow-data',
+  'node-visibility',
+  'chains',
+  'chain',
+  'chain-counts',
+  'chain-activity',
+  'chain-trust-score',
+  'chain-access-groups',
 ])
 
 export const orgContextKey = ['ledger', 'org-context'] as const

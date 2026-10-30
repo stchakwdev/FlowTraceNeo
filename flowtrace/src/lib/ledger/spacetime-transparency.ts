@@ -1,4 +1,5 @@
-// Campaigns, donations, donor updates and the organisation profile on the SpacetimeDB module
+// Campaigns, donations, donor updates and the organisation profile (RW1), and transactions, flow
+// nodes, node visibility, the flow data and organisation chains (RW2) on the SpacetimeDB module
 // (MOD1, rust/docs/adr/0004-transparency-tables.md; MOD2, ADR 0005). Each export keeps the
 // signature of the Supabase function it replaces (supabase.ts), so data.ts can select it.
 // Loaded lazily with the SDK, like spacetime-backend.ts.
@@ -19,36 +20,67 @@ import {
   campaignPatch,
   campaignReport,
   campaignStats,
+  chainCounts,
+  chainTrustScore,
+  chainsOf,
   decodeCampaign,
+  decodeChain,
+  decodeChainActivity,
   decodeDonation,
   decodeDonorUpdate,
   decodeFlowNode,
+  decodeNodeVisibility,
   decodeStat,
   decodeTransaction,
   donationInput,
   donationWithDetails,
   donorUpdateInput,
   donorUpdateWithDetails,
+  flowData,
+  flowNodeInput,
+  nodeVisibilitySettings,
+  nodeVisibilityWithGroups,
+  orgStats,
   organizationFrom,
   organizationPatch,
   resolveCreated,
+  transactionInput,
+  transactionPatch,
+  transactionsWithNodes,
   underfundedCampaigns,
+  withNodes,
   withTarget,
 } from './transparency-model'
 import type { DbConnection } from './spacetime-bindings'
-import type { DocRowLike } from './transparency-model'
+import type {
+  DocRowLike,
+  NodeVisibilityWithGroup,
+  ProofLike,
+} from './transparency-model'
 import type { CampaignReport, OrganizationProfileUpdate } from '../demo/api'
 import type {
+  AccessGroup,
   Campaign,
   CampaignCounts,
   CampaignStats,
   CampaignWithDetails,
+  ChainActivityLog,
+  ChainCounts,
+  ChainTrustScore,
   Donation,
   DonationWithDetails,
   DonorUpdate,
   DonorUpdateWithDetails,
+  FlowDataResult,
+  FlowNode,
+  NodeVisibility,
+  OrgStats,
   Organization,
+  OrganizationChain,
+  OrganizationChainWithDetails,
   PaymentStatus,
+  Transaction,
+  TransactionWithNodes,
 } from '../types'
 
 const WRITE_TIMEOUT_MS = 15_000
@@ -61,6 +93,11 @@ const DOC_VIEWS = [
   'donorUpdate',
   'flowNode',
   'transaction',
+  'nodeVisibility',
+  // Read only here: proofs feed the flow and proof figures, access groups the chain approval
+  // (their writes stay on Supabase until RW3).
+  'verification',
+  'accessGroup',
 ] as const
 const ORG_VIEWS = [
   'organizationProfile',
@@ -68,6 +105,8 @@ const ORG_VIEWS = [
   'ledgerOrg',
   'profile',
 ] as const
+/** The two chain views: rows keyed by chain, not by organisation (ADR 0005, Views). */
+const CHAIN_VIEWS = ['organizationChain', 'chainActivityLog'] as const
 type DocView = (typeof DOC_VIEWS)[number]
 
 const sqlName = (accessor: string) =>
@@ -97,7 +136,7 @@ function ensureSubscribed(conn: DbConnection): Promise<void> {
           reject(ctx.event ?? new Error('SpacetimeDB subscription failed.'))
         })
         .subscribe(
-          [...DOC_VIEWS, ...ORG_VIEWS].map(
+          [...DOC_VIEWS, ...ORG_VIEWS, ...CHAIN_VIEWS].map(
             (v) => `SELECT * FROM ${sqlName(v)}`,
           ),
         )
@@ -624,6 +663,448 @@ export async function setProfile(
   await conn.reducers.setProfile({ displayName, email })
 }
 
+// ---------------------------------------------------------------------------
+// Transactions and flow nodes (RW2)
+// ---------------------------------------------------------------------------
+
+const transactions = (conn: DbConnection, orgId: string) =>
+  ofOrg(docs(conn, 'transaction'), orgId)
+    .sort((a, b) => (a.seq < b.seq ? -1 : a.seq > b.seq ? 1 : 0))
+    .map(decodeTransaction)
+const proofs = (conn: DbConnection) =>
+  docs(conn, 'verification').map((r) => JSON.parse(r.data) as ProofLike)
+const accessGroups = (conn: DbConnection, orgId: string) =>
+  ofOrg(docs(conn, 'accessGroup'), orgId).map(
+    (r) => JSON.parse(r.data) as AccessGroup,
+  )
+
+export async function getTransactions(
+  organizationId: string,
+): Promise<Array<TransactionWithNodes>> {
+  const conn = await session()
+  return transactionsWithNodes(
+    transactions(conn, organizationId),
+    nodes(conn, organizationId),
+  )
+}
+
+export async function getTransaction(
+  id: string,
+  organizationId: string,
+): Promise<TransactionWithNodes> {
+  const conn = await session()
+  const t = transactions(conn, organizationId).find((x) => x.id === id)
+  if (!t) throw new Error('Transaction not found.')
+  return withNodes(t, nodes(conn, organizationId))
+}
+
+/**
+ * Records a transaction (create_transaction). Unlike the demo, recording does not post it to the
+ * books: posting stays a ledger command and `link_transaction_entries` records the link
+ * (ADR 0005, difference 1).
+ */
+export async function createTransaction(
+  transaction: Omit<
+    Transaction,
+    'id' | 'created_at' | 'updated_at' | 'verification_count'
+  >,
+): Promise<Transaction> {
+  const conn = await session()
+  const orgId = transaction.organization_id
+  const before = new Set(docs(conn, 'transaction').map((r) => r.key))
+  return write(
+    conn,
+    'transaction',
+    () =>
+      conn.reducers.createTransaction({
+        orgId,
+        transactionJson: JSON.stringify(transactionInput(transaction)),
+      }),
+    () =>
+      resolveCreated(
+        docs(conn, 'transaction'),
+        before,
+        orgId,
+        (t: Transaction) =>
+          t.description === transaction.description &&
+          t.amount === transaction.amount,
+        decodeTransaction,
+      ),
+  )
+}
+
+export async function updateTransaction(
+  id: string,
+  organizationId: string,
+  updates: Partial<
+    Omit<Transaction, 'id' | 'organization_id' | 'created_at' | 'updated_at'>
+  >,
+): Promise<Transaction> {
+  const conn = await session()
+  const find = () => transactions(conn, organizationId).find((t) => t.id === id)
+  const was = updatedAt(find())
+  return write(
+    conn,
+    'transaction',
+    () =>
+      conn.reducers.updateTransaction({
+        orgId: organizationId,
+        transactionId: id,
+        patchJson: JSON.stringify(transactionPatch(updates)),
+      }),
+    () => {
+      const t = find()
+      return t && t.updated_at !== was ? t : undefined
+    },
+  )
+}
+
+/** `getNodes` (api.ts:256-262): by name. */
+export async function getNodes(
+  organizationId: string,
+): Promise<Array<FlowNode>> {
+  const conn = await session()
+  return nodes(conn, organizationId).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )
+}
+
+export async function createNode(
+  node: Omit<FlowNode, 'id' | 'created_at' | 'balance'>,
+): Promise<FlowNode> {
+  const conn = await session()
+  const orgId = node.organization_id
+  const before = new Set(docs(conn, 'flowNode').map((r) => r.key))
+  return write(
+    conn,
+    'flowNode',
+    () =>
+      conn.reducers.createFlowNode({
+        orgId,
+        nodeJson: JSON.stringify(flowNodeInput(node)),
+      }),
+    () =>
+      resolveCreated(
+        docs(conn, 'flowNode'),
+        before,
+        orgId,
+        (n: FlowNode) => n.name === node.name,
+        decodeFlowNode,
+      ),
+  )
+}
+
+export async function getOrganizationStats(
+  organizationId: string,
+): Promise<OrgStats> {
+  const conn = await session()
+  return orgStats(transactions(conn, organizationId), proofs(conn))
+}
+
+/**
+ * The flow map data. The web read it from the `generate-flow-data` edge function, which the
+ * module has no counterpart for, so it is computed from `my_flow_node`, `my_transaction` and
+ * `my_verification` as the demo computes it (api.ts:475-566, flows.rs `flow_data`).
+ */
+export async function getFlowDataAPI(
+  organizationId: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<FlowDataResult> {
+  const conn = await session()
+  return flowData({
+    nodes: nodes(conn, organizationId),
+    transactions: transactions(conn, organizationId),
+    proofs: proofs(conn),
+    currency: organizationOf(conn, organizationId).currency,
+    startDate,
+    endDate,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Node visibility (RW2; admins and managers write, ADR 0005)
+// ---------------------------------------------------------------------------
+
+function nodeOrg(conn: DbConnection, nodeId: string): string {
+  const row = docs(conn, 'flowNode').find((r) => r.id === nodeId)
+  if (!row)
+    throw new Error(
+      'Flow node not found, or you are not a member of its organisation.',
+    )
+  return row.orgId
+}
+
+const visibilityOf = (conn: DbConnection, nodeId: string) =>
+  docs(conn, 'nodeVisibility')
+    .map(decodeNodeVisibility)
+    .filter((v) => v.node_id === nodeId)
+
+export async function getNodeVisibility(
+  nodeId: string,
+): Promise<Array<NodeVisibilityWithGroup>> {
+  const conn = await session()
+  const orgId = docs(conn, 'flowNode').find((r) => r.id === nodeId)?.orgId
+  return nodeVisibilityWithGroups(
+    visibilityOf(conn, nodeId),
+    orgId ? accessGroups(conn, orgId) : [],
+  )
+}
+
+export async function setNodeVisibility(
+  nodeId: string,
+  groupId: string,
+  settings: Partial<
+    Omit<NodeVisibility, 'id' | 'node_id' | 'group_id' | 'created_at'>
+  >,
+): Promise<NodeVisibility> {
+  const conn = await session()
+  const orgId = nodeOrg(conn, nodeId)
+  const find = () =>
+    visibilityOf(conn, nodeId).find((v) => v.group_id === groupId)
+  const was = JSON.stringify(find() ?? null)
+  const sent = nodeVisibilitySettings(settings)
+  return write(
+    conn,
+    'nodeVisibility',
+    () =>
+      conn.reducers.setNodeVisibility({
+        orgId,
+        nodeId,
+        groupId,
+        settingsJson: JSON.stringify(sent),
+      }),
+    () => {
+      const v = find()
+      if (!v) return undefined
+      // A row that already held these settings does not change; it is the result as it is.
+      const same = Object.entries(sent).every(
+        ([k, x]) => (v as unknown as Record<string, unknown>)[k] === x,
+      )
+      return JSON.stringify(v) !== was || same ? v : undefined
+    },
+  )
+}
+
+export async function removeNodeVisibility(
+  nodeId: string,
+  groupId: string,
+): Promise<void> {
+  const conn = await session()
+  await conn.reducers.removeNodeVisibility({
+    orgId: nodeOrg(conn, nodeId),
+    nodeId,
+    groupId,
+  })
+}
+
+/**
+ * The organisation's access groups, read only, for the chain approval's group choice (RW3 moves
+ * the access group screens).
+ */
+export async function getChainAccessGroups(
+  organizationId: string,
+): Promise<Array<AccessGroup>> {
+  const conn = await session()
+  return accessGroups(conn, organizationId).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Organisation chains (RW2; chains.rs, ADR 0005)
+// ---------------------------------------------------------------------------
+
+interface ChainRow {
+  id: string
+  sourceOrgId: string
+  targetOrgId: string
+  seq: bigint
+  data: string
+}
+interface ChainActivityRow {
+  id: string
+  chainId: string
+  seq: bigint
+  data: string
+}
+
+const chains = (conn: DbConnection) =>
+  [...watch<ChainRow>(conn, 'organizationChain').iter()].map(decodeChain)
+const chainById = (conn: DbConnection, id: string) =>
+  chains(conn).find((c) => c.id === id)
+
+function chainOrFail(conn: DbConnection, id: string) {
+  const c = chainById(conn, id)
+  if (!c)
+    throw new Error(
+      'Chain not found, or neither organisation is one you are a member of.',
+    )
+  return c
+}
+
+/** Calls a chain reducer and resolves the chain once it shows `done`. */
+function changeChain(
+  conn: DbConnection,
+  chainId: string,
+  call: () => Promise<void>,
+  done: (c: OrganizationChainWithDetails, was: string) => boolean,
+): Promise<OrganizationChainWithDetails> {
+  const was = chainOrFail(conn, chainId).updated_at
+  return write(conn, 'organizationChain', call, () => {
+    const c = chainById(conn, chainId)
+    return c && done(c, was) ? c : undefined
+  })
+}
+
+export async function getOutgoingChains(
+  organizationId: string,
+): Promise<Array<OrganizationChainWithDetails>> {
+  return chainsOf(chains(await session()), organizationId, 'outgoing')
+}
+
+export async function getIncomingChains(
+  organizationId: string,
+): Promise<Array<OrganizationChainWithDetails>> {
+  return chainsOf(chains(await session()), organizationId, 'incoming')
+}
+
+export async function getChain(
+  chainId: string,
+): Promise<OrganizationChainWithDetails> {
+  return chainOrFail(await session(), chainId)
+}
+
+/**
+ * Asks `targetOrgId` for a chain (request_chain). The requester is the caller, so `requestedBy`
+ * is not sent; the module refuses a second pending or active chain between the two (ADR 0005,
+ * difference 4).
+ */
+export async function requestChain(
+  sourceOrgId: string,
+  targetOrgId: string,
+  _requestedBy: string,
+  message?: string,
+): Promise<OrganizationChain> {
+  const conn = await session()
+  const before = new Set(chains(conn).map((c) => c.id))
+  return write(
+    conn,
+    'organizationChain',
+    () =>
+      conn.reducers.requestChain({
+        sourceOrgId,
+        targetOrgId,
+        message: message || undefined,
+      }),
+    () =>
+      chains(conn).find(
+        (c) =>
+          !before.has(c.id) &&
+          c.source_org_id === sourceOrgId &&
+          c.target_org_id === targetOrgId,
+      ),
+  )
+}
+
+/** Approves a pending chain; the module asks a manager of the target (ADR 0005, Reducers). */
+export async function approveChain(
+  chainId: string,
+  _approvedBy: string,
+  grantedGroupId: string,
+  linkNodeId?: string,
+): Promise<OrganizationChain> {
+  const conn = await session()
+  return changeChain(
+    conn,
+    chainId,
+    () =>
+      conn.reducers.approveChain({
+        chainId,
+        grantedGroupId,
+        linkNodeId: linkNodeId || undefined,
+      }),
+    (c) => c.status === 'active',
+  )
+}
+
+export async function rejectChain(
+  chainId: string,
+  _rejectedBy: string,
+  reason?: string,
+): Promise<OrganizationChain> {
+  const conn = await session()
+  return changeChain(
+    conn,
+    chainId,
+    () => conn.reducers.rejectChain({ chainId, reason: reason || undefined }),
+    (c) => c.status === 'rejected',
+  )
+}
+
+export async function revokeChain(
+  chainId: string,
+  _revokedBy: string,
+): Promise<OrganizationChain> {
+  const conn = await session()
+  return changeChain(
+    conn,
+    chainId,
+    () => conn.reducers.revokeChain({ chainId }),
+    (c) => c.status === 'revoked',
+  )
+}
+
+/** Withdraws a pending request; the module drops it with its log (ADR 0005, difference 4). */
+export async function cancelChainRequest(chainId: string): Promise<void> {
+  const conn = await session()
+  await conn.reducers.cancelChainRequest({ chainId })
+}
+
+export async function updateChainPermissions(
+  chainId: string,
+  grantedGroupId: string,
+  linkNodeId?: string,
+): Promise<OrganizationChain> {
+  const conn = await session()
+  return changeChain(
+    conn,
+    chainId,
+    () =>
+      conn.reducers.updateChainPermissions({
+        chainId,
+        grantedGroupId,
+        linkNodeId: linkNodeId || undefined,
+      }),
+    (c, was) => c.updated_at !== was,
+  )
+}
+
+/** `getChainActivityLog` (api.ts:992-998): newest first. */
+export async function getChainActivityLog(
+  chainId: string,
+): Promise<Array<ChainActivityLog>> {
+  const conn = await session()
+  return [...watch<ChainActivityRow>(conn, 'chainActivityLog').iter()]
+    .filter((r) => r.chainId === chainId)
+    .map(decodeChainActivity)
+    .sort((a, b) =>
+      a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0,
+    )
+}
+
+export async function getChainCounts(
+  organizationId: string,
+): Promise<ChainCounts> {
+  return chainCounts(chains(await session()), organizationId)
+}
+
+export async function getChainTrustScore(
+  chainId: string,
+): Promise<ChainTrustScore | null> {
+  return chainTrustScore(chainById(await session(), chainId))
+}
+
 /** Calls back once per transaction that changes any record this file reads. */
 export function onTransparencyChange(onChange: () => void): () => void {
   let stopped = false
@@ -643,8 +1124,8 @@ export function onTransparencyChange(onChange: () => void): () => void {
     .then((conn) => {
       if (stopped) return
       // `member` is spacetime-backend.ts's subscription; a new membership changes the org context.
-      const views = [...DOC_VIEWS, ...ORG_VIEWS, 'member'].map((v) =>
-        watch<unknown>(conn, v),
+      const views = [...DOC_VIEWS, ...ORG_VIEWS, ...CHAIN_VIEWS, 'member'].map(
+        (v) => watch<unknown>(conn, v),
       )
       for (const v of views) {
         v.onInsert(onRow)

@@ -96,7 +96,7 @@ export function AppShell({
           <div className="border-t border-masthead-foreground/15 bg-primary px-4 py-1.5 text-xs leading-4 text-primary-foreground md:truncate md:px-5">
             {DEMO_BOOKS
               ? "Demo: you're viewing Demo NGO Kenya. Changes reset when you reload. "
-              : "Demo sign-in on SpacetimeDB: the books, campaigns, donations and organisation profile are live; other screens show Demo NGO Kenya and reset when you reload. "}
+              : "Demo sign-in on SpacetimeDB: the books, transactions, flows, chains, campaigns, donations and organisation profile are live; proofs and access groups show Demo NGO Kenya and reset when you reload. "}
             <Link to="/" className="font-semibold underline">
               Back to the overview
             </Link>

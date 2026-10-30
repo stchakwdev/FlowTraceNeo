@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/select'
 import { ReportDialog } from '@/components/report-dialog'
 import {
-  useAccessGroups,
   useApproveChain,
+  useChainAccessGroups,
   useNodes,
   useRejectChain,
 } from '@/lib/queries'
@@ -58,7 +58,7 @@ export function ChainApprovalModal({
   const [rejectionReason, setRejectionReason] = useState('')
   const [showGroupError, setShowGroupError] = useState(false)
 
-  const { data: accessGroups, isError: groupsFailed } = useAccessGroups()
+  const { data: accessGroups, isError: groupsFailed } = useChainAccessGroups()
   const { data: nodes } = useNodes()
   const approveChain = useApproveChain()
   const rejectChain = useRejectChain()
