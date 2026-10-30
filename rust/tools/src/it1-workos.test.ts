@@ -14,6 +14,7 @@ import {
   ENV_IT1_KEYS,
   devServerArgs,
   installXdgOpen,
+  isEmailVerification,
   jwtClaims,
   onAuthKit,
   openedUrls,
@@ -126,6 +127,12 @@ describe("the desktop's system browser", () => {
     expect(onAuthKit('https://sample-env-staging.authkit.app/?client_id=x')).toBe(true)
     expect(onAuthKit('http://localhost:3000/ledger/accounts')).toBe(false)
   })
+
+  test("knows AuthKit's email verification step by its path", () => {
+    expect(isEmailVerification('https://sample-env-staging.authkit.app/email-verification?state=x')).toBe(true)
+    expect(isEmailVerification('https://sample-env-staging.authkit.app/email-verification-help')).toBe(false)
+    expect(isEmailVerification('http://localhost:3000/api/auth/callback?code=x')).toBe(false)
+  })
 })
 
 describe('the web dev server', () => {
@@ -197,6 +204,25 @@ describe('the AuthKit driver, against a stand-in of the hosted page', () => {
       )
       const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByRole('button', { name: 'Add an account' }), 15000)
       await expect(run).rejects.toThrow(/^AuthKit sent <user>@flowtrace\.test to \S+ instead of asking for a password: .*\(sso_required\)/)
+    } finally {
+      await browser.close()
+      void server.stop(true)
+    }
+  }, 30000)
+
+  test.skipIf(chromiumPath() === undefined)('says so when AuthKit asks for an email verification code instead of signing in', async () => {
+    const server = standIn(false)
+    const browser = await launchBrowser(false)
+    try {
+      const page = await (await browser.newContext()).newPage()
+      // The stand-in's unverified case: the password form sends the browser to AuthKit's
+      // email verification step, which waits for a code mailed to the address.
+      await page.route('**/authkit', async (route) => {
+        if (route.request().method() !== 'POST' || !(route.request().postData() ?? '').includes('password=')) return route.continue()
+        return route.fulfill({ status: 302, headers: { location: `http://127.0.0.1:${server.port}/email-verification?state=s` } })
+      })
+      const run = signInOnWeb(page, `http://127.0.0.1:${server.port}/books`, person, page.getByRole('button', { name: 'Add an account' }), 15000)
+      await expect(run).rejects.toThrow(/^AuthKit asked <user>@flowtrace\.test for an email verification code instead of signing in: .*\(email_verification_required\)/)
     } finally {
       await browser.close()
       void server.stop(true)

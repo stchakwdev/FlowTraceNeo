@@ -113,8 +113,20 @@ export async function authkitSignIn(page: Page, person: Pick<WorkosPerson, 'emai
   }
   if (shown === undefined) throw new Error(`AuthKit showed no password field within ${timeout} ms (at ${new URL(page.url()).host})`)
   await password.fill(person.password)
+  const before = page.url()
   await page.getByRole('button', { name: /^(Continue|Sign in)/ }).click()
+  // A user whose email WorkOS has not verified is asked for a code mailed to the address instead
+  // (WorkOS answers a password sign-in for it with `email_verification_required`): say so, not a
+  // bare timeout. Anywhere else the browser goes next is the caller's to wait for.
+  const verify = page.waitForURL((u) => isEmailVerification(u.href), { timeout }).then(() => true)
+  const left = page.waitForURL((u) => u.href !== before && !isEmailVerification(u.href), { timeout }).then(() => false)
+  if ((await Promise.race([verify, left]).catch(() => false)) === true) {
+    throw new Error(`AuthKit asked ${person.email.replace(/^[^@]*/, '<user>')} for an email verification code instead of signing in: WorkOS has not verified that user's email (email_verification_required). Mark the email verified in this WorkOS environment, or turn email verification off.`)
+  }
 }
+
+/** True on AuthKit's email verification step (a code mailed to the address). */
+export const isEmailVerification = (url: string) => /\/email-verification(\/|$)/.test(new URL(url).pathname)
 
 /**
  * The desktop's system browser for one run: an `xdg-open` script for the front of PATH that
