@@ -15,6 +15,7 @@
 // visits; in workos mode the signed-in person's WorkOS access token, never
 // stored, fetched fresh for every connection.
 import { AUTH_MODE } from '../auth'
+import { randomId } from '../random-id'
 import { DbConnection } from './spacetime-bindings'
 import { connectionToken, refusalMessage, workosAccessToken } from './spacetime-auth'
 import {
@@ -234,7 +235,7 @@ export const spacetimeLedgerBackend: LedgerBackend = {
   run: async (organizationId, cmd: LedgerCommand) => {
     const conn = await connect()
     await ensureSubscribed(conn, organizationId)
-    const requestId = crypto.randomUUID()
+    const requestId = randomId()
     const waiter = waitForResult(conn, requestId)
     try {
       await conn.reducers.runCommand({ orgId: organizationId, requestId, commandJson: JSON.stringify(cmd) })

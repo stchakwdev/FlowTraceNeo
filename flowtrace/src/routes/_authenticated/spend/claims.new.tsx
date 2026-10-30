@@ -18,6 +18,7 @@ import {
   useOfflineClaimSync,
 } from '@/lib/offline-claims'
 import { cn } from '@/lib/utils'
+import { randomId } from '@/lib/random-id'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -36,11 +37,6 @@ export const Route = createFileRoute('/_authenticated/spend/claims/new')({
 const MAX_RECEIPTS = 8
 
 type Errors = { date?: string; purpose?: string }
-
-function newClaimId() {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
-  return `claim-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
 
 function NewClaim() {
   const navigate = useNavigate()
@@ -111,7 +107,7 @@ function NewClaim() {
       return
     }
     const input: ClaimInput = {
-      id: newClaimId(),
+      id: randomId(),
       claim_date: parseDayMonthYear(date)?.iso ?? asOf,
       currency: base,
       fx_rate: 1,
