@@ -17,7 +17,8 @@ Reading the columns:
   or `gap: <task>` naming the task that owns a missing counterpart. Sub-pages of one web section
   (a detail page, a new form) are a tab, a selection or a dialog inside the same entry.
 - Proved by: the unit tests (module path under `crates/desktop/src/`, or `tests/<file>`) and the
-  IT1 steps (`rust/docs/integration-test.md`) that drive the screen.
+  IT1 steps (`rust/docs/integration-test.md`) that drive the screen. `tests/live_*.rs` are
+  ignored live checks against a real database, run by hand.
 - Known differences: deliberate or known differences from the web page; empty when none is
   recorded. The longer list is in `rust/docs/handoff.md`, "Known gaps and differences from the
   web app".
@@ -61,7 +62,7 @@ show, and links to them, but does not render donate, badge or embed pages itself
 | `/campaigns` | Campaigns | `campaigns` | `campaigns` tests; `tests/live_campaigns.rs` |  |
 | `/campaigns/$id` | Campaigns | `campaigns` | `campaigns` tests; `tests/live_campaigns.rs` | Copy link and Copy embed code sit on the managed campaign (P20) |
 | `/chains` | Chains | `chains` | `chains` tests; `tests/live_flows_chains.rs` |  |
-| `/trust-score` | Trust Score | gap: DT4 (t-0045) |  |  |
-| `/settings` | Settings | gap: DT4 (t-0045) |  |  |
-| `/settings/access-groups` | Settings | gap: DT4 (t-0045) |  |  |
-| `/settings/embed` | Settings | gap: DT4 (t-0045) |  |  |
+| `/trust-score` | Trust Score | `trust-score` | `trust` tests | weights 32, 24, 24, 20 on both sides (P16); the chart's labels sit on approximate baselines |
+| `/settings` | Settings | `settings` | `settings` tests; `tests/live_settings.rs` | the web reaches Access groups and Embed from Settings only; the desktop gives each its own entry |
+| `/settings/access-groups` | Settings | `access-groups` | `access_groups` tests; `tests/live_settings.rs` | its own entry, not a Settings sub-page |
+| `/settings/embed` | Settings | `embed-badges` | `badge` tests | its own entry; campaign embed code also sits on the managed campaign (P20); the Large badge's letter spacing is not drawn |
