@@ -22,6 +22,10 @@ use std::time::Duration;
 
 use ledger_core::types::LedgerState;
 use ledger_core::{CommandResult, LedgerCommand};
+use ledger_module::transparency::flows::{
+    FlowNodePatch, NewFlowNode, NewTransaction, NodeVisibilitySettings, TransactionPatch,
+    TransactionVisibilitySettings,
+};
 use ledger_module::transparency::types::{
     CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
 };
@@ -48,9 +52,14 @@ use crate::module_bindings::{
     MyTrustScoreTableAccess as _, MyVendorTableAccess as _,
     MyVerificationAccessLogTableAccess as _, MyVerificationTableAccess as _,
     PublicBadgeTableAccess as _, PublicCampaignTableAccess as _,
-    PublicOrganizationTableAccess as _, create_campaign as _, create_org_ledger as _,
-    create_verification as _, delete_campaign as _, import_books as _, mark_published as _,
-    record_donation as _, run_command as _, update_campaign as _, update_donation_status as _,
+    PublicOrganizationTableAccess as _, approve_chain as _, cancel_chain_request as _,
+    create_campaign as _, create_flow_node as _, create_org_ledger as _, create_transaction as _,
+    create_verification as _, delete_campaign as _, import_books as _,
+    link_transaction_entries as _, mark_published as _, record_donation as _, reject_chain as _,
+    remove_node_visibility as _, remove_transaction_visibility as _, request_chain as _,
+    revoke_chain as _, run_command as _, set_node_visibility as _, set_transaction_visibility as _,
+    update_campaign as _, update_chain_permissions as _, update_donation_status as _,
+    update_flow_node as _, update_transaction as _,
 };
 use crate::status::{
     ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
@@ -454,6 +463,261 @@ impl SpacetimeClient {
                 donation_id.to_owned(),
                 status,
                 reference,
+                done,
+            )
+        })
+    }
+
+    /// Adds a node to the organisation's flow map (`create_flow_node`, ADR 0005; `createNode`,
+    /// `api.ts:264-274`): any member; the balance starts at zero.
+    pub fn create_flow_node(&self, org_id: &str, node: &NewFlowNode) -> Ticket<()> {
+        let json = match serde_json::to_string(node) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .create_flow_node_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Changes a flow node field by field (`update_flow_node`, module addition): any member; a
+    /// field left out of `patch` is kept.
+    pub fn update_flow_node(
+        &self,
+        org_id: &str,
+        node_id: &str,
+        patch: &FlowNodePatch,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(patch) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .update_flow_node_then(org_id.to_owned(), node_id.to_owned(), json, done)
+        })
+    }
+
+    /// Records a movement between two flow nodes (`create_transaction`; `createTransaction`,
+    /// `api.ts:220-238`): any member; amounts in minor units, `created_by` the caller. Posting it
+    /// to the books stays a `run_command`; [`SpacetimeClient::link_transaction_entries`] ties the
+    /// two.
+    pub fn create_transaction(&self, org_id: &str, transaction: &NewTransaction) -> Ticket<()> {
+        let json = match serde_json::to_string(transaction) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .create_transaction_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Changes a transaction field by field (`update_transaction`; `updateTransaction`,
+    /// `api.ts:240-254`): any member; a field left out of `patch` is kept.
+    pub fn update_transaction(
+        &self,
+        org_id: &str,
+        transaction_id: &str,
+        patch: &TransactionPatch,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(patch) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers.update_transaction_then(
+                org_id.to_owned(),
+                transaction_id.to_owned(),
+                json,
+                done,
+            )
+        })
+    }
+
+    /// Sets the journal entries that record a transaction (`link_transaction_entries`, module
+    /// addition): each must be in the books and record no other transaction; an empty list
+    /// unlinks.
+    pub fn link_transaction_entries(
+        &self,
+        org_id: &str,
+        transaction_id: &str,
+        entry_ids: &[String],
+    ) -> Ticket<()> {
+        let ids = entry_ids.to_vec();
+        self.call(|conn, done| {
+            conn.reducers.link_transaction_entries_then(
+                org_id.to_owned(),
+                transaction_id.to_owned(),
+                ids,
+                done,
+            )
+        })
+    }
+
+    /// Sets what one access group sees of one node (`set_node_visibility`;
+    /// `setNodeVisibility`, `api.ts:708-736`): admins and managers.
+    pub fn set_node_visibility(
+        &self,
+        org_id: &str,
+        node_id: &str,
+        group_id: &str,
+        settings: &NodeVisibilitySettings,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(settings) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers.set_node_visibility_then(
+                org_id.to_owned(),
+                node_id.to_owned(),
+                group_id.to_owned(),
+                json,
+                done,
+            )
+        })
+    }
+
+    /// Drops a node's setting for one group, back to the group's own (`remove_node_visibility`).
+    pub fn remove_node_visibility(
+        &self,
+        org_id: &str,
+        node_id: &str,
+        group_id: &str,
+    ) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers.remove_node_visibility_then(
+                org_id.to_owned(),
+                node_id.to_owned(),
+                group_id.to_owned(),
+                done,
+            )
+        })
+    }
+
+    /// Sets what one access group sees of one transaction (`set_transaction_visibility`, module
+    /// addition): admins and managers.
+    pub fn set_transaction_visibility(
+        &self,
+        org_id: &str,
+        transaction_id: &str,
+        group_id: &str,
+        settings: &TransactionVisibilitySettings,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(settings) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers.set_transaction_visibility_then(
+                org_id.to_owned(),
+                transaction_id.to_owned(),
+                group_id.to_owned(),
+                json,
+                done,
+            )
+        })
+    }
+
+    /// Drops a transaction's setting for one group (`remove_transaction_visibility`).
+    pub fn remove_transaction_visibility(
+        &self,
+        org_id: &str,
+        transaction_id: &str,
+        group_id: &str,
+    ) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers.remove_transaction_visibility_then(
+                org_id.to_owned(),
+                transaction_id.to_owned(),
+                group_id.to_owned(),
+                done,
+            )
+        })
+    }
+
+    /// Asks `target_org_id` for a view of its flows on behalf of `source_org_id`
+    /// (`request_chain`; `requestChain`, `api.ts:865-892`): any member of the source; the target
+    /// must have books on the module. A blank message is none.
+    pub fn request_chain(
+        &self,
+        source_org_id: &str,
+        target_org_id: &str,
+        message: Option<&str>,
+    ) -> Ticket<()> {
+        let message = message.map(str::to_owned);
+        self.call(|conn, done| {
+            conn.reducers.request_chain_then(
+                source_org_id.to_owned(),
+                target_org_id.to_owned(),
+                message,
+                done,
+            )
+        })
+    }
+
+    /// Approves a pending chain with one of the target's access groups and, when given, one of
+    /// its nodes (`approve_chain`; `approveChain`, `api.ts:921-940`): a member of the target who
+    /// can close periods.
+    pub fn approve_chain(
+        &self,
+        chain_id: &str,
+        granted_group_id: &str,
+        link_node_id: Option<&str>,
+    ) -> Ticket<()> {
+        let node = link_node_id.map(str::to_owned);
+        self.call(|conn, done| {
+            conn.reducers.approve_chain_then(
+                chain_id.to_owned(),
+                granted_group_id.to_owned(),
+                node,
+                done,
+            )
+        })
+    }
+
+    /// Turns a pending chain down (`reject_chain`; `rejectChain`, `api.ts:942-959`): a member of
+    /// the target who can close periods. A blank reason is none.
+    pub fn reject_chain(&self, chain_id: &str, reason: Option<&str>) -> Ticket<()> {
+        let reason = reason.map(str::to_owned);
+        self.call(|conn, done| {
+            conn.reducers
+                .reject_chain_then(chain_id.to_owned(), reason, done)
+        })
+    }
+
+    /// Ends an active chain (`revoke_chain`; `revokeChain`, `api.ts:961-969`): a member of the
+    /// target who can close periods.
+    pub fn revoke_chain(&self, chain_id: &str) -> Ticket<()> {
+        self.call(|conn, done| conn.reducers.revoke_chain_then(chain_id.to_owned(), done))
+    }
+
+    /// Withdraws a pending request (`cancel_chain_request`; `cancelChainRequest`,
+    /// `api.ts:971-976`): any member of the source; anything else changes nothing.
+    pub fn cancel_chain_request(&self, chain_id: &str) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers
+                .cancel_chain_request_then(chain_id.to_owned(), done)
+        })
+    }
+
+    /// Gives an active chain another of the target's groups and node
+    /// (`update_chain_permissions`; `updateChainPermissions`, `api.ts:978-990`): a member of
+    /// the target who can close periods.
+    pub fn update_chain_permissions(
+        &self,
+        chain_id: &str,
+        granted_group_id: &str,
+        link_node_id: Option<&str>,
+    ) -> Ticket<()> {
+        let node = link_node_id.map(str::to_owned);
+        self.call(|conn, done| {
+            conn.reducers.update_chain_permissions_then(
+                chain_id.to_owned(),
+                granted_group_id.to_owned(),
+                node,
                 done,
             )
         })
@@ -1032,6 +1296,79 @@ mod tests {
             assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
         }
         client.disconnect();
+    }
+
+    fn transaction() -> NewTransaction {
+        serde_json::from_value(serde_json::json!({
+            "from_node_id": "n1", "to_node_id": "n2", "amount": 150_000, "currency": "KES",
+            "description": "School fees", "verification_status": "pending",
+            "transaction_date": "2026-10-29",
+        }))
+        .unwrap()
+    }
+
+    /// DT2's flow, visibility and chain writes take the same path: with no connection each
+    /// resolves at once as disconnected.
+    #[test]
+    fn flow_and_chain_writes_before_a_connection_resolve_as_disconnected() {
+        let client =
+            SpacetimeClient::connect(ClientConfig::new("http://127.0.0.1:9", "none")).unwrap();
+        let node: NewFlowNode =
+            serde_json::from_value(serde_json::json!({ "name": "Donor", "type": "donor" }))
+                .unwrap();
+        let ids = ["e1".to_owned()];
+        let tickets = [
+            client.create_flow_node("org-1", &node),
+            client.update_flow_node("org-1", "n1", &FlowNodePatch::default()),
+            client.create_transaction("org-1", &transaction()),
+            client.update_transaction("org-1", "t1", &TransactionPatch::default()),
+            client.link_transaction_entries("org-1", "t1", &ids),
+            client.set_node_visibility("org-1", "n1", "g1", &NodeVisibilitySettings::default()),
+            client.remove_node_visibility("org-1", "n1", "g1"),
+            client.set_transaction_visibility(
+                "org-1",
+                "t1",
+                "g1",
+                &TransactionVisibilitySettings::default(),
+            ),
+            client.remove_transaction_visibility("org-1", "t1", "g1"),
+            client.request_chain("org-1", "org-2", Some("Please")),
+            client.approve_chain("c1", "g1", None),
+            client.reject_chain("c1", Some("No")),
+            client.revoke_chain("c1"),
+            client.cancel_chain_request("c1"),
+            client.update_chain_permissions("c1", "g1", Some("n1")),
+        ];
+        for ticket in tickets {
+            assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
+        }
+        client.disconnect();
+    }
+
+    /// The JSON arguments read back as the module's reducers parse them (`parse` in
+    /// `ledger_module::transparency::flow_reducers`, `deny_unknown_fields`), and a patch sends
+    /// only what it sets.
+    #[test]
+    fn flow_arguments_parse_back_as_the_module_reads_them() {
+        let text = serde_json::to_string(&transaction()).unwrap();
+        let back: NewTransaction = serde_json::from_str(&text).unwrap();
+        assert_eq!(back, transaction());
+        let patch = TransactionPatch {
+            amount: Some(200_000),
+            ..TransactionPatch::default()
+        };
+        assert_eq!(
+            serde_json::to_string(&patch).unwrap(),
+            r#"{"amount":200000}"#
+        );
+        let node = FlowNodePatch {
+            name: Some("Clinic".to_owned()),
+            ..FlowNodePatch::default()
+        };
+        assert_eq!(
+            serde_json::to_string(&node).unwrap(),
+            r#"{"name":"Clinic"}"#
+        );
     }
 
     /// A patch sends only the fields it sets, so the module keeps the rest

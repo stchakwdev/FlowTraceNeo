@@ -6,6 +6,7 @@ import path from 'node:path'
 import { nonFinite } from './canonical'
 import { exportCommands } from './commands'
 import { exportDemo } from './demo'
+import { exportFlowGraph } from './flow-graph'
 import { written } from './fixture'
 import { exportPrimitives } from './primitives'
 import { exportQueries } from './queries'
@@ -31,6 +32,7 @@ exportReconcile(outDir, demo.state, demo.preAutoMatch)
 const rejected = exportRejected(outDir)
 await exportTransparency(outDir)
 await exportTransparencyFlows(outDir)
+await exportFlowGraph(outDir)
 
 // Every timestamp the engine writes (audit `at`, entry `created_at` and
 // `posted_at`, approval `at`) and every env `now` must be a frozen now. The

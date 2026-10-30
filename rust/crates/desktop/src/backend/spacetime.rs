@@ -25,11 +25,13 @@ use ledger_core::engine;
 use ledger_core::types::{Actor, ActorId, OrganizationId};
 use ledger_core::{CommandError, CommandResult, LedgerCommand, LedgerState};
 use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
+use ledger_module::transparency::public::PublicOrganization;
 use ledger_module::transparency::types::{NewVerification, Verification};
 
 use super::{
-    BackendError, BackendEvent, CampaignWrite, ConnectSettings, ConnectionStatus, LedgerBackend,
-    Organisation, Submission,
+    BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, ConnectionStatus,
+    FlowWrite, LedgerBackend, Organisation, Submission,
 };
 
 /// What [`SpacetimeBackend`] needs of a client: [`SpacetimeClient`] in the app, a fake in tests.
@@ -67,6 +69,32 @@ pub trait LiveClient: Send + Sync {
     /// Sends one campaign or donation write without waiting ([`SpacetimeClient::create_campaign`]
     /// and the other four).
     fn write_campaign(&self, org: &str, write: &CampaignWrite) -> Submission;
+    /// Sends one flow map write without waiting ([`SpacetimeClient::create_flow_node`] and the
+    /// other four).
+    fn write_flow(&self, org: &str, write: &FlowWrite) -> Submission;
+    /// The chains of the caller's organisations ([`SpacetimeClient::chains`]); `None` when they
+    /// do not read.
+    fn chains(&self) -> Option<Vec<ChainDetails>>;
+    /// One chain's log ([`SpacetimeClient::chain_activity`]); empty when it does not read.
+    fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity>;
+    /// The published organisations ([`SpacetimeClient::public_organizations`]); empty when they
+    /// do not read.
+    fn public_organizations(&self) -> Vec<PublicOrganization>;
+    /// Sends one chain write without waiting ([`SpacetimeClient::request_chain`] and the other
+    /// five).
+    fn write_chain(&self, write: &ChainWrite) -> Submission;
+}
+
+/// A reducer ticket as a [`Submission`]: resolved once the server answered and the changed rows
+/// are readable.
+fn submission(ticket: ledger_client::Ticket<()>) -> Submission {
+    Submission::pending(async move {
+        ticket
+            .result()
+            .await
+            .map(|()| CommandResult::None)
+            .map_err(backend_error)
+    })
 }
 
 impl LiveClient for SpacetimeClient {
@@ -100,14 +128,7 @@ impl LiveClient for SpacetimeClient {
     }
 
     fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission {
-        let ticket = Self::create_verification(self, org, proof);
-        Submission::pending(async move {
-            ticket
-                .result()
-                .await
-                .map(|()| CommandResult::None)
-                .map_err(backend_error)
-        })
+        submission(Self::create_verification(self, org, proof))
     }
 
     fn verifications(&self, org: &str) -> Vec<Verification> {
@@ -132,12 +153,51 @@ impl LiveClient for SpacetimeClient {
                 reference,
             } => Self::update_donation_status(self, org, id, *status, reference.as_deref()),
         };
-        Submission::pending(async move {
-            ticket
-                .result()
-                .await
-                .map(|()| CommandResult::None)
-                .map_err(backend_error)
+        submission(ticket)
+    }
+
+    fn write_flow(&self, org: &str, write: &FlowWrite) -> Submission {
+        submission(match write {
+            FlowWrite::CreateNode(input) => Self::create_flow_node(self, org, input),
+            FlowWrite::UpdateNode { id, patch } => Self::update_flow_node(self, org, id, patch),
+            FlowWrite::CreateTransaction(input) => Self::create_transaction(self, org, input),
+            FlowWrite::UpdateTransaction { id, patch } => {
+                Self::update_transaction(self, org, id, patch)
+            }
+            FlowWrite::LinkEntries { id, entry_ids } => {
+                Self::link_transaction_entries(self, org, id, entry_ids)
+            }
+        })
+    }
+
+    fn chains(&self) -> Option<Vec<ChainDetails>> {
+        Self::chains(self).ok()
+    }
+
+    fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity> {
+        Self::chain_activity(self, chain_id).unwrap_or_default()
+    }
+
+    fn public_organizations(&self) -> Vec<PublicOrganization> {
+        Self::public_organizations(self).unwrap_or_default()
+    }
+
+    fn write_chain(&self, write: &ChainWrite) -> Submission {
+        submission(match write {
+            ChainWrite::Request {
+                source,
+                target,
+                message,
+            } => Self::request_chain(self, source.as_str(), target.as_str(), message.as_deref()),
+            ChainWrite::Approve { id, group, node } => {
+                Self::approve_chain(self, id, group, node.as_deref())
+            }
+            ChainWrite::Reject { id, reason } => Self::reject_chain(self, id, reason.as_deref()),
+            ChainWrite::Revoke { id } => Self::revoke_chain(self, id),
+            ChainWrite::Cancel { id } => Self::cancel_chain_request(self, id),
+            ChainWrite::UpdatePermissions { id, group, node } => {
+                Self::update_chain_permissions(self, id, group, node.as_deref())
+            }
         })
     }
 }
@@ -219,6 +279,8 @@ struct Live {
     books: HashMap<String, Arc<LedgerState>>,
     /// The last transparency records read per organisation; kept while offline.
     transparency: HashMap<String, Arc<OrgTransparency>>,
+    /// The last chains read; kept while offline.
+    chains: Arc<Vec<ChainDetails>>,
     subscribers: Vec<Sender<BackendEvent>>,
 }
 
@@ -234,13 +296,15 @@ impl Live {
                 // The first rows are readable from `Ready` on (ledger-client `status.rs`).
                 if matches!(status, ClientStatus::Ready { .. }) {
                     self.refresh(client, None, &mut out);
+                    self.refresh_chains(client, &mut out);
                 }
                 self.set_status(status_of(&status), &mut out);
             }
             ClientEvent::Changed { orgs } => self.refresh(client, Some(orgs), &mut out),
-            // Profiles, chains, the public tables and the service row have no screen yet
-            // (DT2 to DT4); the organisations' records feed Dashboard and Campaigns (DT1).
-            ClientEvent::TransparencyChanged { orgs, .. } => {
+            // Profiles, the public tables and the service row have no screen yet (DT3, DT4);
+            // the organisations' records feed Dashboard, Campaigns and Flows, the chains the
+            // Chains screen (DT2). The public organisations are read when searched.
+            ClientEvent::TransparencyChanged { orgs, chains, .. } => {
                 for id in orgs {
                     if let Some(t) = client.transparency(&id) {
                         self.transparency.insert(id.clone(), Arc::new(t));
@@ -249,12 +313,25 @@ impl Live {
                         });
                     }
                 }
+                if chains {
+                    self.refresh_chains(client, &mut out);
+                }
             }
             ClientEvent::Error(message) => {
                 self.set_status(ConnectionStatus::Error { message }, &mut out);
             }
         }
         out
+    }
+
+    /// Re-reads the chains; ones that fail to read keep the last seen.
+    fn refresh_chains(&mut self, client: &dyn LiveClient, out: &mut Vec<BackendEvent>) {
+        if let Some(chains) = client.chains()
+            && *self.chains != chains
+        {
+            self.chains = Arc::new(chains);
+            out.push(BackendEvent::Chains);
+        }
     }
 
     fn set_status(&mut self, status: ConnectionStatus, out: &mut Vec<BackendEvent>) {
@@ -502,6 +579,45 @@ impl LedgerBackend for SpacetimeBackend {
         match self.writable(org) {
             Ok(client) => client.write_campaign(org.as_str(), &write),
             Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
+    fn write_flow(&mut self, org: &OrganizationId, write: FlowWrite) -> Submission {
+        match self.writable(org) {
+            Ok(client) => client.write_flow(org.as_str(), &write),
+            Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
+    fn chains(&self) -> Vec<ChainDetails> {
+        lock(&self.live).chains.as_ref().clone()
+    }
+
+    fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity> {
+        self.client
+            .as_ref()
+            .map(|c| c.chain_activity(chain_id))
+            .unwrap_or_default()
+    }
+
+    fn public_organizations(&self) -> Vec<PublicOrganization> {
+        self.client
+            .as_ref()
+            .map(|c| c.public_organizations())
+            .unwrap_or_default()
+    }
+
+    /// The acting side's membership is the module's to check (`chain_reducers.rs`); the client
+    /// only has to be connected.
+    fn write_chain(&mut self, write: ChainWrite) -> Submission {
+        let live = lock(&self.live);
+        match (&live.status, &self.client) {
+            (ConnectionStatus::Connected { .. }, Some(client)) => {
+                let client = Arc::clone(client);
+                drop(live);
+                client.write_chain(&write)
+            }
+            _ => Submission::ready(Err(BackendError::Offline)),
         }
     }
 

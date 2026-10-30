@@ -46,6 +46,11 @@ pub struct Launch {
     pub grants: Option<String>,
     /// What the Campaigns entry shows first: `list`, `new`, a campaign id or `preview:<id>`.
     pub campaigns: Option<String>,
+    /// What Flows shows first: a period (`week`, `month`, `quarter`, `year`), optionally with
+    /// `:<n>` to select the nth node or line in money order.
+    pub flows: Option<String>,
+    /// The dialog Chains opens on: `request`, `approve`, `reject`, `revoke` or `cancel`.
+    pub chains: Option<String>,
     /// `--server`: the SpacetimeDB server, over the config file's.
     pub server: Option<String>,
     /// `--database`: the database on it, over the config file's.
@@ -158,7 +163,8 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Opens what the launch flags name (`--report`, `--grants`, `--campaigns`, the `--gl-*` flags)
+/// Opens what the launch flags name (`--report`, `--grants`, `--campaigns`, `--flows`,
+/// `--chains`, the `--gl-*` flags)
 /// and hands Campaigns the web address its links point to.
 fn show_launch(
     shell: &Entity<Shell>,
@@ -183,6 +189,14 @@ fn show_launch(
             panel.show(CampaignsView::from_launch(value), window, cx);
         }
     });
+    if let Some(value) = &launch.flows {
+        let flows = shell.read(cx).flows().clone();
+        flows.update(cx, |panel, cx| panel.launch(value, cx));
+    }
+    if let Some(value) = &launch.chains {
+        let chains = shell.read(cx).chains().clone();
+        chains.update(cx, |panel, cx| panel.launch(value, window, cx));
+    }
     let panel = shell.read(cx).general_ledger().clone();
     panel.update(cx, |panel, cx| {
         panel.launch(&launch.general_ledger, window, cx);

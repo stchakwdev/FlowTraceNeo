@@ -31,7 +31,14 @@ use ledger_core::{
 };
 use ledger_module::tables::Member;
 use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::chains::{
+    self as chain_rules, ChainActivity, ChainDetails, Chains, activity_of, details_of,
+};
+use ledger_module::transparency::flows::{
+    self as flow_rules, EntryLinks, FlowNodePatch, NewFlowNode, NewTransaction, TransactionPatch,
+};
 use ledger_module::transparency::plan::{self as transparency_plan, Ctx, LedgerLinks};
+use ledger_module::transparency::public::PublicOrganization;
 use ledger_module::transparency::types::{
     CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus, Verification,
 };
@@ -118,6 +125,8 @@ pub enum BackendEvent {
         /// The organisation.
         org: OrganizationId,
     },
+    /// The chains of the caller's organisations changed; re-read [`LedgerBackend::chains`].
+    Chains,
 }
 
 /// A write to an organisation's campaigns and donations: the module's reducers
@@ -151,6 +160,106 @@ pub enum CampaignWrite {
         /// The payment's reference; blank or `None` stores none.
         reference: Option<String>,
     },
+}
+
+/// A write to an organisation's flow map: the module's reducers `create_flow_node`,
+/// `update_flow_node`, `create_transaction`, `update_transaction` and
+/// `link_transaction_entries` (`crates/ledger-module/src/transparency/flow_reducers.rs`), amounts
+/// in minor units. The change comes back as a [`BackendEvent::Transparency`].
+#[derive(Debug, Clone, PartialEq)]
+pub enum FlowWrite {
+    /// `createNode` (`api.ts:264-274`).
+    CreateNode(NewFlowNode),
+    /// A change to a node (module addition): the fields `patch` sets.
+    UpdateNode {
+        /// The node.
+        id: String,
+        /// What changes.
+        patch: FlowNodePatch,
+    },
+    /// `createTransaction` (`api.ts:220-238`).
+    CreateTransaction(NewTransaction),
+    /// `updateTransaction` (`api.ts:240-254`).
+    UpdateTransaction {
+        /// The transaction.
+        id: String,
+        /// What changes.
+        patch: TransactionPatch,
+    },
+    /// The journal entries that record a transaction (module addition); empty unlinks.
+    LinkEntries {
+        /// The transaction.
+        id: String,
+        /// Journal entry ids, in order.
+        entry_ids: Vec<String>,
+    },
+}
+
+/// A write to a chain between two organisations: the module's chain reducers
+/// (`crates/ledger-module/src/transparency/chain_reducers.rs`). Who acts is the caller's member
+/// row in the source (request, cancel) or the target (the rest). The change comes back as a
+/// [`BackendEvent::Chains`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ChainWrite {
+    /// `requestChain` (`api.ts:865-892`).
+    Request {
+        /// The asking organisation.
+        source: OrganizationId,
+        /// The organisation asked; it must have books.
+        target: OrganizationId,
+        /// Why; blank is none.
+        message: Option<String>,
+    },
+    /// `approveChain` (`api.ts:921-940`).
+    Approve {
+        /// The chain.
+        id: String,
+        /// One of the target's access groups.
+        group: String,
+        /// One of the target's flow nodes.
+        node: Option<String>,
+    },
+    /// `rejectChain` (`api.ts:942-959`).
+    Reject {
+        /// The chain.
+        id: String,
+        /// Why; blank is none.
+        reason: Option<String>,
+    },
+    /// `revokeChain` (`api.ts:961-969`).
+    Revoke {
+        /// The chain.
+        id: String,
+    },
+    /// `cancelChainRequest` (`api.ts:971-976`).
+    Cancel {
+        /// The chain.
+        id: String,
+    },
+    /// `updateChainPermissions` (`api.ts:978-990`).
+    UpdatePermissions {
+        /// The chain.
+        id: String,
+        /// One of the target's access groups.
+        group: String,
+        /// One of the target's flow nodes.
+        node: Option<String>,
+    },
+}
+
+impl ChainWrite {
+    /// The chain the write names; none for a request.
+    #[must_use]
+    pub fn chain_id(&self) -> Option<&str> {
+        match self {
+            Self::Request { .. } => None,
+            Self::Approve { id, .. }
+            | Self::Reject { id, .. }
+            | Self::Revoke { id }
+            | Self::Cancel { id }
+            | Self::UpdatePermissions { id, .. } => Some(id),
+        }
+    }
 }
 
 /// Why a backend call failed.
@@ -324,6 +433,38 @@ pub trait LedgerBackend {
         let _ = (org, write);
         Submission::ready(Err(BackendError::Connection(NO_TRANSPARENCY.to_owned())))
     }
+
+    /// Writes to the flow map of `org` ([`FlowWrite`]). On success subscribers get a
+    /// [`BackendEvent::Transparency`] with the change readable.
+    fn write_flow(&mut self, org: &OrganizationId, write: FlowWrite) -> Submission {
+        let _ = (org, write);
+        Submission::ready(Err(BackendError::Connection(NO_TRANSPARENCY.to_owned())))
+    }
+
+    /// The chains of every organisation the caller belongs to, either side, with both
+    /// organisations' names and scores (`my_organization_chain`), in row order.
+    fn chains(&self) -> Vec<ChainDetails> {
+        Vec::new()
+    }
+
+    /// One chain's log, newest first (`my_chain_activity_log`).
+    fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity> {
+        let _ = chain_id;
+        Vec::new()
+    }
+
+    /// The organisations that made their profile public (`public_organization`): who a chain
+    /// can be requested of.
+    fn public_organizations(&self) -> Vec<PublicOrganization> {
+        Vec::new()
+    }
+
+    /// Writes to a chain ([`ChainWrite`]). On success subscribers get a
+    /// [`BackendEvent::Chains`] with the change readable.
+    fn write_chain(&mut self, write: ChainWrite) -> Submission {
+        let _ = write;
+        Submission::ready(Err(BackendError::Connection(NO_TRANSPARENCY.to_owned())))
+    }
 }
 
 /// Why a backend keeps no campaigns.
@@ -356,6 +497,13 @@ pub struct InProcessBackend {
     status: ConnectionStatus,
     settings: Option<ConnectSettings>,
     subscribers: Vec<Sender<BackendEvent>>,
+    /// Every chain between the organisations, as the module's chain rules keep them.
+    chains: Chains,
+    /// The records of the demo's partner organisations, which have no books here: their
+    /// profiles and trust rows, so a chain names them as the module would.
+    partners: Vec<(String, OrgTransparency)>,
+    /// The organisations a chain can be requested of.
+    public: Vec<PublicOrganization>,
 }
 
 impl InProcessBackend {
@@ -394,11 +542,15 @@ impl InProcessBackend {
             transparency: Arc::default(),
         };
 
+        let partners = demo_partners(&demo.transparency)?;
         Ok(Self {
             books: vec![demo, empty],
             status: ConnectionStatus::Disconnected,
             settings: None,
             subscribers: Vec::new(),
+            chains: partners.chains,
+            partners: partners.records,
+            public: partners.public,
         })
     }
 
@@ -456,6 +608,64 @@ impl InProcessBackend {
         books.transparency = Arc::new(next);
         self.broadcast(&BackendEvent::Transparency { org: org.clone() });
         Ok(CommandResult::None)
+    }
+
+    /// The records of `org`: its books' or a partner's; empty for an organisation not held.
+    fn records_of(&self, org: &str) -> Option<&OrgTransparency> {
+        self.books
+            .iter()
+            .find(|b| b.org.id.as_str() == org)
+            .map(|b| b.transparency.as_ref())
+            .or_else(|| {
+                self.partners
+                    .iter()
+                    .find(|(id, _)| id == org)
+                    .map(|(_, t)| t)
+            })
+    }
+
+    /// Runs one chain rule on a copy of the chains as the actor of `side`'s books, with their
+    /// ids and clock, as the module's `run` does (`chain_reducers.rs`), and tells subscribers.
+    /// A refusal leaves the chains as they were.
+    fn change_chains(
+        &mut self,
+        side: &str,
+        rule: impl FnOnce(
+            &mut Chains,
+            &mut dyn LedgerEnv,
+            Option<&Member>,
+            &OrgTransparency,
+        ) -> Result<(), String>,
+    ) -> SubmitResult {
+        let mut next = self.chains.clone();
+        let target = self.records_of(side).cloned().unwrap_or_default();
+        let books = self.books.iter_mut().find(|b| b.org.id.as_str() == side);
+        let result = match books {
+            Some(b) => {
+                let member = member_of(&b.org.id, &b.actor);
+                rule(&mut next, b.env.as_mut(), Some(&member), &target)
+            }
+            None => rule(&mut next, &mut SystemEnv, None, &target),
+        };
+        result.map_err(BackendError::Connection)?;
+        self.chains = next;
+        self.broadcast(&BackendEvent::Chains);
+        Ok(CommandResult::None)
+    }
+
+    /// The side a chain write acts for: the source for a request or a cancel, else the target;
+    /// none for a chain that is not there.
+    fn acting_side(&self, write: &ChainWrite) -> Option<String> {
+        if let ChainWrite::Request { source, .. } = write {
+            return Some(source.as_str().to_owned());
+        }
+        let id = write.chain_id()?;
+        let c = self.chains.chains.iter().find(|c| c.id == id)?;
+        Some(if matches!(write, ChainWrite::Cancel { .. }) {
+            c.source_org_id.clone()
+        } else {
+            c.target_org_id.clone()
+        })
     }
 
     /// Sends `event` to every live subscriber and forgets the closed ones.
@@ -567,6 +777,114 @@ impl LedgerBackend for InProcessBackend {
     /// `delete_campaign`, `record_donation`, `update_donation_status`). A public link is unique
     /// across the organisations the backend holds, as across the module's
     /// (`campaign_slug_elsewhere`, `reducers.rs`).
+    /// Runs the module's own flow rules (`flows::create_flow_node`, `update_flow_node`,
+    /// `create_transaction`, `update_transaction`, `link_transaction_entries` against these
+    /// books).
+    fn write_flow(&mut self, org: &OrganizationId, write: FlowWrite) -> Submission {
+        Submission::ready(self.change_transparency(org, |t, ctx, state| {
+            match write {
+                FlowWrite::CreateNode(input) => {
+                    flow_rules::create_flow_node(t, ctx, input).map(drop)
+                }
+                FlowWrite::UpdateNode { id, patch } => {
+                    flow_rules::update_flow_node(t, ctx, &id, patch).map(drop)
+                }
+                FlowWrite::CreateTransaction(input) => {
+                    flow_rules::create_transaction(t, ctx, input).map(drop)
+                }
+                FlowWrite::UpdateTransaction { id, patch } => {
+                    flow_rules::update_transaction(t, ctx, &id, patch).map(drop)
+                }
+                FlowWrite::LinkEntries { id, entry_ids } => {
+                    flow_rules::link_transaction_entries(t, ctx, &id, entry_ids, &StateLinks(state))
+                        .map(drop)
+                }
+            }
+        }))
+    }
+
+    /// Each chain with both sides' records (`details_of`), as `my_organization_chain` gives
+    /// them.
+    fn chains(&self) -> Vec<ChainDetails> {
+        let none = OrgTransparency::default();
+        self.chains
+            .chains
+            .iter()
+            .map(|c| {
+                let source = self.records_of(&c.source_org_id).unwrap_or(&none);
+                let target = self.records_of(&c.target_org_id).unwrap_or(&none);
+                details_of(c, source, target)
+            })
+            .collect()
+    }
+
+    fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity> {
+        activity_of(&self.chains.log, chain_id)
+    }
+
+    fn public_organizations(&self) -> Vec<PublicOrganization> {
+        self.public.clone()
+    }
+
+    /// Runs the module's chain rules (`chains::request_chain` and the rest) as the actor of the
+    /// side that acts. A request's target must hold books here, as the module asks for a
+    /// ledger; the demo's partners hold none.
+    fn write_chain(&mut self, write: ChainWrite) -> Submission {
+        let Some(side) = self.acting_side(&write) else {
+            // An unknown chain: the module's refusal for the state it needed; a cancel of one
+            // changes nothing.
+            return Submission::ready(match write {
+                ChainWrite::Cancel { .. } => Ok(CommandResult::None),
+                ChainWrite::Approve { .. } | ChainWrite::Reject { .. } => {
+                    Err(BackendError::Connection(chain_rules::no_longer(
+                        chain_rules::ChainStatus::Pending,
+                    )))
+                }
+                _ => Err(BackendError::Connection(chain_rules::no_longer(
+                    chain_rules::ChainStatus::Active,
+                ))),
+            });
+        };
+        let target_exists = match &write {
+            ChainWrite::Request { target, .. } => self.books.iter().any(|b| &b.org.id == target),
+            _ => true,
+        };
+        Submission::ready(self.change_chains(&side, |c, env, member, records| {
+            match write {
+                ChainWrite::Request {
+                    source,
+                    target,
+                    message,
+                } => chain_rules::request_chain(
+                    c,
+                    env,
+                    member,
+                    source.as_str(),
+                    target.as_str(),
+                    target_exists,
+                    message,
+                )
+                .map(drop),
+                ChainWrite::Approve { id, group, node } => {
+                    chain_rules::approve_chain(c, env, member, records, &id, &group, node).map(drop)
+                }
+                ChainWrite::Reject { id, reason } => {
+                    chain_rules::reject_chain(c, env, member, &id, reason).map(drop)
+                }
+                ChainWrite::Revoke { id } => {
+                    chain_rules::revoke_chain(c, env, member, &id).map(drop)
+                }
+                ChainWrite::Cancel { id } => chain_rules::cancel_chain_request(c, member, &id),
+                ChainWrite::UpdatePermissions { id, group, node } => {
+                    chain_rules::update_chain_permissions(
+                        c, env, member, records, &id, &group, node,
+                    )
+                    .map(drop)
+                }
+            }
+        }))
+    }
+
     fn write_campaign(&mut self, org: &OrganizationId, write: CampaignWrite) -> Submission {
         let elsewhere: Vec<String> = self
             .books
@@ -616,6 +934,68 @@ pub fn demo_transparency() -> Result<OrgTransparency, BackendError> {
     Ok(t)
 }
 
+/// The demo's partners as the in-process backend holds them.
+struct Partners {
+    chains: Chains,
+    records: Vec<(String, OrgTransparency)>,
+    public: Vec<PublicOrganization>,
+}
+
+/// The dataset's chains and the other organisations of `transparency-dataset.json#/store`:
+/// each partner's profile read as `import_transparency` reads it (`ts::dataset`) and its trust
+/// row set to the dataset's `trust_score` (the web's `orgRef`, `api.ts:94-105`, reads the score
+/// from the organisation), so a chain names and scores them as the module would; and every
+/// organisation as the request dialog's search finds it (`searchOrganizations`, `api.ts:182-190`,
+/// searches them all).
+fn demo_partners(demo: &OrgTransparency) -> Result<Partners, BackendError> {
+    let fixture: Value = serde_json::from_str(DEMO_TRANSPARENCY)
+        .map_err(|e| BackendError::Connection(e.to_string()))?;
+    let store = &fixture["store"];
+    let demo_id = fixture["demo_org_id"].as_str().unwrap_or_default();
+    let chains = ts::chains(demo_id, store).map_err(|e| BackendError::Connection(e.to_string()))?;
+    let mut records = Vec::new();
+    let mut public = Vec::new();
+    for org in store["organizations"].as_array().into_iter().flatten() {
+        let id = org["id"].as_str().unwrap_or_default().to_owned();
+        let trust_score = org["trust_score"].as_i64().unwrap_or(0);
+        let profile = ts::organization(org).map_err(|e| BackendError::Connection(e.to_string()))?;
+        public.push(PublicOrganization {
+            id: id.clone(),
+            name: profile.name.clone(),
+            org_type: profile.org_type,
+            country: profile.country.clone(),
+            currency: profile.currency.clone(),
+            verified: profile.verified,
+            public_slug: profile.public_slug.clone(),
+            description: profile.description.clone(),
+            logo_key: profile.logo_key.clone(),
+            trust_score: Some(trust_score),
+            grade: Some(trust::trust_grade(trust_score).to_owned()),
+            updated_at: profile.updated_at.clone(),
+        });
+        if id == demo_id {
+            continue;
+        }
+        let trust = demo.trust.clone().map(|mut row| {
+            row.organization_id.clone_from(&id);
+            row.score = trust_score;
+            trust::trust_grade(trust_score).clone_into(&mut row.grade);
+            row
+        });
+        let t = OrgTransparency {
+            profile: Some(profile),
+            trust,
+            ..OrgTransparency::default()
+        };
+        records.push((id, t));
+    }
+    Ok(Partners {
+        chains,
+        records,
+        public,
+    })
+}
+
 /// The demo's transparency dataset, built into the app.
 const DEMO_TRANSPARENCY: &str = include_str!("../../../fixtures/transparency-dataset.json");
 
@@ -635,6 +1015,12 @@ fn member_of(org: &OrganizationId, actor: &Actor) -> Member {
 
 /// The claims and bills a proof may link to, from a snapshot of the books.
 struct StateLinks<'a>(&'a LedgerState);
+
+impl EntryLinks for StateLinks<'_> {
+    fn has_entry(&self, id: &str) -> bool {
+        self.0.entries.iter().any(|e| e.id.as_str() == id)
+    }
+}
 
 impl LedgerLinks for StateLinks<'_> {
     fn has_claim(&self, id: &str) -> bool {
@@ -1118,6 +1504,247 @@ mod tests {
         assert_eq!(
             err,
             BackendError::Connection(transparency_plan::SLUG_TAKEN.to_owned())
+        );
+    }
+
+    const MAJI: &str = "660e8400-e29b-41d4-a716-446655440001";
+    const TECH: &str = "660e8400-e29b-41d4-a716-446655440003";
+
+    fn chain_from(backend: &InProcessBackend, source: &str) -> ChainDetails {
+        backend
+            .chains()
+            .into_iter()
+            .find(|c| c.chain.source_org_id == source)
+            .unwrap()
+    }
+
+    #[test]
+    fn the_demo_chains_name_and_score_the_partners() {
+        let backend = backend();
+        let chains = backend.chains();
+        assert_eq!(chains.len(), 4);
+        let maji = chains
+            .iter()
+            .find(|c| c.chain.target_org_id == MAJI)
+            .unwrap();
+        assert_eq!(maji.source_org.name, DEMO_ORG_NAME);
+        assert_eq!(maji.target_org.name, "Maji Safi East Africa");
+        assert_eq!(maji.target_org.trust_score, 92);
+        let tech = chain_from(&backend, TECH);
+        assert_eq!(tech.source_org.name, "TechBridge Solutions");
+        assert_eq!(tech.source_org.trust_score, 78);
+        assert_eq!(
+            backend.chain_activity(&maji.chain.id).len(),
+            2,
+            "requested and approved"
+        );
+        let public = backend.public_organizations();
+        assert_eq!(public.len(), 5);
+        assert_eq!(public[1].trust_score, Some(92));
+    }
+
+    #[test]
+    fn the_demo_actor_approves_an_incoming_chain_and_revokes_it() {
+        let mut backend = backend();
+        let rx = backend.subscribe();
+        let id = chain_from(&backend, TECH).chain.id;
+        let partners = backend.transparency(&demo()).unwrap().access_groups[3]
+            .id
+            .clone();
+        let result = backend
+            .write_chain(ChainWrite::Approve {
+                id: id.clone(),
+                group: partners,
+                node: None,
+            })
+            .now()
+            .unwrap();
+        assert_eq!(result, Ok(CommandResult::None));
+        assert_eq!(rx.try_recv().unwrap(), BackendEvent::Chains);
+        let c = chain_from(&backend, TECH);
+        assert_eq!(c.chain.status, chain_rules::ChainStatus::Active);
+        assert_eq!(c.granted_group.unwrap().name, "Partners");
+        assert_eq!(
+            c.chain.approved_by.as_deref(),
+            Some(demo_actor().id.as_str())
+        );
+
+        backend
+            .write_chain(ChainWrite::Revoke { id: id.clone() })
+            .now()
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            chain_from(&backend, TECH).chain.status,
+            chain_rules::ChainStatus::Revoked
+        );
+        let again = backend
+            .write_chain(ChainWrite::Revoke { id })
+            .now()
+            .unwrap();
+        assert_eq!(
+            again,
+            Err(BackendError::Connection(
+                "This chain is no longer active, so it can't be changed.".to_owned()
+            ))
+        );
+    }
+
+    #[test]
+    fn a_source_cannot_answer_its_own_request_and_a_partner_has_no_books() {
+        let mut backend = backend();
+        let maji = backend
+            .chains()
+            .into_iter()
+            .find(|c| c.chain.target_org_id == MAJI)
+            .unwrap()
+            .chain
+            .id;
+        let refused = backend
+            .write_chain(ChainWrite::Revoke { id: maji })
+            .now()
+            .unwrap();
+        assert_eq!(
+            refused,
+            Err(BackendError::Connection(format!(
+                "You are not a member of organisation {MAJI}."
+            ))),
+            "only the target answers"
+        );
+        let request = backend
+            .write_chain(ChainWrite::Request {
+                source: demo(),
+                target: OrganizationId::from(TECH),
+                message: None,
+            })
+            .now()
+            .unwrap();
+        assert_eq!(
+            request,
+            Err(BackendError::Connection(format!(
+                "No ledger for organisation {TECH}."
+            )))
+        );
+    }
+
+    #[test]
+    fn a_request_to_an_organisation_with_books_can_be_cancelled() {
+        let mut backend = backend();
+        let rx = backend.subscribe();
+        let empty = backend.organisations()[1].id.clone();
+        backend
+            .write_chain(ChainWrite::Request {
+                source: demo(),
+                target: empty.clone(),
+                message: Some("Follow the grant.".to_owned()),
+            })
+            .now()
+            .unwrap()
+            .unwrap();
+        assert_eq!(rx.try_recv().unwrap(), BackendEvent::Chains);
+        let made = backend
+            .chains()
+            .into_iter()
+            .find(|c| c.chain.target_org_id == empty.as_str())
+            .unwrap();
+        assert_eq!(
+            made.chain.request_message.as_deref(),
+            Some("Follow the grant.")
+        );
+        let twice = backend
+            .write_chain(ChainWrite::Request {
+                source: demo(),
+                target: empty.clone(),
+                message: None,
+            })
+            .now()
+            .unwrap();
+        assert!(twice.is_err(), "one live chain per pair");
+        backend
+            .write_chain(ChainWrite::Cancel {
+                id: made.chain.id.clone(),
+            })
+            .now()
+            .unwrap()
+            .unwrap();
+        assert_eq!(backend.chains().len(), 4);
+        assert_eq!(
+            backend
+                .write_chain(ChainWrite::Cancel { id: made.chain.id })
+                .now()
+                .unwrap(),
+            Ok(CommandResult::None),
+            "an unknown chain changes nothing"
+        );
+    }
+
+    #[test]
+    fn flow_writes_run_the_module_rules_and_link_entries_in_the_books() {
+        let mut backend = backend();
+        let rx = backend.subscribe();
+        let node: NewFlowNode =
+            serde_json::from_value(json!({ "name": "Clinic", "type": "project" })).unwrap();
+        backend
+            .write_flow(&demo(), FlowWrite::CreateNode(node))
+            .now()
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            BackendEvent::Transparency { org: demo() }
+        );
+        let t = backend.transparency(&demo()).unwrap();
+        let clinic = t.flow_nodes.last().unwrap().id.clone();
+        let from = t.flow_nodes[0].id.clone();
+        let input: NewTransaction = serde_json::from_value(json!({
+            "from_node_id": from, "to_node_id": clinic, "amount": 150_000, "currency": "KES",
+            "description": "Clinic supplies", "verification_status": "pending",
+            "transaction_date": "2026-02-04",
+        }))
+        .unwrap();
+        backend
+            .write_flow(&demo(), FlowWrite::CreateTransaction(input))
+            .now()
+            .unwrap()
+            .unwrap();
+        let t = backend.transparency(&demo()).unwrap();
+        let made = t.transactions.last().unwrap();
+        assert_eq!(made.created_by.as_deref(), Some(demo_actor().id.as_str()));
+        let entry = backend.state(&demo()).unwrap().entries[0]
+            .id
+            .as_str()
+            .to_owned();
+        backend
+            .write_flow(
+                &demo(),
+                FlowWrite::LinkEntries {
+                    id: made.id.clone(),
+                    entry_ids: vec![entry.clone()],
+                },
+            )
+            .now()
+            .unwrap()
+            .unwrap();
+        let linked = backend.transparency(&demo()).unwrap();
+        assert_eq!(
+            linked.transactions.last().unwrap().journal_entry_ids,
+            [entry]
+        );
+        let unknown = backend
+            .write_flow(
+                &demo(),
+                FlowWrite::LinkEntries {
+                    id: made.id.clone(),
+                    entry_ids: vec!["nope".to_owned()],
+                },
+            )
+            .now()
+            .unwrap();
+        assert_eq!(
+            unknown,
+            Err(BackendError::Connection(
+                "Journal entry nope not found.".to_owned()
+            ))
         );
     }
 

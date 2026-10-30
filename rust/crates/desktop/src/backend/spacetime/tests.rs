@@ -28,6 +28,7 @@ fn kinds(events: &[BackendEvent]) -> Vec<String> {
             ),
             BackendEvent::Status(s) => format!("status {s:?}"),
             BackendEvent::Transparency { org } => format!("transparency {org}"),
+            BackendEvent::Chains => "chains".to_owned(),
         })
         .collect()
 }
@@ -428,4 +429,103 @@ fn campaign_writes_go_to_the_client_only_while_connected() {
     let sent = backend.write_campaign(&org, write.clone()).now().unwrap();
     assert_eq!(sent, Ok(CommandResult::None));
     assert_eq!(*lock(&fake.campaign_writes), [("org-a".to_owned(), write)]);
+}
+
+fn chains_changed() -> ClientEvent {
+    ClientEvent::TransparencyChanged {
+        orgs: std::collections::BTreeSet::new(),
+        profiles: false,
+        chains: true,
+        public: false,
+        service: false,
+    }
+}
+
+#[test]
+fn chains_are_read_at_ready_and_again_when_they_change_and_kept_offline() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![]);
+    let demo = crate::backend::InProcessBackend::with_demo_and_empty()
+        .unwrap()
+        .chains();
+    *lock(&fake.chains) = demo[..1].to_vec();
+    let mut live = Live::default();
+    let out = live.apply(ready(), fake.as_ref());
+    assert!(
+        kinds(&out).contains(&"chains".to_owned()),
+        "{:?}",
+        kinds(&out)
+    );
+    assert_eq!(live.chains.len(), 1);
+
+    let out = live.apply(chains_changed(), fake.as_ref());
+    assert_eq!(
+        kinds(&out),
+        Vec::<String>::new(),
+        "unchanged chains send nothing"
+    );
+    *lock(&fake.chains) = demo.clone();
+    let out = live.apply(chains_changed(), fake.as_ref());
+    assert_eq!(kinds(&out), ["chains"]);
+    let out = live.apply(transparency_changed(&[]), fake.as_ref());
+    assert_eq!(
+        kinds(&out),
+        Vec::<String>::new(),
+        "only a chains change rereads them"
+    );
+    assert_eq!(*live.chains, demo);
+}
+
+#[test]
+fn flow_and_chain_writes_go_to_the_client_only_while_connected() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![member(ME, "me", true)]);
+    let mut backend = SpacetimeBackend::new();
+    let rx = backend.subscribe();
+    let org = OrganizationId::from("org-a");
+    let flow = FlowWrite::LinkEntries {
+        id: "t1".to_owned(),
+        entry_ids: vec!["e1".to_owned()],
+    };
+    let chain = ChainWrite::Revoke {
+        id: "c1".to_owned(),
+    };
+    assert_eq!(
+        backend.write_flow(&org, flow.clone()).now().unwrap(),
+        Err(BackendError::Offline)
+    );
+    assert_eq!(
+        backend.write_chain(chain.clone()).now().unwrap(),
+        Err(BackendError::Offline)
+    );
+
+    backend.attach(fake.clone()).unwrap();
+    fake.emit(ready());
+    while !matches!(
+        next(&rx),
+        BackendEvent::Status(ConnectionStatus::Connected { .. })
+    ) {}
+    assert_eq!(
+        backend
+            .write_flow(&OrganizationId::from("org-b"), flow.clone())
+            .now()
+            .unwrap(),
+        Err(BackendError::UnknownOrganisation("org-b".to_owned()))
+    );
+    assert_eq!(
+        backend.write_flow(&org, flow.clone()).now().unwrap(),
+        Ok(CommandResult::None)
+    );
+    assert_eq!(
+        backend.write_chain(chain.clone()).now().unwrap(),
+        Ok(CommandResult::None)
+    );
+    assert_eq!(*lock(&fake.flow_writes), [("org-a".to_owned(), flow)]);
+    assert_eq!(*lock(&fake.chain_writes), [chain]);
+
+    let public = crate::backend::InProcessBackend::with_demo_and_empty()
+        .unwrap()
+        .public_organizations();
+    *lock(&fake.public) = public.clone();
+    assert_eq!(backend.public_organizations(), public);
 }

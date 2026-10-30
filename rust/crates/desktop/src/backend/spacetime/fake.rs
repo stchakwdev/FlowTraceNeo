@@ -14,10 +14,12 @@ use ledger_core::demo::build_demo_ledger;
 use ledger_core::types::OrganizationId;
 use ledger_core::{CommandResult, LedgerCommand, LedgerState};
 use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
+use ledger_module::transparency::public::PublicOrganization;
 use ledger_module::transparency::types::{NewVerification, Verification};
 
 use super::{LiveClient, lock};
-use crate::backend::{CampaignWrite, Submission};
+use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, Submission};
 
 pub const ME: &str = "c200aa00000000000000000000000000000000000000000000000000000000ff";
 
@@ -31,6 +33,10 @@ pub struct Fake {
     pub proofs: Mutex<HashMap<String, Vec<Verification>>>,
     pub transparency: Mutex<HashMap<String, OrgTransparency>>,
     pub campaign_writes: Mutex<Vec<(String, CampaignWrite)>>,
+    pub flow_writes: Mutex<Vec<(String, FlowWrite)>>,
+    pub chains: Mutex<Vec<ChainDetails>>,
+    pub chain_writes: Mutex<Vec<ChainWrite>>,
+    pub public: Mutex<Vec<PublicOrganization>>,
 }
 
 impl Fake {
@@ -44,6 +50,10 @@ impl Fake {
             proofs: Mutex::new(HashMap::new()),
             transparency: Mutex::new(HashMap::new()),
             campaign_writes: Mutex::new(Vec::new()),
+            flow_writes: Mutex::new(Vec::new()),
+            chains: Mutex::new(Vec::new()),
+            chain_writes: Mutex::new(Vec::new()),
+            public: Mutex::new(Vec::new()),
         })
     }
 
@@ -111,6 +121,28 @@ impl LiveClient for Fake {
 
     fn write_campaign(&self, org: &str, write: &CampaignWrite) -> Submission {
         lock(&self.campaign_writes).push((org.to_owned(), write.clone()));
+        Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn write_flow(&self, org: &str, write: &FlowWrite) -> Submission {
+        lock(&self.flow_writes).push((org.to_owned(), write.clone()));
+        Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn chains(&self) -> Option<Vec<ChainDetails>> {
+        Some(lock(&self.chains).clone())
+    }
+
+    fn chain_activity(&self, _: &str) -> Vec<ChainActivity> {
+        Vec::new()
+    }
+
+    fn public_organizations(&self) -> Vec<PublicOrganization> {
+        lock(&self.public).clone()
+    }
+
+    fn write_chain(&self, write: &ChainWrite) -> Submission {
+        lock(&self.chain_writes).push(write.clone());
         Submission::ready(Ok(CommandResult::None))
     }
 }

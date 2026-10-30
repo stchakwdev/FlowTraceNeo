@@ -388,3 +388,63 @@ fn a_live_store_reads_records_when_the_server_says_they_changed() {
         [("org-a".to_owned(), write)]
     );
 }
+
+#[test]
+fn the_store_reads_chains_at_open_and_again_after_a_chain_write() {
+    use ledger_module::transparency::chains::ChainStatus;
+    let (mut store, rx) = demo_store();
+    assert_eq!(store.view().chains().len(), 4, "the demo's chains at open");
+    let seen = store.view().chains_revision();
+    let pending = store
+        .view()
+        .chains()
+        .iter()
+        .find(|c| c.chain.status == ChainStatus::Pending)
+        .unwrap()
+        .chain
+        .id
+        .clone();
+    store
+        .write_chain(crate::backend::ChainWrite::Reject {
+            id: pending.clone(),
+            reason: Some("Not now.".to_owned()),
+        })
+        .now()
+        .unwrap()
+        .unwrap();
+    let records = store.view().transparency_revision();
+    assert!(store.apply(std::iter::from_fn(|| rx.try_recv().ok()).collect()));
+    assert_eq!(store.view().chains_revision(), seen + 1);
+    assert_eq!(
+        store.view().transparency_revision(),
+        records,
+        "a chain change leaves the records alone"
+    );
+    let c = store
+        .view()
+        .chains()
+        .iter()
+        .find(|c| c.chain.id == pending)
+        .unwrap();
+    assert_eq!(c.chain.status, ChainStatus::Rejected);
+    assert_ne!(store.public_organizations().len(), 0);
+    assert_eq!(store.chain_activity(&pending)[0].chain_id, pending);
+}
+
+#[test]
+fn a_flow_write_reaches_the_selected_organisations_records() {
+    let (mut store, rx) = demo_store();
+    let before = store.view().transparency().unwrap().flow_nodes.len();
+    let node =
+        serde_json::from_value(serde_json::json!({ "name": "Clinic", "type": "project" })).unwrap();
+    store
+        .write_flow(crate::backend::FlowWrite::CreateNode(node))
+        .now()
+        .unwrap()
+        .unwrap();
+    assert!(store.apply(std::iter::from_fn(|| rx.try_recv().ok()).collect()));
+    assert_eq!(
+        store.view().transparency().unwrap().flow_nodes.len(),
+        before + 1
+    );
+}

@@ -12,10 +12,13 @@ use gpui_kit::{Context, Task};
 use ledger_core::LedgerCommand;
 use ledger_core::types::{Actor, OrganizationId};
 
+use ledger_module::transparency::chains::ChainActivity;
+use ledger_module::transparency::public::PublicOrganization;
 use ledger_module::transparency::types::{NewVerification, Verification};
 
 use crate::backend::{
-    BackendError, BackendEvent, CampaignWrite, ConnectSettings, LedgerBackend, Submission,
+    BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, FlowWrite,
+    LedgerBackend, Submission,
 };
 use crate::model::LedgerView;
 use crate::proofs::{LinkKind, ProofsClient, ProofsError};
@@ -75,6 +78,7 @@ impl StoreCore {
         self.view = LedgerView::new(orgs, self.backend.status(), snapshot);
         self.view.set_remote(self.backend.is_remote());
         self.reload_transparency();
+        self.view.set_chains(self.backend.chains());
         rx
     }
 
@@ -142,7 +146,9 @@ impl StoreCore {
                         let names: Vec<&str> = orgs.iter().map(|o| o.name.as_str()).collect();
                         eprintln!("desktop: organisations {names:?}");
                     }
-                    BackendEvent::Ledger { .. } | BackendEvent::Transparency { .. } => {}
+                    BackendEvent::Ledger { .. }
+                    | BackendEvent::Transparency { .. }
+                    | BackendEvent::Chains => {}
                 }
             }
         }
@@ -155,6 +161,9 @@ impl StoreCore {
         let touched_records = batch.iter().any(|event| {
             matches!(event, BackendEvent::Transparency { org } if Some(org) == selected.as_ref())
         });
+        let touched_chains = batch
+            .iter()
+            .any(|event| matches!(event, BackendEvent::Chains));
         let mut changed = self.view.apply(batch);
         if self.view.snapshot().is_none()
             && let Some(org) = self.view.selected().map(|org| org.id.clone())
@@ -165,6 +174,9 @@ impl StoreCore {
         let now_selected = self.view.selected().map(|org| org.id.clone());
         if touched_records || now_selected != selected {
             changed |= self.reload_transparency();
+        }
+        if touched_chains {
+            changed |= self.view.set_chains(self.backend.chains());
         }
         if let Some(t) = &mut self.timings
             && touched_selected
@@ -292,6 +304,33 @@ impl StoreCore {
             return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
         };
         self.backend.write_campaign(&org, write)
+    }
+
+    /// Sends a flow map write to the selected organisation ([`LedgerBackend::write_flow`]); the
+    /// change comes back through the change channel.
+    pub fn write_flow(&mut self, write: FlowWrite) -> Submission {
+        let Some(org) = self.view.selected().map(|org| org.id.clone()) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
+        };
+        self.backend.write_flow(&org, write)
+    }
+
+    /// Sends a chain write ([`LedgerBackend::write_chain`]); the change comes back through the
+    /// change channel.
+    pub fn write_chain(&mut self, write: ChainWrite) -> Submission {
+        self.backend.write_chain(write)
+    }
+
+    /// The organisations a chain can be requested of ([`LedgerBackend::public_organizations`]).
+    #[must_use]
+    pub fn public_organizations(&self) -> Vec<PublicOrganization> {
+        self.backend.public_organizations()
+    }
+
+    /// One chain's log, newest first ([`LedgerBackend::chain_activity`]).
+    #[must_use]
+    pub fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity> {
+        self.backend.chain_activity(chain_id)
     }
 
     /// Sends `command` to the selected organisation's books. The new books come back through
@@ -463,6 +502,28 @@ impl LedgerStore {
     #[must_use]
     pub fn proofs_of(&self, kind: LinkKind, id: &str) -> Vec<Verification> {
         self.core.proofs_of(kind, id)
+    }
+
+    /// [`StoreCore::write_flow`]. Screens go through `panels::write_flow`.
+    pub fn write_flow(&mut self, write: FlowWrite) -> Submission {
+        self.core.write_flow(write)
+    }
+
+    /// [`StoreCore::write_chain`]. Screens go through `panels::write_chain`.
+    pub fn write_chain(&mut self, write: ChainWrite) -> Submission {
+        self.core.write_chain(write)
+    }
+
+    /// [`StoreCore::public_organizations`].
+    #[must_use]
+    pub fn public_organizations(&self) -> Vec<PublicOrganization> {
+        self.core.public_organizations()
+    }
+
+    /// [`StoreCore::chain_activity`].
+    #[must_use]
+    pub fn chain_activity(&self, chain_id: &str) -> Vec<ChainActivity> {
+        self.core.chain_activity(chain_id)
     }
 }
 
