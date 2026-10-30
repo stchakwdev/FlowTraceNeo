@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, FlowArrow, Plus } from '@phosphor-icons/react'
 import type { TransactionWithNodes } from '@/lib/supabase'
 import type { DonorLine } from '@/lib/dashboard-summary'
-import { DEV_MODE } from '@/lib/auth'
+import { DEMO_BOOKS } from '@/lib/ledger-client'
 import { useOrg } from '@/lib/org-context'
 import { useTransactions } from '@/lib/queries'
 import { getTrustGrade } from '@/lib/supabase'
@@ -53,7 +53,7 @@ function Dashboard() {
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             {organization?.name && <span>{organization.name}</span>}
             {summary.latest && <AsOf date={summary.latest} className="text-sm" />}
-            {DEV_MODE && <DemoTag />}
+            {DEMO_BOOKS && <DemoTag />}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
