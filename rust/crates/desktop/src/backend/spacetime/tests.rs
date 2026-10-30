@@ -583,3 +583,36 @@ fn settings_writes_go_to_the_client_only_while_connected() {
     *lock(&fake.badges) = badges.clone();
     assert_eq!(backend.public_badges(), badges);
 }
+
+#[test]
+fn org_members_come_from_the_member_rows_by_name() {
+    let fake = Fake::new();
+    let mut zed = member("c200bb", "user_z", false);
+    zed.name = "Zawadi".to_owned();
+    fake.add_org("org-a", vec![zed, member(ME, "me", true)]);
+    let mut backend = SpacetimeBackend::new();
+    let rx = backend.subscribe();
+    backend.attach(fake.clone()).unwrap();
+    fake.emit(ready());
+    while !matches!(
+        next(&rx),
+        BackendEvent::Status(ConnectionStatus::Connected { .. })
+    ) {}
+    let people: Vec<(String, String)> = backend
+        .org_members(&OrganizationId::from("org-a"))
+        .into_iter()
+        .map(|p| (p.user_id, p.name))
+        .collect();
+    assert_eq!(
+        people,
+        [
+            ("me".to_owned(), "Name of me".to_owned()),
+            ("user_z".to_owned(), "Zawadi".to_owned())
+        ]
+    );
+    assert!(
+        backend
+            .org_members(&OrganizationId::from("org-b"))
+            .is_empty()
+    );
+}

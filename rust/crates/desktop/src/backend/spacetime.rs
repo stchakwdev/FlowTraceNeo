@@ -31,7 +31,7 @@ use ledger_module::transparency::types::{AccessType, NewVerification, Verificati
 
 use super::{
     BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, ConnectionStatus,
-    FlowWrite, LedgerBackend, Organisation, SettingsWrite, Submission,
+    FlowWrite, LedgerBackend, OrgMember, Organisation, SettingsWrite, Submission,
 };
 
 /// What [`SpacetimeBackend`] needs of a client: [`SpacetimeClient`] in the app, a fake in tests.
@@ -721,6 +721,24 @@ impl LedgerBackend for SpacetimeBackend {
             .as_ref()
             .map(|c| c.public_badges())
             .unwrap_or_default()
+    }
+
+    /// The member rows the client holds for `org`, by name (`people`,
+    /// `flowtrace/src/lib/ledger/spacetime-transparency.ts:1284-1289`).
+    fn org_members(&self, org: &OrganizationId) -> Vec<OrgMember> {
+        let live = lock(&self.live);
+        let mut people: Vec<OrgMember> = live
+            .orgs
+            .iter()
+            .filter(|o| o.org_id == org.as_str())
+            .flat_map(|o| o.members.iter())
+            .map(|m| OrgMember {
+                user_id: m.user_id.clone(),
+                name: m.name.clone(),
+            })
+            .collect();
+        people.sort_by(|a, b| a.name.cmp(&b.name));
+        people
     }
 
     fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {

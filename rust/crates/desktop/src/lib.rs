@@ -5,9 +5,11 @@
 //! the GPUI side is [`store`] (the one store entity), [`shell`] (the window's root view),
 //! [`panels`] (one content panel per nav entry) and [`app`] (start-up).
 
+pub mod access_groups;
 pub mod accounts;
 pub mod app;
 pub mod backend;
+pub mod badge;
 pub mod bills;
 pub mod campaigns;
 pub mod chains;
@@ -24,11 +26,13 @@ pub mod model;
 pub mod panels;
 pub mod proofs;
 pub mod reconcile;
+pub mod settings;
 pub mod shell;
 pub mod signin;
 pub mod statements;
 pub mod store;
 pub mod theme;
 pub mod transactions;
+pub mod trust;
 pub mod verification;
 pub mod web_format;

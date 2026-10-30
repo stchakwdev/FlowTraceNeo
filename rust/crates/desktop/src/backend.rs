@@ -73,6 +73,16 @@ pub struct Organisation {
     pub base_currency: String,
 }
 
+/// A member of an organisation, as an access group member can be picked (`OrgMember`,
+/// `flowtrace/src/lib/types.ts`; the module's member rows).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrgMember {
+    /// Their user id.
+    pub user_id: String,
+    /// Display name.
+    pub name: String,
+}
+
 /// Where the backend stands with its server.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum ConnectionStatus {
@@ -558,6 +568,22 @@ pub trait LedgerBackend {
     /// has a trust row.
     fn public_badges(&self) -> Vec<PublicBadge> {
         Vec::new()
+    }
+
+    /// The organisation's members by name (`getOrgMembers`, the module's member rows), for
+    /// adding one to an access group (pre-decision P7: the screen needed them, so the backend
+    /// gives them). By default the backend's own actor.
+    fn org_members(&self, org: &OrganizationId) -> Vec<OrgMember> {
+        let mut people: Vec<OrgMember> = self
+            .actor(org)
+            .map(|a| OrgMember {
+                user_id: a.id.as_str().to_owned(),
+                name: a.name,
+            })
+            .into_iter()
+            .collect();
+        people.sort_by(|a, b| a.name.cmp(&b.name));
+        people
     }
 }
 
@@ -1802,6 +1828,15 @@ mod tests {
             err,
             BackendError::Connection("Default access groups cannot be deleted.".to_owned())
         );
+    }
+
+    #[test]
+    fn the_in_process_members_are_the_actor() {
+        let backend = backend();
+        let people = backend.org_members(&demo());
+        assert_eq!(people.len(), 1);
+        assert_eq!(people[0].user_id, demo_actor().id.as_str());
+        assert_eq!(people[0].name, demo_actor().name);
     }
 
     #[test]

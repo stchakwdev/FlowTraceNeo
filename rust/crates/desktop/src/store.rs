@@ -18,7 +18,7 @@ use ledger_module::transparency::types::{AccessType, NewVerification, Verificati
 
 use crate::backend::{
     BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, FlowWrite,
-    LedgerBackend, SettingsWrite, Submission,
+    LedgerBackend, OrgMember, SettingsWrite, Submission,
 };
 use crate::model::LedgerView;
 use crate::proofs::{LinkKind, ProofsClient, ProofsError};
@@ -369,6 +369,15 @@ impl StoreCore {
         self.backend.public_badges()
     }
 
+    /// The selected organisation's members by name ([`LedgerBackend::org_members`]).
+    #[must_use]
+    pub fn org_members(&self) -> Vec<OrgMember> {
+        self.view
+            .selected()
+            .map(|org| self.backend.org_members(&org.id))
+            .unwrap_or_default()
+    }
+
     /// The organisations a chain can be requested of ([`LedgerBackend::public_organizations`]).
     #[must_use]
     pub fn public_organizations(&self) -> Vec<PublicOrganization> {
@@ -585,6 +594,12 @@ impl LedgerStore {
     #[must_use]
     pub fn public_badges(&self) -> Vec<PublicBadge> {
         self.core.public_badges()
+    }
+
+    /// [`StoreCore::org_members`].
+    #[must_use]
+    pub fn org_members(&self) -> Vec<OrgMember> {
+        self.core.org_members()
     }
 
     /// [`StoreCore::public_organizations`].
