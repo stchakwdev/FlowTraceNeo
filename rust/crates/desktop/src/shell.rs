@@ -28,7 +28,9 @@ use crate::model::{
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
 use crate::panels::campaigns::CampaignsPanel;
-use crate::panels::dashboard::DashboardPanel;
+use crate::panels::chains::ChainsPanel;
+use crate::panels::dashboard::{DashboardPanel, OpenFlows};
+use crate::panels::flows::{FlowsPanel, OpenLedgerLines};
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
 use crate::panels::grants::GrantsPanel;
 use crate::panels::journal::JournalPanel;
@@ -62,6 +64,8 @@ pub struct Shell {
     reconcile: Entity<ReconcilePanel>,
     dashboard: Entity<DashboardPanel>,
     campaigns: Entity<CampaignsPanel>,
+    flows: Entity<FlowsPanel>,
+    chains: Entity<ChainsPanel>,
     scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -107,6 +111,8 @@ impl Shell {
         let reconcile = cx.new(|cx| ReconcilePanel::new(store.clone(), window, cx));
         let dashboard = cx.new(|cx| DashboardPanel::new(store.clone(), window, cx));
         let campaigns = cx.new(|cx| CampaignsPanel::new(store.clone(), window, cx));
+        let flows = cx.new(|cx| FlowsPanel::new(store.clone(), window, cx));
+        let chains = cx.new(|cx| ChainsPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe_in(&store, window, |shell, _, window, cx| {
@@ -115,6 +121,10 @@ impl Shell {
             }),
             cx.subscribe_in(&org_select, window, Self::on_org_selected),
             cx.subscribe_in(&general_ledger, window, Self::on_open_entry),
+            cx.subscribe_in(&flows, window, Self::on_open_ledger_lines),
+            cx.subscribe_in(&dashboard, window, |shell, _, _: &OpenFlows, window, cx| {
+                shell.select_entry(NavEntry::Flows, window, cx);
+            }),
         ];
 
         let focus = cx.focus_handle();
@@ -138,6 +148,8 @@ impl Shell {
             reconcile,
             dashboard,
             campaigns,
+            flows,
+            chains,
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
@@ -178,6 +190,34 @@ impl Shell {
     #[must_use]
     pub fn general_ledger(&self) -> &Entity<GeneralLedgerPanel> {
         &self.general_ledger
+    }
+
+    /// The Chains panel, for the launch flags (`app.rs`).
+    #[must_use]
+    pub fn chains(&self) -> &Entity<ChainsPanel> {
+        &self.chains
+    }
+
+    /// The Flows panel, for the launch flags (`app.rs`).
+    #[must_use]
+    pub fn flows(&self) -> &Entity<FlowsPanel> {
+        &self.flows
+    }
+
+    /// A ledger link on the flow map opens the General ledger on those lines only, as the web's
+    /// links to `/ledger/general?source=` and `?node=` do.
+    fn on_open_ledger_lines(
+        &mut self,
+        _: &Entity<FlowsPanel>,
+        event: &OpenLedgerLines,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let records = self.store.read(cx).view().transparency().cloned();
+        let filter = event.0.filter(records.as_deref());
+        self.general_ledger
+            .update(cx, |gl, cx| gl.open_scope(filter, window, cx));
+        self.select_entry(NavEntry::GeneralLedger, window, cx);
     }
 
     /// A line clicked in the General ledger opens its entry on the Journal screen.
@@ -260,6 +300,16 @@ impl Shell {
                 && self.nav.entry == NavEntry::Reconcile
                 && self
                     .reconcile
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Flows
+                && self
+                    .flows
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Chains
+                && self
+                    .chains
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)))
             || (books
                 && self.nav.entry == NavEntry::Campaigns
@@ -386,6 +436,8 @@ impl Shell {
             NavEntry::Reports => self.reports.clone().into_any_element(),
             NavEntry::Dashboard => self.dashboard.clone().into_any_element(),
             NavEntry::Campaigns => self.campaigns.clone().into_any_element(),
+            NavEntry::Flows => self.flows.clone().into_any_element(),
+            NavEntry::Chains => self.chains.clone().into_any_element(),
         }
     }
 
@@ -442,7 +494,7 @@ impl Shell {
                         .w(px(12.0))
                         .text_size(px(text::LABEL))
                         .when(!active, |key| key.text_color(p.ink_muted.to_hsla()))
-                        .child(entry.key()),
+                        .child(entry.key().unwrap_or_default()),
                 )
                 .child(entry.label())
                 .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {

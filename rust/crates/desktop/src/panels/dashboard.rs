@@ -4,15 +4,16 @@
 //! only draws. Also the draw helpers Campaigns shares: a key-figure row with details, the
 //! coverage bar of a [`Bar`] and the proof line mark (`StatusMark`).
 //!
-//! The web's header links ("Record a transaction", "Open the flow map") and the donor hover
-//! that dims other movements are left out: the desktop has no transactions or flow map screen
-//! yet (`rust/docs/handoff.md`).
+//! The header's "Open the flow map" emits [`OpenFlows`] for the shell (DT2). "Record a
+//! transaction" and the donor hover that dims other movements are left out: the desktop has no
+//! transactions screen yet (DT3, `rust/docs/handoff.md`).
 
+use gpui_kit::component::button::Button;
 use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, Context, Div, Entity, FontWeight, IntoElement, ParentElement, Render, Styled as _,
-    Subscription, Window, div, px, relative,
+    AnyElement, ClickEvent, Context, Div, Entity, EventEmitter, FontWeight, IntoElement,
+    ParentElement, Render, Styled as _, Subscription, Window, div, px, relative,
 };
 use ledger_core::Minor;
 use ledger_core::demo::DEMO_ORG_ID;
@@ -24,6 +25,10 @@ use crate::panels::{demo_tag, page_title, section_header};
 use crate::store::LedgerStore;
 use crate::theme::{Palette, palette, space, text};
 
+/// Emitted by "Open the flow map" (`dashboard.tsx` header): the shell shows Flows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OpenFlows;
+
 /// The Dashboard screen.
 pub struct DashboardPanel {
     store: Entity<LedgerStore>,
@@ -33,6 +38,8 @@ pub struct DashboardPanel {
     dashboard: Option<Dashboard>,
     _subscriptions: Vec<Subscription>,
 }
+
+impl EventEmitter<OpenFlows> for DashboardPanel {}
 
 impl DashboardPanel {
     /// The screen over `store`.
@@ -70,10 +77,19 @@ impl DashboardPanel {
         cx.notify();
     }
 
-    fn header(&self, cx: &Context<Self>) -> impl IntoElement {
+    fn header(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let p = palette(cx.theme().mode);
         let as_of = self.dashboard.as_ref().and_then(|d| d.as_of.clone());
-        v_flex().gap(px(8.0)).child(page_title("Dashboard")).child(
+        let open = Button::new("open-flow-map")
+            .outline()
+            .label("Open the flow map")
+            .on_click(cx.listener(|_, _: &ClickEvent, _, cx| cx.emit(OpenFlows)));
+        let title = h_flex()
+            .justify_between()
+            .items_end()
+            .child(page_title("Dashboard"))
+            .child(open);
+        v_flex().gap(px(8.0)).child(title).child(
             h_flex()
                 .gap(px(12.0))
                 .text_size(px(text::BODY))

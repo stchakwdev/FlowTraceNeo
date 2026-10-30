@@ -427,7 +427,7 @@ fn the_store_reads_chains_at_open_and_again_after_a_chain_write() {
         .find(|c| c.chain.id == pending)
         .unwrap();
     assert_eq!(c.chain.status, ChainStatus::Rejected);
-    assert!(!store.public_organizations().is_empty());
+    assert_ne!(store.public_organizations().len(), 0);
     assert_eq!(store.chain_activity(&pending)[0].chain_id, pending);
 }
 

@@ -13,8 +13,8 @@ use std::sync::Arc;
 use ledger_core::Minor;
 use ledger_core::reports::{self, LineFilter};
 use ledger_core::types::{
-    AccountId, AccountType, DimensionId, DimensionKind, EntryId, EntryStatus, FundId, GrantId,
-    IsoDate, LedgerState, PeriodId,
+    AccountId, AccountType, DimensionId, DimensionKind, EntryId, EntryStatus, FlowNodeId, FundId,
+    GrantId, IsoDate, JournalEntry, JournalLine, LedgerState, PeriodId, SourceType,
 };
 
 use crate::accounts::{format_minor, format_short_date};
@@ -37,9 +37,94 @@ pub struct GlFilter {
     pub from: Option<IsoDate>,
     /// Last date, inclusive.
     pub to: Option<IsoDate>,
+    /// The lines of one movement or entry (the web's `source` search, `general.tsx:91`), from
+    /// the flow map.
+    pub source: Option<GlSource>,
+    /// The lines recorded against one flow node (`node`, `general.tsx:92`), from the flow map.
+    pub node: Option<FlowNodeId>,
+}
+
+/// A `source` scope: a transaction or entry id, and the journal entries a transaction is linked
+/// to (`journal_entry_ids`, ledger-module `transparency::flows::Transaction`).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
+pub struct GlSource {
+    /// Transaction or entry id.
+    pub id: String,
+    /// The entries the transaction is linked to; empty for none.
+    pub entries: Vec<EntryId>,
+}
+
+impl GlSource {
+    /// Whether `entry` belongs to the scope: one of the linked entries when there are any, else
+    /// an entry the transaction is the source of (`source_type` `transaction`, `bridge.ts:83-86`)
+    /// or the entry itself (`l.entry.source_id === s.source || l.entry.id === s.source`,
+    /// `general.tsx:91`).
+    #[must_use]
+    pub fn holds(&self, entry: &JournalEntry) -> bool {
+        if !self.entries.is_empty() {
+            return self.entries.contains(&entry.id);
+        }
+        entry.id.as_str() == self.id
+            || (entry.source_type == SourceType::Transaction
+                && entry.source_id.as_deref() == Some(self.id.as_str()))
+    }
 }
 
 impl GlFilter {
+    /// Whether a flow-map scope (`source` or `node`) is set.
+    #[must_use]
+    pub fn has_scope(&self) -> bool {
+        self.source.is_some() || self.node.is_some()
+    }
+
+    /// Whether a posted line passes the flow-map scope (`general.tsx:91-92`).
+    fn in_scope(&self, line: &JournalLine, entry: &JournalEntry) -> bool {
+        self.source.as_ref().is_none_or(|s| s.holds(entry))
+            && self
+                .node
+                .as_ref()
+                .is_none_or(|n| line.flow_node_id.as_ref() == Some(n))
+    }
+
+    /// The note over a scoped ledger (`scopeNote`, `general.tsx:145-157`): the entry's number
+    /// when the source is an entry, else one source document; the node's dimension or donor
+    /// name, else "selected on the flow map". `None` without a scope.
+    #[must_use]
+    pub fn scope_note(&self, state: &LedgerState) -> Option<String> {
+        if let Some(source) = &self.source {
+            return Some(
+                match state.entries.iter().find(|e| e.id.as_str() == source.id) {
+                    Some(e) => format!(
+                        "Lines of {} and anything it reverses or is reversed by",
+                        e.number
+                    ),
+                    None => "Lines from one source document".to_owned(),
+                },
+            );
+        }
+        let node = self.node.as_ref()?;
+        let name = state
+            .dimensions
+            .iter()
+            .find(|d| d.node_id.as_ref() == Some(node))
+            .map(|d| d.name.as_str())
+            .or_else(|| {
+                state
+                    .grants
+                    .iter()
+                    .find(|g| g.donor_node_id.as_ref() == Some(node))
+                    .map(|g| g.donor_name.as_str())
+            })
+            .unwrap_or("selected on the flow map");
+        Some(format!("Lines recorded against the flow node {name}"))
+    }
+
+    /// "Show all lines" (`general.tsx:203-213`): drops the flow-map scope, keeping the rest.
+    pub fn show_all_lines(&mut self) {
+        self.source = None;
+        self.node = None;
+    }
+
     /// The report filter for `state`: the ids as given (`general.tsx`, `buildLedger`), and the
     /// dates as the overlap of the period and `from`/`to`. A period not in `state` bounds
     /// nothing.
@@ -426,7 +511,12 @@ impl GlTable {
     /// Derives the table of `state` under `filter`.
     #[must_use]
     pub fn derive(state: &LedgerState, filter: &GlFilter) -> Self {
-        let report = match reports::general_ledger(state, &filter.to_line_filter(state)) {
+        let report = if filter.has_scope() {
+            scoped(state, filter)
+        } else {
+            reports::general_ledger(state, &filter.to_line_filter(state))
+        };
+        let report = match report {
             Ok(report) => report,
             Err(err) => {
                 return Self {
@@ -509,6 +599,42 @@ impl GlTable {
     pub fn is_totals_row(&self, row_ix: usize) -> bool {
         !self.rows.is_empty() && row_ix == self.rows.len()
     }
+}
+
+/// The general ledger of only the lines in the flow-map scope, as the web filters lines before
+/// it groups and runs balances (`buildLedger`, `general.tsx:84-121`): the report up to `to`
+/// from the start, the scope's lines kept, running balances over them alone, then the lines
+/// before `from` folded into the opening.
+fn scoped(
+    state: &LedgerState,
+    filter: &GlFilter,
+) -> Result<reports::GeneralLedger, reports::ReportError> {
+    let mut lf = filter.to_line_filter(state);
+    let from = lf.from.take();
+    let all = reports::general_ledger(state, &lf)?;
+    let mut opening: std::collections::BTreeMap<AccountId, Minor> =
+        std::collections::BTreeMap::default();
+    let mut running = opening.clone();
+    let mut rows = Vec::new();
+    for mut r in all.rows {
+        if !filter.in_scope(&r.line.line, &r.line.entry) {
+            continue;
+        }
+        let id = r.line.line.account_id.clone();
+        let sum = running.get(&id).copied().unwrap_or(0) + r.line.line.base_amount;
+        running.insert(id.clone(), sum);
+        if from.as_ref().is_some_and(|f| r.line.entry.date < *f) {
+            opening.insert(id, sum);
+            continue;
+        }
+        r.running = sum;
+        rows.push(r);
+    }
+    Ok(reports::GeneralLedger {
+        rows,
+        opening,
+        closing: running,
+    })
 }
 
 /// Keeps the last derived table and derives again only when the books' revision or the filter
@@ -1079,6 +1205,144 @@ mod tests {
         // The bank opened February at (10.00) and closes it at 40.00.
         assert_eq!(table.rows[0].balance, 4_000);
         assert_eq!(table.totals.debits, 5_000);
+    }
+
+    const TXN: &str = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01";
+    const GENERAL_FUND: &str = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+
+    /// Running balances over the kept rows only, per account (`general.tsx:88-121`).
+    fn assert_running(table: &GlTable, demo: &LedgerState) {
+        let mut running: HashMap<String, Minor> = HashMap::new();
+        for r in &table.rows {
+            let line = demo
+                .lines
+                .iter()
+                .find(|l| {
+                    l.entry_id == r.entry_id
+                        && (l.base_amount.max(0) == r.debit)
+                        && ((-l.base_amount).max(0) == r.credit)
+                })
+                .unwrap();
+            let account = demo
+                .accounts
+                .iter()
+                .find(|a| a.id == line.account_id)
+                .unwrap();
+            let sum = running.entry(account.id.as_str().to_owned()).or_insert(0);
+            *sum += line.base_amount;
+            assert_eq!(r.balance, reports::natural(account.normal_balance, *sum));
+        }
+    }
+
+    #[test]
+    fn a_source_keeps_the_lines_of_its_entries_with_their_own_running_balances() {
+        let demo = build_demo_ledger().unwrap();
+        let entries: Vec<&ledger_core::types::JournalEntry> = demo
+            .entries
+            .iter()
+            .filter(|e| e.source_id.as_deref() == Some(TXN))
+            .collect();
+        assert!(!entries.is_empty(), "the demo posts the movement");
+        let filter = GlFilter {
+            source: Some(GlSource {
+                id: TXN.to_owned(),
+                entries: Vec::new(),
+            }),
+            ..GlFilter::default()
+        };
+        let table = GlTable::derive(&demo, &filter);
+        assert_ne!(table.rows.len(), 0);
+        assert!(
+            table
+                .rows
+                .iter()
+                .all(|r| entries.iter().any(|e| e.id == r.entry_id))
+        );
+        assert_running(&table, &demo);
+        assert_eq!(
+            filter.scope_note(&demo).as_deref(),
+            Some("Lines from one source document")
+        );
+
+        // Linked entries win over the source id: the module's journal_entry_ids.
+        let other = demo
+            .entries
+            .iter()
+            .find(|e| e.status == EntryStatus::Posted && e.source_id.as_deref() != Some(TXN))
+            .unwrap();
+        let linked = GlFilter {
+            source: Some(GlSource {
+                id: TXN.to_owned(),
+                entries: vec![other.id.clone()],
+            }),
+            ..GlFilter::default()
+        };
+        let table = GlTable::derive(&demo, &linked);
+        assert_ne!(table.rows.len(), 0);
+        assert!(table.rows.iter().all(|r| r.entry_id == other.id));
+
+        // An entry id as the source: the web's `l.entry.id === s.source`.
+        let by_entry = GlFilter {
+            source: Some(GlSource {
+                id: other.id.as_str().to_owned(),
+                entries: Vec::new(),
+            }),
+            ..GlFilter::default()
+        };
+        assert_eq!(
+            GlTable::derive(&demo, &by_entry).rows.len(),
+            table.rows.len()
+        );
+        assert_eq!(
+            by_entry.scope_note(&demo),
+            Some(format!(
+                "Lines of {} and anything it reverses or is reversed by",
+                other.number
+            ))
+        );
+    }
+
+    #[test]
+    fn a_node_keeps_the_lines_recorded_against_it_and_names_it() {
+        let demo = build_demo_ledger().unwrap();
+        let filter = GlFilter {
+            node: Some(FlowNodeId::from(GENERAL_FUND)),
+            from: Some(date("2026-01-10")),
+            ..GlFilter::default()
+        };
+        let table = GlTable::derive(&demo, &filter);
+        let tagged: Vec<_> = demo
+            .lines
+            .iter()
+            .filter(|l| l.flow_node_id.as_ref().map(FlowNodeId::as_str) == Some(GENERAL_FUND))
+            .collect();
+        assert_ne!(tagged.len(), 0);
+        assert_ne!(table.rows.len(), 0);
+        assert!(table.rows.iter().all(|r| r.date.as_str() >= "2026-01-10"));
+        assert!(table.rows.len() <= tagged.len());
+        let note = filter.scope_note(&demo).unwrap();
+        assert!(
+            note.starts_with("Lines recorded against the flow node "),
+            "{note}"
+        );
+        let nowhere = GlFilter {
+            node: Some(FlowNodeId::from("nowhere")),
+            ..GlFilter::default()
+        };
+        assert_eq!(
+            nowhere.scope_note(&demo).as_deref(),
+            Some("Lines recorded against the flow node selected on the flow map")
+        );
+        assert_eq!(GlTable::derive(&demo, &nowhere).rows.len(), 0);
+        assert_eq!(GlFilter::default().scope_note(&demo), None);
+
+        let mut cleared = filter.clone();
+        cleared.show_all_lines();
+        assert_eq!(cleared.node, None);
+        assert_eq!(
+            cleared.from, filter.from,
+            "Show all lines keeps the other filters"
+        );
     }
 
     #[test]

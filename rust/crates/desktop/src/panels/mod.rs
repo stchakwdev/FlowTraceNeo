@@ -5,7 +5,9 @@
 pub mod accounts;
 pub mod bills;
 pub mod campaigns;
+pub mod chains;
 pub mod dashboard;
+pub mod flows;
 pub mod general_ledger;
 pub mod grants;
 pub mod journal;
@@ -36,6 +38,7 @@ use crate::theme::{palette, space, text};
 pub fn task_of(entry: NavEntry) -> &'static str {
     match entry {
         NavEntry::Dashboard | NavEntry::Campaigns => "DT1",
+        NavEntry::Flows | NavEntry::Chains => "DT2",
         NavEntry::Accounts => "U2",
         NavEntry::Journal => "U3",
         NavEntry::GeneralLedger => "U4",
@@ -75,6 +78,11 @@ pub(crate) fn write_campaign<T: 'static>(
 }
 
 /// [`submit`] for a flow map write ([`LedgerStore::write_flow`]).
+#[expect(
+    dead_code,
+    reason = "no DT2 screen writes the flow map; the Transactions screen (DT3) records movements \
+              through it"
+)]
 pub(crate) fn write_flow<T: 'static>(
     this: &mut T,
     store: &Entity<LedgerStore>,
@@ -400,6 +408,7 @@ mod tests {
             tasks,
             [
                 "DT1",
+                "DT2",
                 "U2",
                 "U3",
                 "U4",
@@ -407,7 +416,8 @@ mod tests {
                 "U7",
                 "U8",
                 "U9",
-                "DT1"
+                "DT1",
+                "DT2"
             ]
         );
     }

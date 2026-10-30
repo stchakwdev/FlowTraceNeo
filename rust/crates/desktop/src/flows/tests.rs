@@ -6,6 +6,7 @@ use super::*;
 use crate::backend::demo_transparency;
 use crate::bills::days_between;
 use crate::dashboard::transactions;
+use ledger_core::types::{EntryId, FlowNodeId};
 
 /// The web's own output over the demo transactions (`rust/tools/src/flow-graph.ts`).
 const FIXTURE: &str = include_str!("../../../../fixtures/transparency-flow-graph.json");
@@ -46,10 +47,7 @@ fn status_of(s: &str) -> TransactionStatus {
 
 /// `M x1 y1 C mx y1, mx y2, x2 y2` back into its numbers.
 fn path_of(s: &str) -> EdgePath {
-    let n: Vec<f64> = s
-        .split(|c: char| c == ' ' || c == ',')
-        .filter_map(|p| p.parse().ok())
-        .collect();
+    let n: Vec<f64> = s.split([' ', ',']).filter_map(|p| p.parse().ok()).collect();
     assert_eq!(n.len(), 8, "{s}");
     assert_eq!((n[1], n[2], n[5]), (n[3], n[4], n[7]), "{s}");
     EdgePath {
@@ -413,4 +411,34 @@ fn dashes_scale_with_the_line_and_the_cross_with_its_width() {
     assert_eq!(node_amount(&node), ("in KES ", "850K".to_owned()));
     assert_eq!(meta_baseline(&node), 47.0);
     assert_eq!(name_baseline(2), 61.0);
+}
+
+#[test]
+fn a_ledger_link_opens_the_linked_entries_else_the_source() {
+    let mut t = demo_transparency().unwrap();
+    let id = t.transactions[0].id.clone();
+    let source = LedgerLink::Source(id.clone()).filter(Some(&t));
+    assert_eq!(
+        source.source,
+        Some(crate::general_ledger::GlSource {
+            id: id.clone(),
+            entries: vec![]
+        }),
+        "the demo's movements carry no links, so the source id resolves"
+    );
+    assert_eq!(source.node, None);
+    t.transactions[0].journal_entry_ids = vec!["e1".to_owned(), "e2".to_owned()];
+    let linked = LedgerLink::Source(id).filter(Some(&t));
+    let entries: Vec<&str> = linked
+        .source
+        .as_ref()
+        .unwrap()
+        .entries
+        .iter()
+        .map(EntryId::as_str)
+        .collect();
+    assert_eq!(entries, ["e1", "e2"]);
+    let node = LedgerLink::Node("n1".to_owned()).filter(None);
+    assert_eq!(node.node.as_ref().map(FlowNodeId::as_str), Some("n1"));
+    assert_eq!(node.source, None);
 }

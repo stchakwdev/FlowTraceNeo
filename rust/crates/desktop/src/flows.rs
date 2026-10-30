@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use ledger_core::Minor;
-use ledger_core::types::IsoDate;
+use ledger_core::types::{EntryId, FlowNodeId, IsoDate};
 use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::flows::{
     NodeRef, NodeType, TransactionStatus, TransactionWithNodes,
@@ -17,6 +17,7 @@ use ledger_module::transparency::flows::{
 
 use crate::bills::add_days;
 use crate::dashboard::{Figure, proof_label};
+use crate::general_ledger::{GlFilter, GlSource};
 use crate::web_format::{format_compact, format_date, format_money};
 
 // ---------------------------------------------------------------------------------------------
@@ -300,29 +301,30 @@ impl EdgePath {
         (x, y)
     }
 
-    /// The shortest distance from `(x, y)` to the curve, by 64 samples refined around the best.
+    /// The shortest distance from `(px, py)` to the curve, by 64 samples refined around the
+    /// best.
     #[must_use]
-    pub fn distance(&self, x: f64, y: f64) -> f64 {
-        let d = |t: f64| {
-            let (px, py) = self.at(t);
-            (px - x).hypot(py - y)
+    pub fn distance(&self, px: f64, py: f64) -> f64 {
+        let gap = |at: f64| {
+            let (cx, cy) = self.at(at);
+            (cx - px).hypot(cy - py)
         };
         let steps = 64_u32;
-        let (mut best_t, mut best) = (0.0, f64::INFINITY);
+        let (mut best_at, mut best) = (0.0, f64::INFINITY);
         for i in 0..=steps {
-            let t = f64::from(i) / f64::from(steps);
-            let v = d(t);
-            if v < best {
-                (best_t, best) = (t, v);
+            let at = f64::from(i) / f64::from(steps);
+            let here = gap(at);
+            if here < best {
+                (best_at, best) = (at, here);
             }
         }
         let mut span = 1.0 / f64::from(steps);
         for _ in 0..12 {
-            for t in [best_t - span / 2.0, best_t + span / 2.0] {
-                let t = t.clamp(0.0, 1.0);
-                let v = d(t);
-                if v < best {
-                    (best_t, best) = (t, v);
+            for at in [best_at - span / 2.0, best_at + span / 2.0] {
+                let at = at.clamp(0.0, 1.0);
+                let here = gap(at);
+                if here < best {
+                    (best_at, best) = (at, here);
                 }
             }
             span /= 2.0;
@@ -743,7 +745,10 @@ fn order_rows(nodes: &mut [GraphNode], drafts: &[Draft], columns: usize) -> Vec<
         col.sort_by(|&a, &b| {
             let (sa, sb) = (scores[&a], scores[&b]);
             // `score(a) - score(b)` is NaN for two infinities, which reads as a tie.
-            let by_score = if sa.is_infinite() && sb.is_infinite() && sa == sb {
+            let by_score = if sa.is_infinite()
+                && sb.is_infinite()
+                && sa.is_sign_positive() == sb.is_sign_positive()
+            {
                 Ordering::Equal
             } else {
                 sa.partial_cmp(&sb).unwrap_or(Ordering::Equal)
@@ -1178,6 +1183,40 @@ pub enum LedgerLink {
     Node(String),
 }
 
+impl LedgerLink {
+    /// The General ledger filter this link opens (`flow-details.tsx` links to
+    /// `/ledger/general?source=` or `?node=`, replacing any other filter): a movement's lines
+    /// through the journal entries it is linked to (`journal_entry_ids`), else through the
+    /// entries it is the source of; a node's lines through `flow_node_id`.
+    #[must_use]
+    pub fn filter(&self, t: Option<&OrgTransparency>) -> GlFilter {
+        match self {
+            Self::Source(id) => {
+                let entries = t
+                    .and_then(|t| t.transactions.iter().find(|x| &x.id == id))
+                    .map(|x| {
+                        x.journal_entry_ids
+                            .iter()
+                            .map(|e| EntryId::from(e.as_str()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                GlFilter {
+                    source: Some(GlSource {
+                        id: id.clone(),
+                        entries,
+                    }),
+                    ..GlFilter::default()
+                }
+            }
+            Self::Node(id) => GlFilter {
+                node: Some(FlowNodeId::from(id.as_str())),
+                ..GlFilter::default()
+            },
+        }
+    }
+}
+
 /// One movement in a details list (`MovementList`, `flow-details.tsx:175-237`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MovementItem {
@@ -1270,17 +1309,17 @@ impl Details {
     #[must_use]
     pub fn of(graph: &FlowGraph, selection: &Selection) -> Option<Self> {
         match selection {
-            Selection::Edge(id) => Self::edge(graph, graph.edge(id)?),
+            Selection::Edge(id) => Some(Self::edge(graph, graph.edge(id)?)),
             Selection::Node(id) => Some(Self::node(graph, graph.node(id)?)),
         }
     }
 
-    fn edge(graph: &FlowGraph, edge: &GraphEdge) -> Option<Self> {
+    fn edge(graph: &FlowGraph, edge: &GraphEdge) -> Self {
         let name = |id: &str| graph.node(id).map_or("Unknown", |n| n.name.as_str());
         let mut txns = edge.transactions.clone();
         by_date_desc(&mut txns);
         let several = txns.len() > 1;
-        Some(Self {
+        Self {
             heading: format!("{} \u{2192} {}", name(&edge.source), name(&edge.target)),
             subtitle: format!("{} on this line", plural(txns.len(), "movement")),
             figures: vec![("Moved in period", format_money(edge.amount, "KES"))],
@@ -1295,7 +1334,7 @@ impl Details {
                 title: "Movements".to_owned(),
                 items: txns.iter().map(|t| item(t, None, None, several)).collect(),
             }],
-        })
+        }
     }
 
     fn node(graph: &FlowGraph, node: &GraphNode) -> Self {

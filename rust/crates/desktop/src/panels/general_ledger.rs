@@ -15,13 +15,14 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::input::{Input, InputEvent, InputState};
 use gpui_kit::component::select::{Select, SelectEvent, SelectState};
 use gpui_kit::component::table::{Column, DataTable, TableDelegate, TableEvent, TableState};
 use gpui_kit::component::{ActiveTheme as _, IndexPath, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    App, AppContext as _, Context, Div, Entity, EventEmitter, FontWeight, IntoElement,
+    App, AppContext as _, ClickEvent, Context, Div, Entity, EventEmitter, FontWeight, IntoElement,
     ParentElement as _, Render, SharedString, Styled, Subscription, Window, div, px,
 };
 use ledger_core::types::{EntryId, IsoDate, LedgerState, OrganizationId};
@@ -249,6 +250,51 @@ impl GeneralLedgerPanel {
         };
         panel.refresh(window, cx);
         panel
+    }
+
+    /// Shows only the lines `filter` scopes, as the flow map's ledger links do
+    /// (`flow-details.tsx`, a link to `/ledger/general` with `source` or `node` and no other
+    /// filter): the other filters and the dates are cleared.
+    pub fn open_scope(&mut self, filter: GlFilter, window: &mut Window, cx: &mut Context<Self>) {
+        self.filter = filter;
+        self.detail = None;
+        self.date_error = None;
+        self.choices_revision = None;
+        for input in [&self.from, &self.to] {
+            input.update(cx, |i, cx| i.set_value("", window, cx));
+        }
+        self.refresh(window, cx);
+    }
+
+    /// "Show all lines" (`general.tsx:203-213`): drops the flow-map scope.
+    fn show_all_lines(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.filter.show_all_lines();
+        self.refresh(window, cx);
+    }
+
+    /// The scope note and its "Show all lines" button (`general.tsx:200-214`).
+    fn scope_note(&self, cx: &mut Context<Self>) -> Option<impl IntoElement + use<>> {
+        let books = self.store.read(cx).view().snapshot().cloned()?;
+        let note = self.filter.scope_note(&books)?;
+        let p = palette(cx.theme().mode);
+        Some(
+            h_flex()
+                .justify_between()
+                .gap(px(8.0))
+                .py(px(12.0))
+                .border_b(px(space::HAIRLINE))
+                .border_color(p.hairline.to_hsla())
+                .text_size(px(text::BODY))
+                .child(div().font_weight(FontWeight::SEMIBOLD).child(note))
+                .child(
+                    Button::new("gl-show-all")
+                        .ghost()
+                        .label("Show all lines")
+                        .on_click(cx.listener(|panel, _: &ClickEvent, window, cx| {
+                            panel.show_all_lines(window, cx);
+                        })),
+                ),
+        )
     }
 
     /// Applies the launch flags: a filter, a row to open, the scroll measurement.
@@ -633,6 +679,7 @@ impl GeneralLedgerPanel {
 
 impl Render for GeneralLedgerPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let scope = self.scope_note(cx);
         let p = palette(cx.theme().mode);
         let view = self.store.read(cx).view();
         let demo = view
@@ -714,7 +761,8 @@ impl Render for GeneralLedgerPanel {
             .child(
                 v_flex()
                     .child(section_header("Filters", div(), cx))
-                    .child(self.filters(cx)),
+                    .child(self.filters(cx))
+                    .children(scope),
             )
             .child(
                 v_flex()

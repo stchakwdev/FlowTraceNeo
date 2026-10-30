@@ -14,19 +14,15 @@ fn demo_chains() -> Vec<ChainDetails> {
     InProcessBackend::with_demo_and_empty().unwrap().chains()
 }
 
-fn perms(
-    nodes: bool,
-    amounts: bool,
-    proofs: bool,
-    full: bool,
-    executor: bool,
-) -> AccessGroupPermissions {
+/// Permissions with the named ones on.
+fn perms(on: &[&str]) -> AccessGroupPermissions {
+    let has = |name: &str| on.contains(&name);
     AccessGroupPermissions {
-        can_view_nodes: nodes,
-        can_view_amounts: amounts,
-        can_view_proofs: proofs,
-        can_view_executor: executor,
-        can_view_full_proofs: full,
+        can_view_nodes: has("nodes"),
+        can_view_amounts: has("amounts"),
+        can_view_proofs: has("proofs"),
+        can_view_executor: has("executor"),
+        can_view_full_proofs: has("full"),
         can_edit_nodes: false,
         can_edit_transactions: false,
         can_manage_members: false,
@@ -36,24 +32,18 @@ fn perms(
 
 #[test]
 fn describe_access_reads_as_the_web() {
+    assert_eq!(describe_access(&perms(&[])), "Sees nothing yet.");
+    assert_eq!(describe_access(&perms(&["nodes"])), "Sees the flow.");
     assert_eq!(
-        describe_access(&perms(false, false, false, false, false)),
-        "Sees nothing yet."
-    );
-    assert_eq!(
-        describe_access(&perms(true, false, false, false, false)),
-        "Sees the flow."
-    );
-    assert_eq!(
-        describe_access(&perms(true, true, false, false, false)),
+        describe_access(&perms(&["nodes", "amounts"])),
         "Sees the flow and amounts."
     );
     assert_eq!(
-        describe_access(&perms(true, true, true, false, true)),
+        describe_access(&perms(&["nodes", "amounts", "proofs", "executor"])),
         "Sees the flow, amounts, proof summaries and who handled each payment."
     );
     assert_eq!(
-        describe_access(&perms(false, false, true, true, false)),
+        describe_access(&perms(&["proofs", "full"])),
         "Sees original proofs.",
         "full proofs win over summaries"
     );
@@ -142,7 +132,7 @@ fn ended_rows_read_their_dates_and_reason_and_sort_last() {
         id: "g".to_owned(),
         name: "Partners".to_owned(),
         slug: "partners".to_owned(),
-        permissions: perms(true, true, false, false, false),
+        permissions: perms(&["nodes", "amounts"]),
     });
     let v = ChainsView::of(&chains, DEMO_ORG_ID);
     let order: Vec<ChainStatus> = v.incoming.iter().map(|r| r.status).collect();
@@ -233,7 +223,7 @@ fn the_review_dialog_names_the_requester_and_the_hint_follows_priority() {
     assert_eq!(r.title, "Reject TechBridge Solutions");
     assert_eq!(r.submit, ("Reject request", "Rejecting"));
 
-    let p = perms(true, false, false, false, false);
+    let p = perms(&["nodes"]);
     assert_eq!(
         group_hint(true, true, Some(&p)),
         "Choose an access group before approving."

@@ -957,7 +957,7 @@ fn demo_partners(demo: &OrgTransparency) -> Result<Partners, BackendError> {
     let mut public = Vec::new();
     for org in store["organizations"].as_array().into_iter().flatten() {
         let id = org["id"].as_str().unwrap_or_default().to_owned();
-        let score = org["trust_score"].as_i64().unwrap_or(0);
+        let trust_score = org["trust_score"].as_i64().unwrap_or(0);
         let profile = ts::organization(org).map_err(|e| BackendError::Connection(e.to_string()))?;
         public.push(PublicOrganization {
             id: id.clone(),
@@ -969,8 +969,8 @@ fn demo_partners(demo: &OrgTransparency) -> Result<Partners, BackendError> {
             public_slug: profile.public_slug.clone(),
             description: profile.description.clone(),
             logo_key: profile.logo_key.clone(),
-            trust_score: Some(score),
-            grade: Some(trust::trust_grade(score).to_owned()),
+            trust_score: Some(trust_score),
+            grade: Some(trust::trust_grade(trust_score).to_owned()),
             updated_at: profile.updated_at.clone(),
         });
         if id == demo_id {
@@ -978,8 +978,8 @@ fn demo_partners(demo: &OrgTransparency) -> Result<Partners, BackendError> {
         }
         let trust = demo.trust.clone().map(|mut row| {
             row.organization_id.clone_from(&id);
-            row.score = score;
-            row.grade = trust::trust_grade(score).to_owned();
+            row.score = trust_score;
+            trust::trust_grade(trust_score).clone_into(&mut row.grade);
             row
         });
         let t = OrgTransparency {

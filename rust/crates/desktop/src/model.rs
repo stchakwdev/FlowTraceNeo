@@ -18,6 +18,8 @@ use crate::backend::{BackendEvent, ConnectSettings, ConnectionStatus, Organisati
 pub enum NavEntry {
     /// Key figures, funding by donor and recent movements (DT1).
     Dashboard,
+    /// The flow map of money between flow nodes (DT2).
+    Flows,
     /// Chart of accounts and fiscal periods (U2).
     Accounts,
     /// Journal entries and manual entry (U3).
@@ -34,13 +36,16 @@ pub enum NavEntry {
     Reports,
     /// Fundraising campaigns, donations, the preview card and embed code (DT1).
     Campaigns,
+    /// Chain links to partner organisations (DT2).
+    Chains,
 }
 
 impl NavEntry {
     /// Every entry, in navigation order: the rail's sections of `flowtrace/src/lib/navigation.ts`
-    /// (Dashboard alone, the books, then Transparency).
-    pub const ALL: [Self; 9] = [
+    /// (Dashboard and Flows, the books, then Transparency with Campaigns and Chains).
+    pub const ALL: [Self; 11] = [
         Self::Dashboard,
+        Self::Flows,
         Self::Accounts,
         Self::Journal,
         Self::GeneralLedger,
@@ -49,15 +54,17 @@ impl NavEntry {
         Self::Reconcile,
         Self::Reports,
         Self::Campaigns,
+        Self::Chains,
     ];
 
     /// The rail section heading the entry sits under (`navSections`, `navigation.ts:16-44`):
-    /// none for Dashboard, `Books` for the ledger screens, `Transparency` for Campaigns.
+    /// none for Dashboard and Flows, `Books` for the ledger screens, `Transparency` for
+    /// Campaigns and Chains.
     #[must_use]
     pub fn section(self) -> Option<&'static str> {
         match self {
-            Self::Dashboard => None,
-            Self::Campaigns => Some("Transparency"),
+            Self::Dashboard | Self::Flows => None,
+            Self::Campaigns | Self::Chains => Some("Transparency"),
             _ => Some("Books"),
         }
     }
@@ -67,7 +74,9 @@ impl NavEntry {
     pub fn label(self) -> &'static str {
         match self {
             Self::Dashboard => "Dashboard",
+            Self::Flows => "Flows",
             Self::Campaigns => "Campaigns",
+            Self::Chains => "Chains",
             Self::Accounts => "Accounts",
             Self::Journal => "Journal",
             Self::GeneralLedger => "General ledger",
@@ -83,7 +92,11 @@ impl NavEntry {
     pub fn summary(self) -> &'static str {
         match self {
             Self::Dashboard => "Key figures, funding received by donor and recent movements.",
+            Self::Flows => {
+                "Where money came from, where it went, and the proof behind each movement."
+            }
             Self::Campaigns => "Fundraising campaigns, donations, the preview card and embed code.",
+            Self::Chains => "Chain links to partners whose flows are linked to yours.",
             Self::Accounts => {
                 "The chart of accounts and the fiscal periods, with closing and locking."
             }
@@ -97,11 +110,13 @@ impl NavEntry {
     }
 
     /// The key that opens this entry: `0` for Dashboard, `1` to `7` for the books screens in
-    /// order (the keys they had before DT1), `8` for Campaigns.
+    /// order (the keys they had before DT1), `8` for Campaigns, `9` for Flows. Chains has none
+    /// (the digits are spent): it opens from the rail or `--entry chains`.
     #[must_use]
-    pub fn key(self) -> &'static str {
-        match self {
+    pub fn key(self) -> Option<&'static str> {
+        Some(match self {
             Self::Dashboard => "0",
+            Self::Flows => "9",
             Self::Campaigns => "8",
             Self::Accounts => "1",
             Self::Journal => "2",
@@ -110,13 +125,30 @@ impl NavEntry {
             Self::Grants => "5",
             Self::Reconcile => "6",
             Self::Reports => "7",
-        }
+            Self::Chains => return None,
+        })
     }
 
-    /// The entry a key opens, for the keys `0` to `8`.
+    /// The entry a key opens, for the keys `0` to `9`.
     #[must_use]
     pub fn from_key(key: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|entry| entry.key() == key)
+        Self::ALL.into_iter().find(|entry| entry.key() == Some(key))
+    }
+
+    /// The entry's name for `--entry`: its label in lower case with hyphens
+    /// (`general-ledger`).
+    #[must_use]
+    pub fn name(self) -> String {
+        self.label().to_lowercase().replace(' ', "-")
+    }
+
+    /// The entry `--entry` names: a key digit or a [`NavEntry::name`], any case.
+    #[must_use]
+    pub fn from_name(value: &str) -> Option<Self> {
+        Self::from_key(value).or_else(|| {
+            let wanted = value.to_lowercase();
+            Self::ALL.into_iter().find(|entry| entry.name() == wanted)
+        })
     }
 }
 
@@ -155,7 +187,7 @@ impl Navigation {
         self.screen = Screen::Books;
     }
 
-    /// Handles a key pressed with no modifier. Keys `0` to `8` select their entry while the
+    /// Handles a key pressed with no modifier. Keys `0` to `9` select their entry while the
     /// books show; on the connect screen they belong to the form's fields. Returns whether the
     /// key was taken.
     pub fn press_key(&mut self, key: &str) -> bool {
@@ -571,12 +603,13 @@ mod tests {
     }
 
     #[test]
-    fn nav_has_the_nine_entries_in_order() {
+    fn nav_has_the_eleven_entries_in_the_webs_rail_order() {
         let labels: Vec<_> = NavEntry::ALL.iter().map(|e| e.label()).collect();
         assert_eq!(
             labels,
             [
                 "Dashboard",
+                "Flows",
                 "Accounts",
                 "Journal",
                 "General ledger",
@@ -584,13 +617,14 @@ mod tests {
                 "Grants",
                 "Reconcile",
                 "Reports",
-                "Campaigns"
+                "Campaigns",
+                "Chains"
             ]
         );
         let sections: Vec<_> = NavEntry::ALL.iter().map(|e| e.section()).collect();
-        assert_eq!(sections[0], None);
-        assert!(sections[1..8].iter().all(|s| *s == Some("Books")));
-        assert_eq!(sections[8], Some("Transparency"));
+        assert_eq!(sections[..2], [None, None]);
+        assert!(sections[2..9].iter().all(|s| *s == Some("Books")));
+        assert_eq!(sections[9..], [Some("Transparency"), Some("Transparency")]);
         for entry in NavEntry::ALL {
             assert_ne!(entry.summary(), "");
             assert!(entry.summary().is_ascii(), "no emoji: {}", entry.summary());
@@ -598,20 +632,54 @@ mod tests {
     }
 
     #[test]
-    fn keys_zero_to_eight_map_to_the_entries_and_back() {
-        for (i, entry) in NavEntry::ALL.into_iter().enumerate() {
-            let key = i.to_string();
-            assert_eq!(entry.key(), key);
-            assert_eq!(NavEntry::from_key(&key), Some(entry));
-        }
+    fn keys_zero_to_nine_keep_their_entries_and_chains_has_none() {
+        let keys: Vec<(NavEntry, Option<&str>)> =
+            NavEntry::ALL.iter().map(|e| (*e, e.key())).collect();
         assert_eq!(
-            NavEntry::from_key("3"),
-            Some(NavEntry::GeneralLedger),
-            "kept from U1"
+            keys,
+            [
+                (NavEntry::Dashboard, Some("0")),
+                (NavEntry::Flows, Some("9")),
+                (NavEntry::Accounts, Some("1")),
+                (NavEntry::Journal, Some("2")),
+                (NavEntry::GeneralLedger, Some("3")),
+                (NavEntry::Spend, Some("4")),
+                (NavEntry::Grants, Some("5")),
+                (NavEntry::Reconcile, Some("6")),
+                (NavEntry::Reports, Some("7")),
+                (NavEntry::Campaigns, Some("8")),
+                (NavEntry::Chains, None),
+            ]
         );
-        for key in ["9", "a", "", "11", "F1"] {
+        for entry in NavEntry::ALL {
+            if let Some(key) = entry.key() {
+                assert_eq!(NavEntry::from_key(key), Some(entry));
+            }
+        }
+        for key in ["a", "", "10", "11", "F1"] {
             assert_eq!(NavEntry::from_key(key), None, "{key:?}");
         }
+    }
+
+    #[test]
+    fn an_entry_is_named_by_its_digit_or_its_name() {
+        for entry in NavEntry::ALL {
+            assert_eq!(NavEntry::from_name(&entry.name()), Some(entry));
+        }
+        assert_eq!(NavEntry::from_name("chains"), Some(NavEntry::Chains));
+        assert_eq!(NavEntry::from_name("flows"), Some(NavEntry::Flows));
+        assert_eq!(
+            NavEntry::from_name("general-ledger"),
+            Some(NavEntry::GeneralLedger)
+        );
+        assert_eq!(NavEntry::from_name("9"), Some(NavEntry::Flows));
+        assert_eq!(NavEntry::from_name("3"), Some(NavEntry::GeneralLedger));
+        assert_eq!(
+            NavEntry::from_name("Chains"),
+            Some(NavEntry::Chains),
+            "any case"
+        );
+        assert_eq!(NavEntry::from_name("ledger"), None);
     }
 
     #[test]
@@ -620,13 +688,15 @@ mod tests {
         assert_eq!(nav.entry, NavEntry::Accounts);
         assert!(nav.press_key("4"));
         assert_eq!(nav.entry, NavEntry::Spend);
-        assert!(!nav.press_key("9"));
+        assert!(!nav.press_key("a"));
         assert_eq!(nav.entry, NavEntry::Spend);
+        assert!(nav.press_key("9"));
+        assert_eq!(nav.entry, NavEntry::Flows);
 
         nav.open_connect();
         assert_eq!(nav.screen, Screen::Connect);
         assert!(!nav.press_key("2"), "the form's fields take digits");
-        assert_eq!(nav.entry, NavEntry::Spend);
+        assert_eq!(nav.entry, NavEntry::Flows);
 
         nav.close_connect();
         assert_eq!(nav.screen, Screen::Books);
