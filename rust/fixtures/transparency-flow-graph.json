@@ -1,0 +1,4405 @@
+{
+  "constants": {
+    "bands": [
+      {
+        "label": "Donors",
+        "types": [
+          "donor"
+        ]
+      },
+      {
+        "label": "Accounts",
+        "types": [
+          "account"
+        ]
+      },
+      {
+        "label": "Departments, projects",
+        "types": [
+          "department",
+          "project"
+        ]
+      },
+      {
+        "label": "Recipients",
+        "types": [
+          "vendor",
+          "beneficiary",
+          "unassigned"
+        ]
+      }
+    ],
+    "node_type_label": {
+      "account": "Account",
+      "beneficiary": "Beneficiary",
+      "department": "Department",
+      "donor": "Donor",
+      "project": "Project",
+      "unassigned": "No recipient",
+      "vendor": "Vendor"
+    },
+    "node_w": 196,
+    "periods": [
+      {
+        "days": 7,
+        "id": "week",
+        "label": "Week",
+        "phrase": "last week"
+      },
+      {
+        "days": 30,
+        "id": "month",
+        "label": "Month",
+        "phrase": "last month"
+      },
+      {
+        "days": 91,
+        "id": "quarter",
+        "label": "Quarter",
+        "phrase": "last quarter"
+      },
+      {
+        "days": 365,
+        "id": "year",
+        "label": "Year",
+        "phrase": "last year"
+      }
+    ]
+  },
+  "covers": [
+    "buildFlowGraph",
+    "connectedSet",
+    "filterByPeriod",
+    "periodWindow",
+    "wrapName"
+  ],
+  "description": "The web flow map pinned on the demo transactions (getTransactions order, major units): for each period the window, the transactions in it, buildFlowGraph whole (nodes, edges with their transaction ids, columns, size, totals) and connectedSet for every node and edge; and wrapName on names that hit each branch.",
+  "env": {
+    "defined_at": "rust/tools/src/transparency.ts#withFrozenClock: replaces Date and crypto.randomUUID while the demo API runs (it has no LedgerEnv)",
+    "new_id": "00000000-0000-4000-8000- then n left-padded with 0 to 12 digits, n = 1, 2, 3, ... (a UUID v4 shape), one per crypto.randomUUID() call",
+    "now": "2026-02-04T09:00:00.000Z"
+  },
+  "fixture": "transparency-flow-graph",
+  "periods": [
+    {
+      "connected": [
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31"
+          ],
+          "selection": {
+            "id": "__no-recipient__",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "kind": "edge"
+          }
+        }
+      ],
+      "graph": {
+        "columns": [
+          {
+            "label": "Donors",
+            "x": 16
+          },
+          {
+            "label": "Accounts",
+            "x": 252
+          },
+          {
+            "label": null,
+            "x": 488
+          },
+          {
+            "label": "Departments, projects",
+            "x": 724
+          },
+          {
+            "label": "Recipients",
+            "x": 960
+          }
+        ],
+        "edges": [
+          {
+            "amount": 6000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 74.5
+            },
+            "path": "M 212 79 C 232 79, 232 70, 252 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15"
+            ],
+            "width": 16
+          },
+          {
+            "amount": 15000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "mid": {
+              "x": 704,
+              "y": 187
+            },
+            "path": "M 448 226 C 704 226, 704 148, 960 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14"
+            ],
+            "width": 2.7
+          },
+          {
+            "amount": 1200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "mid": {
+              "x": 940,
+              "y": 70
+            },
+            "path": "M 920 70 C 940 70, 940 70, 960 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13"
+            ],
+            "width": 8.260990336999411
+          },
+          {
+            "amount": 1450000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "mid": {
+              "x": 468,
+              "y": 109
+            },
+            "path": "M 448 148 C 468 148, 468 70, 488 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06"
+            ],
+            "width": 8.882344561751225
+          },
+          {
+            "amount": 500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "mid": {
+              "x": 704,
+              "y": 148
+            },
+            "path": "M 448 70 C 704 70, 704 226, 960 226",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "flagged",
+            "target": "__no-recipient__",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16"
+            ],
+            "width": 6.04145188432738
+          }
+        ],
+        "height": 272,
+        "nodes": [
+          {
+            "band": 0,
+            "column": 0,
+            "h": 78,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "inflow": 0,
+            "lines": [
+              "Pan-African Education",
+              "Fund"
+            ],
+            "name": "Pan-African Education Fund",
+            "outflow": 6000000,
+            "type": "donor",
+            "x": 16,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "inflow": 6000000,
+            "lines": [
+              "Project Fund"
+            ],
+            "name": "Project Fund",
+            "outflow": 500000,
+            "type": "account",
+            "x": 252,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "inflow": 0,
+            "lines": [
+              "Operations Budget"
+            ],
+            "name": "Operations Budget",
+            "outflow": 15000,
+            "type": "account",
+            "x": 252,
+            "y": 196
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "inflow": 15000,
+            "lines": [
+              "Safaricom M-Pesa"
+            ],
+            "name": "Safaricom M-Pesa",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 118
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "inflow": 0,
+            "lines": [
+              "Field Operations"
+            ],
+            "name": "Field Operations",
+            "outflow": 1200000,
+            "type": "department",
+            "x": 724,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "inflow": 1200000,
+            "lines": [
+              "Kilifi Health Centers"
+            ],
+            "name": "Kilifi Health Centers",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "inflow": 0,
+            "lines": [
+              "General Fund"
+            ],
+            "name": "General Fund",
+            "outflow": 1450000,
+            "type": "account",
+            "x": 252,
+            "y": 118
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "inflow": 1450000,
+            "lines": [
+              "Payroll"
+            ],
+            "name": "Payroll",
+            "outflow": 0,
+            "type": "account",
+            "x": 488,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "__no-recipient__",
+            "inflow": 500000,
+            "lines": [
+              "No recipient recorded"
+            ],
+            "name": "No recipient recorded",
+            "outflow": 0,
+            "type": "unassigned",
+            "x": 960,
+            "y": 196
+          }
+        ],
+        "totals": {
+          "evidenced": 1450000,
+          "moved": 9165000,
+          "movements": 5
+        },
+        "width": 1172
+      },
+      "period": "week",
+      "transaction_ids": [
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16"
+      ],
+      "window": {
+        "end": "2026-02-04T00:00:00.000Z",
+        "start": "2026-01-29T00:00:00.000Z"
+      }
+    },
+    {
+      "connected": [
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30"
+          ],
+          "selection": {
+            "id": "__no-recipient__",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "edge"
+          }
+        }
+      ],
+      "graph": {
+        "columns": [
+          {
+            "label": "Donors",
+            "x": 16
+          },
+          {
+            "label": "Accounts",
+            "x": 252
+          },
+          {
+            "label": null,
+            "x": 488
+          },
+          {
+            "label": "Departments, projects",
+            "x": 724
+          },
+          {
+            "label": "Recipients",
+            "x": 960
+          }
+        ],
+        "edges": [
+          {
+            "amount": 6000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 69.5
+            },
+            "path": "M 212 79 C 232 79, 232 60, 252 60",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15"
+            ],
+            "width": 16
+          },
+          {
+            "amount": 15000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "mid": {
+              "x": 822,
+              "y": 196
+            },
+            "path": "M 684 88 C 822 88, 822 304, 960 304",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14"
+            ],
+            "width": 2.7
+          },
+          {
+            "amount": 1200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "mid": {
+              "x": 940,
+              "y": 260
+            },
+            "path": "M 920 138 C 940 138, 940 382, 960 382",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13"
+            ],
+            "width": 8.260990336999411
+          },
+          {
+            "amount": 1450000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "mid": {
+              "x": 468,
+              "y": 148
+            },
+            "path": "M 448 148 C 468 148, 468 148, 488 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06"
+            ],
+            "width": 8.882344561751225
+          },
+          {
+            "amount": 500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "mid": {
+              "x": 704,
+              "y": 348
+            },
+            "path": "M 448 80 C 704 80, 704 616, 960 616",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "flagged",
+            "target": "__no-recipient__",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16"
+            ],
+            "width": 6.04145188432738
+          },
+          {
+            "amount": 750000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "mid": {
+              "x": 940,
+              "y": 309
+            },
+            "path": "M 920 158 C 940 158, 940 460, 960 460",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11"
+            ],
+            "width": 6.949747468305833
+          },
+          {
+            "amount": 42000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "mid": {
+              "x": 822,
+              "y": 106
+            },
+            "path": "M 684 64 C 822 64, 822 148, 960 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09"
+            ],
+            "width": 3.1713240371477056
+          },
+          {
+            "amount": 380000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "mid": {
+              "x": 940,
+              "y": 382
+            },
+            "path": "M 920 226 C 940 226, 940 538, 960 538",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12"
+            ],
+            "width": 5.523256069793017
+          },
+          {
+            "amount": 67000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "mid": {
+              "x": 822,
+              "y": 61
+            },
+            "path": "M 684 52 C 822 52, 822 70, 960 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08"
+            ],
+            "width": 3.47941429852042
+          },
+          {
+            "amount": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "mid": {
+              "x": 586,
+              "y": 65
+            },
+            "path": "M 448 60 C 586 60, 586 70, 724 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10"
+            ],
+            "width": 11.03696114115064
+          },
+          {
+            "amount": 28500,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "mid": {
+              "x": 822,
+              "y": 151
+            },
+            "path": "M 684 76 C 822 76, 822 226, 960 226",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07"
+            ],
+            "width": 2.9648834126463157
+          },
+          {
+            "amount": 2000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "mid": {
+              "x": 468,
+              "y": 101.5
+            },
+            "path": "M 448 133 C 468 133, 468 70, 488 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04"
+            ],
+            "width": 10.08290376865476
+          },
+          {
+            "amount": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "mid": {
+              "x": 586,
+              "y": 155.5
+            },
+            "path": "M 448 163 C 586 163, 586 148, 724 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05"
+            ],
+            "width": 9.668115805072325
+          },
+          {
+            "amount": 4000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 123
+            },
+            "path": "M 212 166 C 232 166, 232 80, 252 80",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03"
+            ],
+            "width": 13.430952132988164
+          },
+          {
+            "amount": 3200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "mid": {
+              "x": 232,
+              "y": 196
+            },
+            "path": "M 212 244 C 232 244, 232 148, 252 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02"
+            ],
+            "width": 12.2241544067631
+          }
+        ],
+        "height": 662,
+        "nodes": [
+          {
+            "band": 0,
+            "column": 0,
+            "h": 78,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "inflow": 0,
+            "lines": [
+              "Pan-African Education",
+              "Fund"
+            ],
+            "name": "Pan-African Education Fund",
+            "outflow": 6000000,
+            "type": "donor",
+            "x": 16,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "inflow": 10000000,
+            "lines": [
+              "Project Fund"
+            ],
+            "name": "Project Fund",
+            "outflow": 3000000,
+            "type": "account",
+            "x": 252,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "inflow": 2000000,
+            "lines": [
+              "Operations Budget"
+            ],
+            "name": "Operations Budget",
+            "outflow": 152500,
+            "type": "account",
+            "x": 488,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "inflow": 15000,
+            "lines": [
+              "Safaricom M-Pesa"
+            ],
+            "name": "Safaricom M-Pesa",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 274
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "inflow": 1800000,
+            "lines": [
+              "Field Operations"
+            ],
+            "name": "Field Operations",
+            "outflow": 1950000,
+            "type": "department",
+            "x": 724,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "inflow": 1200000,
+            "lines": [
+              "Kilifi Health Centers"
+            ],
+            "name": "Kilifi Health Centers",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 352
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "inflow": 3200000,
+            "lines": [
+              "General Fund"
+            ],
+            "name": "General Fund",
+            "outflow": 5250000,
+            "type": "account",
+            "x": 252,
+            "y": 118
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "inflow": 1450000,
+            "lines": [
+              "Payroll"
+            ],
+            "name": "Payroll",
+            "outflow": 0,
+            "type": "account",
+            "x": 488,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "__no-recipient__",
+            "inflow": 500000,
+            "lines": [
+              "No recipient recorded"
+            ],
+            "name": "No recipient recorded",
+            "outflow": 0,
+            "type": "unassigned",
+            "x": 960,
+            "y": 586
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "inflow": 750000,
+            "lines": [
+              "Communities"
+            ],
+            "name": "Communities",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 430
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "inflow": 42000,
+            "lines": [
+              "Kenya Power"
+            ],
+            "name": "Kenya Power",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 118
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "inflow": 0,
+            "lines": [
+              "Training Department"
+            ],
+            "name": "Training Department",
+            "outflow": 380000,
+            "type": "department",
+            "x": 724,
+            "y": 196
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "inflow": 380000,
+            "lines": [
+              "Training Co Ltd"
+            ],
+            "name": "Training Co Ltd",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 508
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "inflow": 67000,
+            "lines": [
+              "AutoXpress Ltd"
+            ],
+            "name": "AutoXpress Ltd",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 40
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "inflow": 2500000,
+            "lines": [
+              "Clean Water Turkana"
+            ],
+            "name": "Clean Water Turkana",
+            "outflow": 0,
+            "type": "project",
+            "x": 724,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "inflow": 28500,
+            "lines": [
+              "Staples Kenya"
+            ],
+            "name": "Staples Kenya",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 196
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "inflow": 0,
+            "lines": [
+              "Kisima Water Trust"
+            ],
+            "name": "Kisima Water Trust",
+            "outflow": 4000000,
+            "type": "donor",
+            "x": 16,
+            "y": 136
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "inflow": 0,
+            "lines": [
+              "Northlight Foundation"
+            ],
+            "name": "Northlight Foundation",
+            "outflow": 3200000,
+            "type": "donor",
+            "x": 16,
+            "y": 214
+          }
+        ],
+        "totals": {
+          "evidenced": 16217500,
+          "moved": 23932500,
+          "movements": 15
+        },
+        "width": 1172
+      },
+      "period": "month",
+      "transaction_ids": [
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02"
+      ],
+      "window": {
+        "end": "2026-02-04T00:00:00.000Z",
+        "start": "2026-01-06T00:00:00.000Z"
+      }
+    },
+    {
+      "connected": [
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30"
+          ],
+          "selection": {
+            "id": "__no-recipient__",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "edge"
+          }
+        }
+      ],
+      "graph": {
+        "columns": [
+          {
+            "label": "Donors",
+            "x": 16
+          },
+          {
+            "label": "Accounts",
+            "x": 252
+          },
+          {
+            "label": null,
+            "x": 488
+          },
+          {
+            "label": "Departments, projects",
+            "x": 724
+          },
+          {
+            "label": "Recipients",
+            "x": 960
+          }
+        ],
+        "edges": [
+          {
+            "amount": 6000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 147.5
+            },
+            "path": "M 212 157 C 232 157, 232 138, 252 138",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15"
+            ],
+            "width": 13.762352705835282
+          },
+          {
+            "amount": 15000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "mid": {
+              "x": 822,
+              "y": 274
+            },
+            "path": "M 684 88 C 822 88, 822 460, 960 460",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14"
+            ],
+            "width": 2.588117635291764
+          },
+          {
+            "amount": 1200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "mid": {
+              "x": 940,
+              "y": 65
+            },
+            "path": "M 920 60 C 940 60, 940 70, 960 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13"
+            ],
+            "width": 7.260284045115255
+          },
+          {
+            "amount": 1450000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "mid": {
+              "x": 468,
+              "y": 116.5
+            },
+            "path": "M 448 85 C 468 85, 468 148, 488 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06"
+            ],
+            "width": 7.782326012743233
+          },
+          {
+            "amount": 500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "mid": {
+              "x": 704,
+              "y": 387
+            },
+            "path": "M 448 158 C 704 158, 704 616, 960 616",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "flagged",
+            "target": "__no-recipient__",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16"
+            ],
+            "width": 5.395498750508661
+          },
+          {
+            "amount": 750000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "mid": {
+              "x": 940,
+              "y": 114
+            },
+            "path": "M 920 80 C 940 80, 940 148, 960 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11"
+            ],
+            "width": 6.158619680502032
+          },
+          {
+            "amount": 42000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "mid": {
+              "x": 822,
+              "y": 184
+            },
+            "path": "M 684 64 C 822 64, 822 304, 960 304",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09"
+            ],
+            "width": 2.9841090326967303
+          },
+          {
+            "amount": 380000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "mid": {
+              "x": 940,
+              "y": 382
+            },
+            "path": "M 920 226 C 940 226, 940 538, 960 538",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12"
+            ],
+            "width": 4.9601271832771765
+          },
+          {
+            "amount": 67000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "mid": {
+              "x": 822,
+              "y": 139
+            },
+            "path": "M 684 52 C 822 52, 822 226, 960 226",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08"
+            ],
+            "width": 3.242956626946648
+          },
+          {
+            "amount": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "mid": {
+              "x": 586,
+              "y": 143
+            },
+            "path": "M 448 138 C 586 138, 586 148, 724 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10"
+            ],
+            "width": 9.592566023652966
+          },
+          {
+            "amount": 28500,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "mid": {
+              "x": 822,
+              "y": 229
+            },
+            "path": "M 684 76 C 822 76, 822 382, 960 382",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07"
+            ],
+            "width": 2.810664215682569
+          },
+          {
+            "amount": 2000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "mid": {
+              "x": 468,
+              "y": 62.5
+            },
+            "path": "M 448 55 C 468 55, 468 70, 488 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04"
+            ],
+            "width": 8.790997501017323
+          },
+          {
+            "amount": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "mid": {
+              "x": 586,
+              "y": 70
+            },
+            "path": "M 448 70 C 586 70, 586 70, 724 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05"
+            ],
+            "width": 8.442505906317912
+          },
+          {
+            "amount": 4000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 201
+            },
+            "path": "M 212 244 C 232 244, 232 158, 252 158",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03"
+            ],
+            "width": 11.603920767980496
+          },
+          {
+            "amount": 3200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "mid": {
+              "x": 232,
+              "y": 201
+            },
+            "path": "M 212 322 C 232 322, 232 80, 252 80",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02"
+            ],
+            "width": 10.59000787509055
+          },
+          {
+            "amount": 8500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "mid": {
+              "x": 232,
+              "y": 65
+            },
+            "path": "M 212 70 C 232 70, 232 60, 252 60",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01"
+            ],
+            "width": 16
+          }
+        ],
+        "height": 662,
+        "nodes": [
+          {
+            "band": 0,
+            "column": 0,
+            "h": 78,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "inflow": 0,
+            "lines": [
+              "Pan-African Education",
+              "Fund"
+            ],
+            "name": "Pan-African Education Fund",
+            "outflow": 6000000,
+            "type": "donor",
+            "x": 16,
+            "y": 118
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "inflow": 10000000,
+            "lines": [
+              "Project Fund"
+            ],
+            "name": "Project Fund",
+            "outflow": 3000000,
+            "type": "account",
+            "x": 252,
+            "y": 118
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "inflow": 2000000,
+            "lines": [
+              "Operations Budget"
+            ],
+            "name": "Operations Budget",
+            "outflow": 152500,
+            "type": "account",
+            "x": 488,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "inflow": 15000,
+            "lines": [
+              "Safaricom M-Pesa"
+            ],
+            "name": "Safaricom M-Pesa",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 430
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "inflow": 1800000,
+            "lines": [
+              "Field Operations"
+            ],
+            "name": "Field Operations",
+            "outflow": 1950000,
+            "type": "department",
+            "x": 724,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "inflow": 1200000,
+            "lines": [
+              "Kilifi Health Centers"
+            ],
+            "name": "Kilifi Health Centers",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "inflow": 11700000,
+            "lines": [
+              "General Fund"
+            ],
+            "name": "General Fund",
+            "outflow": 5250000,
+            "type": "account",
+            "x": 252,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "inflow": 1450000,
+            "lines": [
+              "Payroll"
+            ],
+            "name": "Payroll",
+            "outflow": 0,
+            "type": "account",
+            "x": 488,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "__no-recipient__",
+            "inflow": 500000,
+            "lines": [
+              "No recipient recorded"
+            ],
+            "name": "No recipient recorded",
+            "outflow": 0,
+            "type": "unassigned",
+            "x": 960,
+            "y": 586
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "inflow": 750000,
+            "lines": [
+              "Communities"
+            ],
+            "name": "Communities",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "inflow": 42000,
+            "lines": [
+              "Kenya Power"
+            ],
+            "name": "Kenya Power",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 274
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "inflow": 0,
+            "lines": [
+              "Training Department"
+            ],
+            "name": "Training Department",
+            "outflow": 380000,
+            "type": "department",
+            "x": 724,
+            "y": 196
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "inflow": 380000,
+            "lines": [
+              "Training Co Ltd"
+            ],
+            "name": "Training Co Ltd",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 508
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "inflow": 67000,
+            "lines": [
+              "AutoXpress Ltd"
+            ],
+            "name": "AutoXpress Ltd",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 196
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "inflow": 2500000,
+            "lines": [
+              "Clean Water Turkana"
+            ],
+            "name": "Clean Water Turkana",
+            "outflow": 0,
+            "type": "project",
+            "x": 724,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "inflow": 28500,
+            "lines": [
+              "Staples Kenya"
+            ],
+            "name": "Staples Kenya",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 352
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "inflow": 0,
+            "lines": [
+              "Kisima Water Trust"
+            ],
+            "name": "Kisima Water Trust",
+            "outflow": 4000000,
+            "type": "donor",
+            "x": 16,
+            "y": 214
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "inflow": 0,
+            "lines": [
+              "Northlight Foundation"
+            ],
+            "name": "Northlight Foundation",
+            "outflow": 3200000,
+            "type": "donor",
+            "x": 16,
+            "y": 292
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "inflow": 0,
+            "lines": [
+              "Harambee Health Fund"
+            ],
+            "name": "Harambee Health Fund",
+            "outflow": 8500000,
+            "type": "donor",
+            "x": 16,
+            "y": 40
+          }
+        ],
+        "totals": {
+          "evidenced": 24717500,
+          "moved": 32432500,
+          "movements": 16
+        },
+        "width": 1172
+      },
+      "period": "quarter",
+      "transaction_ids": [
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01"
+      ],
+      "window": {
+        "end": "2026-02-04T00:00:00.000Z",
+        "start": "2025-11-06T00:00:00.000Z"
+      }
+    },
+    {
+      "connected": [
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30"
+          ],
+          "selection": {
+            "id": "__no-recipient__",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "kind": "node"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "__no-recipient__"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "__no-recipient__",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "edge"
+          }
+        },
+        {
+          "edges": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "nodes": [
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23"
+          ],
+          "selection": {
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "kind": "edge"
+          }
+        }
+      ],
+      "graph": {
+        "columns": [
+          {
+            "label": "Donors",
+            "x": 16
+          },
+          {
+            "label": "Accounts",
+            "x": 252
+          },
+          {
+            "label": null,
+            "x": 488
+          },
+          {
+            "label": "Departments, projects",
+            "x": 724
+          },
+          {
+            "label": "Recipients",
+            "x": 960
+          }
+        ],
+        "edges": [
+          {
+            "amount": 6000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 147.5
+            },
+            "path": "M 212 157 C 232 157, 232 138, 252 138",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15"
+            ],
+            "width": 13.762352705835282
+          },
+          {
+            "amount": 15000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "mid": {
+              "x": 822,
+              "y": 274
+            },
+            "path": "M 684 88 C 822 88, 822 460, 960 460",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14"
+            ],
+            "width": 2.588117635291764
+          },
+          {
+            "amount": 1200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "mid": {
+              "x": 940,
+              "y": 65
+            },
+            "path": "M 920 60 C 940 60, 940 70, 960 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "pending",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13"
+            ],
+            "width": 7.260284045115255
+          },
+          {
+            "amount": 1450000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "mid": {
+              "x": 468,
+              "y": 116.5
+            },
+            "path": "M 448 85 C 468 85, 468 148, 488 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06"
+            ],
+            "width": 7.782326012743233
+          },
+          {
+            "amount": 500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->__no-recipient__",
+            "mid": {
+              "x": 704,
+              "y": 387
+            },
+            "path": "M 448 158 C 704 158, 704 616, 960 616",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "flagged",
+            "target": "__no-recipient__",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16"
+            ],
+            "width": 5.395498750508661
+          },
+          {
+            "amount": 750000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "mid": {
+              "x": 940,
+              "y": 114
+            },
+            "path": "M 920 80 C 940 80, 940 148, 960 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11"
+            ],
+            "width": 6.158619680502032
+          },
+          {
+            "amount": 42000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "mid": {
+              "x": 822,
+              "y": 184
+            },
+            "path": "M 684 64 C 822 64, 822 304, 960 304",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09"
+            ],
+            "width": 2.9841090326967303
+          },
+          {
+            "amount": 380000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "mid": {
+              "x": 940,
+              "y": 382
+            },
+            "path": "M 920 226 C 940 226, 940 538, 960 538",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12"
+            ],
+            "width": 4.9601271832771765
+          },
+          {
+            "amount": 67000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "mid": {
+              "x": 822,
+              "y": 139
+            },
+            "path": "M 684 52 C 822 52, 822 226, 960 226",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08"
+            ],
+            "width": 3.242956626946648
+          },
+          {
+            "amount": 2500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "mid": {
+              "x": 586,
+              "y": 143
+            },
+            "path": "M 448 138 C 586 138, 586 148, 724 148",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10"
+            ],
+            "width": 9.592566023652966
+          },
+          {
+            "amount": 28500,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "mid": {
+              "x": 822,
+              "y": 229
+            },
+            "path": "M 684 76 C 822 76, 822 382, 960 382",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07"
+            ],
+            "width": 2.810664215682569
+          },
+          {
+            "amount": 2000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "mid": {
+              "x": 468,
+              "y": 62.5
+            },
+            "path": "M 448 55 C 468 55, 468 70, 488 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04"
+            ],
+            "width": 8.790997501017323
+          },
+          {
+            "amount": 1800000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "mid": {
+              "x": 586,
+              "y": 70
+            },
+            "path": "M 448 70 C 586 70, 586 70, 724 70",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05"
+            ],
+            "width": 8.442505906317912
+          },
+          {
+            "amount": 4000000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "mid": {
+              "x": 232,
+              "y": 201
+            },
+            "path": "M 212 244 C 232 244, 232 158, 252 158",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03"
+            ],
+            "width": 11.603920767980496
+          },
+          {
+            "amount": 3200000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "mid": {
+              "x": 232,
+              "y": 201
+            },
+            "path": "M 212 322 C 232 322, 232 80, 252 80",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02"
+            ],
+            "width": 10.59000787509055
+          },
+          {
+            "amount": 8500000,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12->a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "mid": {
+              "x": 232,
+              "y": 65
+            },
+            "path": "M 212 70 C 232 70, 232 60, 252 60",
+            "source": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "status": "verified",
+            "target": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "transaction_ids": [
+              "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01"
+            ],
+            "width": 16
+          }
+        ],
+        "height": 662,
+        "nodes": [
+          {
+            "band": 0,
+            "column": 0,
+            "h": 78,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a31",
+            "inflow": 0,
+            "lines": [
+              "Pan-African Education",
+              "Fund"
+            ],
+            "name": "Pan-African Education Fund",
+            "outflow": 6000000,
+            "type": "donor",
+            "x": 16,
+            "y": 118
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            "inflow": 10000000,
+            "lines": [
+              "Project Fund"
+            ],
+            "name": "Project Fund",
+            "outflow": 3000000,
+            "type": "account",
+            "x": 252,
+            "y": 118
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
+            "inflow": 2000000,
+            "lines": [
+              "Operations Budget"
+            ],
+            "name": "Operations Budget",
+            "outflow": 152500,
+            "type": "account",
+            "x": 488,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+            "inflow": 15000,
+            "lines": [
+              "Safaricom M-Pesa"
+            ],
+            "name": "Safaricom M-Pesa",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 430
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
+            "inflow": 1800000,
+            "lines": [
+              "Field Operations"
+            ],
+            "name": "Field Operations",
+            "outflow": 1950000,
+            "type": "department",
+            "x": 724,
+            "y": 40
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a38",
+            "inflow": 1200000,
+            "lines": [
+              "Kilifi Health Centers"
+            ],
+            "name": "Kilifi Health Centers",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 1,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "inflow": 11700000,
+            "lines": [
+              "General Fund"
+            ],
+            "name": "General Fund",
+            "outflow": 5250000,
+            "type": "account",
+            "x": 252,
+            "y": 40
+          },
+          {
+            "band": 1,
+            "column": 2,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19",
+            "inflow": 1450000,
+            "lines": [
+              "Payroll"
+            ],
+            "name": "Payroll",
+            "outflow": 0,
+            "type": "account",
+            "x": 488,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "__no-recipient__",
+            "inflow": 500000,
+            "lines": [
+              "No recipient recorded"
+            ],
+            "name": "No recipient recorded",
+            "outflow": 0,
+            "type": "unassigned",
+            "x": 960,
+            "y": 586
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a23",
+            "inflow": 750000,
+            "lines": [
+              "Communities"
+            ],
+            "name": "Communities",
+            "outflow": 0,
+            "type": "beneficiary",
+            "x": 960,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a34",
+            "inflow": 42000,
+            "lines": [
+              "Kenya Power"
+            ],
+            "name": "Kenya Power",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 274
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
+            "inflow": 0,
+            "lines": [
+              "Training Department"
+            ],
+            "name": "Training Department",
+            "outflow": 380000,
+            "type": "department",
+            "x": 724,
+            "y": 196
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+            "inflow": 380000,
+            "lines": [
+              "Training Co Ltd"
+            ],
+            "name": "Training Co Ltd",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 508
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18",
+            "inflow": 67000,
+            "lines": [
+              "AutoXpress Ltd"
+            ],
+            "name": "AutoXpress Ltd",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 196
+          },
+          {
+            "band": 2,
+            "column": 3,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a35",
+            "inflow": 2500000,
+            "lines": [
+              "Clean Water Turkana"
+            ],
+            "name": "Clean Water Turkana",
+            "outflow": 0,
+            "type": "project",
+            "x": 724,
+            "y": 118
+          },
+          {
+            "band": 3,
+            "column": 4,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17",
+            "inflow": 28500,
+            "lines": [
+              "Staples Kenya"
+            ],
+            "name": "Staples Kenya",
+            "outflow": 0,
+            "type": "vendor",
+            "x": 960,
+            "y": 352
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a30",
+            "inflow": 0,
+            "lines": [
+              "Kisima Water Trust"
+            ],
+            "name": "Kisima Water Trust",
+            "outflow": 4000000,
+            "type": "donor",
+            "x": 16,
+            "y": 214
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a20",
+            "inflow": 0,
+            "lines": [
+              "Northlight Foundation"
+            ],
+            "name": "Northlight Foundation",
+            "outflow": 3200000,
+            "type": "donor",
+            "x": 16,
+            "y": 292
+          },
+          {
+            "band": 0,
+            "column": 0,
+            "h": 60,
+            "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            "inflow": 0,
+            "lines": [
+              "Harambee Health Fund"
+            ],
+            "name": "Harambee Health Fund",
+            "outflow": 8500000,
+            "type": "donor",
+            "x": 16,
+            "y": 40
+          }
+        ],
+        "totals": {
+          "evidenced": 24717500,
+          "moved": 32432500,
+          "movements": 16
+        },
+        "width": 1172
+      },
+      "period": "year",
+      "transaction_ids": [
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b15",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b14",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b13",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b16",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b12",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02",
+        "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01"
+      ],
+      "window": {
+        "end": "2026-02-04T00:00:00.000Z",
+        "start": "2025-02-05T00:00:00.000Z"
+      }
+    }
+  ],
+  "sources": [
+    "flowtrace/src/components/flows/flow-graph.ts#PERIODS",
+    "flowtrace/src/components/flows/flow-graph.ts#periodWindow",
+    "flowtrace/src/components/flows/flow-graph.ts#filterByPeriod",
+    "flowtrace/src/components/flows/flow-graph.ts#buildFlowGraph",
+    "flowtrace/src/components/flows/flow-graph.ts#connectedSet",
+    "flowtrace/src/components/flows/flow-graph.ts#wrapName",
+    "flowtrace/src/lib/demo/api.ts#getTransactions"
+  ],
+  "wrap_name": [
+    [
+      "",
+      [
+        ""
+      ]
+    ],
+    [
+      "General Fund",
+      [
+        "General Fund"
+      ]
+    ],
+    [
+      "Kenya Water Partnership Fund",
+      [
+        "Kenya Water",
+        "Partnership Fund"
+      ]
+    ],
+    [
+      "Turkana Community Water Project Phase Two Borehole Drilling and Maintenance",
+      [
+        "Turkana Community",
+        "Water Project Phase",
+        "Two Borehole Drillin…"
+      ]
+    ],
+    [
+      "Supercalifragilisticexpialidociousandmorewordsjoined",
+      [
+        "Supercalifragilistic-"
+      ]
+    ],
+    [
+      "A Supercalifragilisticexpialidociousandmorewordsjoined B",
+      [
+        "A",
+        "Supercalifragilistic-",
+        "B"
+      ]
+    ],
+    [
+      "  spaced   out   name  ",
+      [
+        "spaced out name"
+      ]
+    ],
+    [
+      "Ministry of Health Pwani County Office for Maternal and Child Health",
+      [
+        "Ministry of Health",
+        "Pwani County Office",
+        "for Maternal and…"
+      ]
+    ]
+  ]
+}
