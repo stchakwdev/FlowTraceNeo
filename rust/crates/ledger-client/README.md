@@ -34,6 +34,21 @@ client.update_campaign(org_id, id, &patch);            // Ticket<()>, fields lef
 client.delete_campaign(org_id, id);                    // Ticket<()>, drafts only (others kept silently)
 client.record_donation(org_id, &new_donation);         // Ticket<()>, a record only, no payment (P19)
 client.update_donation_status(org_id, id, status, reference); // Ticket<()>, moves the raised amount
+client.create_flow_node(org_id, &new_node);            // Ticket<()>, any member (DT2)
+client.update_flow_node(org_id, node_id, &patch);      // Ticket<()>, fields left out are kept
+client.create_transaction(org_id, &new_transaction);   // Ticket<()>, any member; minor units
+client.update_transaction(org_id, id, &patch);         // Ticket<()>, fields left out are kept
+client.link_transaction_entries(org_id, id, &entry_ids); // Ticket<()>, empty unlinks
+client.set_node_visibility(org_id, node_id, group_id, &settings); // Ticket<()>, managers
+client.remove_node_visibility(org_id, node_id, group_id);
+client.set_transaction_visibility(org_id, id, group_id, &settings);
+client.remove_transaction_visibility(org_id, id, group_id);
+client.request_chain(source_org_id, target_org_id, message); // Ticket<()>, any member of the source
+client.approve_chain(chain_id, group_id, link_node_id);  // Ticket<()>, a target member who can close
+client.reject_chain(chain_id, reason);                   // Ticket<()>, same
+client.revoke_chain(chain_id);                           // Ticket<()>, same
+client.cancel_chain_request(chain_id);                   // Ticket<()>, any member of the source
+client.update_chain_permissions(chain_id, group_id, link_node_id); // Ticket<()>, a target manager
 client.disconnect();
 ```
 
@@ -49,7 +64,15 @@ allow (`visible_as` on each). DT1 added the campaign and donation writes
 `update_donation_status`): each is one reducer call through the same `call` path as
 `create_verification`, its JSON argument the module's own input type
 (`ledger_module::transparency::types::{NewCampaign, CampaignPatch, NewDonation}`), and its
-ticket resolves after the changed rows are in the cache. DT2 to DT4 add what their screens need.
+ticket resolves after the changed rows are in the cache. DT2 added the flow, visibility and
+chain writes the same way (`create_flow_node`, `update_flow_node`, `create_transaction`,
+`update_transaction`, `link_transaction_entries`, `set_node_visibility`,
+`remove_node_visibility`, `set_transaction_visibility`, `remove_transaction_visibility`,
+`request_chain`, `approve_chain`, `reject_chain`, `revoke_chain`, `cancel_chain_request`,
+`update_chain_permissions`), their JSON arguments `ledger_module::transparency::flows::{NewFlowNode,
+FlowNodePatch, NewTransaction, TransactionPatch, NodeVisibilitySettings,
+TransactionVisibilitySettings}`; chain calls take no organisation, the module finds the side
+that acts. DT3 and DT4 add what their screens need.
 
 A subscriber's first event is the current `ClientEvent::Status`. After that it gets one
 `ClientEvent::Changed { orgs }` per applied message (initial subscription or transaction).

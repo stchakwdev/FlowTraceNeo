@@ -21,8 +21,9 @@ root.
   call; a module update is the user-run command in `module-release.md`, section 4.
 - **ledger-client** connects, keeps its own cache, rebuilds the books and submits commands; its
   live test passed against maincloud dev.
-- **desktop** (FlowTrace Books) has all seven screens (Accounts, Journal, General ledger,
-  Spend, Grants, Reconcile, Reports) over either the in-process demo books or the live module,
+- **desktop** (FlowTrace Books) has the seven books screens (Accounts, Journal, General ledger,
+  Spend, Grants, Reconcile, Reports), Dashboard and Campaigns (DT1), and Flows and Chains (DT2)
+  over either the in-process demo books or the live module,
   with a Connection screen, a saved token and an offline mode. It was checked on Linux
   (Omarchy, Hyprland on Wayland) and on macOS (release build and the full test suite on the
   user's MacBook, 2026-10-16).
@@ -64,8 +65,10 @@ changing either once production books exist means a migration.
 
 - Books covers the web app's finance area: `ledger/*`, `spend/*`, `grants/*`, `reconcile/*`,
   `reports`, and since DT1 the Dashboard and Campaigns (list, new, manage, record and confirm
-  donations, preview card, link and embed code). It has no counterpart yet for flows, chains,
-  transactions, the trust score page, donate pages, badges, or settings and access groups.
+  donations, preview card, link and embed code), and since DT2 Flows (the flow map, its details
+  panel and ledger links) and Chains (list, request, approve, reject, revoke, cancel). It has
+  no counterpart yet for transactions, the trust score page, donate pages, badges, or settings
+  and access groups.
 - DT1, deliberate difference (P20): the desktop manages and previews campaigns, and puts
   **Copy link** and **Copy embed code** on the campaign it manages; the web keeps the embed code
   under Settings > Embed and the copy-link button on the public donate page. The snippet and the
@@ -76,9 +79,27 @@ changing either once production books exist means a migration.
   raised amount. Payment status stays a recorded field, nothing is charged (P19).
 - DT1: as on the web, a campaign's name, target and dates cannot be edited after it is saved
   (`update_campaign` takes any field, but neither app has an edit form); the Dashboard leaves
-  out the web's "Record a transaction" and "Open the flow map" links (no such screens yet).
+  out the web's "Record a transaction" link (no Transactions screen yet; "Open the flow map"
+  arrived with DT2).
 - DT1 nav: Dashboard is key `0` at the top of the rail and Campaigns key `8` under
   "Transparency"; keys `1` to `7` keep their screens. The app still opens on Accounts.
+- DT2 nav: Flows is key `9` under Dashboard and Chains sits under Campaigns with no key (the
+  digits are spent); `--entry` takes an entry's name (`chains`) as well as its digit.
+- DT2 Flows: the web's "Record a transaction" button (empty notice) and the movement rows'
+  links to a transaction's page wait for the Transactions screen (DT3); the map is drawn
+  natively (canvas lines, div nodes), so text sits on approximate baselines; the desktop adds
+  keys (`w` `m` `q` `y` period, `-` `=` `f` zoom, Left and Right in money order, `l` ledger
+  lines) to the web's Tab and Esc. Ledger links open the General ledger on the movement's
+  linked journal entries first (`journal_entry_ids`), the web's source match only when it has
+  none. Node visibility settings wait for DT4 (access groups).
+- DT2 Chains: the request dialog searches the published organisations
+  (`public_organization`), since the module has no organisation search; the web's demo searches
+  every organisation, so here an organisation must publish its profile to be found ("No
+  organisation matches ... ask them to make their profile public on FlowTrace first."), and the
+  module refuses a target without books. The text fields are single-line inputs where the web
+  has text areas. In the in-process demo the two active chains' granted groups belong to the
+  demo organisation (the dataset's quirk), so they show "None" for access: the module looks
+  the group up in the target's records, where the web's demo looks it up anywhere.
 - Sign-in: with `workos_client_id` in `config.toml` the desktop signs in with WorkOS AuthKit
   through the system browser (AUTH2, `crates/desktop/README.md`); without it, it connects with a
   device identity (a token file). Auth providers are the user's decision.

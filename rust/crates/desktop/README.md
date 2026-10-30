@@ -5,7 +5,8 @@ organisation picker and seven entries, one placeholder panel per entry, a connec
 status bar, over an in-process backend that runs `ledger-core` in the app. Each screen task
 (U2 to U9) replaces one placeholder; U10 added the SpacetimeDB backend behind the same trait
 (Configuration, below). DT1 added Dashboard and Campaigns over the module's transparency
-records (Dashboard and Campaigns (DT1), below).
+records (Dashboard and Campaigns (DT1), below); DT2 added Flows and Chains (Flows and Chains
+(DT2), below).
 
 ## Run
 
@@ -16,13 +17,18 @@ cargo run -p desktop -- --theme dark --entry 3     # dark, General ledger open
 cargo run -p desktop -- --screen connect           # opens on the connect screen
 cargo run -p desktop -- --report activities        # Reports, on the statement of activities
 cargo run -p desktop -- --entry 8 --campaigns preview:e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01
+cargo run -p desktop -- --entry flows --flows year:3     # the flow map on the year, 4th item selected
+cargo run -p desktop -- --entry chains --chains approve  # Chains with the approve dialog open
 cargo run -p desktop -- --server https://maincloud.spacetimedb.com --database flowtrace-ledger-dev
 cargo run -p desktop -- --server http://127.0.0.1:9 --timings on   # offline at once, times on stderr
 cargo run -p desktop -- --config out/auth2/trusted/config.toml --sign-in on   # another config; sign in at once
 ```
 
-Keys `0` to `8` open the nav entries (`0` Dashboard; `1` to `7` Accounts, Journal, General
-ledger, Spend, Grants, Reconcile, Reports, the keys they had before DT1; `8` Campaigns) while the books show and no field has focus (the shell only handles keys
+Keys `0` to `9` open the nav entries (`0` Dashboard; `1` to `7` Accounts, Journal, General
+ledger, Spend, Grants, Reconcile, Reports, the keys they had before DT1; `8` Campaigns; `9`
+Flows). Chains has no key, the digits being spent: it opens from the rail or with
+`--entry chains`. `--entry` takes a digit or an entry's name, its label in lower case with
+hyphens (`dashboard`, `flows`, `general-ledger`, `campaigns`, `chains`). Keys work while the books show and no field has focus (the shell only handles keys
 while its own focus handle is focused, so typing in a field never switches screens). Other
 keys go to the screen showing, except `Page Up`, `Page Down`, `Home` and `End`, which scroll
 the content. On Accounts, `a` opens the chart, `p` the periods and `n` the
@@ -46,6 +52,8 @@ when the app closes.
 | `model` | `NavEntry` (with its rail `section`), `Navigation` (entry, screen, keys), `LedgerView` (orgs, selection, status, snapshot, revision, transparency records and their own revision), `ConnectForm` | no |
 | `dashboard` | Dashboard view models (DT1): `transactions` (newest first, with nodes), `summarise` (the web's donor lines and counts), `DonorRow`, `MovementRow`, `Dashboard` (figures, donors, recent eight), `Bar`, `Figure`, `proof_label` | no |
 | `campaigns` | Campaigns view models (DT1): `CampaignList` (rows, counts, figures, search, `StatusFilter`), `campaign_timing`, `NewCampaignForm`, `CampaignPage` (coverage, figures, donations, spending, details, earmarks, `StatusAction`s), `DonationForm`, `confirm_payment`, `PreviewCard`, `donate_url`, `EmbedOptions`, `embed_snippet` | no |
+| `flows` | Flows view models (DT2), `flow-graph.ts` ported function by function: `PERIODS`, `period_window`, `filter_by_period`, `MapNodeType` and `BANDS`, `wrap_name`, `build_flow_graph` (`FlowGraph` with nodes, edges, `EdgePath`, columns, totals; `hit` and `focus_order`), `connected_set`; the page (`FlowPage`: lede, `Body`, key figures), `Zoom`, `Details` (the side panel), `LedgerLink` (to a `GlFilter`), `edge_dash`, `node_amount` | no |
+| `chains` | Chains view models (DT2): `ChainsView` (incoming and outgoing rows, counts, linked targets), `ChainRow` (when line, access, Chain Trust Score, actions), `describe_access`, `Confirm`, `search` and `OrgOption` for the request dialog, `Review` and `group_hint` for the review dialog, `status_label`, `LEGEND` | no |
 | `web_format` | the web's `lib/format.ts` over minor units: `format_amount`, `format_money`, `format_compact`, `format_date`, `format_short_date` | no |
 | `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
@@ -55,7 +63,7 @@ when the app closes.
 | `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
 | `entry_form` | Manual entry form and CSV import view models: `EntryForm` (lines, `set_debit`/`set_credit`, `set_fund`, `balance`, `field_errors`, `issues`, `summary`, `save_command`, `post_commands`, `from_draft`), `Balance`, `account_choices`, `tag_choices`, `ImportPreview`, `read_import_file` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign` | yes |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign`; `panels::flows::FlowsPanel` and `panels::chains::ChainsPanel` (DT2), `panels::write_flow`, `panels::write_chain` | yes |
 | `reconcile` | Reconcile view models: `bank_rows`, `overview`, `NewBankForm`, `ImportPreview` (parse, skipped rows, money in and out, `repeats` as the engine dedupes), `LineStatus` and `status_of`, `line_rows`, `candidates`, `position`, `auto_match_summary`, the `bank.add` and `statement.*` command builders, `PostForm`, `post_accounts` | no |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `proofs` | proof files through the proofs Worker (`../../../workers/proofs/README.md`): `sniff`, `check`, `read_file` (25 MB, photos and PDF), `ProofsClient` (`upload`, `signed_url`, over ureq), `AttachList` (the files on a form), `new_verification` (the record for `create_verification`) | no |
@@ -85,8 +93,14 @@ pub enum BackendEvent {
     Ledger { org: OrganizationId, state: Arc<LedgerState> },   // whole new snapshot
     Organisations(Vec<Organisation>),
     Status(ConnectionStatus),
+    Transparency { org: OrganizationId },  // DT1: re-read transparency(org)
+    Chains,                                // DT2: re-read chains()
 }
 ```
+
+DT1 and DT2 added, with defaults that refuse or read nothing: `transparency(org)`,
+`write_campaign(org, CampaignWrite)`, `write_flow(org, FlowWrite)`, `chains()`,
+`chain_activity(id)`, `public_organizations()` and `write_chain(ChainWrite)`.
 
 A successful `submit` sends one `BackendEvent::Ledger` with the new books; a refused one sends
 nothing and changes nothing. Snapshots are immutable `Arc`s: the backend applies a command to a
@@ -506,8 +520,8 @@ names and keeps the last records while offline.
 **Dashboard** (key `0`, `--entry 0`) is the web's `dashboard.tsx`: key figures (KES received
 with proof, movements evidenced, awaiting proof with the flagged count, the Trust Score and its
 grade), "Funding received, by donor" (the web's `summarise`, same order and bar rules) and the
-eight latest movements. The web's "Record a transaction" and "Open the flow map" links and the
-donor hover are left out: the desktop has no transactions or flow screen yet.
+eight latest movements, and "Open the flow map" (DT2). The web's "Record a transaction" link
+and the donor hover are left out: the desktop has no transactions screen yet.
 
 **Campaigns** (key `8`, `--entry 8`; `--campaigns list|new|<id>|preview:<id>`): the list with
 its four figures, search (`name`, story, category) and status filter; `n` the new-campaign
@@ -531,3 +545,58 @@ snippet against the web's literal), `src/web_format.rs`, the backend, store and 
 tests. `tests/live_campaigns.rs` is the live check (ignored; see its header). Shots:
 `docs/screens/dt1-dashboard.png`, `dt1-campaigns.png`, `dt1-campaign-detail.png`,
 `dt1-campaign-preview.png`.
+
+## Flows and Chains (DT2)
+
+**Flows** (key `9`, `--entry flows`; `--flows week|month|quarter|year[:<n>]`) is the web's
+"Money flow" page (`routes/_authenticated/flows.tsx`). `desktop::flows` ports
+`components/flows/flow-graph.ts` function by function, and
+`rust/fixtures/transparency-flow-graph.json` (exported by `rust/tools/src/flow-graph.ts` from the
+web's own code over the demo transactions) pins its output: every period's window, the
+transactions in it, every node's column, position, height and wrapped name, every edge's
+amount, worst status, width and cubic, the columns, the size, the totals and `connectedSet` for
+every node and edge, all equal to the last bit. The page has the lede, the Period control
+(Week, Month, Quarter, Year counted back from the latest movement), the four key figures, the
+Flow map section with Zoom out, the percentage, Zoom in and Fit (0.4 to 1.6 by 0.1; the
+opening view never below 0.9), the loading, empty and empty-period notices ("Show the last
+year"), the proof legend with "Line weight carries the amount." and the help line. The map is
+a `gpui_kit::canvas` painting each line with `PathBuilder` (`cubic_bezier_to`, `dash_array`
+scaled with the line, `stroke`) and `window.paint_path`, the flagged cross and the selection
+halo; the nodes (dashed box for "No recipient recorded"), column labels and the amount tag are
+positioned divs over it, faded to 0.12 outside the selection's upstream and downstream. A click
+picks the node under it or the nearest line within `max(16, width + 8) / 2`; Tab or Right
+moves in money order, Left back, Esc clears; `w` `m` `q` `y` pick the period, `-` and `=`
+zoom, `f` fits, `l` opens the selection's ledger lines. The details panel shows a line's
+movements or a node's money in and out with the web's texts, and its ledger links open the
+General ledger on those lines only: the movement's linked journal entries
+(`journal_entry_ids`), else the entries it is the source of (`source_type` `transaction`), or
+a node's lines (`flow_node_id`), with the web's scope note and "Show all lines"
+(`GlFilter::source`, `GlFilter::node`; balances run over the kept lines as the web's
+`buildLedger` does). The Dashboard's header has "Open the flow map".
+
+**Chains** (no key; `--entry chains`; `--chains request|approve|reject|revoke|cancel` opens
+that dialog on the first row offering it) is the web's "Chain links" page
+(`routes/_authenticated/chains.tsx`): the lede, "Request a link", the four key figures, the
+legend, "Incoming: who can see your flows" and "Outgoing: flows you follow" with their empty
+notices, rows in the order pending, active, rejected, revoked, each with both organisations
+("You" under yours), the status and its line (solid, dashed 7 5, broken with cut marks), the
+when line, the message while pending, the reason once rejected, "Access granted" with what the
+group sees, the Chain Trust Score with "Average of a and b", and Approve and Reject, Revoke
+access or Cancel request. The dialogs are inline boxes with the web's titles, texts and
+buttons: request (search, "Type at least two letters.", results with type, country and Trust
+Score, "Already linked", message, "Send request", "The request wasn't sent. ..."), approve
+(facts, access group with the hint by priority, "Join at node (optional)"), reject (reason),
+revoke and cancel confirmations. `n` opens the request dialog, Esc closes a dialog. The module
+has no organisation search, so the request dialog searches `public_organizations()` by name:
+an organisation must have published its profile to be found, and the module refuses a target
+without books. The in-process demo holds the dataset's four chains with the partners' profiles
+and scores (the partners hold no books, so a request to them is refused as the module would),
+and runs the module's chain rules as the demo user.
+
+Tests: `src/flows/tests.rs` (the fixture, texts, zoom, details, hits, Tab order, ledger links),
+`src/chains/tests.rs`, the General ledger scope tests in `src/general_ledger.rs`, the backend,
+store and fake-client tests. `tests/live_flows_chains.rs` is the live check (ignored; see its
+header). Shots (when a display is available): `docs/screens/dt2-flows.png`,
+`dt2-flow-edge.png`, `dt2-chains.png`, `dt2-chain-approve.png`, taken as in Screenshots above
+with `--entry flows --flows month`, `--entry flows --flows month:3` (the month's three donors come first, so item 3 is the first line), `--entry chains` and
+`--entry chains --chains approve`.
