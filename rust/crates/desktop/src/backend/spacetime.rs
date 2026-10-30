@@ -27,7 +27,7 @@ use ledger_core::{CommandError, CommandResult, LedgerCommand, LedgerState};
 use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
 use ledger_module::transparency::public::PublicOrganization;
-use ledger_module::transparency::types::{NewVerification, Verification};
+use ledger_module::transparency::types::{AccessType, NewVerification, Verification};
 
 use super::{
     BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, ConnectionStatus,
@@ -60,6 +60,16 @@ pub trait LiveClient: Send + Sync {
     fn disconnect(&self);
     /// Records a proof without waiting ([`SpacetimeClient::create_verification`]).
     fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission;
+    /// Publishes a proof or takes it back without waiting ([`SpacetimeClient::mark_published`]).
+    fn mark_published(&self, org: &str, verification_id: &str, published: bool) -> Submission;
+    /// Logs a look at a proof without waiting
+    /// ([`SpacetimeClient::log_verification_access`]).
+    fn log_verification_access(
+        &self,
+        org: &str,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission;
     /// The organisation's proofs as the caller may see them
     /// ([`SpacetimeClient::transparency`]); none when the cache has no such organisation.
     fn verifications(&self, org: &str) -> Vec<Verification>;
@@ -129,6 +139,24 @@ impl LiveClient for SpacetimeClient {
 
     fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission {
         submission(Self::create_verification(self, org, proof))
+    }
+
+    fn mark_published(&self, org: &str, verification_id: &str, published: bool) -> Submission {
+        submission(Self::mark_published(self, org, verification_id, published))
+    }
+
+    fn log_verification_access(
+        &self,
+        org: &str,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        submission(Self::log_verification_access(
+            self,
+            org,
+            verification_id,
+            access,
+        ))
     }
 
     fn verifications(&self, org: &str) -> Vec<Verification> {
@@ -571,6 +599,30 @@ impl LedgerBackend for SpacetimeBackend {
         }
     }
 
+    fn mark_published(
+        &mut self,
+        org: &OrganizationId,
+        verification_id: &str,
+        published: bool,
+    ) -> Submission {
+        match self.writable(org) {
+            Ok(client) => client.mark_published(org.as_str(), verification_id, published),
+            Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
+    fn log_verification_access(
+        &mut self,
+        org: &OrganizationId,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        match self.writable(org) {
+            Ok(client) => client.log_verification_access(org.as_str(), verification_id, access),
+            Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
     fn transparency(&self, org: &OrganizationId) -> Option<Arc<OrgTransparency>> {
         lock(&self.live).transparency.get(org.as_str()).cloned()
     }
@@ -628,10 +680,15 @@ impl LedgerBackend for SpacetimeBackend {
             .unwrap_or_default()
     }
 
-    /// The token in the connection's token file (`ledger_client::TokenFile`), read when asked
-    /// and never kept or printed.
+    /// The WorkOS access token the connection presented, as the module saw the caller by it
+    /// (`crate::signin`); else the token in the connection's token file
+    /// (`ledger_client::TokenFile`), read when asked and never kept or printed. The store hands
+    /// out a refreshed session's token over this one (`StoreCore::proofs_client`).
     fn proofs_token(&self) -> Option<String> {
         let settings = self.settings.as_ref()?;
+        if let Some(token) = &settings.access_token {
+            return Some(token.expose().to_owned());
+        }
         if settings.token_path.is_empty() {
             return None;
         }

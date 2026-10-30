@@ -27,7 +27,7 @@ use ledger_module::transparency::flows::{
     TransactionVisibilitySettings,
 };
 use ledger_module::transparency::types::{
-    CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
+    AccessType, CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
 };
 use spacetimedb_sdk::__codegen::InternalError;
 use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
@@ -55,11 +55,12 @@ use crate::module_bindings::{
     PublicOrganizationTableAccess as _, approve_chain as _, cancel_chain_request as _,
     create_campaign as _, create_flow_node as _, create_org_ledger as _, create_transaction as _,
     create_verification as _, delete_campaign as _, import_books as _,
-    link_transaction_entries as _, mark_published as _, record_donation as _, reject_chain as _,
-    remove_node_visibility as _, remove_transaction_visibility as _, request_chain as _,
-    revoke_chain as _, run_command as _, set_node_visibility as _, set_transaction_visibility as _,
-    update_campaign as _, update_chain_permissions as _, update_donation_status as _,
-    update_flow_node as _, update_transaction as _,
+    link_transaction_entries as _, log_verification_access as _, mark_published as _,
+    record_donation as _, reject_chain as _, remove_node_visibility as _,
+    remove_transaction_visibility as _, request_chain as _, revoke_chain as _, run_command as _,
+    set_node_visibility as _, set_transaction_visibility as _, update_campaign as _,
+    update_chain_permissions as _, update_donation_status as _, update_flow_node as _,
+    update_transaction as _,
 };
 use crate::status::{
     ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
@@ -382,6 +383,27 @@ impl SpacetimeClient {
                 org_id.to_owned(),
                 verification_id.to_owned(),
                 published,
+                done,
+            )
+        })
+    }
+
+    /// Logs that the caller opened (`View`) or downloaded (`Download`) a proof's file
+    /// (`log_verification_access`, `crates/ledger-module/src/transparency/plan.rs`;
+    /// `logVerificationAccess`, `supabase.ts:554-571`). The module records the caller and the
+    /// level they were given, never taken from the call; the row arrives through
+    /// `my_verification_access_log`.
+    pub fn log_verification_access(
+        &self,
+        org_id: &str,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers.log_verification_access_then(
+                org_id.to_owned(),
+                verification_id.to_owned(),
+                access_arg(access),
                 done,
             )
         })
@@ -757,6 +779,16 @@ fn status_arg(status: PaymentStatus) -> String {
         PaymentStatus::Confirmed => "confirmed",
         PaymentStatus::Failed => "failed",
         PaymentStatus::Refunded => "refunded",
+    }
+    .to_owned()
+}
+
+/// `log_verification_access`'s `access_type` argument: `view` or `download`, which the reducer
+/// parses back as its JSON string.
+fn access_arg(access: AccessType) -> String {
+    match access {
+        AccessType::View => "view",
+        AccessType::Download => "download",
     }
     .to_owned()
 }
@@ -1259,6 +1291,32 @@ mod tests {
             let back: PaymentStatus = serde_json::from_str(&text).unwrap();
             assert_eq!(back, status);
         }
+    }
+
+    /// The reducer reads `access_type` the same way (`reducers::log_verification_access`).
+    #[test]
+    fn the_access_argument_parses_back_as_the_reducer_reads_it() {
+        for access in [AccessType::View, AccessType::Download] {
+            let text = serde_json::Value::String(access_arg(access)).to_string();
+            let back: AccessType = serde_json::from_str(&text).unwrap();
+            assert_eq!(back, access);
+        }
+        assert_eq!(access_arg(AccessType::View), "view");
+    }
+
+    /// DT3's proof writes take the same path as the others.
+    #[test]
+    fn proof_writes_before_a_connection_resolve_as_disconnected() {
+        let client =
+            SpacetimeClient::connect(ClientConfig::new("http://127.0.0.1:9", "none")).unwrap();
+        let tickets = [
+            client.mark_published("org-1", "v1", true),
+            client.log_verification_access("org-1", "v1", AccessType::View),
+        ];
+        for ticket in tickets {
+            assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
+        }
+        client.disconnect();
     }
 
     fn campaign() -> NewCampaign {

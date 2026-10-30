@@ -22,7 +22,8 @@ root.
 - **ledger-client** connects, keeps its own cache, rebuilds the books and submits commands; its
   live test passed against maincloud dev.
 - **desktop** (FlowTrace Books) has the seven books screens (Accounts, Journal, General ledger,
-  Spend, Grants, Reconcile, Reports), Dashboard and Campaigns (DT1), and Flows and Chains (DT2)
+  Spend, Grants, Reconcile, Reports), Dashboard and Campaigns (DT1), Flows and Chains (DT2), and
+  Transactions with the shared Proofs section on transactions, claims and bills (DT3)
   over either the in-process demo books or the live module,
   with a Connection screen, a saved token and an offline mode. It was checked on Linux
   (Omarchy, Hyprland on Wayland) and on macOS (release build and the full test suite on the
@@ -66,9 +67,9 @@ changing either once production books exist means a migration.
 - Books covers the web app's finance area: `ledger/*`, `spend/*`, `grants/*`, `reconcile/*`,
   `reports`, and since DT1 the Dashboard and Campaigns (list, new, manage, record and confirm
   donations, preview card, link and embed code), and since DT2 Flows (the flow map, its details
-  panel and ledger links) and Chains (list, request, approve, reject, revoke, cancel). It has
-  no counterpart yet for transactions, the trust score page, donate pages, badges, or settings
-  and access groups.
+  panel and ledger links) and Chains (list, request, approve, reject, revoke, cancel), and since
+  DT3 Transactions (list, page, record) with proofs (gallery, attach panel, viewer). It has no
+  counterpart yet for the trust score page, donate pages, badges, or settings and access groups.
 - DT1, deliberate difference (P20): the desktop manages and previews campaigns, and puts
   **Copy link** and **Copy embed code** on the campaign it manages; the web keeps the embed code
   under Settings > Embed and the copy-link button on the public donate page. The snippet and the
@@ -78,9 +79,8 @@ changing either once production books exist means a migration.
   which the web page lacks; without it a gift recorded by hand could never count toward the
   raised amount. Payment status stays a recorded field, nothing is charged (P19).
 - DT1: as on the web, a campaign's name, target and dates cannot be edited after it is saved
-  (`update_campaign` takes any field, but neither app has an edit form); the Dashboard leaves
-  out the web's "Record a transaction" link (no Transactions screen yet; "Open the flow map"
-  arrived with DT2).
+  (`update_campaign` takes any field, but neither app has an edit form). The Dashboard's
+  "Open the flow map" arrived with DT2 and "Record a transaction" with DT3.
 - DT1 nav: Dashboard is key `0` at the top of the rail and Campaigns key `8` under
   "Transparency"; keys `1` to `7` keep their screens. The app still opens on Accounts.
 - DT2 nav: Flows is key `9` under Dashboard and Chains sits under Campaigns with no key (the
@@ -100,6 +100,22 @@ changing either once production books exist means a migration.
   has text areas. In the in-process demo the two active chains' granted groups belong to the
   demo organisation (the dataset's quirk), so they show "None" for access: the module looks
   the group up in the target's records, where the web's demo looks it up anywhere.
+- DT3 nav: Transactions sits second in the rail (the web's place) with no key; `--entry
+  transactions`. The Flows empty notice's "Record a transaction" and the movement rows' links to
+  a transaction's page are still not wired from Flows.
+- DT3 Proofs, deliberate differences: a manager publishes a proof at the Worker's public link
+  from the viewer (`mark_published`; the web has no control for it, and the public badge path
+  needs it); the GPS reading is typed (no geolocation on the desktop); a file's type is read from
+  its first bytes, so only the photos and PDFs the Worker stores pass even where the web's
+  `PROOF_ACCEPT` lists Word, JSON, text or video (a Video proof cannot carry a file through the
+  Worker today); PDFs and videos open in the browser, not inside the viewer; tiles show the
+  type's short name where the web draws an icon; the screen limit is the web's 10 MB (the Worker
+  allows 25 MB); opening and downloading a file log `view` and `download` through
+  `log_verification_access` (the web logs nothing). Gaps outside DT3's scope: the Worker has no
+  delete route, thumbnails exist only with its Images binding, and a proof's own
+  `visibility_level` is enforced nowhere (module, TS and Worker alike: what a reader sees comes
+  from their access groups). Claims' and bills' Proofs sections take the attach panel's kinds;
+  their `a` key stays Approve, so the panel opens from its button there.
 - Sign-in: with `workos_client_id` in `config.toml` the desktop signs in with WorkOS AuthKit
   through the system browser (AUTH2, `crates/desktop/README.md`); without it, it connects with a
   device identity (a token file). Auth providers are the user's decision.
@@ -114,7 +130,8 @@ changing either once production books exist means a migration.
 
 - Bills: a new supplier is added on the Vendors tab, not inside the bill form; vendors have no
   default account or contact field in the ledger.
-- Proof files (bill attachments, claim receipts) are not stored: the desktop has no file store.
+- Proof files go to the proofs Worker (STO1, DT3): `proofs_url` in `config.toml`; without it,
+  or on the in-process demo books, attaching says what to set up.
 - Journal: the web's paste box on CSV import is left out (the path field and the file dialog
   read the same files); the list draws at most 500 rows and asks to filter past that.
 - Reconcile: adding a bank account has a form here (`bank.add`) that the web does not have;

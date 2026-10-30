@@ -301,7 +301,13 @@ fn a_claim_receipt_becomes_a_pending_receipt_proof_with_key_and_hash() {
     assert_eq!(v.description.as_deref(), Some("fuel.jpg"));
     assert_eq!(
         serde_json::Value::Object(v.metadata),
-        serde_json::json!({ "file_name": "fuel.jpg", "mime_type": "image/jpeg", "size": 2048 })
+        serde_json::json!({
+            "file_name": "fuel.jpg",
+            "mime_type": "image/jpeg",
+            "size": 2048,
+            "object_key": a.uploaded.key,
+            "sha256": "a".repeat(64),
+        })
     );
     let bill = new_verification(LinkKind::Bill, "bill-1", &a);
     assert_eq!(
@@ -349,4 +355,126 @@ fn an_answer_for_a_removed_file_is_dropped() {
     list.remove(a);
     list.finish(a, Ok(uploaded(&"1".repeat(64))));
     assert_eq!(list.rows(), []);
+}
+
+#[test]
+fn a_transaction_is_a_link_kind_of_its_own() {
+    assert_eq!(LinkKind::Transaction.as_str(), "transaction");
+    assert_eq!(
+        LinkKind::Transaction.proof_type(),
+        VerificationType::Receipt
+    );
+    assert_eq!(SCREEN_MAX_BYTES, 10 * 1024 * 1024);
+}
+
+fn photo() -> Attachment {
+    let sha = "b".repeat(64);
+    Attachment {
+        name: "site.png".into(),
+        uploaded: Uploaded {
+            key: format!("org/org-1/{sha}"),
+            sha256: sha,
+            size: 12,
+            content_type: "image/png".into(),
+            thumbnail_key: None,
+        },
+    }
+}
+
+#[test]
+fn a_proof_of_a_transaction_carries_what_the_attach_panel_set() {
+    let details = ProofDetails {
+        kind: VerificationType::Photo,
+        visibility: Visibility::Thumbnail,
+        description: "  Pipes delivered to the site ".into(),
+        executor: " Achieng ".into(),
+        gps: Some(Gps {
+            latitude: -3.119_5,
+            longitude: 35.597_2,
+            accuracy: Some(12.0),
+            location_name: Some("Lokichar".into()),
+        }),
+    };
+    let v = new_verification_for(LinkKind::Transaction, "txn-1", &details, Some(&photo()));
+    assert_eq!(v.transaction_id.as_deref(), Some("txn-1"));
+    assert_eq!((v.claim_id, v.bill_id), (None, None));
+    assert_eq!(v.kind, VerificationType::Photo);
+    assert_eq!(v.visibility_level, Visibility::Thumbnail);
+    assert_eq!(
+        v.description.as_deref(),
+        Some("Pipes delivered to the site")
+    );
+    assert_eq!(v.executor_name.as_deref(), Some("Achieng"));
+    assert_eq!(
+        (v.gps_latitude, v.gps_longitude, v.gps_accuracy),
+        (Some(-3.119_5), Some(35.597_2), Some(12.0))
+    );
+    assert_eq!(v.location_name.as_deref(), Some("Lokichar"));
+    assert_eq!(v.object_key.as_deref(), Some(photo().uploaded.key.as_str()));
+    assert_eq!(v.metadata["file_name"], "site.png");
+}
+
+#[test]
+fn a_reading_without_a_file_is_a_record_with_no_key_and_no_metadata() {
+    let details = ProofDetails {
+        kind: VerificationType::Gps,
+        visibility: Visibility::Full,
+        description: String::new(),
+        executor: "   ".into(),
+        gps: Some(Gps {
+            latitude: 1.0,
+            longitude: 2.0,
+            accuracy: None,
+            location_name: None,
+        }),
+    };
+    let v = new_verification_for(LinkKind::Transaction, "txn-1", &details, None);
+    assert_eq!(
+        (v.object_key, v.sha256, v.thumbnail_key),
+        (None, None, None)
+    );
+    assert!(v.metadata.is_empty());
+    assert_eq!((v.description, v.executor_name), (None, None));
+    assert_eq!(v.status, VerificationStatus::Pending);
+    assert_eq!(v.gps_latitude, Some(1.0));
+}
+
+#[test]
+fn a_blank_description_falls_back_to_the_file_name() {
+    let details = ProofDetails::of(VerificationType::Receipt);
+    let v = new_verification_for(LinkKind::Bill, "bill-1", &details, Some(&photo()));
+    assert_eq!(v.description.as_deref(), Some("site.png"));
+    assert_eq!(v.bill_id.as_deref(), Some("bill-1"));
+    assert_eq!(v.visibility_level, Visibility::Full);
+}
+
+#[test]
+fn a_signed_links_bytes_are_fetched_without_the_token() {
+    let (base, server) = stub(200, "PNGDATA");
+    let bytes = ProofsClient::new(&base, "tok")
+        .fetch_bytes(&format!("{base}/signed/org/o/abc?exp=1&sig=2"))
+        .unwrap();
+    let seen = server.join().unwrap();
+    assert_eq!(
+        seen.request_line,
+        "GET /signed/org/o/abc?exp=1&sig=2 HTTP/1.1"
+    );
+    assert_eq!(seen.header("authorization"), None);
+    assert_eq!(bytes, b"PNGDATA");
+}
+
+#[test]
+fn a_refused_fetch_names_the_workers_reason() {
+    let (base, server) = stub(403, r#"{"error":"This link has expired."}"#);
+    let err = ProofsClient::new(&base, "tok")
+        .fetch_bytes(&format!("{base}/signed/x"))
+        .unwrap_err();
+    server.join().unwrap();
+    assert_eq!(
+        err,
+        ProofsError::Refused {
+            status: 403,
+            message: "This link has expired.".into()
+        }
+    );
 }

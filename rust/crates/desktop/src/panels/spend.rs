@@ -34,6 +34,7 @@ use crate::claims::{
     grant_choices, has_overridable, list_notice,
 };
 use crate::panels::bills::BillsPanel;
+use crate::panels::proof_section::ProofsSection;
 use crate::panels::proofs::{self as proof_ui, HasProofs};
 use crate::panels::{demo_tag, failure_box, field, form_buttons, hint, page_title, section_header};
 use crate::proofs::{AttachList, LinkKind};
@@ -94,6 +95,8 @@ enum LinePick {
 /// The Spend screen.
 pub struct SpendPanel {
     store: Entity<LedgerStore>,
+    /// The Proofs section of the claim on show (DT3).
+    proof_section: Entity<ProofsSection>,
     seen: Option<(Option<OrganizationId>, u64)>,
     tab: SpendTab,
     view: ClaimsView,
@@ -168,9 +171,11 @@ impl SpendPanel {
             cx.new(|cx| InputState::new(window, cx).placeholder("M-Pesa code or bank reference"));
         let cash = cx.new(|cx| SelectState::new(Items::new(), None, window, cx));
         let bills = cx.new(|cx| BillsPanel::new(store.clone(), window, cx));
+        let proof_section = cx.new(|cx| ProofsSection::new(store.clone(), window, cx));
         let enter = |event: &InputEvent| matches!(event, InputEvent::PressEnter { .. });
         let subscriptions = vec![
             cx.observe(&bills, |_, _, cx| cx.notify()),
+            cx.observe(&proof_section, |_, _, cx| cx.notify()),
             cx.observe_in(&store, window, |this, _, window, cx| {
                 this.refresh(window, cx);
             }),
@@ -212,6 +217,7 @@ impl SpendPanel {
             cx.subscribe_in(&cash, window, Self::on_cash),
         ];
         let mut panel = Self {
+            proof_section,
             store,
             seen: None,
             tab: SpendTab::Claims,
@@ -324,6 +330,19 @@ impl SpendPanel {
     /// opens the claim; on a claim `s`, `a`, `r` and `p` start Submit, Approve, Reject and
     /// Reimburse, Enter confirms, Escape steps back.
     pub fn press_key(&mut self, key: &str, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        if self.tab == SpendTab::Claims && matches!(self.view, ClaimsView::Detail(_)) {
+            let section = self.proof_section.read(cx);
+            if (section.viewing() || section.attaching())
+                && self
+                    .proof_section
+                    .update(cx, |s, cx| s.press_key(key, window, cx))
+            {
+                return true;
+            }
+            if key == "o" {
+                return self.proof_section.update(cx, ProofsSection::open_first);
+            }
+        }
         let handled = match (key, &self.view) {
             ("c", _) => {
                 self.tab = SpendTab::Claims;
@@ -1296,10 +1315,12 @@ impl SpendPanel {
             .into_any_element()
     }
 
-    /// The receipts recorded on claim `id` ([`crate::panels::proofs::recorded_section`]).
+    /// The Proofs section of claim `id` ([`ProofsSection`], shared with transactions and
+    /// bills; `o` opens the viewer).
     fn receipt_files(&self, id: &str, cx: &mut Context<Self>) -> AnyElement {
-        let proofs = self.store.read(cx).proofs_of(LinkKind::Claim, id);
-        proof_ui::recorded_section::<Self>("Receipt files", &proofs, self.proof_note.as_deref(), cx)
+        let link = Some((LinkKind::Claim, id.to_owned()));
+        self.proof_section.update(cx, |s, cx| s.show(link, cx));
+        self.proof_section.clone().into_any_element()
     }
 
     fn dialog_box(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -1881,6 +1902,11 @@ impl Render for SpendPanel {
                 (SpendTab::Bills, _) => self.bills.update(cx, BillsPanel::body),
                 (SpendTab::Claims, ClaimsView::List) => self.list(cx),
                 (SpendTab::Claims, ClaimsView::New) => self.new_form(cx),
+                (SpendTab::Claims, ClaimsView::Detail(_))
+                    if self.proof_section.read(cx).viewing() =>
+                {
+                    self.proof_section.clone().into_any_element()
+                }
                 (SpendTab::Claims, ClaimsView::Detail(_)) => self.detail_view(cx),
             }
         };

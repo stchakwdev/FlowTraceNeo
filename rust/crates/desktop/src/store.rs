@@ -14,7 +14,7 @@ use ledger_core::types::{Actor, OrganizationId};
 
 use ledger_module::transparency::chains::ChainActivity;
 use ledger_module::transparency::public::PublicOrganization;
-use ledger_module::transparency::types::{NewVerification, Verification};
+use ledger_module::transparency::types::{AccessType, NewVerification, Verification};
 
 use crate::backend::{
     BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, FlowWrite,
@@ -235,8 +235,11 @@ impl StoreCore {
         self.proofs_url = url.map(|u| u.trim().to_owned()).filter(|u| !u.is_empty());
     }
 
-    /// A client of the proofs Worker for the selected organisation, as the connection's
-    /// identity ([`LedgerBackend::proofs_token`]), with the organisation id to upload under.
+    /// A client of the proofs Worker for the selected organisation, with the organisation id to
+    /// upload under. Signed in with WorkOS, it sends the session's access token, the refreshed
+    /// one once the session renews (`signin::state::SignInState::refreshed`), so the Worker sees
+    /// the same caller the module does; otherwise the connection's token
+    /// ([`LedgerBackend::proofs_token`]).
     ///
     /// # Errors
     ///
@@ -248,9 +251,13 @@ impl StoreCore {
                     .to_owned(),
             )
         })?;
-        let token = self
-            .backend
-            .proofs_token()
+        let session = (self.signin.phase() == crate::signin::state::Phase::SignedIn)
+            .then(|| self.signin.session())
+            .flatten()
+            .filter(|_| self.backend.is_remote())
+            .map(|s| s.access_token.expose().to_owned());
+        let token = session
+            .or_else(|| self.backend.proofs_token())
             .ok_or_else(|| ProofsError::Unavailable(crate::backend::NO_PROOFS.to_owned()))?;
         let org = self
             .view
@@ -269,7 +276,32 @@ impl StoreCore {
         self.backend.attach_proof(&org, proof)
     }
 
-    /// The selected organisation's proofs of one claim or bill that the caller may see.
+    /// Publishes a proof of the selected organisation at the public link, or takes it back
+    /// ([`LedgerBackend::mark_published`]).
+    pub fn mark_published(&mut self, verification_id: &str, published: bool) -> Submission {
+        let Some(org) = self.view.selected().map(|org| org.id.clone()) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
+        };
+        self.backend
+            .mark_published(&org, verification_id, published)
+    }
+
+    /// Logs that the caller opened or downloaded a proof's file
+    /// ([`LedgerBackend::log_verification_access`]).
+    pub fn log_verification_access(
+        &mut self,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        let Some(org) = self.view.selected().map(|org| org.id.clone()) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
+        };
+        self.backend
+            .log_verification_access(&org, verification_id, access)
+    }
+
+    /// The selected organisation's proofs of one claim, bill or transaction that the caller may
+    /// see, in the backend's order.
     #[must_use]
     pub fn proofs_of(&self, kind: LinkKind, id: &str) -> Vec<Verification> {
         let Some(org) = self.view.selected() else {
@@ -281,6 +313,7 @@ impl StoreCore {
             .filter(|v| match kind {
                 LinkKind::Claim => v.claim_id.as_deref() == Some(id),
                 LinkKind::Bill => v.bill_id.as_deref() == Some(id),
+                LinkKind::Transaction => v.transaction_id.as_deref() == Some(id),
             })
             .collect()
     }
@@ -490,6 +523,20 @@ impl LedgerStore {
     /// [`StoreCore::attach_proof`].
     pub fn attach_proof(&mut self, proof: NewVerification) -> Submission {
         self.core.attach_proof(proof)
+    }
+
+    /// [`StoreCore::mark_published`].
+    pub fn mark_published(&mut self, verification_id: &str, published: bool) -> Submission {
+        self.core.mark_published(verification_id, published)
+    }
+
+    /// [`StoreCore::log_verification_access`].
+    pub fn log_verification_access(
+        &mut self,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        self.core.log_verification_access(verification_id, access)
     }
 
     /// [`StoreCore::write_campaign`]. Screens go through `panels::write_campaign`, which

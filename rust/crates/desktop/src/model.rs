@@ -18,6 +18,8 @@ use crate::backend::{BackendEvent, ConnectSettings, ConnectionStatus, Organisati
 pub enum NavEntry {
     /// Key figures, funding by donor and recent movements (DT1).
     Dashboard,
+    /// Every movement of money with its proofs, and recording one (DT3).
+    Transactions,
     /// The flow map of money between flow nodes (DT2).
     Flows,
     /// Chart of accounts and fiscal periods (U2).
@@ -42,9 +44,11 @@ pub enum NavEntry {
 
 impl NavEntry {
     /// Every entry, in navigation order: the rail's sections of `flowtrace/src/lib/navigation.ts`
-    /// (Dashboard and Flows, the books, then Transparency with Campaigns and Chains).
-    pub const ALL: [Self; 11] = [
+    /// (Dashboard, Transactions and Flows, the books, then Transparency with Campaigns and
+    /// Chains).
+    pub const ALL: [Self; 12] = [
         Self::Dashboard,
+        Self::Transactions,
         Self::Flows,
         Self::Accounts,
         Self::Journal,
@@ -63,7 +67,7 @@ impl NavEntry {
     #[must_use]
     pub fn section(self) -> Option<&'static str> {
         match self {
-            Self::Dashboard | Self::Flows => None,
+            Self::Dashboard | Self::Transactions | Self::Flows => None,
             Self::Campaigns | Self::Chains => Some("Transparency"),
             _ => Some("Books"),
         }
@@ -74,6 +78,7 @@ impl NavEntry {
     pub fn label(self) -> &'static str {
         match self {
             Self::Dashboard => "Dashboard",
+            Self::Transactions => "Transactions",
             Self::Flows => "Flows",
             Self::Campaigns => "Campaigns",
             Self::Chains => "Chains",
@@ -92,6 +97,7 @@ impl NavEntry {
     pub fn summary(self) -> &'static str {
         match self {
             Self::Dashboard => "Key figures, funding received by donor and recent movements.",
+            Self::Transactions => "Every movement of money, with the proof attached to it.",
             Self::Flows => {
                 "Where money came from, where it went, and the proof behind each movement."
             }
@@ -110,8 +116,9 @@ impl NavEntry {
     }
 
     /// The key that opens this entry: `0` for Dashboard, `1` to `7` for the books screens in
-    /// order (the keys they had before DT1), `8` for Campaigns, `9` for Flows. Chains has none
-    /// (the digits are spent): it opens from the rail or `--entry chains`.
+    /// order (the keys they had before DT1), `8` for Campaigns, `9` for Flows. Chains and
+    /// Transactions have none (the digits are spent): they open from the rail or `--entry
+    /// chains` and `--entry transactions`.
     #[must_use]
     pub fn key(self) -> Option<&'static str> {
         Some(match self {
@@ -125,7 +132,7 @@ impl NavEntry {
             Self::Grants => "5",
             Self::Reconcile => "6",
             Self::Reports => "7",
-            Self::Chains => return None,
+            Self::Chains | Self::Transactions => return None,
         })
     }
 
@@ -603,12 +610,13 @@ mod tests {
     }
 
     #[test]
-    fn nav_has_the_eleven_entries_in_the_webs_rail_order() {
+    fn nav_has_the_twelve_entries_in_the_webs_rail_order() {
         let labels: Vec<_> = NavEntry::ALL.iter().map(|e| e.label()).collect();
         assert_eq!(
             labels,
             [
                 "Dashboard",
+                "Transactions",
                 "Flows",
                 "Accounts",
                 "Journal",
@@ -622,9 +630,9 @@ mod tests {
             ]
         );
         let sections: Vec<_> = NavEntry::ALL.iter().map(|e| e.section()).collect();
-        assert_eq!(sections[..2], [None, None]);
-        assert!(sections[2..9].iter().all(|s| *s == Some("Books")));
-        assert_eq!(sections[9..], [Some("Transparency"), Some("Transparency")]);
+        assert_eq!(sections[..3], [None, None, None]);
+        assert!(sections[3..10].iter().all(|s| *s == Some("Books")));
+        assert_eq!(sections[10..], [Some("Transparency"), Some("Transparency")]);
         for entry in NavEntry::ALL {
             assert_ne!(entry.summary(), "");
             assert!(entry.summary().is_ascii(), "no emoji: {}", entry.summary());
@@ -632,13 +640,14 @@ mod tests {
     }
 
     #[test]
-    fn keys_zero_to_nine_keep_their_entries_and_chains_has_none() {
+    fn keys_zero_to_nine_keep_their_entries_and_chains_and_transactions_have_none() {
         let keys: Vec<(NavEntry, Option<&str>)> =
             NavEntry::ALL.iter().map(|e| (*e, e.key())).collect();
         assert_eq!(
             keys,
             [
                 (NavEntry::Dashboard, Some("0")),
+                (NavEntry::Transactions, None),
                 (NavEntry::Flows, Some("9")),
                 (NavEntry::Accounts, Some("1")),
                 (NavEntry::Journal, Some("2")),
@@ -667,6 +676,10 @@ mod tests {
             assert_eq!(NavEntry::from_name(&entry.name()), Some(entry));
         }
         assert_eq!(NavEntry::from_name("chains"), Some(NavEntry::Chains));
+        assert_eq!(
+            NavEntry::from_name("transactions"),
+            Some(NavEntry::Transactions)
+        );
         assert_eq!(NavEntry::from_name("flows"), Some(NavEntry::Flows));
         assert_eq!(
             NavEntry::from_name("general-ledger"),

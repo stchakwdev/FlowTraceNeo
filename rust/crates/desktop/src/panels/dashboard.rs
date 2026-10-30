@@ -4,11 +4,11 @@
 //! only draws. Also the draw helpers Campaigns shares: a key-figure row with details, the
 //! coverage bar of a [`Bar`] and the proof line mark (`StatusMark`).
 //!
-//! The header's "Open the flow map" emits [`OpenFlows`] for the shell (DT2). "Record a
-//! transaction" and the donor hover that dims other movements are left out: the desktop has no
-//! transactions screen yet (DT3, `rust/docs/handoff.md`).
+//! The header's "Open the flow map" emits [`OpenFlows`] for the shell (DT2) and "Record a
+//! transaction" emits [`RecordTransaction`] (DT3). The donor hover that dims other movements is
+//! left out (`rust/docs/handoff.md`).
 
-use gpui_kit::component::button::Button;
+use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
@@ -29,6 +29,11 @@ use crate::theme::{Palette, palette, space, text};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct OpenFlows;
 
+/// Emitted by "Record a transaction" (`dashboard.tsx` header): the shell opens the
+/// record-a-transaction form.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RecordTransaction;
+
 /// The Dashboard screen.
 pub struct DashboardPanel {
     store: Entity<LedgerStore>,
@@ -40,6 +45,7 @@ pub struct DashboardPanel {
 }
 
 impl EventEmitter<OpenFlows> for DashboardPanel {}
+impl EventEmitter<RecordTransaction> for DashboardPanel {}
 
 impl DashboardPanel {
     /// The screen over `store`.
@@ -84,11 +90,15 @@ impl DashboardPanel {
             .outline()
             .label("Open the flow map")
             .on_click(cx.listener(|_, _: &ClickEvent, _, cx| cx.emit(OpenFlows)));
+        let record = Button::new("record-a-transaction")
+            .primary()
+            .label("Record a transaction")
+            .on_click(cx.listener(|_, _: &ClickEvent, _, cx| cx.emit(RecordTransaction)));
         let title = h_flex()
             .justify_between()
             .items_end()
             .child(page_title("Dashboard"))
-            .child(open);
+            .child(h_flex().gap(px(8.0)).child(open).child(record));
         v_flex().gap(px(8.0)).child(title).child(
             h_flex()
                 .gap(px(12.0))

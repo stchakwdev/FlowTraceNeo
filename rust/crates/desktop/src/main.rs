@@ -4,6 +4,7 @@
 //! desktop [--theme light|dark] [--screen books|connect] [--entry 0-9|<name>] [--report <id>]
 //!         [--large-books LINES] [--gl-account CODE] [--gl-row N] [--gl-scroll-bench on]
 //!         [--grants list|budgets|<grant id>] [--campaigns list|new|<id>|preview:<id>]
+//!         [--transactions list|new|evidenced|awaiting-proof|flagged|<id>]
 //!         [--flows week|month|quarter|year[:<n>]] [--chains request|approve|reject|revoke|cancel]
 //!         [--server <url>] [--database <name>]
 //!         [--timings on] [--config <path>] [--sign-in on]
@@ -16,7 +17,9 @@
 //! `--gl-*` flags filter the General ledger on an account code, open a row, or scroll the whole
 //! table once and log the frame times. `--grants` opens the Grants entry on its list, its
 //! budget tab or one grant (with `--entry 5`); `--campaigns` opens Campaigns on its list, the
-//! new-campaign form, one campaign or its preview card (with `--entry 8`); `--flows` picks the
+//! new-campaign form, one campaign or its preview card (with `--entry 8`); `--transactions` opens
+//! Transactions on its list (or one status), the record form or one transaction (with `--entry
+//! transactions`); `--flows` picks the
 //! flow map's period and selects its nth node or line in money order (with `--entry flows`);
 //! `--chains` opens a Chains dialog on the first row that offers it (with `--entry chains`). `--server` and `--database` open the books on a
 //! SpacetimeDB server instead of the demo, over `flowtrace-books/config.toml` (README.md,
@@ -80,6 +83,7 @@ fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
             "--grants" => launch.grants = Some(value),
             "--campaigns" => launch.campaigns = Some(value),
             "--flows" => launch.flows = Some(value),
+            "--transactions" => launch.transactions = Some(value),
             "--chains" => launch.chains = Some(value),
             "--gl-scroll-bench" => launch.general_ledger.scroll_bench = value == "on",
             "--server" => launch.server = Some(value),

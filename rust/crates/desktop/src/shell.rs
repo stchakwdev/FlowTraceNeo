@@ -29,7 +29,7 @@ use crate::panels;
 use crate::panels::accounts::AccountsPanel;
 use crate::panels::campaigns::CampaignsPanel;
 use crate::panels::chains::ChainsPanel;
-use crate::panels::dashboard::{DashboardPanel, OpenFlows};
+use crate::panels::dashboard::{DashboardPanel, OpenFlows, RecordTransaction};
 use crate::panels::flows::{FlowsPanel, OpenLedgerLines};
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
 use crate::panels::grants::GrantsPanel;
@@ -37,6 +37,7 @@ use crate::panels::journal::JournalPanel;
 use crate::panels::reconcile::ReconcilePanel;
 use crate::panels::reports::ReportsPanel;
 use crate::panels::spend::SpendPanel;
+use crate::panels::transactions::{TransactionsPanel, TransactionsView};
 use crate::signin::state::{Action, Card, Phase};
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
@@ -63,6 +64,7 @@ pub struct Shell {
     grants: Entity<GrantsPanel>,
     reconcile: Entity<ReconcilePanel>,
     dashboard: Entity<DashboardPanel>,
+    transactions: Entity<TransactionsPanel>,
     campaigns: Entity<CampaignsPanel>,
     flows: Entity<FlowsPanel>,
     chains: Entity<ChainsPanel>,
@@ -110,6 +112,7 @@ impl Shell {
         let journal = cx.new(|cx| JournalPanel::new(store.clone(), window, cx));
         let reconcile = cx.new(|cx| ReconcilePanel::new(store.clone(), window, cx));
         let dashboard = cx.new(|cx| DashboardPanel::new(store.clone(), window, cx));
+        let transactions = cx.new(|cx| TransactionsPanel::new(store.clone(), window, cx));
         let campaigns = cx.new(|cx| CampaignsPanel::new(store.clone(), window, cx));
         let flows = cx.new(|cx| FlowsPanel::new(store.clone(), window, cx));
         let chains = cx.new(|cx| ChainsPanel::new(store.clone(), window, cx));
@@ -125,6 +128,16 @@ impl Shell {
             cx.subscribe_in(&dashboard, window, |shell, _, _: &OpenFlows, window, cx| {
                 shell.select_entry(NavEntry::Flows, window, cx);
             }),
+            cx.subscribe_in(
+                &dashboard,
+                window,
+                |shell, _, _: &RecordTransaction, window, cx| {
+                    shell.transactions.update(cx, |panel, cx| {
+                        panel.show(TransactionsView::New, window, cx);
+                    });
+                    shell.select_entry(NavEntry::Transactions, window, cx);
+                },
+            ),
         ];
 
         let focus = cx.focus_handle();
@@ -147,6 +160,7 @@ impl Shell {
             grants,
             reconcile,
             dashboard,
+            transactions,
             campaigns,
             flows,
             chains,
@@ -178,6 +192,12 @@ impl Shell {
     #[must_use]
     pub fn grants(&self) -> &Entity<GrantsPanel> {
         &self.grants
+    }
+
+    /// The Transactions panel, for the launch flags (`app.rs`).
+    #[must_use]
+    pub fn transactions(&self) -> &Entity<TransactionsPanel> {
+        &self.transactions
     }
 
     /// The Campaigns panel, for the launch flags and `web_url` (`app.rs`).
@@ -312,6 +332,11 @@ impl Shell {
                     .chains
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)))
             || (books
+                && self.nav.entry == NavEntry::Transactions
+                && self
+                    .transactions
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
                 && self.nav.entry == NavEntry::Campaigns
                 && self
                     .campaigns
@@ -435,6 +460,7 @@ impl Shell {
             NavEntry::Grants => self.grants.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),
             NavEntry::Dashboard => self.dashboard.clone().into_any_element(),
+            NavEntry::Transactions => self.transactions.clone().into_any_element(),
             NavEntry::Campaigns => self.campaigns.clone().into_any_element(),
             NavEntry::Flows => self.flows.clone().into_any_element(),
             NavEntry::Chains => self.chains.clone().into_any_element(),

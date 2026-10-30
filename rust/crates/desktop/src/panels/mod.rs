@@ -11,10 +11,12 @@ pub mod flows;
 pub mod general_ledger;
 pub mod grants;
 pub mod journal;
+pub mod proof_section;
 pub(crate) mod proofs;
 pub mod reconcile;
 pub mod reports;
 pub mod spend;
+pub mod transactions;
 
 use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::select::{SelectItem, SelectState};
@@ -39,6 +41,7 @@ pub fn task_of(entry: NavEntry) -> &'static str {
     match entry {
         NavEntry::Dashboard | NavEntry::Campaigns => "DT1",
         NavEntry::Flows | NavEntry::Chains => "DT2",
+        NavEntry::Transactions => "DT3",
         NavEntry::Accounts => "U2",
         NavEntry::Journal => "U3",
         NavEntry::GeneralLedger => "U4",
@@ -78,11 +81,6 @@ pub(crate) fn write_campaign<T: 'static>(
 }
 
 /// [`submit`] for a flow map write ([`LedgerStore::write_flow`]).
-#[expect(
-    dead_code,
-    reason = "no DT2 screen writes the flow map; the Transactions screen (DT3) records movements \
-              through it"
-)]
 pub(crate) fn write_flow<T: 'static>(
     this: &mut T,
     store: &Entity<LedgerStore>,
@@ -408,6 +406,7 @@ mod tests {
             tasks,
             [
                 "DT1",
+                "DT3",
                 "DT2",
                 "U2",
                 "U3",

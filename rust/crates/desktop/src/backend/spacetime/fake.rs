@@ -16,7 +16,7 @@ use ledger_core::{CommandResult, LedgerCommand, LedgerState};
 use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
 use ledger_module::transparency::public::PublicOrganization;
-use ledger_module::transparency::types::{NewVerification, Verification};
+use ledger_module::transparency::types::{AccessType, NewVerification, Verification};
 
 use super::{LiveClient, lock};
 use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, Submission};
@@ -31,6 +31,8 @@ pub struct Fake {
     pub sent: Mutex<Vec<(String, LedgerCommand)>>,
     pub proofs_sent: Mutex<Vec<(String, NewVerification)>>,
     pub proofs: Mutex<HashMap<String, Vec<Verification>>>,
+    pub published: Mutex<Vec<(String, String, bool)>>,
+    pub accesses: Mutex<Vec<(String, String, AccessType)>>,
     pub transparency: Mutex<HashMap<String, OrgTransparency>>,
     pub campaign_writes: Mutex<Vec<(String, CampaignWrite)>>,
     pub flow_writes: Mutex<Vec<(String, FlowWrite)>>,
@@ -48,6 +50,8 @@ impl Fake {
             sent: Mutex::new(Vec::new()),
             proofs_sent: Mutex::new(Vec::new()),
             proofs: Mutex::new(HashMap::new()),
+            published: Mutex::new(Vec::new()),
+            accesses: Mutex::new(Vec::new()),
             transparency: Mutex::new(HashMap::new()),
             campaign_writes: Mutex::new(Vec::new()),
             flow_writes: Mutex::new(Vec::new()),
@@ -108,6 +112,21 @@ impl LiveClient for Fake {
 
     fn create_verification(&self, org: &str, proof: &NewVerification) -> Submission {
         lock(&self.proofs_sent).push((org.to_owned(), proof.clone()));
+        Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn mark_published(&self, org: &str, verification_id: &str, published: bool) -> Submission {
+        lock(&self.published).push((org.to_owned(), verification_id.to_owned(), published));
+        Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn log_verification_access(
+        &self,
+        org: &str,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        lock(&self.accesses).push((org.to_owned(), verification_id.to_owned(), access));
         Submission::ready(Ok(CommandResult::None))
     }
 

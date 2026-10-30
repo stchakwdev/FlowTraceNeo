@@ -40,7 +40,8 @@ use ledger_module::transparency::flows::{
 use ledger_module::transparency::plan::{self as transparency_plan, Ctx, LedgerLinks};
 use ledger_module::transparency::public::PublicOrganization;
 use ledger_module::transparency::types::{
-    CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus, Verification,
+    AccessType, CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
+    Verification,
 };
 use ledger_module::transparency::{trust, ts};
 use serde_json::Value;
@@ -407,14 +408,40 @@ pub trait LedgerBackend {
         Submission::ready(Err(BackendError::Connection(NO_PROOFS.to_owned())))
     }
 
+    /// Publishes a proof of `org` at the proofs Worker's public link, or takes it back
+    /// (`mark_published`, `crates/ledger-module/src/transparency/plan.rs`): managers only, and
+    /// only a proof with a file. The change shows in [`LedgerBackend::proofs`].
+    fn mark_published(
+        &mut self,
+        org: &OrganizationId,
+        verification_id: &str,
+        published: bool,
+    ) -> Submission {
+        let _ = (org, verification_id, published);
+        Submission::ready(Err(BackendError::Connection(NO_PROOFS.to_owned())))
+    }
+
+    /// Logs that the caller opened or downloaded a proof's file of `org`
+    /// (`log_verification_access`, `plan.rs`; `logVerificationAccess`, `supabase.ts:554-571`).
+    fn log_verification_access(
+        &mut self,
+        org: &OrganizationId,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        let _ = (org, verification_id, access);
+        Submission::ready(Err(BackendError::Connection(NO_PROOFS.to_owned())))
+    }
+
     /// The proofs of `org` the caller may see (`my_verification`), oldest first.
     fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {
         let _ = org;
         Vec::new()
     }
 
-    /// The token the proofs Worker checks the caller by: the connection's SpacetimeDB token.
-    /// `None` when the backend has none to give (the in-process books).
+    /// The token the proofs Worker checks the caller by: the WorkOS access token the
+    /// connection presented, else the connection's SpacetimeDB token. `None` when the backend
+    /// has none to give (the in-process books).
     fn proofs_token(&self) -> Option<String> {
         None
     }
@@ -755,6 +782,31 @@ impl LedgerBackend for InProcessBackend {
     fn attach_proof(&mut self, org: &OrganizationId, proof: NewVerification) -> Submission {
         Submission::ready(self.change_transparency(org, |t, ctx, state| {
             transparency_plan::create_verification(t, ctx, proof, &StateLinks(state)).map(drop)
+        }))
+    }
+
+    /// `plan::mark_published` as the backend's actor (the demo user can close periods, so is a
+    /// manager).
+    fn mark_published(
+        &mut self,
+        org: &OrganizationId,
+        verification_id: &str,
+        published: bool,
+    ) -> Submission {
+        Submission::ready(self.change_transparency(org, |t, ctx, _| {
+            transparency_plan::mark_published(t, ctx, verification_id, published).map(drop)
+        }))
+    }
+
+    /// `plan::log_verification_access` as the backend's actor.
+    fn log_verification_access(
+        &mut self,
+        org: &OrganizationId,
+        verification_id: &str,
+        access: AccessType,
+    ) -> Submission {
+        Submission::ready(self.change_transparency(org, |t, ctx, _| {
+            transparency_plan::log_verification_access(t, ctx, verification_id, access).map(drop)
         }))
     }
 
