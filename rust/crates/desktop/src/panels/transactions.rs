@@ -110,7 +110,7 @@ impl TransactionsPanel {
         let inputs = new_form::Inputs::new(window, cx);
         let mut subscriptions = vec![
             cx.observe_in(&store, window, |this, _, window, cx| {
-                this.refresh(window, cx)
+                this.refresh(window, cx);
             }),
             cx.observe(&section, |_, _, cx| cx.notify()),
             cx.subscribe_in(&query, window, |this, _, event: &InputEvent, _, cx| {
