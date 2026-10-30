@@ -41,6 +41,8 @@ Key architectural decisions:
 
 ## Database Design
 
+> Superseded: the Supabase database below is deleted; the books, campaigns, donations, organisation profile and org context now run on the SpacetimeDB module (flowtrace/README.md, Docs/adr/0001-native-ledger.md).
+
 The schema is built through **13 progressive migrations**, each adding a self-contained feature layer with its own tables, indexes, RLS policies, triggers, and functions.
 
 ### Migration Progression

@@ -62,6 +62,34 @@ person is a member of a ledger organisation with that id, else the first organis
 member of. The masthead names the WorkOS user and the books' organisation: its profile name in
 the module (`my_organization_profile`, from MOD1), or its id when it has no profile.
 
+### Campaigns, donations and the organisation profile
+
+With `VITE_LEDGER_BACKEND=spacetimedb` the module also serves campaigns (list, detail, create,
+status changes, delete of drafts, figures, counts, the campaign report), donations and donor
+updates, the organisation profile in Settings, and the signed-in person
+(`src/lib/ledger/spacetime-transparency.ts`, selected in `src/lib/data.ts`). The organisation and
+role come from this identity's member row: a member who can close periods is an admin. With no
+membership the app shows only the not-connected notice with the identity; nothing is created for
+it. Without the setting the demo dataset serves these screens; with no backend at all (WorkOS and
+no `VITE_LEDGER_BACKEND`) they say the books are not connected, as Supabase is gone.
+
+The module keeps money in minor units; the web converts at the boundary. Every gift starts
+pending: on the campaign page a member presses "Confirm received" once the money has arrived,
+and only confirmed gifts count towards the raised amount and the figures (as in the demo).
+
+The public pages (`/donate/<link>`, `/embed/campaign/<id>`, `/badge/trust/<org>`) read the
+module's public tables `public_campaign`, `public_organization` and `public_badge` over HTTP SQL
+(`POST https://maincloud.spacetimedb.com/v1/database/<name>/sql`, no Authorization header;
+`src/lib/ledger/public-sql.ts`). A visitor opens no WebSocket and gets no identity until they
+press Give, which records a pending gift as a device identity (dummy mode). A campaign is public
+once it is active, marked public and has a link. The organisation and its badge are public once
+its profile has `is_public` set; Settings has no switch for it yet, so an operator or closing
+member sets it:
+
+```sh
+$S call -s maincloud flowtrace-ledger-dev update_organization_profile '"org-example"' '"{\"is_public\":true}"'
+```
+
 The client bindings in `src/lib/ledger/spacetime-bindings/` are generated from the Rust
 module. After a module change:
 

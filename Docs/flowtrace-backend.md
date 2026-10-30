@@ -2,6 +2,8 @@
 
 ## Overview
 
+> Superseded: the Supabase project is deleted; the books, campaigns, donations and organisation profile run on the SpacetimeDB module (Docs/adr/0001-native-ledger.md, flowtrace/README.md).
+
 FlowTrace uses **Supabase** for database, storage, and real-time features. Authentication is handled by **WorkOS AuthKit** (see flowtrace-architecture.md).
 
 ---

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouterState } from '@tanstack/react-router'
 import { useAppAuth } from './auth-context'
 import { AUTH_MODE, DEV_MODE } from './auth'
 import { DEV_ORG_ID } from './supabase'
@@ -70,7 +71,12 @@ export const orgContextKey = ['ledger', 'org-context'] as const
 function ModuleOrgProvider({ children }: { children: ReactNode }) {
   const { user, organizationId: authOrgId, loading: authLoading } = useAppAuth()
   const queryClient = useQueryClient()
-  const enabled = DEV_MODE || (!authLoading && !!user)
+  // Only the signed-in app connects: the donate page, embed and badge read the public tables
+  // over HTTP (ledger/public-sql.ts) and must not open a connection or mint an identity.
+  const inApp = useRouterState({
+    select: (r) => r.matches.some((m) => m.routeId === '/_authenticated'),
+  })
+  const enabled = inApp && (DEV_MODE || (!authLoading && !!user))
   const snapshot = useQuery({
     queryKey: orgContextKey,
     queryFn: async () => (await loadTransparency()).orgSnapshot(),
