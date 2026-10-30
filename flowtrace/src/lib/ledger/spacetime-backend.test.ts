@@ -9,7 +9,11 @@ const fake = vi.hoisted(() => {
   }
   const built: Array<Built> = []
   // When set, the host refuses: the SDK closes the socket without ever calling onConnect.
-  const state = { refuse: false }
+  // With `hang`, a reducer call never settles, as on a socket that died without closing;
+  // with `refuseCommand`, the module answers with the engine's issues.
+  const state = { refuse: false, hang: false, refuseCommand: '' }
+  // The connections (by build order) the backend closed.
+  const disconnected: Array<number> = []
   // The request ids run_command was called with; each call is answered with a result row.
   const requestIds: Array<string> = []
   const results: Array<{ requestId: string; resultJson: string }> = []
@@ -20,7 +24,7 @@ const fake = vi.hoisted(() => {
     removeOnInsert: () => {},
     removeOnUpdate: () => {},
   })
-  const conn = (identity: unknown) => ({
+  const conn = (identity: unknown, index: number) => ({
     identity,
     db: new Proxy({} as Record<string, unknown>, {
       get: (_t, name) => view(name === 'myCommandResult' ? results : []),
@@ -39,12 +43,19 @@ const fake = vi.hoisted(() => {
     reducers: {
       runCommand: ({ requestId }: { requestId: string }) => {
         requestIds.push(requestId)
+        if (state.hang) return new Promise<void>(() => {})
+        if (state.refuseCommand) {
+          return Promise.reject(new Error(state.refuseCommand))
+        }
         results.push({
           requestId,
           resultJson: JSON.stringify({ type: 'none' }),
         })
         return Promise.resolve()
       },
+    },
+    disconnect: () => {
+      disconnected.push(index)
     },
   })
   const builder = () => {
@@ -78,14 +89,19 @@ const fake = vi.hoisted(() => {
           queueMicrotask(() => onDisconnect())
           return
         }
+        const index = built.length - 1
         queueMicrotask(() =>
-          onConnect(conn(identity), identity, token ?? 'host-minted-token'),
+          onConnect(
+            conn(identity, index),
+            identity,
+            token ?? 'host-minted-token',
+          ),
         )
       },
     }
     return b
   }
-  return { built, builder, state, requestIds, results }
+  return { built, builder, state, requestIds, results, disconnected }
 })
 
 vi.mock('./spacetime-bindings', () => ({
@@ -118,6 +134,9 @@ const storedValues = () => [...stored.values()]
 beforeEach(() => {
   fake.built.length = 0
   fake.state.refuse = false
+  fake.state.hang = false
+  fake.state.refuseCommand = ''
+  fake.disconnected.length = 0
   fake.requestIds.length = 0
   fake.results.length = 0
   stored.clear()
@@ -266,5 +285,53 @@ describe('a command on plain HTTP, where crypto.randomUUID is missing', () => {
     expect(fake.requestIds[0]).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     )
+  })
+})
+
+describe('a command on a connection that died without closing', () => {
+  // SpacetimeDB ignores the actor and takes it from the caller's identity.
+  const actor = {
+    id: 'alice',
+    name: 'Alice',
+    can_post: true,
+    can_approve: false,
+    can_close: false,
+  }
+  const approve = { type: 'claim.approve' as const, claimId: 'claim-1' }
+
+  it('gives up after the deadline and the next command opens a fresh connection', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      const { backend } = await load('dummy')
+      fake.state.hang = true
+      const first = backend.spacetimeLedgerBackend.run('org-a', approve, actor)
+      const failed = expect(first).rejects.toThrow(/timed out/i)
+      await vi.advanceTimersByTimeAsync(backend.COMMAND_TIMEOUT_MS)
+      await failed
+      expect(fake.disconnected).toEqual([0])
+
+      fake.state.hang = false
+      await expect(
+        backend.spacetimeLedgerBackend.run('org-a', approve, actor),
+      ).resolves.toEqual({ type: 'none' })
+      expect(fake.built).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps the connection when the ledger refuses the command', async () => {
+    const { backend } = await load('dummy')
+    const { LEDGER_ERROR_PREFIX } = await import('./spacetime-codec')
+    fake.state.refuseCommand = `${LEDGER_ERROR_PREFIX}${JSON.stringify([
+      { code: 'PERMISSION', message: 'Alice may not approve.' },
+    ])}`
+    await expect(
+      backend.spacetimeLedgerBackend.run('org-a', approve, actor),
+    ).rejects.toThrow('Alice may not approve.')
+    fake.state.refuseCommand = ''
+    await backend.spacetimeLedgerBackend.run('org-a', approve, actor)
+    expect(fake.built).toHaveLength(1)
+    expect(fake.disconnected).toEqual([])
   })
 })

@@ -164,9 +164,14 @@ export function isNetworkError(e: unknown) {
 
 export const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
 
+/** How often waiting claims are sent again while the browser says it is online. */
+export const RETRY_MS = 20_000
+
 /**
- * The queue for this device, flushed on mount and whenever the browser
- * comes back online.
+ * The queue for this device, flushed on mount, whenever the browser comes
+ * back online or the page back into view, and every `RETRY_MS` while claims
+ * wait. iOS can fire `online` before the network works, or not at all, so
+ * one failed send must not leave a claim waiting until the next visit.
  */
 export function useOfflineClaimSync() {
   const command = useLedgerCommand()
@@ -211,9 +216,25 @@ export function useOfflineClaimSync() {
     const onOnline = () => {
       flush()
     }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') flush()
+    }
     window.addEventListener('online', onOnline)
-    return () => window.removeEventListener('online', onOnline)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [ready, flush])
+
+  const waiting = queued.length > 0
+  useEffect(() => {
+    if (!ready || !waiting) return
+    const timer = setInterval(() => {
+      flush()
+    }, RETRY_MS)
+    return () => clearInterval(timer)
+  }, [ready, waiting, flush])
 
   const discard = useCallback(async (key: string) => {
     await removeQueued(key)
