@@ -1464,10 +1464,7 @@ export async function removeGroupMember(id: string): Promise<void> {
 // Trust score (RW3; trust.rs, P16, P17)
 // ---------------------------------------------------------------------------
 
-/**
- * The organisation's trust row. The module recomputes it on every transparency write and only a
- * registered service may ask for a recompute (P17), so the web only reads it.
- */
+/** The organisation's trust row, which the module refreshes on every transparency write. */
 export async function getTrustScore(
   organizationId: string,
 ): Promise<TrustScoreSummary | null> {
@@ -1476,6 +1473,28 @@ export async function getTrustScore(
     (r) => r.orgId === organizationId,
   )
   return trustSummaryFrom(row?.data)
+}
+
+/**
+ * "Recalculate score" (recompute_trust, trust_reducers.rs:192): any member may ask. The row is
+ * already current after every write, so this mostly records a history snapshot; it resolves
+ * once that snapshot has arrived.
+ */
+export async function recomputeTrustScore(
+  organizationId: string,
+): Promise<TrustScoreSummary | null> {
+  const conn = await session()
+  const before = ofOrg(docs(conn, 'trustScoreHistory'), organizationId).length
+  await write(
+    conn,
+    'trustScoreHistory',
+    () => conn.reducers.recomputeTrust({ orgId: organizationId }),
+    () =>
+      ofOrg(docs(conn, 'trustScoreHistory'), organizationId).length > before
+        ? true
+        : undefined,
+  )
+  return getTrustScore(organizationId)
 }
 
 export async function getTrustScoreHistory(

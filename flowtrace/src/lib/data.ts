@@ -165,8 +165,10 @@ export const addGroupMember = served('addGroupMember', demo.addGroupMember)
 export const inviteMemberByEmail = served('inviteMemberByEmail', demo.inviteMemberByEmail)
 export const removeGroupMember = served('removeGroupMember', demo.removeGroupMember)
 
-/** The current score; the module recomputes it on every change, so nothing recalculates it here. */
+/** The current score; the module also refreshes it on every change. */
 export const getTrustScore = served('getTrustScore', demo.getTrustScore)
+/** "Recalculate score": records a history snapshot (recompute_trust, any member). */
+export const recomputeTrustScore = served('recomputeTrustScore', demo.recomputeTrustScore)
 export const getTrustScoreHistory = served('getTrustScoreHistory', demo.getTrustScoreHistory)
 
 export const getPublicEmbedConfig = served('getPublicEmbedConfig', demo.getPublicEmbedConfig)

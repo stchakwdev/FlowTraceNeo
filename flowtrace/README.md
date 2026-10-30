@@ -119,9 +119,12 @@ score page, the badge preview and the embed settings (`my_verification`,
   member who can close periods.
 - An email invite is recorded with the note "Invited by email. No email was sent." and does not
   attach to an account; membership end dates are shown but not enforced yet.
-- The score has four parts (verification 32, documentation 24, consistency 24, independent
-  review 20) and the module recomputes it on every change, so the page has no Recalculate
-  button. Receipt reading (the `process-receipt-ocr` edge function) is gone.
+- The score has four parts read from `my_trust_score` with their weights (verification 32,
+  documentation 24, consistency 24, independent review 20; P16), not the web's three at
+  40/30/30. The review part reads "Not yet scored" while the model's source is neutral.
+- The module refreshes the score on every change. "Recalculate score" calls `recompute_trust`
+  (any member may), which mostly records a history snapshot. Receipt reading (the
+  `process-receipt-ocr` edge function) is gone.
 - Permissions come from the member row, never from a query.
 
 The public pages (`/donate/<link>`, `/embed/campaign/<id>`, `/badge/trust/<org>`) read the

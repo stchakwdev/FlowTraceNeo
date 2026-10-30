@@ -1,11 +1,12 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { ArrowRight } from '@phosphor-icons/react'
+import { ArrowRight, ArrowsClockwise } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import type { TrustComponent, TrustScoreHistory } from '@/lib/types'
 import { useOrg } from '@/lib/org-context'
 import {
   useOrgStats,
+  useRecalculateTrustScore,
   useTransactions,
   useTrustHistory,
   useTrustSummary,
@@ -76,6 +77,7 @@ function TrustScore() {
   const historyQuery = useTrustHistory()
   const summaryQuery = useTrustSummary()
   const txQuery = useTransactions()
+  const recalculate = useRecalculateTrustScore()
 
   const loading =
     orgLoading ||
@@ -122,10 +124,31 @@ function TrustScore() {
           </p>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             The score updates by itself each time a movement or a proof is
-            recorded or changed, so there is nothing to recalculate.
+            recorded or changed. Recalculate adds today's score to the history.
           </p>
         </div>
+        {!loading && !error && organizationId && (
+          <Button
+            variant="outline"
+            className="h-10"
+            onClick={() => recalculate.mutate()}
+            disabled={recalculate.isPending}
+          >
+            <ArrowsClockwise
+              className={cn(recalculate.isPending && 'animate-spin')}
+            />
+            {recalculate.isPending ? 'Recalculating…' : 'Recalculate score'}
+          </Button>
+        )}
       </header>
+
+      {recalculate.isError && (
+        <p role="alert" className="mb-6 text-sm text-destructive">
+          The score could not be recalculated
+          {recalculate.error.message ? ` (${recalculate.error.message})` : ''}.
+          The figures below are still current; try again in a moment.
+        </p>
+      )}
 
       {error ? (
         <ReportSection title="Score">
@@ -188,6 +211,7 @@ function TrustScore() {
                 {components.map((part) => {
                   const c = { ...COMPONENT_TEXT[part.key], weight: part.weight }
                   const value = part.value
+                  const scored = part.scored !== false
                   return (
                     <li key={part.key} className="py-4">
                       <div className="flex items-baseline justify-between gap-4">
@@ -198,21 +222,33 @@ function TrustScore() {
                           </span>
                         </p>
                         <p className="shrink-0 text-sm whitespace-nowrap tabular-nums">
-                          <span className="figure text-2xl">
-                            {Math.round(value)}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {' '}
-                            / 100
-                          </span>
+                          {scored ? (
+                            <>
+                              <span className="figure text-2xl">
+                                {Math.round(value)}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {' '}
+                                / 100
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Not yet scored
+                            </span>
+                          )}
                         </p>
                       </div>
                       <CoverageBar
                         className="mt-2"
                         total={100}
-                        filled={value}
-                        evidenced={value}
-                        label={`${c.label}: ${Math.round(value)} of 100`}
+                        filled={scored ? value : 0}
+                        evidenced={scored ? value : 0}
+                        label={
+                          scored
+                            ? `${c.label}: ${Math.round(value)} of 100`
+                            : `${c.label}: not yet scored`
+                        }
                       />
                       <p className="mt-1.5 text-xs text-muted-foreground">
                         {c.explain}
@@ -238,9 +274,9 @@ function TrustScore() {
             >
               {history.length === 0 ? (
                 <ReportNotice title="No history yet">
-                  Each scoring run adds a point here, so you can see the score
-                  move. None has been recorded yet; the score above is already
-                  current.
+                  Each recalculation adds a point here, so you can see the
+                  score move. Use Recalculate score to record the first point;
+                  the score above is already current.
                 </ReportNotice>
               ) : (
                 <HistoryChart history={history} />

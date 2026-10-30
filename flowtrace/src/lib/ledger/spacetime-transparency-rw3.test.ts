@@ -44,6 +44,7 @@ const fake = vi.hoisted(() => {
         validUntil?: string
       }) => Promise.resolve(),
     ),
+    recomputeTrust: vi.fn((_args: { orgId: string }) => Promise.resolve()),
     updatePublicEmbedConfig: vi.fn(
       (_args: { orgId: string; patchJson: string }) => Promise.resolve(),
     ),
@@ -185,10 +186,32 @@ describe('the trust page reads the module row and its history', () => {
       key: 'model',
       value: 60,
       weight: 20,
+      scored: false,
     })
     const history = await t.getTrustScoreHistory('rw1')
     expect(history.map((x) => x.score)).toEqual([58, 64])
     expect(await t.getTrustScore('other-org')).toBeNull()
+  })
+})
+
+describe('Recalculate score', () => {
+  it('calls recompute_trust and resolves once the new snapshot has arrived', async () => {
+    fake.viewOf('trustScore').rows.push({
+      orgId: 'rw1',
+      data: JSON.stringify({ score: 54, grade: 'D', components: {}, weights: {} }),
+    })
+    fake.reducers.recomputeTrust.mockImplementation(() => {
+      setTimeout(() =>
+        fake.viewOf('trustScoreHistory').insert(
+          doc('h1', 1n, { score: 54, calculated_at: '2026-10-30T11:00:00Z' }),
+        ),
+      )
+      return Promise.resolve()
+    })
+    const t1 = await t.recomputeTrustScore('rw1')
+    expect(fake.reducers.recomputeTrust).toHaveBeenCalledWith({ orgId: 'rw1' })
+    expect(t1?.score).toBe(54)
+    expect((await t.getTrustScoreHistory('rw1')).map((h) => h.score)).toEqual([54])
   })
 })
 

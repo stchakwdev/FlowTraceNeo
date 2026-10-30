@@ -470,6 +470,12 @@ export function getTrustScore(
   })
 }
 
+/** "Recalculate score" in the demo: a new snapshot, then the current score. */
+export async function recomputeTrustScore(organizationId: string) {
+  await calculateTrustScoreAPI(organizationId)
+  return getTrustScore(organizationId)
+}
+
 export function calculateTrustScoreAPI(
   organizationId: string,
 ): Promise<TrustScoreResult> {

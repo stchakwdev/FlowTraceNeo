@@ -1147,6 +1147,7 @@ export function trustSummaryFrom(json: string | undefined): TrustScoreSummary | 
   const t = parse(json)
   const values = (t.components ?? {}) as Record<string, unknown>
   const weights = (t.weights ?? {}) as Record<string, unknown>
+  const model = (t.model ?? {}) as Record<string, unknown>
   return {
     score: typeof t.score === 'number' ? t.score : 0,
     grade: typeof t.grade === 'string' ? t.grade : 'F',
@@ -1154,6 +1155,7 @@ export function trustSummaryFrom(json: string | undefined): TrustScoreSummary | 
       key: k,
       value: typeof values[k] === 'number' ? values[k] : 0,
       weight: weights[k] as number,
+      ...(k === 'model' && { scored: model.source === 'rubric' }),
     })),
     computed_at: typeof t.computed_at === 'string' ? t.computed_at : null,
   }

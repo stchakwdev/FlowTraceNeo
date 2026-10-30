@@ -160,6 +160,8 @@ export interface TrustComponent {
   key: 'verification' | 'documentation' | 'consistency' | 'model'
   value: number
   weight: number
+  /** False for the model part while no review has scored it (`model.source` neutral, P16). */
+  scored?: boolean
 }
 
 /** The organisation's current Trust Score and how it is made. */

@@ -56,6 +56,7 @@ import {
   inviteMemberByEmail,
   logVerificationAccess,
   publishVerification,
+  recomputeTrustScore,
   regenerateEmbedToken,
   markUpdateSent,
   rejectChain,
@@ -433,7 +434,27 @@ export function useFlowData(startDate?: string, endDate?: string) {
   })
 }
 
-// The score recalculates in the module on every change (P17), so there is no recalculate hook.
+/** "Recalculate score": a new history snapshot (recompute_trust); refreshes the score and history. */
+export function useRecalculateTrustScore() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => recomputeTrustScore(organizationId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trustScore(organizationId!),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trustHistory(organizationId!),
+      })
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'organization',
+      })
+    },
+  })
+}
+
 // Receipt reading (useProcessReceiptOCR, the process-receipt-ocr edge function) has no module
 // counterpart and is gone.
 

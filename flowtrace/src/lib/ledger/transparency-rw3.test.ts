@@ -331,6 +331,16 @@ describe('the trust row (trust.rs:149, P16)', () => {
     expect(t?.computed_at).toBe('2026-10-30T09:00:00Z')
   })
 
+  it('marks the review part not yet scored while its source is neutral', () => {
+    const neutral = JSON.parse(row) as Record<string, unknown>
+    const of = (source: string) =>
+      trustSummaryFrom(JSON.stringify({ ...neutral, model: { source } }))?.components.find(
+        (c) => c.key === 'model',
+      )?.scored
+    expect(of('neutral')).toBe(false)
+    expect(of('rubric')).toBe(true)
+  })
+
   it('is null before the module has computed one', () => {
     expect(trustSummaryFrom(undefined)).toBeNull()
   })
