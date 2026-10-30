@@ -400,6 +400,32 @@ fn a_transparency_change_rereads_the_named_records_and_keeps_them() {
 }
 
 #[test]
+fn an_organisation_without_records_reads_empty_ones_once_its_books_arrive() {
+    let fake = Fake::new();
+    fake.add_org("org-new", vec![]);
+    lock(&fake.transparency).insert("org-new".to_owned(), OrgTransparency::default());
+    let mut live = Live::default();
+    let out = live.apply(ready(), fake.as_ref());
+    assert!(
+        kinds(&out).contains(&"transparency org-new".to_owned()),
+        "{:?}",
+        kinds(&out)
+    );
+    assert_eq!(*live.transparency["org-new"], OrgTransparency::default());
+
+    let again = live.apply(
+        ClientEvent::Changed {
+            orgs: ["org-new".to_owned()].into_iter().collect(),
+        },
+        fake.as_ref(),
+    );
+    assert!(
+        !kinds(&again).contains(&"transparency org-new".to_owned()),
+        "read once; later changes come as TransparencyChanged"
+    );
+}
+
+#[test]
 fn campaign_writes_go_to_the_client_only_while_connected() {
     let fake = Fake::new();
     fake.add_org("org-a", vec![member(ME, "me", true)]);
@@ -528,4 +554,90 @@ fn flow_and_chain_writes_go_to_the_client_only_while_connected() {
         .public_organizations();
     *lock(&fake.public) = public.clone();
     assert_eq!(backend.public_organizations(), public);
+}
+
+#[test]
+fn settings_writes_go_to_the_client_only_while_connected() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![member(ME, "me", true)]);
+    let mut backend = SpacetimeBackend::new();
+    let rx = backend.subscribe();
+    let org = OrganizationId::from("org-a");
+    let write = SettingsWrite::InviteMember {
+        group: "g1".to_owned(),
+        email: "a@example.org".to_owned(),
+        valid_until: None,
+    };
+    assert_eq!(
+        backend.write_settings(&org, write.clone()).now().unwrap(),
+        Err(BackendError::Offline)
+    );
+
+    backend.attach(fake.clone()).unwrap();
+    fake.emit(ready());
+    while !matches!(
+        next(&rx),
+        BackendEvent::Status(ConnectionStatus::Connected { .. })
+    ) {}
+    assert_eq!(
+        backend
+            .write_settings(
+                &OrganizationId::from("org-b"),
+                SettingsWrite::RecomputeTrust
+            )
+            .now()
+            .unwrap(),
+        Err(BackendError::UnknownOrganisation("org-b".to_owned()))
+    );
+    for w in [write.clone(), SettingsWrite::RecomputeTrust] {
+        assert_eq!(
+            backend.write_settings(&org, w).now().unwrap(),
+            Ok(CommandResult::None)
+        );
+    }
+    assert_eq!(
+        *lock(&fake.settings_writes),
+        [
+            ("org-a".to_owned(), write),
+            ("org-a".to_owned(), SettingsWrite::RecomputeTrust)
+        ]
+    );
+
+    let badges = crate::backend::InProcessBackend::with_demo_and_empty()
+        .unwrap()
+        .public_badges();
+    *lock(&fake.badges) = badges.clone();
+    assert_eq!(backend.public_badges(), badges);
+}
+
+#[test]
+fn org_members_come_from_the_member_rows_by_name() {
+    let fake = Fake::new();
+    let mut zed = member("c200bb", "user_z", false);
+    zed.name = "Zawadi".to_owned();
+    fake.add_org("org-a", vec![zed, member(ME, "me", true)]);
+    let mut backend = SpacetimeBackend::new();
+    let rx = backend.subscribe();
+    backend.attach(fake.clone()).unwrap();
+    fake.emit(ready());
+    while !matches!(
+        next(&rx),
+        BackendEvent::Status(ConnectionStatus::Connected { .. })
+    ) {}
+    let people: Vec<(String, String)> = backend
+        .org_members(&OrganizationId::from("org-a"))
+        .into_iter()
+        .map(|p| (p.user_id, p.name))
+        .collect();
+    assert_eq!(
+        people,
+        [
+            ("me".to_owned(), "Name of me".to_owned()),
+            ("user_z".to_owned(), "Zawadi".to_owned())
+        ]
+    );
+    assert_eq!(
+        backend.org_members(&OrganizationId::from("org-b")),
+        Vec::<OrgMember>::new()
+    );
 }

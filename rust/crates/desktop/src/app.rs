@@ -186,6 +186,8 @@ fn show_launch(
             panel.show(GrantsView::from_launch(value), window, cx);
         });
     }
+    let embed = shell.read(cx).embed_badges().clone();
+    embed.update(cx, |panel, cx| panel.set_web_url(web_url.clone(), cx));
     let campaigns = shell.read(cx).campaigns().clone();
     campaigns.update(cx, |panel, cx| {
         panel.set_web_url(web_url, cx);

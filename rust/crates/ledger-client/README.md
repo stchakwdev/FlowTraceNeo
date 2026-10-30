@@ -49,6 +49,17 @@ client.reject_chain(chain_id, reason);                   // Ticket<()>, same
 client.revoke_chain(chain_id);                           // Ticket<()>, same
 client.cancel_chain_request(chain_id);                   // Ticket<()>, any member of the source
 client.update_chain_permissions(chain_id, group_id, link_node_id); // Ticket<()>, a target manager
+client.update_organization_profile(org_id, &patch);    // Ticket<()>, managers; SLUG_TAKEN refused (DT4)
+client.create_default_access_groups(org_id);           // Ticket<()>, managers; refused once any default exists
+client.create_access_group(org_id, &new_group);        // Ticket<()>, managers
+client.update_access_group(org_id, group_id, &patch);  // Ticket<()>, managers; permissions replaced whole
+client.delete_access_group(org_id, group_id);          // Ticket<()>, managers; custom groups only
+client.add_access_group_member(org_id, &new_member);   // Ticket<()>, managers; granted_by is the caller
+client.invite_access_group_member(org_id, group_id, email, valid_until); // Ticket<()>, no email is sent
+client.remove_access_group_member(org_id, member_id);  // Ticket<()>, managers
+client.update_public_embed_config(org_id, &patch);     // Ticket<()>, managers; no screen yet
+client.regenerate_embed_token(org_id);                 // Ticket<()>, managers; no screen yet
+client.recompute_trust(org_id);                        // Ticket<()>, any member; appends a history point
 client.disconnect();
 ```
 
@@ -74,7 +85,14 @@ FlowNodePatch, NewTransaction, TransactionPatch, NodeVisibilitySettings,
 TransactionVisibilitySettings}`; chain calls take no organisation, the module finds the side
 that acts. DT3 added `log_verification_access` (the caller opened or downloaded a proof's
 file; `AccessType::View` or `Download`, the level recorded by the module) and the desktop's use
-of `mark_published`; DT4 adds what its screens need.
+of `mark_published`. DT4 added the eleven settings writes the same way
+(`update_organization_profile`, `create_default_access_groups`, `create_access_group`,
+`update_access_group`, `delete_access_group`, `add_access_group_member`,
+`invite_access_group_member`, `remove_access_group_member`, `update_public_embed_config`,
+`regenerate_embed_token`, `recompute_trust`), their JSON arguments
+`ledger_module::transparency::types::{OrganizationPatch, NewAccessGroup, AccessGroupPatch,
+NewGroupMember}` and `flows::EmbedConfigPatch`; "managers" here are members who can close
+periods (`plan.rs`).
 
 A subscriber's first event is the current `ClientEvent::Status`. After that it gets one
 `ClientEvent::Changed { orgs }` per applied message (initial subscription or transaction).

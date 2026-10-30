@@ -13,12 +13,12 @@ use ledger_core::LedgerCommand;
 use ledger_core::types::{Actor, OrganizationId};
 
 use ledger_module::transparency::chains::ChainActivity;
-use ledger_module::transparency::public::PublicOrganization;
+use ledger_module::transparency::public::{PublicBadge, PublicOrganization};
 use ledger_module::transparency::types::{AccessType, NewVerification, Verification};
 
 use crate::backend::{
     BackendError, BackendEvent, CampaignWrite, ChainWrite, ConnectSettings, FlowWrite,
-    LedgerBackend, Submission,
+    LedgerBackend, OrgMember, SettingsWrite, Submission,
 };
 use crate::model::LedgerView;
 use crate::proofs::{LinkKind, ProofsClient, ProofsError};
@@ -354,6 +354,30 @@ impl StoreCore {
         self.backend.write_chain(write)
     }
 
+    /// Sends a profile, access group, embed or trust write to the selected organisation
+    /// ([`LedgerBackend::write_settings`]); the change comes back through the change channel.
+    pub fn write_settings(&mut self, write: SettingsWrite) -> Submission {
+        let Some(org) = self.view.selected().map(|org| org.id.clone()) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
+        };
+        self.backend.write_settings(&org, write)
+    }
+
+    /// The published trust badges ([`LedgerBackend::public_badges`]).
+    #[must_use]
+    pub fn public_badges(&self) -> Vec<PublicBadge> {
+        self.backend.public_badges()
+    }
+
+    /// The selected organisation's members by name ([`LedgerBackend::org_members`]).
+    #[must_use]
+    pub fn org_members(&self) -> Vec<OrgMember> {
+        self.view
+            .selected()
+            .map(|org| self.backend.org_members(&org.id))
+            .unwrap_or_default()
+    }
+
     /// The organisations a chain can be requested of ([`LedgerBackend::public_organizations`]).
     #[must_use]
     pub fn public_organizations(&self) -> Vec<PublicOrganization> {
@@ -559,6 +583,23 @@ impl LedgerStore {
     /// [`StoreCore::write_chain`]. Screens go through `panels::write_chain`.
     pub fn write_chain(&mut self, write: ChainWrite) -> Submission {
         self.core.write_chain(write)
+    }
+
+    /// [`StoreCore::write_settings`]. Screens go through `panels::write_settings`.
+    pub fn write_settings(&mut self, write: SettingsWrite) -> Submission {
+        self.core.write_settings(write)
+    }
+
+    /// [`StoreCore::public_badges`].
+    #[must_use]
+    pub fn public_badges(&self) -> Vec<PublicBadge> {
+        self.core.public_badges()
+    }
+
+    /// [`StoreCore::org_members`].
+    #[must_use]
+    pub fn org_members(&self) -> Vec<OrgMember> {
+        self.core.org_members()
     }
 
     /// [`StoreCore::public_organizations`].

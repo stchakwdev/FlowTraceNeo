@@ -40,13 +40,21 @@ pub enum NavEntry {
     Campaigns,
     /// Chain links to partner organisations (DT2).
     Chains,
+    /// The Trust Score with how it is made, its history and how to raise it (DT4).
+    TrustScore,
+    /// The organisation profile and the access and sharing links (DT4).
+    Settings,
+    /// Access groups and their members (DT4).
+    AccessGroups,
+    /// The Trust Score badge and its codes (DT4).
+    EmbedBadges,
 }
 
 impl NavEntry {
     /// Every entry, in navigation order: the rail's sections of `flowtrace/src/lib/navigation.ts`
     /// (Dashboard, Transactions and Flows, the books, then Transparency with Campaigns and
     /// Chains).
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 16] = [
         Self::Dashboard,
         Self::Transactions,
         Self::Flows,
@@ -59,16 +67,26 @@ impl NavEntry {
         Self::Reports,
         Self::Campaigns,
         Self::Chains,
+        Self::TrustScore,
+        Self::Settings,
+        Self::AccessGroups,
+        Self::EmbedBadges,
     ];
 
     /// The rail section heading the entry sits under (`navSections`, `navigation.ts:16-44`):
     /// none for Dashboard and Flows, `Books` for the ledger screens, `Transparency` for
-    /// Campaigns and Chains.
+    /// Campaigns, Chains, Trust Score and Settings, with the two settings pages the web reaches
+    /// from Settings (Access groups, Embed & badges) under them.
     #[must_use]
     pub fn section(self) -> Option<&'static str> {
         match self {
             Self::Dashboard | Self::Transactions | Self::Flows => None,
-            Self::Campaigns | Self::Chains => Some("Transparency"),
+            Self::Campaigns
+            | Self::Chains
+            | Self::TrustScore
+            | Self::Settings
+            | Self::AccessGroups
+            | Self::EmbedBadges => Some("Transparency"),
             _ => Some("Books"),
         }
     }
@@ -82,6 +100,10 @@ impl NavEntry {
             Self::Flows => "Flows",
             Self::Campaigns => "Campaigns",
             Self::Chains => "Chains",
+            Self::TrustScore => "Trust Score",
+            Self::Settings => "Settings",
+            Self::AccessGroups => "Access groups",
+            Self::EmbedBadges => "Embed & badges",
             Self::Accounts => "Accounts",
             Self::Journal => "Journal",
             Self::GeneralLedger => "General ledger",
@@ -103,6 +125,10 @@ impl NavEntry {
             }
             Self::Campaigns => "Fundraising campaigns, donations, the preview card and embed code.",
             Self::Chains => "Chain links to partners whose flows are linked to yours.",
+            Self::TrustScore => "The Trust Score, how it is made and how to raise it.",
+            Self::Settings => "The organisation profile, access and what you share publicly.",
+            Self::AccessGroups => "Who sees what of your flows, and the people in each group.",
+            Self::EmbedBadges => "The Trust Score badge and its code for your website.",
             Self::Accounts => {
                 "The chart of accounts and the fiscal periods, with closing and locking."
             }
@@ -118,7 +144,8 @@ impl NavEntry {
     /// The key that opens this entry: `0` for Dashboard, `1` to `7` for the books screens in
     /// order (the keys they had before DT1), `8` for Campaigns, `9` for Flows. Chains and
     /// Transactions have none (the digits are spent): they open from the rail or `--entry
-    /// chains` and `--entry transactions`.
+    /// chains` and `--entry transactions`; so do DT4's four (`--entry trust-score`, `settings`,
+    /// `access-groups`, `embed-badges`).
     #[must_use]
     pub fn key(self) -> Option<&'static str> {
         Some(match self {
@@ -132,7 +159,12 @@ impl NavEntry {
             Self::Grants => "5",
             Self::Reconcile => "6",
             Self::Reports => "7",
-            Self::Chains | Self::Transactions => return None,
+            Self::Chains
+            | Self::Transactions
+            | Self::TrustScore
+            | Self::Settings
+            | Self::AccessGroups
+            | Self::EmbedBadges => return None,
         })
     }
 
@@ -142,11 +174,14 @@ impl NavEntry {
         Self::ALL.into_iter().find(|entry| entry.key() == Some(key))
     }
 
-    /// The entry's name for `--entry`: its label in lower case with hyphens
-    /// (`general-ledger`).
+    /// The entry's name for `--entry`: its label in lower case with hyphens, an `&` dropped
+    /// (`general-ledger`, `embed-badges`).
     #[must_use]
     pub fn name(self) -> String {
-        self.label().to_lowercase().replace(' ', "-")
+        self.label()
+            .to_lowercase()
+            .replace(" & ", " ")
+            .replace(' ', "-")
     }
 
     /// The entry `--entry` names: a key digit or a [`NavEntry::name`], any case.
@@ -610,7 +645,7 @@ mod tests {
     }
 
     #[test]
-    fn nav_has_the_twelve_entries_in_the_webs_rail_order() {
+    fn nav_has_the_sixteen_entries_in_the_webs_rail_order() {
         let labels: Vec<_> = NavEntry::ALL.iter().map(|e| e.label()).collect();
         assert_eq!(
             labels,
@@ -626,13 +661,17 @@ mod tests {
                 "Reconcile",
                 "Reports",
                 "Campaigns",
-                "Chains"
+                "Chains",
+                "Trust Score",
+                "Settings",
+                "Access groups",
+                "Embed & badges"
             ]
         );
         let sections: Vec<_> = NavEntry::ALL.iter().map(|e| e.section()).collect();
         assert_eq!(sections[..3], [None, None, None]);
         assert!(sections[3..10].iter().all(|s| *s == Some("Books")));
-        assert_eq!(sections[10..], [Some("Transparency"), Some("Transparency")]);
+        assert!(sections[10..].iter().all(|s| *s == Some("Transparency")));
         for entry in NavEntry::ALL {
             assert_ne!(entry.summary(), "");
             assert!(entry.summary().is_ascii(), "no emoji: {}", entry.summary());
@@ -658,6 +697,10 @@ mod tests {
                 (NavEntry::Reports, Some("7")),
                 (NavEntry::Campaigns, Some("8")),
                 (NavEntry::Chains, None),
+                (NavEntry::TrustScore, None),
+                (NavEntry::Settings, None),
+                (NavEntry::AccessGroups, None),
+                (NavEntry::EmbedBadges, None),
             ]
         );
         for entry in NavEntry::ALL {
@@ -693,6 +736,15 @@ mod tests {
             "any case"
         );
         assert_eq!(NavEntry::from_name("ledger"), None);
+        for (name, entry) in [
+            ("trust-score", NavEntry::TrustScore),
+            ("settings", NavEntry::Settings),
+            ("access-groups", NavEntry::AccessGroups),
+            ("embed-badges", NavEntry::EmbedBadges),
+        ] {
+            assert_eq!(NavEntry::from_name(name), Some(entry), "{name}");
+            assert_eq!(entry.section(), Some("Transparency"));
+        }
     }
 
     #[test]

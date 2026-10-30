@@ -15,11 +15,11 @@ use ledger_core::types::OrganizationId;
 use ledger_core::{CommandResult, LedgerCommand, LedgerState};
 use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::chains::{ChainActivity, ChainDetails};
-use ledger_module::transparency::public::PublicOrganization;
+use ledger_module::transparency::public::{PublicBadge, PublicOrganization};
 use ledger_module::transparency::types::{AccessType, NewVerification, Verification};
 
 use super::{LiveClient, lock};
-use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, Submission};
+use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, SettingsWrite, Submission};
 
 pub const ME: &str = "c200aa00000000000000000000000000000000000000000000000000000000ff";
 
@@ -39,6 +39,8 @@ pub struct Fake {
     pub chains: Mutex<Vec<ChainDetails>>,
     pub chain_writes: Mutex<Vec<ChainWrite>>,
     pub public: Mutex<Vec<PublicOrganization>>,
+    pub settings_writes: Mutex<Vec<(String, SettingsWrite)>>,
+    pub badges: Mutex<Vec<PublicBadge>>,
 }
 
 impl Fake {
@@ -58,6 +60,8 @@ impl Fake {
             chains: Mutex::new(Vec::new()),
             chain_writes: Mutex::new(Vec::new()),
             public: Mutex::new(Vec::new()),
+            settings_writes: Mutex::new(Vec::new()),
+            badges: Mutex::new(Vec::new()),
         })
     }
 
@@ -163,6 +167,15 @@ impl LiveClient for Fake {
     fn write_chain(&self, write: &ChainWrite) -> Submission {
         lock(&self.chain_writes).push(write.clone());
         Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn write_settings(&self, org: &str, write: &SettingsWrite) -> Submission {
+        lock(&self.settings_writes).push((org.to_owned(), write.clone()));
+        Submission::ready(Ok(CommandResult::None))
+    }
+
+    fn public_badges(&self) -> Vec<PublicBadge> {
+        lock(&self.badges).clone()
     }
 }
 

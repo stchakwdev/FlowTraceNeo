@@ -35,13 +35,14 @@ use ledger_module::transparency::chains::{
     self as chain_rules, ChainActivity, ChainDetails, Chains, activity_of, details_of,
 };
 use ledger_module::transparency::flows::{
-    self as flow_rules, EntryLinks, FlowNodePatch, NewFlowNode, NewTransaction, TransactionPatch,
+    self as flow_rules, EmbedConfigPatch, EntryLinks, FlowNodePatch, NewFlowNode, NewTransaction,
+    TransactionPatch,
 };
 use ledger_module::transparency::plan::{self as transparency_plan, Ctx, LedgerLinks};
-use ledger_module::transparency::public::PublicOrganization;
+use ledger_module::transparency::public::{PublicBadge, PublicOrganization, project};
 use ledger_module::transparency::types::{
-    AccessType, CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
-    Verification,
+    AccessGroupPatch, AccessType, CampaignPatch, NewAccessGroup, NewCampaign, NewDonation,
+    NewGroupMember, NewVerification, OrganizationPatch, PaymentStatus, Verification,
 };
 use ledger_module::transparency::{trust, ts};
 use serde_json::Value;
@@ -70,6 +71,16 @@ pub struct Organisation {
     pub name: String,
     /// Base currency, for example `KES`.
     pub base_currency: String,
+}
+
+/// A member of an organisation, as an access group member can be picked (`OrgMember`,
+/// `flowtrace/src/lib/types.ts`; the module's member rows).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrgMember {
+    /// Their user id.
+    pub user_id: String,
+    /// Display name.
+    pub name: String,
 }
 
 /// Where the backend stands with its server.
@@ -261,6 +272,58 @@ impl ChainWrite {
             | Self::UpdatePermissions { id, .. } => Some(id),
         }
     }
+}
+
+/// A write to an organisation's profile, access groups, public embed or trust score: the
+/// module's reducers `update_organization_profile`, `create_default_access_groups`,
+/// `create_access_group`, `update_access_group`, `delete_access_group`,
+/// `add_access_group_member`, `invite_access_group_member`, `remove_access_group_member`
+/// (`crates/ledger-module/src/transparency/reducers.rs`), `update_public_embed_config`,
+/// `regenerate_embed_token` (`flow_reducers.rs`) and `recompute_trust` (`trust_reducers.rs`).
+/// All but the last need a member who can close periods. The change comes back as a
+/// [`BackendEvent::Transparency`].
+#[derive(Debug, Clone, PartialEq)]
+pub enum SettingsWrite {
+    /// `updateOrganization` (`api.ts:146-160`): the fields `patch` sets.
+    UpdateProfile(OrganizationPatch),
+    /// The five default access groups (module addition; the web's come from seeding).
+    CreateDefaultGroups,
+    /// `createAccessGroup` (`api.ts:585-596`).
+    CreateGroup(NewAccessGroup),
+    /// `updateAccessGroup` (`api.ts:598-609`).
+    UpdateGroup {
+        /// The group.
+        id: String,
+        /// What changes; permissions are replaced whole.
+        patch: AccessGroupPatch,
+    },
+    /// `deleteAccessGroup` (`api.ts:611-617`): custom groups only.
+    DeleteGroup {
+        /// The group.
+        id: String,
+    },
+    /// `addGroupMember` (`api.ts:654-670`).
+    AddMember(NewGroupMember),
+    /// `inviteGroupMember` (`api.ts:672-690`); no email is sent.
+    InviteMember {
+        /// The group.
+        group: String,
+        /// The invited address.
+        email: String,
+        /// The last day, `YYYY-MM-DD`; `None` for no end.
+        valid_until: Option<String>,
+    },
+    /// `removeGroupMember` (`api.ts:692-698`).
+    RemoveMember {
+        /// The membership.
+        id: String,
+    },
+    /// The public embed's settings (module addition; no screen yet).
+    UpdateEmbedConfig(EmbedConfigPatch),
+    /// A new embed token (module addition; no screen yet).
+    RegenerateEmbedToken,
+    /// `calculateTrustScoreAPI` (`api.ts:406-472`): any member; appends a history point.
+    RecomputeTrust,
 }
 
 /// Why a backend call failed.
@@ -491,6 +554,36 @@ pub trait LedgerBackend {
     fn write_chain(&mut self, write: ChainWrite) -> Submission {
         let _ = write;
         Submission::ready(Err(BackendError::Connection(NO_TRANSPARENCY.to_owned())))
+    }
+
+    /// Writes to the organisation's profile, access groups, embed or trust score
+    /// ([`SettingsWrite`]). On success subscribers get a [`BackendEvent::Transparency`] with
+    /// the change readable.
+    fn write_settings(&mut self, org: &OrganizationId, write: SettingsWrite) -> Submission {
+        let _ = (org, write);
+        Submission::ready(Err(BackendError::Connection(NO_TRANSPARENCY.to_owned())))
+    }
+
+    /// The published trust badges (`public_badge`): one per organisation that is public and
+    /// has a trust row.
+    fn public_badges(&self) -> Vec<PublicBadge> {
+        Vec::new()
+    }
+
+    /// The organisation's members by name (`getOrgMembers`, the module's member rows), for
+    /// adding one to an access group (pre-decision P7: the screen needed them, so the backend
+    /// gives them). By default the backend's own actor.
+    fn org_members(&self, org: &OrganizationId) -> Vec<OrgMember> {
+        let mut people: Vec<OrgMember> = self
+            .actor(org)
+            .map(|a| OrgMember {
+                user_id: a.id.as_str().to_owned(),
+                name: a.name,
+            })
+            .into_iter()
+            .collect();
+        people.sort_by(|a, b| a.name.cmp(&b.name));
+        people
     }
 }
 
@@ -937,6 +1030,78 @@ impl LedgerBackend for InProcessBackend {
         }))
     }
 
+    /// Runs the module's own rules for each write (`plan::update_organization`, the access
+    /// group and member rules, `flows::update_embed_config`, `regenerate_embed_token`,
+    /// `trust::recompute`). A public link is unique across the organisations the backend
+    /// holds, as across the module's (`profile_slug_elsewhere`, `reducers.rs`).
+    fn write_settings(&mut self, org: &OrganizationId, write: SettingsWrite) -> Submission {
+        let elsewhere: Vec<String> = self
+            .books
+            .iter()
+            .filter(|b| &b.org.id != org)
+            .map(|b| b.transparency.as_ref())
+            .chain(self.partners.iter().map(|(_, t)| t))
+            .filter_map(|t| t.profile.as_ref()?.public_slug.clone())
+            .collect();
+        let taken = move |s: &str| elsewhere.iter().any(|x| x == s);
+        Submission::ready(self.change_transparency(org, |t, ctx, state| {
+            match write {
+                SettingsWrite::UpdateProfile(patch) => transparency_plan::update_organization(
+                    t,
+                    ctx,
+                    &state.settings.base_currency,
+                    patch,
+                    &taken,
+                )
+                .map(drop),
+                SettingsWrite::CreateDefaultGroups => {
+                    transparency_plan::create_default_access_groups(t, ctx).map(drop)
+                }
+                SettingsWrite::CreateGroup(input) => {
+                    transparency_plan::create_access_group(t, ctx, input).map(drop)
+                }
+                SettingsWrite::UpdateGroup { id, patch } => {
+                    transparency_plan::update_access_group(t, ctx, &id, patch).map(drop)
+                }
+                SettingsWrite::DeleteGroup { id } => {
+                    transparency_plan::delete_access_group(t, ctx, &id)
+                }
+                SettingsWrite::AddMember(input) => {
+                    transparency_plan::add_group_member(t, ctx, input).map(drop)
+                }
+                SettingsWrite::InviteMember {
+                    group,
+                    email,
+                    valid_until,
+                } => transparency_plan::invite_group_member(t, ctx, &group, &email, valid_until)
+                    .map(drop),
+                SettingsWrite::RemoveMember { id } => {
+                    transparency_plan::remove_group_member(t, ctx, &id)
+                }
+                SettingsWrite::UpdateEmbedConfig(patch) => {
+                    flow_rules::update_embed_config(t, ctx, patch).map(drop)
+                }
+                SettingsWrite::RegenerateEmbedToken => {
+                    flow_rules::regenerate_embed_token(t, ctx).map(drop)
+                }
+                SettingsWrite::RecomputeTrust => {
+                    let by = ctx.member.map(|m| m.user_id.clone()).unwrap_or_default();
+                    trust::recompute(t, ctx.org_id, &mut *ctx.env, &by);
+                    Ok(())
+                }
+            }
+        }))
+    }
+
+    /// The badge each held organisation publishes (`public::project`), as `public_badge` holds
+    /// them.
+    fn public_badges(&self) -> Vec<PublicBadge> {
+        self.books
+            .iter()
+            .filter_map(|b| project(b.org.id.as_str(), &b.transparency).badge)
+            .collect()
+    }
+
     fn write_campaign(&mut self, org: &OrganizationId, write: CampaignWrite) -> Submission {
         let elsewhere: Vec<String> = self
             .books
@@ -1197,6 +1362,7 @@ mod tests {
     use super::*;
     use ledger_core::demo::DEMO_ORG_ID;
     use ledger_core::sanitize_command;
+    use ledger_core::types::Nullish;
     use serde_json::json;
 
     #[test]
@@ -1556,6 +1722,136 @@ mod tests {
         assert_eq!(
             err,
             BackendError::Connection(transparency_plan::SLUG_TAKEN.to_owned())
+        );
+    }
+
+    #[test]
+    fn settings_writes_run_the_module_rules_and_reach_subscribers() {
+        let mut backend = backend();
+        let rx = backend.subscribe();
+        let empty = backend.organisations()[1].id.clone();
+        assert!(
+            backend
+                .public_badges()
+                .iter()
+                .all(|b| b.organization_id != empty.as_str())
+        );
+
+        let mut patch = OrganizationPatch {
+            name: Some("Turkana Water Trust".to_owned()),
+            public_slug: Nullish::Value("demo-ngo".to_owned()),
+            is_public: Some(true),
+            ..OrganizationPatch::default()
+        };
+        let err = backend
+            .write_settings(&empty, SettingsWrite::UpdateProfile(patch.clone()))
+            .now()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(
+            err,
+            BackendError::Connection(transparency_plan::SLUG_TAKEN.to_owned()),
+            "the demo holds that link"
+        );
+        assert!(rx.try_recv().is_err());
+        patch.public_slug = Nullish::Value("turkana-water".to_owned());
+        backend
+            .write_settings(&empty, SettingsWrite::UpdateProfile(patch))
+            .now()
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            BackendEvent::Transparency { org: empty.clone() }
+        );
+        let t = backend.transparency(&empty).unwrap();
+        let profile = t.profile.as_ref().unwrap();
+        assert_eq!(profile.name, "Turkana Water Trust");
+        assert_eq!(profile.currency, EMPTY_ORG_CURRENCY, "the books' currency");
+        let badge = backend
+            .public_badges()
+            .into_iter()
+            .find(|b| b.organization_id == empty.as_str())
+            .unwrap();
+        assert_eq!(badge.public_slug.as_deref(), Some("turkana-water"));
+
+        backend
+            .write_settings(&empty, SettingsWrite::CreateDefaultGroups)
+            .now()
+            .unwrap()
+            .unwrap();
+        let groups = backend.transparency(&empty).unwrap().access_groups.clone();
+        assert_eq!(groups.len(), 5);
+        assert!(
+            backend
+                .write_settings(&empty, SettingsWrite::CreateDefaultGroups)
+                .now()
+                .unwrap()
+                .is_err(),
+            "refused once any default exists"
+        );
+        let group = groups[0].id.clone();
+        backend
+            .write_settings(
+                &empty,
+                SettingsWrite::InviteMember {
+                    group: group.clone(),
+                    email: "auditor@example.org".to_owned(),
+                    valid_until: Some("2027-06-30".to_owned()),
+                },
+            )
+            .now()
+            .unwrap()
+            .unwrap();
+        let t = backend.transparency(&empty).unwrap();
+        let invite = t.group_members.last().unwrap();
+        assert_eq!(invite.user_email.as_deref(), Some("auditor@example.org"));
+        let id = invite.id.clone();
+        backend
+            .write_settings(&empty, SettingsWrite::RemoveMember { id })
+            .now()
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            backend.transparency(&empty).unwrap().group_members,
+            Vec::<ledger_module::transparency::types::GroupMember>::new()
+        );
+        let err = backend
+            .write_settings(&empty, SettingsWrite::DeleteGroup { id: group })
+            .now()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(
+            err,
+            BackendError::Connection("Default access groups cannot be deleted.".to_owned())
+        );
+    }
+
+    #[test]
+    fn the_in_process_members_are_the_actor() {
+        let backend = backend();
+        let people = backend.org_members(&demo());
+        assert_eq!(people.len(), 1);
+        assert_eq!(people[0].user_id, demo_actor().id.as_str());
+        assert_eq!(people[0].name, demo_actor().name);
+    }
+
+    #[test]
+    fn recalculating_appends_one_history_point() {
+        let mut backend = backend();
+        let before = backend.transparency(&demo()).unwrap().trust_history.len();
+        backend
+            .write_settings(&demo(), SettingsWrite::RecomputeTrust)
+            .now()
+            .unwrap()
+            .unwrap();
+        let t = backend.transparency(&demo()).unwrap();
+        assert_eq!(t.trust_history.len(), before + 1);
+        let last = t.trust_history.last().unwrap();
+        assert_eq!(last.score, t.trust.as_ref().unwrap().score);
+        assert_eq!(
+            t.trust.as_ref().unwrap().computed_by,
+            demo_actor().id.as_str()
         );
     }
 

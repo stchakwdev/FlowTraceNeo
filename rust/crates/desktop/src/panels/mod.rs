@@ -2,11 +2,13 @@
 //! to U9) replaces one arm of [`crate::shell::Shell::panel`] with its own view (README.md, "How
 //! a screen replaces its placeholder").
 
+pub mod access_groups;
 pub mod accounts;
 pub mod bills;
 pub mod campaigns;
 pub mod chains;
 pub mod dashboard;
+pub mod embed_badges;
 pub mod flows;
 pub mod general_ledger;
 pub mod grants;
@@ -15,8 +17,10 @@ pub mod proof_section;
 pub(crate) mod proofs;
 pub mod reconcile;
 pub mod reports;
+pub mod settings;
 pub mod spend;
 pub mod transactions;
+pub mod trust_score;
 
 use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::select::{SelectItem, SelectState};
@@ -30,7 +34,9 @@ use gpui_kit::{
 use ledger_core::LedgerCommand;
 
 use crate::accounts::Failure;
-use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, Submission, SubmitResult};
+use crate::backend::{
+    CampaignWrite, ChainWrite, FlowWrite, SettingsWrite, Submission, SubmitResult,
+};
 use crate::model::{LedgerView, NavEntry};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
@@ -42,6 +48,10 @@ pub fn task_of(entry: NavEntry) -> &'static str {
         NavEntry::Dashboard | NavEntry::Campaigns => "DT1",
         NavEntry::Flows | NavEntry::Chains => "DT2",
         NavEntry::Transactions => "DT3",
+        NavEntry::TrustScore
+        | NavEntry::Settings
+        | NavEntry::AccessGroups
+        | NavEntry::EmbedBadges => "DT4",
         NavEntry::Accounts => "U2",
         NavEntry::Journal => "U3",
         NavEntry::GeneralLedger => "U4",
@@ -101,6 +111,19 @@ pub(crate) fn write_chain<T: 'static>(
     then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
 ) {
     let submission = store.update(cx, |store, _| store.write_chain(write));
+    settle(this, submission, cx, then);
+}
+
+/// [`submit`] for a profile, access group, embed or trust write
+/// ([`LedgerStore::write_settings`]).
+pub(crate) fn write_settings<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    write: SettingsWrite,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.write_settings(write));
     settle(this, submission, cx, then);
 }
 
@@ -416,7 +439,11 @@ mod tests {
                 "U8",
                 "U9",
                 "DT1",
-                "DT2"
+                "DT2",
+                "DT4",
+                "DT4",
+                "DT4",
+                "DT4"
             ]
         );
     }

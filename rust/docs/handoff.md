@@ -23,7 +23,8 @@ root.
   live test passed against maincloud dev.
 - **desktop** (FlowTrace Books) has the seven books screens (Accounts, Journal, General ledger,
   Spend, Grants, Reconcile, Reports), Dashboard and Campaigns (DT1), Flows and Chains (DT2), and
-  Transactions with the shared Proofs section on transactions, claims and bills (DT3)
+  Transactions with the shared Proofs section on transactions, claims and bills (DT3), and
+  Trust Score, Settings, Access groups and Embed & badges (DT4)
   over either the in-process demo books or the live module,
   with a Connection screen, a saved token and an offline mode. It was checked on Linux
   (Omarchy, Hyprland on Wayland) and on macOS (release build and the full test suite on the
@@ -68,8 +69,9 @@ changing either once production books exist means a migration.
   `reports`, and since DT1 the Dashboard and Campaigns (list, new, manage, record and confirm
   donations, preview card, link and embed code), and since DT2 Flows (the flow map, its details
   panel and ledger links) and Chains (list, request, approve, reject, revoke, cancel), and since
-  DT3 Transactions (list, page, record) with proofs (gallery, attach panel, viewer). It has no
-  counterpart yet for the trust score page, donate pages, badges, or settings and access groups.
+  DT3 Transactions (list, page, record) with proofs (gallery, attach panel, viewer), and since
+  DT4 the Trust Score page, Settings (profile and "Show on public pages"), Access groups and the
+  Trust Score badge. It has no counterpart for the public donate, badge and embed pages.
 - DT1, deliberate difference (P20): the desktop manages and previews campaigns, and puts
   **Copy link** and **Copy embed code** on the campaign it manages; the web keeps the embed code
   under Settings > Embed and the copy-link button on the public donate page. The snippet and the
@@ -91,7 +93,7 @@ changing either once production books exist means a migration.
   keys (`w` `m` `q` `y` period, `-` `=` `f` zoom, Left and Right in money order, `l` ledger
   lines) to the web's Tab and Esc. Ledger links open the General ledger on the movement's
   linked journal entries first (`journal_entry_ids`), the web's source match only when it has
-  none. Node visibility settings wait for DT4 (access groups).
+  none. Node visibility settings have no screen (the web has none either).
 - DT2 Chains: the request dialog searches the published organisations
   (`public_organization`), since the module has no organisation search; the web's demo searches
   every organisation, so here an organisation must publish its profile to be found ("No
@@ -116,6 +118,32 @@ changing either once production books exist means a migration.
   `visibility_level` is enforced nowhere (module, TS and Worker alike: what a reader sees comes
   from their access groups). Claims' and bills' Proofs sections take the attach panel's kinds;
   their `a` key stays Approve, so the panel opens from its button there.
+- DT4 nav: Trust Score, Settings, Access groups and Embed & badges sit under "Transparency"
+  with no keys (`--entry trust-score`, `settings`, `access-groups`, `embed-badges`); the web
+  reaches the last two from Settings only.
+- DT4 Trust Score: four parts at the module's weights 32, 24, 24 and 20 (P16; RW3 made the same
+  change on the web, which had 40, 30 and 30), Independent review reading "Not yet scored" until
+  a rubric review is stored. The chart is a canvas, its labels positioned divs, so text sits on
+  approximate baselines.
+- DT4 badge: the web draws Flat, "Flat, square corners" and Plastic alike (two flat, square
+  fields), and so does the desktop; only Large differs. The preview's letter spacing for Large
+  is not drawn; the text is in capitals as on the web. The score and grade grids
+  (`BadgePreviewGrid`) are drawn under the live preview; the web's page does not use them.
+- DT4 Embed & badges: the campaign widget's code stays on each campaign (DT1, P20); this screen
+  names the ready campaigns and opens Campaigns. The web's "Embed settings" section (added by
+  RW3: allow embedding, amounts, Trust Score, node names, transaction count, a new token) is not
+  drawn here, by the brief; `SettingsWrite::UpdateEmbedConfig` and `RegenerateEmbedToken` and
+  the client wrappers exist for it.
+- DT4 Access groups: "Create the standard groups" runs the module's
+  `create_default_access_groups` (managers only; refused once any default exists), as RW3's web
+  page does. Names come from the organisation's member rows; an invite or a member without one
+  shows the address, else the user id (the module keeps no profile names). Invites send no
+  email, and an expired membership still grants access until a cleanup reducer exists (module
+  gaps). Dialogs are inline boxes; Access ends is typed day/month/year (no calendar picker);
+  Description is a single-line input.
+- DT4 live: an organisation with no transparency rows yet now reads empty records once its
+  books arrive (`backend::spacetime`), so a new organisation's Settings and Access groups can
+  write the first ones; before, such an organisation showed no records at all.
 - Sign-in: with `workos_client_id` in `config.toml` the desktop signs in with WorkOS AuthKit
   through the system browser (AUTH2, `crates/desktop/README.md`); without it, it connects with a
   device identity (a token file). Auth providers are the user's decision.
