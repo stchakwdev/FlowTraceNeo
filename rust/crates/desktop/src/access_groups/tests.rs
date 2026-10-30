@@ -250,10 +250,7 @@ fn saving_sends_what_the_web_sends() {
     assert_eq!(json["node_scope"], "downstream");
     assert_eq!(json["permissions"]["can_view_executor"], true);
     assert!(json.get("priority").is_none(), "only what the form edits");
-    assert_eq!(
-        ProofDepth::None.apply(edit.permissions).can_view_proofs,
-        false
-    );
+    assert!(!ProofDepth::None.apply(edit.permissions).can_view_proofs);
     assert_eq!(
         ProofDepth::Summary.hint(),
         "Type, date and status of each proof."

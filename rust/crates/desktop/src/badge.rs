@@ -7,6 +7,8 @@
 //! (`for-the-badge`) differs, in height, padding and capitals. Flat, "Flat, square corners" and
 //! "Plastic" render alike there, and so they do here.
 
+use std::fmt::Write as _;
+
 use ledger_module::transparency::trust::trust_grade;
 
 #[cfg(test)]
@@ -234,7 +236,9 @@ pub fn form_encode(value: &str) -> String {
                 out.push(char::from(b));
             }
             b' ' => out.push('+'),
-            _ => out.push_str(&format!("%{b:02X}")),
+            _ => {
+                let _ = write!(out, "%{b:02X}");
+            }
         }
     }
     out

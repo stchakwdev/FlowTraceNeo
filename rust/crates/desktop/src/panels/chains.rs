@@ -952,7 +952,7 @@ fn legend(p: &Palette) -> impl IntoElement {
 /// `ChainLine` (`chain-status-badge.tsx:16-77`): the pattern carries the state. Active is a
 /// solid ink line, pending dashed 7 5 in muted ink, revoked or rejected broken at 42% to 58%
 /// with two cut marks.
-fn chain_line(status: ChainStatus, width: f32, p: &Palette) -> Div {
+pub(crate) fn chain_line(status: ChainStatus, width: f32, p: &Palette) -> Div {
     let bar = |w: f32, color| div().w(px(w)).h(px(3.0)).bg(color);
     let muted = p.ink_muted.to_hsla();
     match status {

@@ -1812,12 +1812,9 @@ mod tests {
             .now()
             .unwrap()
             .unwrap();
-        assert!(
-            backend
-                .transparency(&empty)
-                .unwrap()
-                .group_members
-                .is_empty()
+        assert_eq!(
+            backend.transparency(&empty).unwrap().group_members,
+            Vec::<ledger_module::transparency::types::GroupMember>::new()
         );
         let err = backend
             .write_settings(&empty, SettingsWrite::DeleteGroup { id: group })

@@ -26,18 +26,22 @@ use crate::model::{
     short_identity, status_label,
 };
 use crate::panels;
+use crate::panels::access_groups::AccessGroupsPanel;
 use crate::panels::accounts::AccountsPanel;
 use crate::panels::campaigns::CampaignsPanel;
 use crate::panels::chains::ChainsPanel;
 use crate::panels::dashboard::{DashboardPanel, OpenFlows, RecordTransaction};
+use crate::panels::embed_badges::EmbedBadgesPanel;
 use crate::panels::flows::{FlowsPanel, OpenLedgerLines};
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
 use crate::panels::grants::GrantsPanel;
 use crate::panels::journal::JournalPanel;
 use crate::panels::reconcile::ReconcilePanel;
 use crate::panels::reports::ReportsPanel;
+use crate::panels::settings::SettingsPanel;
 use crate::panels::spend::SpendPanel;
 use crate::panels::transactions::{TransactionsPanel, TransactionsView};
+use crate::panels::trust_score::{OpenScreen, OpenTransactions, TrustScorePanel};
 use crate::signin::state::{Action, Card, Phase};
 use crate::statements::ReportKind;
 use crate::store::LedgerStore;
@@ -68,6 +72,10 @@ pub struct Shell {
     campaigns: Entity<CampaignsPanel>,
     flows: Entity<FlowsPanel>,
     chains: Entity<ChainsPanel>,
+    trust_score: Entity<TrustScorePanel>,
+    settings: Entity<SettingsPanel>,
+    access_groups: Entity<AccessGroupsPanel>,
+    embed_badges: Entity<EmbedBadgesPanel>,
     scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -116,6 +124,10 @@ impl Shell {
         let campaigns = cx.new(|cx| CampaignsPanel::new(store.clone(), window, cx));
         let flows = cx.new(|cx| FlowsPanel::new(store.clone(), window, cx));
         let chains = cx.new(|cx| ChainsPanel::new(store.clone(), window, cx));
+        let trust_score = cx.new(|cx| TrustScorePanel::new(store.clone(), window, cx));
+        let settings = cx.new(|cx| SettingsPanel::new(store.clone(), window, cx));
+        let access_groups = cx.new(|cx| AccessGroupsPanel::new(store.clone(), window, cx));
+        let embed_badges = cx.new(|cx| EmbedBadgesPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe_in(&store, window, |shell, _, window, cx| {
@@ -138,6 +150,11 @@ impl Shell {
                     shell.select_entry(NavEntry::Transactions, window, cx);
                 },
             ),
+            cx.subscribe_in(&trust_score, window, Self::on_open_transactions),
+            cx.subscribe_in(&trust_score, window, Self::on_open_screen),
+            cx.subscribe_in(&settings, window, Self::on_open_screen),
+            cx.subscribe_in(&access_groups, window, Self::on_open_screen),
+            cx.subscribe_in(&embed_badges, window, Self::on_open_screen),
         ];
 
         let focus = cx.focus_handle();
@@ -164,6 +181,10 @@ impl Shell {
             campaigns,
             flows,
             chains,
+            trust_score,
+            settings,
+            access_groups,
+            embed_badges,
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
@@ -238,6 +259,45 @@ impl Shell {
         self.general_ledger
             .update(cx, |gl, cx| gl.open_scope(filter, window, cx));
         self.select_entry(NavEntry::GeneralLedger, window, cx);
+    }
+
+    /// The Embed & badges panel, for `web_url` (`app.rs`).
+    #[must_use]
+    pub fn embed_badges(&self) -> &Entity<EmbedBadgesPanel> {
+        &self.embed_badges
+    }
+
+    /// A link on a DT4 screen opens another screen.
+    #[expect(
+        clippy::trivially_copy_pass_by_ref,
+        reason = "GPUI hands subscribers the event by reference"
+    )]
+    fn on_open_screen<T>(
+        &mut self,
+        _: &Entity<T>,
+        event: &OpenScreen,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.select_entry(event.0, window, cx);
+    }
+
+    /// A "How to raise it" link opens Transactions on a filter or one transaction.
+    fn on_open_transactions(
+        &mut self,
+        _: &Entity<TrustScorePanel>,
+        event: &OpenTransactions,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let OpenTransactions(view, filter) = event.clone();
+        self.transactions.update(cx, |panel, cx| {
+            if let Some(filter) = filter {
+                panel.set_filter(filter, cx);
+            }
+            panel.show(view, window, cx);
+        });
+        self.select_entry(NavEntry::Transactions, window, cx);
     }
 
     /// A line clicked in the General ledger opens its entry on the Journal screen.
@@ -340,7 +400,27 @@ impl Shell {
                 && self.nav.entry == NavEntry::Campaigns
                 && self
                     .campaigns
-                    .update(cx, |panel, cx| panel.press_key(key, window, cx)));
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::TrustScore
+                && self
+                    .trust_score
+                    .update(cx, |panel, cx| panel.press_key(key, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Settings
+                && self
+                    .settings
+                    .update(cx, |panel, cx| panel.press_key(key, cx)))
+            || (books
+                && self.nav.entry == NavEntry::AccessGroups
+                && self
+                    .access_groups
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::EmbedBadges
+                && self
+                    .embed_badges
+                    .update(cx, |panel, cx| panel.press_key(key, cx)));
         if handled {
             cx.stop_propagation();
             cx.notify();
@@ -464,6 +544,10 @@ impl Shell {
             NavEntry::Campaigns => self.campaigns.clone().into_any_element(),
             NavEntry::Flows => self.flows.clone().into_any_element(),
             NavEntry::Chains => self.chains.clone().into_any_element(),
+            NavEntry::TrustScore => self.trust_score.clone().into_any_element(),
+            NavEntry::Settings => self.settings.clone().into_any_element(),
+            NavEntry::AccessGroups => self.access_groups.clone().into_any_element(),
+            NavEntry::EmbedBadges => self.embed_badges.clone().into_any_element(),
         }
     }
 

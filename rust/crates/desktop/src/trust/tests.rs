@@ -88,11 +88,15 @@ fn an_empty_organisation_has_no_score_parts_or_history() {
     assert_eq!(page.score, 0);
     assert_eq!(page.grade, "F");
     assert_eq!(page.calculated, None);
-    assert!(page.components.is_empty());
+    assert_eq!(page.components, Vec::<ComponentRow>::new());
     assert_eq!(page.history_meta, None);
     assert_eq!(page.chart, None);
     assert_eq!(page.change, ScoreChange::NotYet);
-    assert!(page.actions.is_empty(), "Nothing outstanding");
+    assert_eq!(
+        page.actions,
+        Vec::<RaiseAction>::new(),
+        "Nothing outstanding"
+    );
 }
 
 #[test]
@@ -233,7 +237,10 @@ fn raise_actions_say_what_would_lift_the_score() {
             RaiseLink::Transactions(TransactionStatus::Flagged)
         ))
     );
-    assert!(raise_actions(&stats(5, 0, 0, 5, 0), 32, 24, None).is_empty());
+    assert_eq!(
+        raise_actions(&stats(5, 0, 0, 5, 0), 32, 24, None),
+        Vec::<RaiseAction>::new()
+    );
 }
 
 #[test]

@@ -610,9 +610,8 @@ fn org_members_come_from_the_member_rows_by_name() {
             ("user_z".to_owned(), "Zawadi".to_owned())
         ]
     );
-    assert!(
-        backend
-            .org_members(&OrganizationId::from("org-b"))
-            .is_empty()
+    assert_eq!(
+        backend.org_members(&OrganizationId::from("org-b")),
+        Vec::<OrgMember>::new()
     );
 }
