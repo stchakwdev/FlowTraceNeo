@@ -130,8 +130,8 @@ export function BooksState({
   if (error instanceof BooksNotConnectedError)
     return (
       <ReportNotice title="The books are not connected yet">
-        This organisation’s ledger lives in SpacetimeDB. Ask an administrator to
-        connect it; until then the transparency screens still work.
+        This organisation’s ledger, campaigns and profile live in SpacetimeDB.
+        Ask an administrator to add you as a member.
         {error.identity && (
           <>
             {' '}

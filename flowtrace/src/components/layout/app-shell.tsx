@@ -8,7 +8,8 @@ import type { AuthUser } from '@/lib/auth'
 import { useAppAuth } from '@/lib/auth-context'
 import { DEV_MODE, getUserDisplayName, getUserInitials } from '@/lib/auth'
 import { useOrg } from '@/lib/org-context'
-import { DEMO_BOOKS, useMastheadOrgName } from '@/lib/ledger-client'
+import { BooksNotConnectedError, DEMO_BOOKS, useMastheadOrgName } from '@/lib/ledger-client'
+import { BooksState } from '@/components/ledger/page'
 import { isNavItemActive, navSections } from '@/lib/navigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -57,7 +58,7 @@ export function AppShell({
   devMode = DEV_MODE,
 }: AppShellProps) {
   const { signOut } = useAppAuth()
-  const { organization } = useOrg()
+  const { organization, error: orgError } = useOrg()
   const orgName = useMastheadOrgName(organization?.name)
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -95,7 +96,7 @@ export function AppShell({
           <div className="border-t border-masthead-foreground/15 bg-primary px-4 py-1.5 text-xs leading-4 text-primary-foreground md:truncate md:px-5">
             {DEMO_BOOKS
               ? "Demo: you're viewing Demo NGO Kenya. Changes reset when you reload. "
-              : "Demo: you're viewing Demo NGO Kenya. The books are live in SpacetimeDB; other changes reset when you reload. "}
+              : "Demo sign-in on SpacetimeDB: the books, campaigns, donations and organisation profile are live; other screens show Demo NGO Kenya and reset when you reload. "}
             <Link to="/" className="font-semibold underline">
               Back to the overview
             </Link>
@@ -182,7 +183,21 @@ export function AppShell({
         />
 
         <main className="min-w-0 flex-1">
-          <div className="page-enter">{children}</div>
+          <div className="page-enter">
+            {/* No membership on SpacetimeDB: nothing to show but who to ask. */}
+            {orgError instanceof BooksNotConnectedError ? (
+              <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8">
+                <BooksState
+                  isLoading={false}
+                  error={orgError}
+                  refetch={() => undefined}
+                  label="organisation"
+                />
+              </div>
+            ) : (
+              children
+            )}
+          </div>
         </main>
       </div>
     </div>

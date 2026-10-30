@@ -42,7 +42,9 @@ import {
   getNodeVisibility,
   getOrganizationStats,
   getOutgoingChains,
+  getPublicCampaignStats,
   getPublicEmbedConfig,
+  getPublicTrustScore,
   getTransaction,
   getTransactions,
   getTrustScoreHistory,
@@ -1164,6 +1166,26 @@ export function useCampaignBySlug(slug: string) {
 
 // Alias for public campaign access
 export const usePublicCampaign = useCampaignBySlug
+
+/** A published campaign's figures, readable with no sign-in (the donate page). */
+export function usePublicCampaignStats(campaignId: string) {
+  return useQuery({
+    queryKey: [...queryKeys.campaignStats(campaignId), 'public'],
+    queryFn: () => getPublicCampaignStats(campaignId),
+    enabled: !!campaignId,
+    staleTime: 30 * 1000,
+  })
+}
+
+/** The score a public trust badge draws, readable with no sign-in. */
+export function usePublicTrustScore(organizationId: string) {
+  return useQuery({
+    queryKey: ['trust-score', organizationId, 'public'],
+    queryFn: () => getPublicTrustScore(organizationId),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
 
 export function useCampaignStats(campaignId: string) {
   return useQuery({

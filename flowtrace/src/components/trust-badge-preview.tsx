@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { BadgeStyle } from '@/lib/badge-utils'
 import { generateGradeBadgeSVG, generateTrustBadgeSVG } from '@/lib/badge-utils'
-import { useTrustScore } from '@/lib/queries'
+import { usePublicTrustScore, useTrustScore } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 interface TrustBadgePreviewProps {
@@ -9,6 +9,8 @@ interface TrustBadgePreviewProps {
   style?: BadgeStyle
   label?: string
   showGrade?: boolean
+  /** Draw the published score (the public badge page, read with no sign-in). */
+  published?: boolean
   /** Draw the badge this many times its natural size (it stays vector). */
   scale?: number
   className?: string
@@ -30,10 +32,13 @@ export function TrustBadgePreview({
   style = 'flat',
   label = 'Trust Score',
   showGrade = false,
+  published = false,
   scale = 1,
   className,
 }: TrustBadgePreviewProps) {
-  const { data: trustData, isLoading, error } = useTrustScore(organizationId)
+  const own = useTrustScore(published ? '' : organizationId)
+  const pub = usePublicTrustScore(published ? organizationId : '')
+  const { data: trustData, isLoading, error } = published ? pub : own
 
   const score = trustData?.overall_score ?? 0
 

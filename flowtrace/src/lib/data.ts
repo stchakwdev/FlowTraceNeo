@@ -1,10 +1,20 @@
 // Data access for the app. In dummy auth mode (DEV_MODE) every call is
 // served from the bundled demo dataset, so the app works with no backend;
 // otherwise it goes to Supabase. Each export keeps the live signature.
+//
+// Campaigns, donations, donor updates and the organisation profile (RW1) are
+// served by the SpacetimeDB module when VITE_LEDGER_BACKEND=spacetimedb
+// (ledger/spacetime-transparency.ts, loaded lazily with the SDK), by the demo
+// dataset when the books are the demo's, and by nothing otherwise: Supabase
+// is gone (Docs/adr/0001-native-ledger.md). Public pages read the module's
+// public tables anonymously (ledger/public-sql.ts).
 import { DEV_MODE } from './auth'
 import * as demo from './demo/api'
 import * as live from './supabase'
-import type { OrganizationProfileUpdate } from './demo/api'
+import * as publicReads from './ledger/public-sql'
+import { BACKEND, BooksNotConnectedError } from './spacetime-session'
+import type { LedgerBackendKind } from './spacetime-session'
+import type * as TransparencyModule from './ledger/spacetime-transparency'
 
 export const addGroupMember: typeof live.addGroupMember = DEV_MODE
   ? demo.addGroupMember
@@ -20,15 +30,6 @@ export const cancelChainRequest: typeof live.cancelChainRequest = DEV_MODE
 export const createAccessGroup: typeof live.createAccessGroup = DEV_MODE
   ? demo.createAccessGroup
   : live.createAccessGroup
-export const createCampaign: typeof live.createCampaign = DEV_MODE
-  ? demo.createCampaign
-  : live.createCampaign
-export const createDonation: typeof live.createDonation = DEV_MODE
-  ? demo.createDonation
-  : live.createDonation
-export const createDonorUpdate: typeof live.createDonorUpdate = DEV_MODE
-  ? demo.createDonorUpdate
-  : live.createDonorUpdate
 export const createNode: typeof live.createNode = DEV_MODE
   ? demo.createNode
   : live.createNode
@@ -41,9 +42,6 @@ export const createVerification: typeof live.createVerification = DEV_MODE
 export const deleteAccessGroup: typeof live.deleteAccessGroup = DEV_MODE
   ? demo.deleteAccessGroup
   : live.deleteAccessGroup
-export const deleteCampaign: typeof live.deleteCampaign = DEV_MODE
-  ? demo.deleteCampaign
-  : live.deleteCampaign
 export const deleteVerificationFile: typeof live.deleteVerificationFile =
   DEV_MODE ? demo.deleteVerificationFile : live.deleteVerificationFile
 export const getAccessGroup: typeof live.getAccessGroup = DEV_MODE
@@ -52,24 +50,6 @@ export const getAccessGroup: typeof live.getAccessGroup = DEV_MODE
 export const getAccessGroups: typeof live.getAccessGroups = DEV_MODE
   ? demo.getAccessGroups
   : live.getAccessGroups
-export const getCampaign: typeof live.getCampaign = DEV_MODE
-  ? demo.getCampaign
-  : live.getCampaign
-export const getCampaignBySlug: typeof live.getCampaignBySlug = DEV_MODE
-  ? demo.getCampaignBySlug
-  : live.getCampaignBySlug
-export const getCampaignCounts: typeof live.getCampaignCounts = DEV_MODE
-  ? demo.getCampaignCounts
-  : live.getCampaignCounts
-export const getCampaigns: typeof live.getCampaigns = DEV_MODE
-  ? demo.getCampaigns
-  : live.getCampaigns
-export const getCampaignStats: typeof live.getCampaignStats = DEV_MODE
-  ? demo.getCampaignStats
-  : live.getCampaignStats
-export const getCampaignUpdates: typeof live.getCampaignUpdates = DEV_MODE
-  ? demo.getCampaignUpdates
-  : live.getCampaignUpdates
 export const getChain: typeof live.getChain = DEV_MODE
   ? demo.getChain
   : live.getChain
@@ -82,18 +62,6 @@ export const getChainCounts: typeof live.getChainCounts = DEV_MODE
 export const getChainTrustScore: typeof live.getChainTrustScore = DEV_MODE
   ? demo.getChainTrustScore
   : live.getChainTrustScore
-export const getDonation: typeof live.getDonation = DEV_MODE
-  ? demo.getDonation
-  : live.getDonation
-export const getDonations: typeof live.getDonations = DEV_MODE
-  ? demo.getDonations
-  : live.getDonations
-export const getDonorDonations: typeof live.getDonorDonations = DEV_MODE
-  ? demo.getDonorDonations
-  : live.getDonorDonations
-export const getDonorUpdates: typeof live.getDonorUpdates = DEV_MODE
-  ? demo.getDonorUpdates
-  : live.getDonorUpdates
 export const getFlowDataAPI: typeof live.getFlowDataAPI = DEV_MODE
   ? demo.getFlowDataAPI
   : live.getFlowDataAPI
@@ -127,8 +95,6 @@ export const getTransactions: typeof live.getTransactions = DEV_MODE
 export const getTrustScoreHistory: typeof live.getTrustScoreHistory = DEV_MODE
   ? demo.getTrustScoreHistory
   : live.getTrustScoreHistory
-export const getUnderfundedCampaigns: typeof live.getUnderfundedCampaigns =
-  DEV_MODE ? demo.getUnderfundedCampaigns : live.getUnderfundedCampaigns
 export const getUserGroups: typeof live.getUserGroups = DEV_MODE
   ? demo.getUserGroups
   : live.getUserGroups
@@ -144,9 +110,6 @@ export const getVisibilityContext: typeof live.getVisibilityContext = DEV_MODE
 export const inviteMemberByEmail: typeof live.inviteMemberByEmail = DEV_MODE
   ? demo.inviteMemberByEmail
   : live.inviteMemberByEmail
-export const markUpdateSent: typeof live.markUpdateSent = DEV_MODE
-  ? demo.markUpdateSent
-  : live.markUpdateSent
 export const processReceiptOCR: typeof live.processReceiptOCR = DEV_MODE
   ? demo.processReceiptOCR
   : live.processReceiptOCR
@@ -174,14 +137,8 @@ export const setNodeVisibility: typeof live.setNodeVisibility = DEV_MODE
 export const updateAccessGroup: typeof live.updateAccessGroup = DEV_MODE
   ? demo.updateAccessGroup
   : live.updateAccessGroup
-export const updateCampaign: typeof live.updateCampaign = DEV_MODE
-  ? demo.updateCampaign
-  : live.updateCampaign
 export const updateChainPermissions: typeof live.updateChainPermissions =
   DEV_MODE ? demo.updateChainPermissions : live.updateChainPermissions
-export const updateDonationStatus: typeof live.updateDonationStatus = DEV_MODE
-  ? demo.updateDonationStatus
-  : live.updateDonationStatus
 export const updatePublicEmbedConfig: typeof live.updatePublicEmbedConfig =
   DEV_MODE ? demo.updatePublicEmbedConfig : live.updatePublicEmbedConfig
 export const updateTransaction: typeof live.updateTransaction = DEV_MODE
@@ -189,106 +146,100 @@ export const updateTransaction: typeof live.updateTransaction = DEV_MODE
   : live.updateTransaction
 export const uploadVerificationFile: typeof live.uploadVerificationFile =
   DEV_MODE ? demo.uploadVerificationFile : live.uploadVerificationFile
-export const getOrganization: typeof live.getOrganization = DEV_MODE
-  ? demo.getOrganization
-  : live.getOrganization
-export const updateOrganization: (
-  id: string,
-  updates: OrganizationProfileUpdate,
-) => Promise<live.Organization> = DEV_MODE
-  ? demo.updateOrganization
-  : async (id, updates) => {
-      const { data, error } = await live.supabase
-        .from('organizations')
-        .update(updates)
-        .eq('id', id)
-        .select('*')
-        .single()
-      if (error) throw error
-      return data as live.Organization
-    }
+// ---------------------------------------------------------------------------
+// Campaigns, donations, donor updates, organisation profile (RW1)
+// ---------------------------------------------------------------------------
+
+export type TransparencySource = 'module' | 'demo' | 'none'
+
+/** Who serves campaigns, donations and the organisation profile for a backend kind. */
+export function transparencySource(kind: LedgerBackendKind): TransparencySource {
+  if (kind === 'spacetimedb') return 'module'
+  if (kind === 'demo') return 'demo'
+  return 'none'
+}
+
+const SOURCE = transparencySource(BACKEND)
+
+type Module = typeof TransparencyModule
+type Fn = (...args: Array<never>) => Promise<unknown>
+
+// Lazy, so the demo bundle never loads the SpacetimeDB SDK.
+const transparencyLoaders = import.meta.glob<Module>(
+  './ledger/spacetime-transparency.ts',
+)
+
+export function loadTransparency(): Promise<Module> {
+  const load = Object.values(transparencyLoaders).at(0)
+  if (!load) throw new Error('The SpacetimeDB module is not built into this app.')
+  return load()
+}
+
+const notConnected = () => Promise.reject(new BooksNotConnectedError())
+
+/** The module's function when the module serves the app, else the demo's, else a refusal. */
+function served<TName extends keyof Module>(
+  name: TName,
+  demoFn: Module[TName],
+): Module[TName] {
+  if (SOURCE === 'demo') return demoFn
+  if (SOURCE === 'none') return notConnected as unknown as Module[TName]
+  const viaModule = (...args: Array<unknown>) =>
+    loadTransparency().then((m) => (m[name] as unknown as (...a: Array<unknown>) => Promise<unknown>)(...args))
+  return viaModule as unknown as Module[TName]
+}
+
+/** For public pages: the anonymous read when the module serves the app. */
+function publicly<T extends Fn>(moduleFn: T, demoFn: T): T {
+  if (SOURCE === 'demo') return demoFn
+  if (SOURCE === 'none') return notConnected as unknown as T
+  return moduleFn
+}
+
+export const getCampaigns = served('getCampaigns', demo.getCampaigns)
+export const getCampaign = served('getCampaign', demo.getCampaign)
+export const createCampaign = served('createCampaign', demo.createCampaign)
+export const updateCampaign = served('updateCampaign', demo.updateCampaign)
+export const deleteCampaign = served('deleteCampaign', demo.deleteCampaign)
+export const getCampaignStats = served('getCampaignStats', demo.getCampaignStats)
+export const getCampaignCounts = served('getCampaignCounts', demo.getCampaignCounts)
+export const getUnderfundedCampaigns = served('getUnderfundedCampaigns', demo.getUnderfundedCampaigns)
+export const getDonations = served('getDonations', demo.getDonations)
+export const getDonation = served('getDonation', demo.getDonation)
+export const getDonorDonations = served('getDonorDonations', demo.getDonorDonations)
+export const createDonation = served('createDonation', demo.createDonation)
+export const updateDonationStatus = served('updateDonationStatus', demo.updateDonationStatus)
+export const getDonorUpdates = served('getDonorUpdates', demo.getDonorUpdates)
+export const getCampaignUpdates = served('getCampaignUpdates', demo.getCampaignUpdates)
+export const createDonorUpdate = served('createDonorUpdate', demo.createDonorUpdate)
+export const markUpdateSent = served('markUpdateSent', demo.markUpdateSent)
+export const getOrganization = served('getOrganization', demo.getOrganization)
+export const updateOrganization = served('updateOrganization', demo.updateOrganization)
 
 // Campaign report: the org behind a campaign, where money can be earmarked,
-// and recent programme spending with its proof state. Read by the public
-// donate page, so it must not depend on the signed-in org.
+// and recent programme spending with its proof state.
 export type {
   CampaignReport,
   CampaignReportEarmark,
 } from './demo/api'
 
-async function liveCampaignReport(
-  campaignId: string,
-): Promise<demo.CampaignReport> {
-  const { data: c, error } = await live.supabase
-    .from('campaigns')
-    .select('*, target_node:flow_nodes(id, name, type)')
-    .eq('id', campaignId)
-    .single()
-  if (error) throw error
-  const campaign = c as live.CampaignWithDetails
-  const [orgRes, nodesRes, txnRes] = await Promise.all([
-    live.supabase
-      .from('organizations')
-      .select('id, name, trust_score, verified')
-      .eq('id', c.organization_id)
-      .single(),
-    live.supabase
-      .from('flow_nodes')
-      .select('id, name, type')
-      .eq('organization_id', c.organization_id)
-      .in('type', ['project', 'department']),
-    live.supabase
-      .from('transactions')
-      .select(
-        '*, from_node:flow_nodes!from_node_id(id, name, type), to_node:flow_nodes!to_node_id(id, name, type)',
-      )
-      .eq('organization_id', c.organization_id)
-      .neq('verification_status', 'rejected')
-      .order('transaction_date', { ascending: false }),
-  ])
-  if (orgRes.error) throw orgRes.error
-  if (nodesRes.error) throw nodesRes.error
-  if (txnRes.error) throw txnRes.error
-  const txns = txnRes.data as Array<live.TransactionWithNodes>
-  const earmarks = (
-    nodesRes.data as Array<Pick<live.FlowNode, 'id' | 'name' | 'type'>>
-  )
-    .map((n) => {
-      const inflow = txns.filter((t) => t.to_node_id === n.id)
-      return {
-        ...n,
-        received: inflow.reduce((s, t) => s + t.amount, 0),
-        evidenced: inflow
-          .filter((t) => t.verification_status === 'verified')
-          .reduce((s, t) => s + t.amount, 0),
-        is_target: n.id === c.target_node_id,
-      }
-    })
-    .sort(
-      (a, b) =>
-        Number(b.is_target) - Number(a.is_target) || b.received - a.received,
-    )
-  const programme = new Set(earmarks.map((e) => e.id))
-  const target = earmarks.find((e) => e.is_target)
-  return {
-    campaign,
-    organization: orgRes.data as demo.CampaignReport['organization'],
-    evidenced_amount: target
-      ? Math.min(target.evidenced, campaign.current_amount)
-      : null,
-    earmarks,
-    spending: txns
-      .filter(
-        (t) =>
-          (t.to_node_id && programme.has(t.to_node_id)) ||
-          (t.from_node_id && programme.has(t.from_node_id)),
-      )
-      .slice(0, 6),
-  }
-}
+/** For a member on the campaign page. */
+export const getCampaignReport = served('getCampaignReport', demo.getCampaignReport)
 
-export const getCampaignReport: (
-  campaignId: string,
-) => Promise<demo.CampaignReport> = DEV_MODE
-  ? demo.getCampaignReport
-  : liveCampaignReport
+/** Public pages: the donate page, the campaign embed and the trust badge, readable with no token. */
+export const getCampaignBySlug = publicly(publicReads.getPublicCampaignBySlug, demo.getCampaignBySlug)
+export const getPublicCampaignStats = publicly(publicReads.getPublicCampaignStats, demo.getCampaignStats)
+export const getPublicCampaignReport = publicly(publicReads.getPublicCampaignReport, demo.getCampaignReport)
+export const getPublicOrganization = publicly(publicReads.getPublicOrganization, demo.getOrganization)
+
+/** The badge's score: the module's published badge, or the demo's latest history snapshot. */
+export const getPublicTrustScore = publicly(publicReads.getPublicBadge, async (organizationId: string) => {
+  const history = await demo.getTrustScoreHistory(organizationId, 1)
+  const latest = history.at(-1)
+  return {
+    overall_score: latest?.score ?? 0,
+    breakdown: (latest?.breakdown ?? {}),
+    verification_rate: latest?.verification_rate ?? null,
+    calculated_at: latest?.calculated_at ?? null,
+  }
+})

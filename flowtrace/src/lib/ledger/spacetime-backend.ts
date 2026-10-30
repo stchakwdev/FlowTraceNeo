@@ -112,6 +112,11 @@ async function open(): Promise<DbConnection> {
   })
 }
 
+/** The browser's one SpacetimeDB connection, shared with spacetime-transparency.ts. */
+export function connectSpacetime(): Promise<DbConnection> {
+  return connect()
+}
+
 function connect(): Promise<DbConnection> {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('The SpacetimeDB ledger runs in the browser only.'))
@@ -133,7 +138,8 @@ const viewName = (table: string) => `my_${table.replace(/[A-Z]/g, (c) => `_${c.t
 
 const LEDGER_TABLES: Array<string> = ['ledgerOrg', 'journalEntry', 'journalLine', ...Object.values(DOC_COLLECTIONS)]
 
-function view<T>(conn: DbConnection, table: string): ViewHandle<T> {
+/** A `my_*` view of the connection by its table name (`campaign` is `my_campaign`). */
+export function view<T>(conn: DbConnection, table: string): ViewHandle<T> {
   return (conn.db as unknown as Record<string, ViewHandle<T>>)[viewAccessor(table)]
 }
 

@@ -51,6 +51,7 @@ import {
   useDeleteCampaign,
   useDonations,
   useUpdateCampaign,
+  useUpdateDonationStatus,
 } from '@/lib/queries'
 import { getCampaignReport } from '@/lib/data'
 import { formatDate, formatMoney, formatShortDate } from '@/lib/format'
@@ -84,6 +85,20 @@ function CampaignDetailPage() {
   })
   const updateCampaign = useUpdateCampaign()
   const deleteCampaign = useDeleteCampaign()
+  const updateDonation = useUpdateDonationStatus()
+
+  // No payment processor confirms a gift yet, so a member marks it received
+  // (pre-decision P19; the module keeps new gifts pending).
+  const confirmDonation = async (donationId: string) => {
+    setActionError(null)
+    try {
+      await updateDonation.mutateAsync({ id: donationId, status: 'confirmed' })
+    } catch (e) {
+      setActionError(
+        `The donation was not confirmed${e instanceof Error ? `: ${e.message}` : '.'} Try again.`,
+      )
+    }
+  }
 
   const setStatus = async (status: CampaignStatus) => {
     setActionError(null)
@@ -352,6 +367,17 @@ function CampaignDetailPage() {
                           <span className="block text-xs text-muted-foreground">
                             {METHOD_LABEL[d.payment_method ?? ''] ?? d.payment_method}
                           </span>
+                          {d.payment_status === 'pending' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-1"
+                              disabled={updateDonation.isPending}
+                              onClick={() => void confirmDonation(d.id)}
+                            >
+                              Confirm received
+                            </Button>
+                          )}
                         </td>
                         <td className="py-2.5 text-right font-semibold tabular-nums">
                           {formatMoney(d.amount, d.currency)}
