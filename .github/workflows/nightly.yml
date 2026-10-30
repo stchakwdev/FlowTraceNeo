@@ -41,21 +41,20 @@ jobs:
     timeout-minutes: 60
     env:
       SPACETIME: /home/runner/.local/bin/spacetime
-      # The desktop's display: weston's headless backend below, drawn by Mesa's software Vulkan
-      # (lavapipe), so GPUI renders with no GPU and no screen.
+      # The desktop's display: sway's headless backend below (WAYLAND_DISPLAY is set when it is
+      # up), drawn by Mesa's software Vulkan (lavapipe), so GPUI renders with no GPU and no screen.
       XDG_RUNTIME_DIR: /tmp/nightly-xdg
-      WAYLAND_DISPLAY: wayland-1
       VK_ICD_FILENAMES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
     steps:
       - uses: actions/checkout@v5
 
-      # GPUI system libraries as in rust.yml; then weston and lavapipe for the headless display.
-      - name: Install GPUI libraries, weston and lavapipe
+      # GPUI system libraries as in rust.yml; then sway and lavapipe for the headless display.
+      - name: Install GPUI libraries, sway and lavapipe
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends clang libfontconfig-dev \
             libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev \
-            weston mesa-vulkan-drivers libvulkan1 vulkan-tools fonts-dejavu-core
+            sway mesa-vulkan-drivers libvulkan1 vulkan-tools fonts-dejavu-core
 
       - uses: actions-rust-lang/setup-rust-toolchain@v2.0.0
         with:
@@ -67,6 +66,8 @@ jobs:
         with:
           workspaces: rust
           key: nightly
+          # The release build is most of the job's time; keep it when IT1 fails.
+          cache-on-failure: true
 
       - name: Build the desktop, it1_probe and the module
         working-directory: rust
@@ -98,13 +99,22 @@ jobs:
           "$SPACETIME" version use 2.12.0
           "$SPACETIME" --version
 
+      # sway, not weston: GPUI panics without a wl_seat ("Wayland compositor does not provide
+      # wl_seat", gpui-pre-linux 0.3.9 platform.rs:366), and weston's headless backend has none,
+      # while sway always creates seat0. An empty config keeps sway from starting a bar.
       - name: Start the headless display
+        env:
+          WLR_BACKENDS: headless
+          WLR_RENDERER: pixman
+          WLR_LIBINPUT_NO_DEVICES: '1'
         run: |
           mkdir -p -m 0700 "$XDG_RUNTIME_DIR"
-          weston --backend=headless --renderer=pixman --socket="$WAYLAND_DISPLAY" --idle-time=0 \
-            > "$RUNNER_TEMP/weston.log" 2>&1 &
-          for _ in $(seq 50); do [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ] && break; sleep 0.2; done
-          [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ] || { cat "$RUNNER_TEMP/weston.log"; exit 1; }
+          : > "$RUNNER_TEMP/sway.conf"
+          sway -c "$RUNNER_TEMP/sway.conf" > "$RUNNER_TEMP/sway.log" 2>&1 &
+          for _ in $(seq 50); do ls "$XDG_RUNTIME_DIR"/wayland-? > /dev/null 2>&1 && break; sleep 0.2; done
+          socket=$(ls "$XDG_RUNTIME_DIR"/wayland-? 2>/dev/null | head -1)
+          [ -n "$socket" ] || { cat "$RUNNER_TEMP/sway.log"; exit 1; }
+          echo "WAYLAND_DISPLAY=$(basename "$socket")" >> "$GITHUB_ENV"
           vulkaninfo --summary 2>/dev/null | grep -E 'deviceName|driverName' || true
 
       # IT1's --local target is http://127.0.0.1:3100, the CLI's server nickname `local`.
@@ -154,7 +164,7 @@ jobs:
             [ -f "$f" ] || continue
             { echo "### $(dirname "${f#rust/}")"; echo; cat "$f"; echo; } >> "$GITHUB_STEP_SUMMARY"
           done
-          for f in "$RUNNER_TEMP/weston.log" "$RUNNER_TEMP/spacetime.log"; do
+          for f in "$RUNNER_TEMP/sway.log" "$RUNNER_TEMP/spacetime.log"; do
             [ -f "$f" ] && cp "$f" rust/out/it1/ 2>/dev/null || true
           done
 
