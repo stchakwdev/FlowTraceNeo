@@ -22,7 +22,9 @@ use std::time::Duration;
 
 use ledger_core::types::LedgerState;
 use ledger_core::{CommandResult, LedgerCommand};
-use ledger_module::transparency::types::NewVerification;
+use ledger_module::transparency::types::{
+    CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
+};
 use spacetimedb_sdk::__codegen::InternalError;
 use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
 
@@ -46,8 +48,9 @@ use crate::module_bindings::{
     MyTrustScoreTableAccess as _, MyVendorTableAccess as _,
     MyVerificationAccessLogTableAccess as _, MyVerificationTableAccess as _,
     PublicBadgeTableAccess as _, PublicCampaignTableAccess as _,
-    PublicOrganizationTableAccess as _, create_org_ledger as _, create_verification as _,
-    import_books as _, mark_published as _, run_command as _,
+    PublicOrganizationTableAccess as _, create_campaign as _, create_org_ledger as _,
+    create_verification as _, delete_campaign as _, import_books as _, mark_published as _,
+    record_donation as _, run_command as _, update_campaign as _, update_donation_status as _,
 };
 use crate::status::{
     ClientEvent, CommandTicket, ConnectionStatus, Organisation, RESULT_TIMEOUT, Ticket,
@@ -375,6 +378,87 @@ impl SpacetimeClient {
         })
     }
 
+    /// Opens a campaign for the organisation (`create_campaign`, ADR 0004, Reducers;
+    /// `createCampaign`, `api.ts:1080-1098`): any member; amounts in minor units. The new row
+    /// arrives through `my_campaign` with its `my_campaign_stat` figures.
+    pub fn create_campaign(&self, org_id: &str, campaign: &NewCampaign) -> Ticket<()> {
+        let json = match serde_json::to_string(campaign) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .create_campaign_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Changes a campaign field by field (`update_campaign`; `updateCampaign`,
+    /// `api.ts:1100-1114`): any member; a field left out of `patch` is kept.
+    pub fn update_campaign(
+        &self,
+        org_id: &str,
+        campaign_id: &str,
+        patch: &CampaignPatch,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(patch) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers.update_campaign_then(
+                org_id.to_owned(),
+                campaign_id.to_owned(),
+                json,
+                done,
+            )
+        })
+    }
+
+    /// Deletes a draft campaign (`delete_campaign`; `deleteCampaign`, `api.ts:1116-1126`). The
+    /// module silently keeps a campaign that is not a draft, so offer it for drafts only.
+    pub fn delete_campaign(&self, org_id: &str, campaign_id: &str) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers
+                .delete_campaign_then(org_id.to_owned(), campaign_id.to_owned(), done)
+        })
+    }
+
+    /// Records a donation (`record_donation`; `createDonation`, `api.ts:1256-1272`): a record
+    /// only, no payment is processed (P19). A confirmed one adds to the campaign's raised amount.
+    pub fn record_donation(&self, org_id: &str, donation: &NewDonation) -> Ticket<()> {
+        let json = match serde_json::to_string(donation) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .record_donation_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Sets a donation's payment status and reference (`update_donation_status`;
+    /// `updateDonationStatus`, `api.ts:1274-1289`): any member; moving into or out of
+    /// `confirmed` moves the campaign's raised amount. A blank reference is stored as none.
+    pub fn update_donation_status(
+        &self,
+        org_id: &str,
+        donation_id: &str,
+        status: PaymentStatus,
+        payment_reference: Option<&str>,
+    ) -> Ticket<()> {
+        let status = status_arg(status);
+        let reference = payment_reference.map(str::to_owned);
+        self.call(|conn, done| {
+            conn.reducers.update_donation_status_then(
+                org_id.to_owned(),
+                donation_id.to_owned(),
+                status,
+                reference,
+                done,
+            )
+        })
+    }
+
     /// Sends one reducer call whose ticket resolves with the reducer's outcome.
     fn call(
         &self,
@@ -399,6 +483,18 @@ impl SpacetimeClient {
         });
         ticket
     }
+}
+
+/// `update_donation_status`'s `status` argument: the status as its JSON string without the
+/// quotes (`pending`, `confirmed`, `failed`, `refunded`), which the reducer parses back.
+fn status_arg(status: PaymentStatus) -> String {
+    match status {
+        PaymentStatus::Pending => "pending",
+        PaymentStatus::Confirmed => "confirmed",
+        PaymentStatus::Failed => "failed",
+        PaymentStatus::Refunded => "refunded",
+    }
+    .to_owned()
 }
 
 /// What a reducer call reports back (the generated `*_then` callbacks).
@@ -876,4 +972,79 @@ fn end(shared: &Shared, error: Option<String>) {
         hub.broadcast(&ClientEvent::Error(e.clone()));
     }
     hub.set_status(ConnectionStatus::Disconnected { error });
+}
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
+
+    use super::*;
+    use ledger_module::transparency::types::CampaignStatus;
+
+    /// The reducer reads `status` as `serde_json::Value::String(status)` parsed into a
+    /// `PaymentStatus` (`ledger_module::transparency::reducers::update_donation_status`).
+    #[test]
+    fn the_status_argument_parses_back_as_the_reducer_reads_it() {
+        for status in [
+            PaymentStatus::Pending,
+            PaymentStatus::Confirmed,
+            PaymentStatus::Failed,
+            PaymentStatus::Refunded,
+        ] {
+            let text = serde_json::Value::String(status_arg(status)).to_string();
+            let back: PaymentStatus = serde_json::from_str(&text).unwrap();
+            assert_eq!(back, status);
+        }
+    }
+
+    fn campaign() -> NewCampaign {
+        serde_json::from_value(serde_json::json!({
+            "name": "Boreholes",
+            "target_amount": 50_000_000,
+            "currency": "KES",
+            "starts_at": "2026-10-29T00:00:00.000Z",
+        }))
+        .unwrap()
+    }
+
+    /// Before the host has answered there is no connection, so every write resolves at once as
+    /// disconnected instead of waiting for the timeout.
+    #[test]
+    fn writes_before_a_connection_resolve_as_disconnected() {
+        let client =
+            SpacetimeClient::connect(ClientConfig::new("http://127.0.0.1:9", "none")).unwrap();
+        let donation: NewDonation = serde_json::from_value(serde_json::json!({
+            "campaign_id": "c1", "amount": 100_000, "currency": "KES",
+        }))
+        .unwrap();
+        let patch = CampaignPatch {
+            status: Some(CampaignStatus::Active),
+            ..CampaignPatch::default()
+        };
+        let tickets = [
+            client.create_campaign("org-1", &campaign()),
+            client.update_campaign("org-1", "c1", &patch),
+            client.delete_campaign("org-1", "c1"),
+            client.record_donation("org-1", &donation),
+            client.update_donation_status("org-1", "d1", PaymentStatus::Confirmed, Some("REF")),
+        ];
+        for ticket in tickets {
+            assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
+        }
+        client.disconnect();
+    }
+
+    /// A patch sends only the fields it sets, so the module keeps the rest
+    /// (`CampaignPatch`, `skip_serializing_if`).
+    #[test]
+    fn a_status_patch_sends_the_status_alone() {
+        let patch = CampaignPatch {
+            status: Some(CampaignStatus::Paused),
+            ..CampaignPatch::default()
+        };
+        assert_eq!(
+            serde_json::to_string(&patch).unwrap(),
+            r#"{"status":"paused"}"#
+        );
+    }
 }

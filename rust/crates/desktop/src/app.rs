@@ -5,8 +5,8 @@
 
 use gpui_kit::component::ThemeMode;
 use gpui_kit::{
-    AppContext as _, Bounds, TitlebarOptions, WindowAppearance, WindowBounds, WindowOptions, px,
-    size,
+    App, AppContext as _, Bounds, Entity, TitlebarOptions, Window, WindowAppearance, WindowBounds,
+    WindowOptions, px, size,
 };
 
 use std::path::PathBuf;
@@ -15,6 +15,7 @@ use std::time::Instant;
 use crate::backend::{ConnectSettings, InProcessBackend, LedgerBackend, SpacetimeBackend};
 use crate::config::{self, CONFIG_FILE, Config};
 use crate::model::{ConnectForm, Navigation};
+use crate::panels::campaigns::CampaignsView;
 use crate::panels::general_ledger::GlLaunch;
 use crate::panels::grants::GrantsView;
 use crate::shell::Shell;
@@ -43,6 +44,8 @@ pub struct Launch {
     pub general_ledger: GlLaunch,
     /// What the Grants entry shows first: `list`, `budgets` or a grant id.
     pub grants: Option<String>,
+    /// What the Campaigns entry shows first: `list`, `new`, a campaign id or `preview:<id>`.
+    pub campaigns: Option<String>,
     /// `--server`: the SpacetimeDB server, over the config file's.
     pub server: Option<String>,
     /// `--database`: the database on it, over the config file's.
@@ -83,6 +86,7 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
         dir: dir.clone(),
     });
     let proofs_url = config.proofs_url.clone();
+    let web_url = config.web_url();
     // A saved WorkOS sign-in is resumed by the store; no device connection opens first.
     let resumes = settings
         .as_ref()
@@ -143,19 +147,7 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
             };
             let opened = gpui_kit::open_window(options, cx, |window, cx| {
                 let shell = cx.new(|cx| Shell::new(store, launch.nav, &form, window, cx));
-                if let Some(kind) = launch.report {
-                    shell.update(cx, |shell, cx| shell.show_report(kind, window, cx));
-                }
-                if let Some(value) = &launch.grants {
-                    let grants = shell.read(cx).grants().clone();
-                    grants.update(cx, |panel, cx| {
-                        panel.show(GrantsView::from_launch(value), window, cx);
-                    });
-                }
-                let panel = shell.read(cx).general_ledger().clone();
-                panel.update(cx, |panel, cx| {
-                    panel.launch(&launch.general_ledger, window, cx);
-                });
+                show_launch(&shell, &launch, web_url, window, cx);
                 shell
             });
             if let Err(err) = opened {
@@ -164,6 +156,37 @@ pub fn run(launch: Launch) -> anyhow::Result<()> {
             }
         });
     Ok(())
+}
+
+/// Opens what the launch flags name (`--report`, `--grants`, `--campaigns`, the `--gl-*` flags)
+/// and hands Campaigns the web address its links point to.
+fn show_launch(
+    shell: &Entity<Shell>,
+    launch: &Launch,
+    web_url: String,
+    window: &mut Window,
+    cx: &mut App,
+) {
+    if let Some(kind) = launch.report {
+        shell.update(cx, |shell, cx| shell.show_report(kind, window, cx));
+    }
+    if let Some(value) = &launch.grants {
+        let grants = shell.read(cx).grants().clone();
+        grants.update(cx, |panel, cx| {
+            panel.show(GrantsView::from_launch(value), window, cx);
+        });
+    }
+    let campaigns = shell.read(cx).campaigns().clone();
+    campaigns.update(cx, |panel, cx| {
+        panel.set_web_url(web_url, cx);
+        if let Some(value) = &launch.campaigns {
+            panel.show(CampaignsView::from_launch(value), window, cx);
+        }
+    });
+    let panel = shell.read(cx).general_ledger().clone();
+    panel.update(cx, |panel, cx| {
+        panel.launch(&launch.general_ledger, window, cx);
+    });
 }
 
 /// The backend for `settings`: the server it names, or the in-process demo books (with

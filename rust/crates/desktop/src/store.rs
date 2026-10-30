@@ -14,7 +14,9 @@ use ledger_core::types::{Actor, OrganizationId};
 
 use ledger_module::transparency::types::{NewVerification, Verification};
 
-use crate::backend::{BackendError, BackendEvent, ConnectSettings, LedgerBackend, Submission};
+use crate::backend::{
+    BackendError, BackendEvent, CampaignWrite, ConnectSettings, LedgerBackend, Submission,
+};
 use crate::model::LedgerView;
 use crate::proofs::{LinkKind, ProofsClient, ProofsError};
 use crate::signin::state::{Card, SignInState};
@@ -72,7 +74,18 @@ impl StoreCore {
         let snapshot = orgs.first().and_then(|org| self.backend.state(&org.id));
         self.view = LedgerView::new(orgs, self.backend.status(), snapshot);
         self.view.set_remote(self.backend.is_remote());
+        self.reload_transparency();
         rx
+    }
+
+    /// Reads the selected organisation's transparency records again. Returns whether they
+    /// changed.
+    fn reload_transparency(&mut self) -> bool {
+        let records = self
+            .view
+            .selected()
+            .and_then(|org| self.backend.transparency(&org.id));
+        self.view.set_transparency(records)
     }
 
     /// Writes start-up and round-trip times to stderr from now on.
@@ -129,7 +142,7 @@ impl StoreCore {
                         let names: Vec<&str> = orgs.iter().map(|o| o.name.as_str()).collect();
                         eprintln!("desktop: organisations {names:?}");
                     }
-                    BackendEvent::Ledger { .. } => {}
+                    BackendEvent::Ledger { .. } | BackendEvent::Transparency { .. } => {}
                 }
             }
         }
@@ -139,12 +152,19 @@ impl StoreCore {
             }
         }
         self.note_signin();
+        let touched_records = batch.iter().any(|event| {
+            matches!(event, BackendEvent::Transparency { org } if Some(org) == selected.as_ref())
+        });
         let mut changed = self.view.apply(batch);
         if self.view.snapshot().is_none()
             && let Some(org) = self.view.selected().map(|org| org.id.clone())
             && let Some(state) = self.backend.state(&org)
         {
             changed |= self.view.select(&org, Some(state));
+        }
+        let now_selected = self.view.selected().map(|org| org.id.clone());
+        if touched_records || now_selected != selected {
+            changed |= self.reload_transparency();
         }
         if let Some(t) = &mut self.timings
             && touched_selected
@@ -256,7 +276,22 @@ impl StoreCore {
     /// Selects `org` and its books. Returns whether the selection changed.
     pub fn select_org(&mut self, org: &OrganizationId) -> bool {
         let snapshot = self.backend.state(org);
-        self.view.select(org, snapshot)
+        let selected = self.view.select(org, snapshot);
+        if selected {
+            self.reload_transparency();
+        }
+        selected
+    }
+
+    /// Sends a campaign or donation write to the selected organisation
+    /// ([`LedgerBackend::write_campaign`]); the new records come back through the change
+    /// channel. With no organisation selected the submission is a ready
+    /// [`BackendError::UnknownOrganisation`].
+    pub fn write_campaign(&mut self, write: CampaignWrite) -> Submission {
+        let Some(org) = self.view.selected().map(|org| org.id.clone()) else {
+            return Submission::ready(Err(BackendError::UnknownOrganisation(String::new())));
+        };
+        self.backend.write_campaign(&org, write)
     }
 
     /// Sends `command` to the selected organisation's books. The new books come back through
@@ -416,6 +451,12 @@ impl LedgerStore {
     /// [`StoreCore::attach_proof`].
     pub fn attach_proof(&mut self, proof: NewVerification) -> Submission {
         self.core.attach_proof(proof)
+    }
+
+    /// [`StoreCore::write_campaign`]. Screens go through `panels::write_campaign`, which
+    /// awaits a pending result in a task.
+    pub fn write_campaign(&mut self, write: CampaignWrite) -> Submission {
+        self.core.write_campaign(write)
     }
 
     /// [`StoreCore::proofs_of`].

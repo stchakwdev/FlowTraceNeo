@@ -4,6 +4,8 @@
 
 pub mod accounts;
 pub mod bills;
+pub mod campaigns;
+pub mod dashboard;
 pub mod general_ledger;
 pub mod grants;
 pub mod journal;
@@ -24,7 +26,7 @@ use gpui_kit::{
 use ledger_core::LedgerCommand;
 
 use crate::accounts::Failure;
-use crate::backend::SubmitResult;
+use crate::backend::{CampaignWrite, Submission, SubmitResult};
 use crate::model::{LedgerView, NavEntry};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
@@ -33,6 +35,7 @@ use crate::theme::{palette, space, text};
 #[must_use]
 pub fn task_of(entry: NavEntry) -> &'static str {
     match entry {
+        NavEntry::Dashboard | NavEntry::Campaigns => "DT1",
         NavEntry::Accounts => "U2",
         NavEntry::Journal => "U3",
         NavEntry::GeneralLedger => "U4",
@@ -55,6 +58,29 @@ pub(crate) fn submit<T: 'static>(
     then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
 ) {
     let submission = store.update(cx, |store, _| store.submit(command));
+    settle(this, submission, cx, then);
+}
+
+/// [`submit`] for a campaign or donation write ([`LedgerStore::write_campaign`]): the result
+/// at once from the in-process books, else from a task once the server has answered.
+pub(crate) fn write_campaign<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    write: CampaignWrite,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.write_campaign(write));
+    settle(this, submission, cx, then);
+}
+
+/// Hands a submission's result to `then`, at once or from a task.
+fn settle<T: 'static>(
+    this: &mut T,
+    submission: Submission,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
     match submission.now() {
         Ok(result) => then(this, result, cx),
         Err(pending) => cx
@@ -346,7 +372,20 @@ mod tests {
     #[test]
     fn every_entry_names_its_task() {
         let tasks: Vec<_> = NavEntry::ALL.into_iter().map(task_of).collect();
-        assert_eq!(tasks, ["U2", "U3", "U4", "U5 and U6", "U7", "U8", "U9"]);
+        assert_eq!(
+            tasks,
+            [
+                "DT1",
+                "U2",
+                "U3",
+                "U4",
+                "U5 and U6",
+                "U7",
+                "U8",
+                "U9",
+                "DT1"
+            ]
+        );
     }
 
     #[test]

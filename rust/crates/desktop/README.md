@@ -4,7 +4,8 @@ The GPUI desktop app on gpui-kit 0.7.3. U1 built the shell: a masthead, a nav ra
 organisation picker and seven entries, one placeholder panel per entry, a connect screen and a
 status bar, over an in-process backend that runs `ledger-core` in the app. Each screen task
 (U2 to U9) replaces one placeholder; U10 added the SpacetimeDB backend behind the same trait
-(Configuration, below).
+(Configuration, below). DT1 added Dashboard and Campaigns over the module's transparency
+records (Dashboard and Campaigns (DT1), below).
 
 ## Run
 
@@ -14,13 +15,14 @@ cargo run -p desktop                               # follows the system light or
 cargo run -p desktop -- --theme dark --entry 3     # dark, General ledger open
 cargo run -p desktop -- --screen connect           # opens on the connect screen
 cargo run -p desktop -- --report activities        # Reports, on the statement of activities
+cargo run -p desktop -- --entry 8 --campaigns preview:e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01
 cargo run -p desktop -- --server https://maincloud.spacetimedb.com --database flowtrace-ledger-dev
 cargo run -p desktop -- --server http://127.0.0.1:9 --timings on   # offline at once, times on stderr
 cargo run -p desktop -- --config out/auth2/trusted/config.toml --sign-in on   # another config; sign in at once
 ```
 
-Keys `1` to `7` open the nav entries (Accounts, Journal, General ledger, Spend, Grants,
-Reconcile, Reports) while the books show and no field has focus (the shell only handles keys
+Keys `0` to `8` open the nav entries (`0` Dashboard; `1` to `7` Accounts, Journal, General
+ledger, Spend, Grants, Reconcile, Reports, the keys they had before DT1; `8` Campaigns) while the books show and no field has focus (the shell only handles keys
 while its own focus handle is focused, so typing in a field never switches screens). Other
 keys go to the screen showing, except `Page Up`, `Page Down`, `Home` and `End`, which scroll
 the content. On Accounts, `a` opens the chart, `p` the periods and `n` the
@@ -39,9 +41,12 @@ when the app closes.
 | Module | Holds | GPUI? |
 |---|---|---|
 | `backend` | `LedgerBackend` trait, `Submission`, `InProcessBackend`, `SystemEnv`, `BackendEvent`, `ConnectionStatus`; `backend::spacetime`: `SpacetimeBackend` over `ledger_client::SpacetimeClient` (through the `LiveClient` trait), `status_of`, `actor_for`, `backend_error` | no |
-| `config` | `Config` (`flowtrace-books/config.toml`, including the `workos_*` keys), `config_dir`, `token_path`, `with_token` | no |
+| `config` | `Config` (`flowtrace-books/config.toml`, including the `workos_*` keys and `web_url`), `config_dir`, `token_path`, `with_token` | no |
 | `signin` | WorkOS AuthKit sign-in through the system browser (AUTH2): `pkce`, `loopback` (the one-shot `127.0.0.1` listener), `workos` (authorize URL, code exchange, refresh), `flow` (`begin`/`finish`, `resume`, `sign_out`), `state` (`SignInState`, the Connect screen's `Card`), `TokenClaims`, `Session`, `refresh_delay`, `refresh_file` | no |
-| `model` | `NavEntry`, `Navigation` (entry, screen, keys), `LedgerView` (orgs, selection, status, snapshot, revision), `ConnectForm` | no |
+| `model` | `NavEntry` (with its rail `section`), `Navigation` (entry, screen, keys), `LedgerView` (orgs, selection, status, snapshot, revision, transparency records and their own revision), `ConnectForm` | no |
+| `dashboard` | Dashboard view models (DT1): `transactions` (newest first, with nodes), `summarise` (the web's donor lines and counts), `DonorRow`, `MovementRow`, `Dashboard` (figures, donors, recent eight), `Bar`, `Figure`, `proof_label` | no |
+| `campaigns` | Campaigns view models (DT1): `CampaignList` (rows, counts, figures, search, `StatusFilter`), `campaign_timing`, `NewCampaignForm`, `CampaignPage` (coverage, figures, donations, spending, details, earmarks, `StatusAction`s), `DonationForm`, `confirm_payment`, `PreviewCard`, `donate_url`, `EmbedOptions`, `embed_snippet` | no |
+| `web_format` | the web's `lib/format.ts` over minor units: `format_amount`, `format_money`, `format_compact`, `format_date`, `format_short_date` | no |
 | `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
 | `store` | `StoreCore` (backend, `LedgerView`, sign-in state, connect, disconnect, submit; no GPUI) and `LedgerStore`, the one store entity that drains the change channel in batches; `store/session.rs` runs the sign-in steps off the UI thread | `LedgerStore` only |
@@ -50,7 +55,7 @@ when the app closes.
 | `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
 | `entry_form` | Manual entry form and CSV import view models: `EntryForm` (lines, `set_debit`/`set_credit`, `set_fund`, `balance`, `field_errors`, `issues`, `summary`, `save_command`, `post_commands`, `from_draft`), `Balance`, `account_choices`, `tag_choices`, `ImportPreview`, `read_import_file` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items | yes |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign` | yes |
 | `reconcile` | Reconcile view models: `bank_rows`, `overview`, `NewBankForm`, `ImportPreview` (parse, skipped rows, money in and out, `repeats` as the engine dedupes), `LineStatus` and `status_of`, `line_rows`, `candidates`, `position`, `auto_match_summary`, the `bank.add` and `statement.*` command builders, `PostForm`, `post_accounts` | no |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `proofs` | proof files through the proofs Worker (`../../../workers/proofs/README.md`): `sniff`, `check`, `read_file` (25 MB, photos and PDF), `ProofsClient` (`upload`, `signed_url`, over ureq), `AttachList` (the files on a form), `new_verification` (the record for `create_verification`) | no |
@@ -113,6 +118,7 @@ server = "https://maincloud.spacetimedb.com"   # without it: the demo books
 database = "flowtrace-ledger-dev"               # default flowtrace-ledger-dev
 token_file = "/path/to/token"                   # optional, see below
 proofs_url = "https://proofs.example.org"       # optional: the proofs Worker (STO1)
+web_url = "https://flowtrace.app"               # optional: where campaign links point (DT1)
 ```
 
 **Proof files (STO1).** With `proofs_url` set and the app connected to a server, the claim form
@@ -480,3 +486,48 @@ Auto-match gives the fixture's result and statement lines. Shots: `docs/screens/
 the sample statement is `docs/screens/u8-mpesa-statement.csv`, synthetic) and
 `u8-reconcile-matched.png` (`a`, Page Down). Typing the absolute path of the sample (under `~/.herdr/...`) with `wtype` was cut at
 `/home/tim0/`, so the shot typed a relative, dot-free symlink to it (`out/u8-statement`).
+
+## Dashboard and Campaigns (DT1)
+
+Both read the selected organisation's transparency records (`OrgTransparency`, ADR 0004 and
+0005): `LedgerBackend::transparency(org)` hands them out, `BackendEvent::Transparency { org }`
+says they changed, and the store keeps them in `LedgerView::transparency()` with their own
+`transparency_revision()`, so these two screens re-derive only when the records change and the
+books screens only when the books do. Writes are `CampaignWrite` (create, update, delete a
+draft, record a donation, set a donation's payment status) through
+`LedgerBackend::write_campaign` and `crate::panels::write_campaign`, the same way proofs go.
+The in-process demo seeds the demo organisation from `rust/fixtures/transparency-dataset.json`
+(built into the app, read by the module's `ts::dataset`) and runs the module's own
+`transparency::plan` rules with a `Ctx` as the backend's actor, then computes the trust score
+again as the module's reducers do; the empty organisation has no records. The live backend
+re-reads `SpacetimeClient::transparency(org)` for each organisation a `TransparencyChanged`
+names and keeps the last records while offline.
+
+**Dashboard** (key `0`, `--entry 0`) is the web's `dashboard.tsx`: key figures (KES received
+with proof, movements evidenced, awaiting proof with the flagged count, the Trust Score and its
+grade), "Funding received, by donor" (the web's `summarise`, same order and bar rules) and the
+eight latest movements. The web's "Record a transaction" and "Open the flow map" links and the
+donor hover are left out: the desktop has no transactions or flow screen yet.
+
+**Campaigns** (key `8`, `--entry 8`; `--campaigns list|new|<id>|preview:<id>`): the list with
+its four figures, search (`name`, story, category) and status filter; `n` the new-campaign
+form (the web's fields, defaults and texts; the target in major units, sent in minor; "Save as
+draft" or "Create and open to donors"); a row opens the manage page: coverage, key figures,
+donations with payment labels, programme spending, details, "Where gifts can go", the status
+actions (Open to donors, Pause, Resume, Delete draft with an inline confirmation; delete is
+offered for drafts only because the module silently keeps any other), `d` "Record donation"
+(the web's in-app form: pending, source `website`), and a **Confirm payment** button on each
+pending gift (a desktop addition, `update_donation_status` to confirmed, which moves the raised
+amount; donations stay records, P19). `v` opens the preview: the widget card drawn natively
+from the same report, full and compact, in light or dark, with the widget's options. The
+manage page and the preview both carry **Copy link** (`c`, the donate page on `web_url`) and
+**Copy embed code** (`e`, the web's snippet byte for byte, `campaigns::embed_snippet`), written
+to the clipboard (`cx.write_to_clipboard`). Formatting is the web's `lib/format.ts`
+(`web_format`): `KES 1,234`, `15.7M`, `850K`.
+
+Tests: `src/dashboard.rs` (the demo summary equals the web's `summarise` over the same dataset),
+`src/campaigns/tests.rs` (rows, counts, search, timing, form texts, the manage page, the embed
+snippet against the web's literal), `src/web_format.rs`, the backend, store and fake-client
+tests. `tests/live_campaigns.rs` is the live check (ignored; see its header). Shots:
+`docs/screens/dt1-dashboard.png`, `dt1-campaigns.png`, `dt1-campaign-detail.png`,
+`dt1-campaign-preview.png`.

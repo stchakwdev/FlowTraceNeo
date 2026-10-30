@@ -27,6 +27,7 @@ fn kinds(events: &[BackendEvent]) -> Vec<String> {
                     .join(",")
             ),
             BackendEvent::Status(s) => format!("status {s:?}"),
+            BackendEvent::Transparency { org } => format!("transparency {org}"),
         })
         .collect()
 }
@@ -367,4 +368,64 @@ fn the_token_path_reaches_the_client() {
         ..settings
     });
     assert!(anonymous.token_file.is_none());
+}
+
+fn transparency_changed(orgs: &[&str]) -> ClientEvent {
+    ClientEvent::TransparencyChanged {
+        orgs: orgs.iter().map(|o| (*o).to_owned()).collect(),
+        profiles: false,
+        chains: false,
+        public: false,
+        service: false,
+    }
+}
+
+#[test]
+fn a_transparency_change_rereads_the_named_records_and_keeps_them() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![]);
+    let records = crate::backend::demo_transparency().unwrap();
+    lock(&fake.transparency).insert("org-a".to_owned(), records.clone());
+    let mut live = Live::default();
+    live.apply(ready(), fake.as_ref());
+
+    let out = live.apply(transparency_changed(&["org-a", "org-gone"]), fake.as_ref());
+    assert_eq!(
+        kinds(&out),
+        ["transparency org-a"],
+        "unreadable records send nothing"
+    );
+    assert_eq!(*live.transparency["org-a"], records);
+}
+
+#[test]
+fn campaign_writes_go_to_the_client_only_while_connected() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![member(ME, "me", true)]);
+    let mut backend = SpacetimeBackend::new();
+    let rx = backend.subscribe();
+    let org = OrganizationId::from("org-a");
+    let write = CampaignWrite::Delete {
+        id: "c1".to_owned(),
+    };
+    let offline = backend.write_campaign(&org, write.clone()).now().unwrap();
+    assert_eq!(offline, Err(BackendError::Offline));
+
+    backend.attach(fake.clone()).unwrap();
+    fake.emit(ready());
+    while !matches!(
+        next(&rx),
+        BackendEvent::Status(ConnectionStatus::Connected { .. })
+    ) {}
+    lock(&fake.transparency).insert(
+        "org-a".to_owned(),
+        crate::backend::demo_transparency().unwrap(),
+    );
+    fake.emit(transparency_changed(&["org-a"]));
+    assert_eq!(next(&rx), BackendEvent::Transparency { org: org.clone() });
+    assert_eq!(backend.transparency(&org).unwrap().campaigns.len(), 4);
+
+    let sent = backend.write_campaign(&org, write.clone()).now().unwrap();
+    assert_eq!(sent, Ok(CommandResult::None));
+    assert_eq!(*lock(&fake.campaign_writes), [("org-a".to_owned(), write)]);
 }

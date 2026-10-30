@@ -24,11 +24,12 @@ use ledger_client::{
 use ledger_core::engine;
 use ledger_core::types::{Actor, ActorId, OrganizationId};
 use ledger_core::{CommandError, CommandResult, LedgerCommand, LedgerState};
+use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::types::{NewVerification, Verification};
 
 use super::{
-    BackendError, BackendEvent, ConnectSettings, ConnectionStatus, LedgerBackend, Organisation,
-    Submission,
+    BackendError, BackendEvent, CampaignWrite, ConnectSettings, ConnectionStatus, LedgerBackend,
+    Organisation, Submission,
 };
 
 /// What [`SpacetimeBackend`] needs of a client: [`SpacetimeClient`] in the app, a fake in tests.
@@ -60,6 +61,12 @@ pub trait LiveClient: Send + Sync {
     /// The organisation's proofs as the caller may see them
     /// ([`SpacetimeClient::transparency`]); none when the cache has no such organisation.
     fn verifications(&self, org: &str) -> Vec<Verification>;
+    /// The organisation's transparency records ([`SpacetimeClient::transparency`]); `None` when
+    /// they do not read.
+    fn transparency(&self, org: &str) -> Option<OrgTransparency>;
+    /// Sends one campaign or donation write without waiting ([`SpacetimeClient::create_campaign`]
+    /// and the other four).
+    fn write_campaign(&self, org: &str, write: &CampaignWrite) -> Submission;
 }
 
 impl LiveClient for SpacetimeClient {
@@ -107,6 +114,31 @@ impl LiveClient for SpacetimeClient {
         Self::transparency(self, org)
             .map(|t| t.verifications)
             .unwrap_or_default()
+    }
+
+    fn transparency(&self, org: &str) -> Option<OrgTransparency> {
+        Self::transparency(self, org).ok()
+    }
+
+    fn write_campaign(&self, org: &str, write: &CampaignWrite) -> Submission {
+        let ticket = match write {
+            CampaignWrite::Create(input) => Self::create_campaign(self, org, input),
+            CampaignWrite::Update { id, patch } => Self::update_campaign(self, org, id, patch),
+            CampaignWrite::Delete { id } => Self::delete_campaign(self, org, id),
+            CampaignWrite::RecordDonation(input) => Self::record_donation(self, org, input),
+            CampaignWrite::DonationStatus {
+                id,
+                status,
+                reference,
+            } => Self::update_donation_status(self, org, id, *status, reference.as_deref()),
+        };
+        Submission::pending(async move {
+            ticket
+                .result()
+                .await
+                .map(|()| CommandResult::None)
+                .map_err(backend_error)
+        })
     }
 }
 
@@ -185,6 +217,8 @@ struct Live {
     identity: Option<String>,
     orgs: Vec<ClientOrganisation>,
     books: HashMap<String, Arc<LedgerState>>,
+    /// The last transparency records read per organisation; kept while offline.
+    transparency: HashMap<String, Arc<OrgTransparency>>,
     subscribers: Vec<Sender<BackendEvent>>,
 }
 
@@ -204,8 +238,18 @@ impl Live {
                 self.set_status(status_of(&status), &mut out);
             }
             ClientEvent::Changed { orgs } => self.refresh(client, Some(orgs), &mut out),
-            // No desktop screen reads the transparency records yet (DT1 to DT4 add them).
-            ClientEvent::TransparencyChanged { .. } => {}
+            // Profiles, chains, the public tables and the service row have no screen yet
+            // (DT2 to DT4); the organisations' records feed Dashboard and Campaigns (DT1).
+            ClientEvent::TransparencyChanged { orgs, .. } => {
+                for id in orgs {
+                    if let Some(t) = client.transparency(&id) {
+                        self.transparency.insert(id.clone(), Arc::new(t));
+                        out.push(BackendEvent::Transparency {
+                            org: OrganizationId::from(id),
+                        });
+                    }
+                }
+            }
             ClientEvent::Error(message) => {
                 self.set_status(ConnectionStatus::Error { message }, &mut out);
             }
@@ -446,6 +490,17 @@ impl LedgerBackend for SpacetimeBackend {
     fn attach_proof(&mut self, org: &OrganizationId, proof: NewVerification) -> Submission {
         match self.writable(org) {
             Ok(client) => client.create_verification(org.as_str(), &proof),
+            Err(e) => Submission::ready(Err(e)),
+        }
+    }
+
+    fn transparency(&self, org: &OrganizationId) -> Option<Arc<OrgTransparency>> {
+        lock(&self.live).transparency.get(org.as_str()).cloned()
+    }
+
+    fn write_campaign(&mut self, org: &OrganizationId, write: CampaignWrite) -> Submission {
+        match self.writable(org) {
+            Ok(client) => client.write_campaign(org.as_str(), &write),
             Err(e) => Submission::ready(Err(e)),
         }
     }

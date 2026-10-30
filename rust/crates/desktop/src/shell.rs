@@ -27,6 +27,8 @@ use crate::model::{
 };
 use crate::panels;
 use crate::panels::accounts::AccountsPanel;
+use crate::panels::campaigns::CampaignsPanel;
+use crate::panels::dashboard::DashboardPanel;
 use crate::panels::general_ledger::{GeneralLedgerPanel, OpenEntry};
 use crate::panels::grants::GrantsPanel;
 use crate::panels::journal::JournalPanel;
@@ -58,6 +60,8 @@ pub struct Shell {
     spend: Entity<SpendPanel>,
     grants: Entity<GrantsPanel>,
     reconcile: Entity<ReconcilePanel>,
+    dashboard: Entity<DashboardPanel>,
+    campaigns: Entity<CampaignsPanel>,
     scroll: ScrollHandle,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
@@ -101,6 +105,8 @@ impl Shell {
         let grants = cx.new(|cx| GrantsPanel::new(store.clone(), window, cx));
         let journal = cx.new(|cx| JournalPanel::new(store.clone(), window, cx));
         let reconcile = cx.new(|cx| ReconcilePanel::new(store.clone(), window, cx));
+        let dashboard = cx.new(|cx| DashboardPanel::new(store.clone(), window, cx));
+        let campaigns = cx.new(|cx| CampaignsPanel::new(store.clone(), window, cx));
 
         let subscriptions = vec![
             cx.observe_in(&store, window, |shell, _, window, cx| {
@@ -130,6 +136,8 @@ impl Shell {
             spend,
             grants,
             reconcile,
+            dashboard,
+            campaigns,
             scroll: ScrollHandle::new(),
             focus,
             _subscriptions: subscriptions,
@@ -158,6 +166,12 @@ impl Shell {
     #[must_use]
     pub fn grants(&self) -> &Entity<GrantsPanel> {
         &self.grants
+    }
+
+    /// The Campaigns panel, for the launch flags and `web_url` (`app.rs`).
+    #[must_use]
+    pub fn campaigns(&self) -> &Entity<CampaignsPanel> {
+        &self.campaigns
     }
 
     /// The General ledger panel, for the launch flags (`app.rs`).
@@ -204,7 +218,7 @@ impl Shell {
         }
     }
 
-    /// Keys 1 to 7 open their nav entry (`Navigation::press_key`), Page Up, Page Down, Home
+    /// Keys 0 to 8 open their nav entry (`Navigation::press_key`), Page Up, Page Down, Home
     /// and End scroll the content (`scroll_target`), and other keys go to the screen showing.
     /// Only while the shell itself has focus, so typing in a field never switches screens.
     fn on_key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
@@ -246,6 +260,11 @@ impl Shell {
                 && self.nav.entry == NavEntry::Reconcile
                 && self
                     .reconcile
+                    .update(cx, |panel, cx| panel.press_key(key, window, cx)))
+            || (books
+                && self.nav.entry == NavEntry::Campaigns
+                && self
+                    .campaigns
                     .update(cx, |panel, cx| panel.press_key(key, window, cx)));
         if handled {
             cx.stop_propagation();
@@ -365,6 +384,8 @@ impl Shell {
             NavEntry::Spend => self.spend.clone().into_any_element(),
             NavEntry::Grants => self.grants.clone().into_any_element(),
             NavEntry::Reports => self.reports.clone().into_any_element(),
+            NavEntry::Dashboard => self.dashboard.clone().into_any_element(),
+            NavEntry::Campaigns => self.campaigns.clone().into_any_element(),
         }
     }
 
@@ -396,9 +417,10 @@ impl Shell {
     fn rail(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let p = palette(cx.theme().mode);
         let current = (self.nav.screen == Screen::Books).then_some(self.nav.entry);
-        let items = NavEntry::ALL.into_iter().map(|entry| {
+        let mut sections: Vec<(Option<&'static str>, Vec<AnyElement>)> = Vec::new();
+        for entry in NavEntry::ALL {
             let active = current == Some(entry);
-            h_flex()
+            let item = h_flex()
                 .id(entry.label())
                 .h(px(space::NAV_ITEM))
                 .px(px(12.0))
@@ -426,7 +448,27 @@ impl Shell {
                 .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {
                     shell.select_entry(entry, window, cx);
                 }))
-        });
+                .into_any_element();
+            match sections.last_mut() {
+                Some((section, items)) if *section == entry.section() => items.push(item),
+                _ => sections.push((entry.section(), vec![item])),
+            }
+        }
+        // `navSections` (`flowtrace/src/lib/navigation.ts`): Dashboard alone at the top, then a
+        // labelled group per section.
+        let groups: Vec<AnyElement> = sections
+            .into_iter()
+            .map(|(section, items)| {
+                v_flex()
+                    .px(px(12.0))
+                    .pt(px(8.0))
+                    .when_some(section, |group, label| {
+                        group.child(div().pt(px(8.0)).pb(px(8.0)).child(rail_label(label, cx)))
+                    })
+                    .children(items)
+                    .into_any_element()
+            })
+            .collect();
 
         v_flex()
             .w(px(space::RAIL))
@@ -442,13 +484,7 @@ impl Shell {
                     .child(rail_label("Organisation", cx))
                     .child(Select::new(&self.org_select).placeholder("Choose an organisation")),
             )
-            .child(
-                v_flex()
-                    .px(px(12.0))
-                    .pt(px(8.0))
-                    .child(div().pb(px(8.0)).child(rail_label("Books", cx)))
-                    .children(items),
-            )
+            .children(groups)
             .child(div().flex_1())
             .child(
                 div().p(px(12.0)).child(
@@ -725,7 +761,7 @@ impl Shell {
             .right(
                 div()
                     .text_color(p.ink_muted.to_hsla())
-                    .child("Keys 1 to 7 switch screens"),
+                    .child("Keys 0 to 8 switch screens"),
             )
             .right(
                 Button::new("toggle-theme")
