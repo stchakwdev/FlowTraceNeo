@@ -34,6 +34,12 @@ import type { Actor, LedgerState } from './types'
 
 const TOKEN_KEY = 'flowtrace.spacetimedb.token'
 const RESULT_TIMEOUT_MS = 15_000
+/**
+ * The longest one command may take, connecting included. Without automatic reconnect the
+ * SDK queues a reducer call on a socket that died without closing (an iPhone leaving
+ * aeroplane mode) and never settles it, so a send must give up and reconnect instead.
+ */
+export const COMMAND_TIMEOUT_MS = 30_000
 
 interface Rows<T> {
   iter: () => Iterable<T>
@@ -80,6 +86,8 @@ function saveToken(token: string) {
 }
 
 let connection: Promise<DbConnection> | null = null
+// Connections dropped as dead: their late disconnect must not reset a newer connection.
+const dropped = new WeakSet<object>()
 let membership: Promise<void> | null = null
 
 async function open(): Promise<DbConnection> {
@@ -101,7 +109,8 @@ async function open(): Promise<DbConnection> {
         resolve(conn)
       })
       .onConnectError((_ctx, error) => reject(error))
-      .onDisconnect(() => {
+      .onDisconnect((ctx) => {
+        if (dropped.has(ctx)) return
         connection = null
         subscriptions.clear()
         membership = null
@@ -112,6 +121,25 @@ async function open(): Promise<DbConnection> {
       .build()
   })
 }
+
+/** Forgets the current connection and closes it, so the next call opens a fresh one. */
+function dropConnection() {
+  const stale = connection
+  connection = null
+  subscriptions.clear()
+  membership = null
+  stale?.then(
+    (conn) => {
+      dropped.add(conn)
+      conn.disconnect()
+    },
+    () => {},
+  )
+}
+
+/** True when the module answered, so the connection itself is fine. */
+const answeredByModule = (e: unknown) =>
+  e instanceof LedgerError || (e instanceof Error && (e.name === 'SenderError' || e.name === 'InternalError'))
 
 /** The browser's one SpacetimeDB connection, shared with spacetime-transparency.ts. */
 export function connectSpacetime(): Promise<DbConnection> {
@@ -233,22 +261,41 @@ export const spacetimeLedgerBackend: LedgerBackend = {
   },
 
   run: async (organizationId, cmd: LedgerCommand) => {
-    const conn = await connect()
-    await ensureSubscribed(conn, organizationId)
-    const requestId = randomId()
-    const waiter = waitForResult(conn, requestId)
+    let waiter: ReturnType<typeof waitForResult> | undefined
+    // Set at the deadline: a connect that finishes later must not send the command after all.
+    let expired = false
+    const send = async () => {
+      const conn = await connect()
+      await ensureSubscribed(conn, organizationId)
+      if (expired) throw new Error('Timed out waiting for the ledger; reconnecting.')
+      const requestId = randomId()
+      waiter = waitForResult(conn, requestId)
+      try {
+        await conn.reducers.runCommand({ orgId: organizationId, requestId, commandJson: JSON.stringify(cmd) })
+      } catch (e) {
+        throw toLedgerError(e)
+      }
+      const row = waiter.cached()
+      if (row) return JSON.parse(row.resultJson) as CommandResult
+      return waiter.promise
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const deadline = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        expired = true
+        reject(new Error('Timed out waiting for the ledger; reconnecting.'))
+      }, COMMAND_TIMEOUT_MS)
+    })
     try {
-      await conn.reducers.runCommand({ orgId: organizationId, requestId, commandJson: JSON.stringify(cmd) })
+      return await Promise.race([send(), deadline])
     } catch (e) {
-      waiter.cancel()
-      throw toLedgerError(e)
+      // A dead or half-open socket: the next command opens a fresh one.
+      if (!answeredByModule(e)) dropConnection()
+      throw e
+    } finally {
+      clearTimeout(timer)
+      waiter?.cancel()
     }
-    const row = waiter.cached()
-    if (row) {
-      waiter.cancel()
-      return JSON.parse(row.resultJson) as CommandResult
-    }
-    return waiter.promise
   },
 
   subscribe: (organizationId, onChange) => {
