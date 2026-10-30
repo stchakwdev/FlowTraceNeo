@@ -32,7 +32,10 @@ use ledger_core::{
 use ledger_module::tables::Member;
 use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::plan::{self as transparency_plan, Ctx, LedgerLinks};
-use ledger_module::transparency::types::{NewVerification, Verification};
+use ledger_module::transparency::types::{
+    CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus, Verification,
+};
+use ledger_module::transparency::{trust, ts};
 use serde_json::Value;
 use spacetimedb::Identity;
 use uuid::Uuid;
@@ -109,6 +112,45 @@ pub enum BackendEvent {
     Organisations(Vec<Organisation>),
     /// The connection status changed.
     Status(ConnectionStatus),
+    /// An organisation's transparency records changed (campaigns, donations, flow nodes,
+    /// transactions, trust score); re-read [`LedgerBackend::transparency`].
+    Transparency {
+        /// The organisation.
+        org: OrganizationId,
+    },
+}
+
+/// A write to an organisation's campaigns and donations: the module's reducers
+/// `create_campaign`, `update_campaign`, `delete_campaign`, `record_donation` and
+/// `update_donation_status` (`crates/ledger-module/src/transparency/reducers.rs`), amounts in
+/// minor units. The new records come back as a [`BackendEvent::Transparency`].
+#[derive(Debug, Clone, PartialEq)]
+pub enum CampaignWrite {
+    /// `createCampaign` (`api.ts:1080-1098`).
+    Create(NewCampaign),
+    /// `updateCampaign` (`api.ts:1100-1114`): the fields `patch` sets.
+    Update {
+        /// The campaign.
+        id: String,
+        /// What changes.
+        patch: CampaignPatch,
+    },
+    /// `deleteCampaign` (`api.ts:1116-1126`): drafts only; the module keeps any other silently.
+    Delete {
+        /// The campaign.
+        id: String,
+    },
+    /// `createDonation` (`api.ts:1256-1272`): a record, no payment is processed (P19).
+    RecordDonation(NewDonation),
+    /// `updateDonationStatus` (`api.ts:1274-1289`).
+    DonationStatus {
+        /// The donation.
+        id: String,
+        /// Its new payment status.
+        status: PaymentStatus,
+        /// The payment's reference; blank or `None` stores none.
+        reference: Option<String>,
+    },
 }
 
 /// Why a backend call failed.
@@ -267,7 +309,26 @@ pub trait LedgerBackend {
     fn proofs_token(&self) -> Option<String> {
         None
     }
+
+    /// The transparency records of `org` as the caller may read them (`my_*` views, ADR 0004
+    /// and 0005): campaigns with their figures, donations, flow nodes, transactions, the trust
+    /// score. `None` while the backend holds none for it.
+    fn transparency(&self, org: &OrganizationId) -> Option<Arc<OrgTransparency>> {
+        let _ = org;
+        None
+    }
+
+    /// Writes to the campaigns and donations of `org` ([`CampaignWrite`]). On success
+    /// subscribers get a [`BackendEvent::Transparency`] with the change readable.
+    fn write_campaign(&mut self, org: &OrganizationId, write: CampaignWrite) -> Submission {
+        let _ = (org, write);
+        Submission::ready(Err(BackendError::Connection(NO_TRANSPARENCY.to_owned())))
+    }
 }
+
+/// Why a backend keeps no campaigns.
+pub const NO_TRANSPARENCY: &str =
+    "Campaigns are kept with books on a server. Connect on the Connection screen first.";
 
 /// Why a backend without a server keeps no proof files.
 pub const NO_PROOFS: &str =
@@ -279,8 +340,9 @@ struct Books {
     state: Arc<LedgerState>,
     env: Box<dyn LedgerEnv>,
     actor: Actor,
-    /// Proofs recorded with [`LedgerBackend::attach_proof`], by the module's own rules.
-    proofs: OrgTransparency,
+    /// The transparency records, changed by the module's own rules
+    /// (`ledger_module::transparency::plan`): the demo's from `transparency-dataset.json`.
+    transparency: Arc<OrgTransparency>,
 }
 
 /// The ledger core in the app's own process: the demo books and one empty organisation.
@@ -314,7 +376,7 @@ impl InProcessBackend {
             env: Box::new(demo_env_after(&demo_state)),
             state: Arc::new(demo_state),
             actor: demo_actor(),
-            proofs: OrgTransparency::default(),
+            transparency: Arc::new(demo_transparency()?),
         };
 
         let mut env = SystemEnv;
@@ -329,7 +391,7 @@ impl InProcessBackend {
             state: Arc::new(empty_state),
             env: Box::new(env),
             actor: local_actor(),
-            proofs: OrgTransparency::default(),
+            transparency: Arc::default(),
         };
 
         Ok(Self {
@@ -358,10 +420,42 @@ impl InProcessBackend {
             state: Arc::new(state),
             env: Box::new(SystemEnv),
             actor: local_actor(),
-            proofs: OrgTransparency::default(),
+            transparency: Arc::default(),
         };
         self.books.insert(0, large);
         Ok(self)
+    }
+
+    /// Runs one rule of `ledger_module::transparency::plan` on a copy of `org`'s records as the
+    /// backend's actor, then computes the trust score again, as the module's `change` does
+    /// (`crates/ledger-module/src/transparency/reducers.rs`), and tells subscribers. A refusal
+    /// leaves the records as they were.
+    fn change_transparency(
+        &mut self,
+        org: &OrganizationId,
+        rule: impl FnOnce(&mut OrgTransparency, &mut Ctx<'_>, &LedgerState) -> Result<(), String>,
+    ) -> SubmitResult {
+        let books = self
+            .books
+            .iter_mut()
+            .find(|b| &b.org.id == org)
+            .ok_or_else(|| BackendError::UnknownOrganisation(org.as_str().to_owned()))?;
+        let member = member_of(org, &books.actor);
+        let mut next = OrgTransparency::clone(&books.transparency);
+        {
+            let mut ctx = Ctx {
+                org_id: org.as_str(),
+                identity: Identity::ZERO,
+                member: Some(&member),
+                env: books.env.as_mut(),
+            };
+            rule(&mut next, &mut ctx, &books.state).map_err(BackendError::Connection)?;
+        }
+        let now = books.env.now().to_string();
+        trust::refresh(&mut next, org.as_str(), &now, books.actor.id.as_str());
+        books.transparency = Arc::new(next);
+        self.broadcast(&BackendEvent::Transparency { org: org.clone() });
+        Ok(CommandResult::None)
     }
 
     /// Sends `event` to every live subscriber and forgets the closed ones.
@@ -449,35 +543,81 @@ impl LedgerBackend for InProcessBackend {
     /// in-process books have no Worker token ([`LedgerBackend::proofs_token`]), so screens only
     /// get here in tests.
     fn attach_proof(&mut self, org: &OrganizationId, proof: NewVerification) -> Submission {
-        let Some(books) = self.books.iter_mut().find(|b| &b.org.id == org) else {
-            return Submission::ready(Err(BackendError::UnknownOrganisation(
-                org.as_str().to_owned(),
-            )));
-        };
-        let member = member_of(org, &books.actor);
-        let links = StateLinks(&books.state);
-        let mut ctx = Ctx {
-            org_id: org.as_str(),
-            identity: Identity::ZERO,
-            member: Some(&member),
-            env: books.env.as_mut(),
-        };
-        let made =
-            transparency_plan::create_verification(&mut books.proofs, &mut ctx, proof, &links);
-        Submission::ready(
-            made.map(|_| CommandResult::None)
-                .map_err(BackendError::Connection),
-        )
+        Submission::ready(self.change_transparency(org, |t, ctx, state| {
+            transparency_plan::create_verification(t, ctx, proof, &StateLinks(state)).map(drop)
+        }))
     }
 
     fn proofs(&self, org: &OrganizationId) -> Vec<Verification> {
         self.books
             .iter()
             .find(|b| &b.org.id == org)
-            .map(|b| b.proofs.verifications.clone())
+            .map(|b| b.transparency.verifications.clone())
             .unwrap_or_default()
     }
+
+    fn transparency(&self, org: &OrganizationId) -> Option<Arc<OrgTransparency>> {
+        self.books
+            .iter()
+            .find(|b| &b.org.id == org)
+            .map(|b| Arc::clone(&b.transparency))
+    }
+
+    /// Runs the module's own rules for each write (`plan::create_campaign`, `update_campaign`,
+    /// `delete_campaign`, `record_donation`, `update_donation_status`). A public link is unique
+    /// across the organisations the backend holds, as across the module's
+    /// (`campaign_slug_elsewhere`, `reducers.rs`).
+    fn write_campaign(&mut self, org: &OrganizationId, write: CampaignWrite) -> Submission {
+        let elsewhere: Vec<String> = self
+            .books
+            .iter()
+            .filter(|b| &b.org.id != org)
+            .flat_map(|b| b.transparency.campaigns.iter())
+            .filter_map(|c| c.public_slug.clone())
+            .collect();
+        let taken = move |s: &str| elsewhere.iter().any(|x| x == s);
+        Submission::ready(self.change_transparency(org, |t, ctx, _| match write {
+            CampaignWrite::Create(input) => {
+                transparency_plan::create_campaign(t, ctx, input, &taken).map(drop)
+            }
+            CampaignWrite::Update { id, patch } => {
+                transparency_plan::update_campaign(t, ctx, &id, patch, &taken).map(drop)
+            }
+            CampaignWrite::Delete { id } => transparency_plan::delete_campaign(t, ctx, &id),
+            CampaignWrite::RecordDonation(input) => {
+                transparency_plan::record_donation(t, ctx, input).map(drop)
+            }
+            CampaignWrite::DonationStatus {
+                id,
+                status,
+                reference,
+            } => {
+                transparency_plan::update_donation_status(t, ctx, &id, status, reference).map(drop)
+            }
+        }))
+    }
 }
+
+/// The demo organisation's transparency records: `rust/fixtures/transparency-dataset.json`
+/// read as the module's `import_transparency` reads it (`ts::dataset`), with the trust row the
+/// first write computes, stamped at the demo's frozen time (as ledger-client's tests do,
+/// `crates/ledger-client/src/transparency.rs`, `demo`).
+///
+/// # Errors
+///
+/// [`BackendError::Connection`] when the bundled dataset does not read.
+pub fn demo_transparency() -> Result<OrgTransparency, BackendError> {
+    let fixture: Value = serde_json::from_str(DEMO_TRANSPARENCY)
+        .map_err(|e| BackendError::Connection(e.to_string()))?;
+    let org = fixture["demo_org_id"].as_str().unwrap_or_default();
+    let mut t =
+        ts::dataset(org, &fixture["store"]).map_err(|e| BackendError::Connection(e.to_string()))?;
+    trust::refresh(&mut t, org, fixed::DEMO_NOW, "module");
+    Ok(t)
+}
+
+/// The demo's transparency dataset, built into the app.
+const DEMO_TRANSPARENCY: &str = include_str!("../../../fixtures/transparency-dataset.json");
 
 /// The in-process actor as the module's member row (`ledger-module`, `tables::Member`).
 fn member_of(org: &OrganizationId, actor: &Actor) -> Member {
@@ -823,6 +963,162 @@ mod tests {
             BackendEvent::Status(ConnectionStatus::Connecting)
         );
         assert_eq!(rx.try_recv().unwrap(), BackendEvent::Status(connected));
+    }
+
+    fn new_campaign(name: &str) -> NewCampaign {
+        serde_json::from_value(json!({
+            "name": name,
+            "target_amount": 50_000_000,
+            "currency": "KES",
+            "starts_at": "2026-02-04T09:00:00.000Z",
+            "is_public": true,
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn the_demo_holds_the_transparency_dataset_and_the_empty_org_none() {
+        let backend = backend();
+        let t = backend.transparency(&demo()).unwrap();
+        assert_eq!(
+            (
+                t.campaigns.len(),
+                t.donations.len(),
+                t.flow_nodes.len(),
+                t.transactions.len()
+            ),
+            (4, 25, 22, 16)
+        );
+        assert_eq!(t.campaign_stats.len(), 4, "one figure row per campaign");
+        assert!(t.trust.is_some(), "the trust row is computed at start");
+        let empty = backend.organisations()[1].id.clone();
+        assert_eq!(
+            *backend.transparency(&empty).unwrap(),
+            OrgTransparency::default()
+        );
+        assert!(
+            backend
+                .transparency(&OrganizationId::from("nobody"))
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn a_campaign_write_runs_the_module_rules_and_reaches_subscribers() {
+        let mut backend = backend();
+        let rx = backend.subscribe();
+        let before = backend.transparency(&demo()).unwrap();
+        let result = backend
+            .write_campaign(&demo(), CampaignWrite::Create(new_campaign("Boreholes")))
+            .now()
+            .unwrap();
+        assert_eq!(result, Ok(CommandResult::None));
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            BackendEvent::Transparency { org: demo() }
+        );
+        let after = backend.transparency(&demo()).unwrap();
+        let made = after.campaigns.last().unwrap();
+        assert_eq!(made.name, "Boreholes");
+        assert_eq!(
+            made.public_slug.as_deref(),
+            Some("boreholes"),
+            "slug from the name"
+        );
+        assert_eq!(made.created_by.as_deref(), Some(demo_actor().id.as_str()));
+        assert_eq!(made.current_amount, 0);
+        assert_eq!(before.campaigns.len(), 4, "the old snapshot is untouched");
+
+        let id = made.id.clone();
+        let donation: NewDonation = serde_json::from_value(json!({
+            "campaign_id": id, "amount": 250_000, "currency": "KES",
+            "payment_status": "confirmed", "payment_method": "mpesa",
+        }))
+        .unwrap();
+        backend
+            .write_campaign(&demo(), CampaignWrite::RecordDonation(donation))
+            .now()
+            .unwrap()
+            .unwrap();
+        let t = backend.transparency(&demo()).unwrap();
+        let c = t.campaigns.iter().find(|c| c.id == id).unwrap();
+        assert_eq!(c.current_amount, 250_000, "a confirmed gift is raised");
+        let d = t.donations.last().unwrap().id.clone();
+        backend
+            .write_campaign(
+                &demo(),
+                CampaignWrite::DonationStatus {
+                    id: d,
+                    status: PaymentStatus::Refunded,
+                    reference: Some("RF1".to_owned()),
+                },
+            )
+            .now()
+            .unwrap()
+            .unwrap();
+        let t = backend.transparency(&demo()).unwrap();
+        assert_eq!(
+            t.campaigns
+                .iter()
+                .find(|c| c.id == id)
+                .unwrap()
+                .current_amount,
+            0
+        );
+    }
+
+    #[test]
+    fn a_refused_campaign_write_changes_nothing_and_sends_nothing() {
+        let mut backend = backend();
+        let rx = backend.subscribe();
+        let before = backend.transparency(&demo()).unwrap();
+        let mut zero = new_campaign("Nothing");
+        zero.target_amount = 0;
+        let err = backend
+            .write_campaign(&demo(), CampaignWrite::Create(zero))
+            .now()
+            .unwrap()
+            .unwrap_err();
+        assert!(matches!(err, BackendError::Connection(_)), "{err:?}");
+        assert_eq!(backend.transparency(&demo()).unwrap(), before);
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[test]
+    fn only_a_draft_is_deleted_and_a_link_is_unique_across_organisations() {
+        let mut backend = backend();
+        let t = backend.transparency(&demo()).unwrap();
+        let active = t.campaigns[0].id.clone();
+        let draft = t
+            .campaigns
+            .iter()
+            .find(|c| c.status == ledger_module::transparency::types::CampaignStatus::Draft)
+            .unwrap()
+            .id
+            .clone();
+        for id in [&active, &draft] {
+            backend
+                .write_campaign(&demo(), CampaignWrite::Delete { id: id.clone() })
+                .now()
+                .unwrap()
+                .unwrap();
+        }
+        let t = backend.transparency(&demo()).unwrap();
+        assert!(t.campaigns.iter().any(|c| c.id == active), "kept silently");
+        assert!(!t.campaigns.iter().any(|c| c.id == draft));
+
+        let empty = backend.organisations()[1].id.clone();
+        let mut taken = new_campaign("Elsewhere");
+        taken.public_slug = Some("clean-water-turkana".to_owned());
+        let err = backend
+            .write_campaign(&empty, CampaignWrite::Create(taken))
+            .now()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(
+            err,
+            BackendError::Connection(transparency_plan::SLUG_TAKEN.to_owned())
+        );
     }
 
     #[test]

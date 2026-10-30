@@ -13,10 +13,11 @@ use ledger_client::{
 use ledger_core::demo::build_demo_ledger;
 use ledger_core::types::OrganizationId;
 use ledger_core::{CommandResult, LedgerCommand, LedgerState};
+use ledger_module::transparency::OrgTransparency;
 use ledger_module::transparency::types::{NewVerification, Verification};
 
 use super::{LiveClient, lock};
-use crate::backend::Submission;
+use crate::backend::{CampaignWrite, Submission};
 
 pub const ME: &str = "c200aa00000000000000000000000000000000000000000000000000000000ff";
 
@@ -28,6 +29,8 @@ pub struct Fake {
     pub sent: Mutex<Vec<(String, LedgerCommand)>>,
     pub proofs_sent: Mutex<Vec<(String, NewVerification)>>,
     pub proofs: Mutex<HashMap<String, Vec<Verification>>>,
+    pub transparency: Mutex<HashMap<String, OrgTransparency>>,
+    pub campaign_writes: Mutex<Vec<(String, CampaignWrite)>>,
 }
 
 impl Fake {
@@ -39,6 +42,8 @@ impl Fake {
             sent: Mutex::new(Vec::new()),
             proofs_sent: Mutex::new(Vec::new()),
             proofs: Mutex::new(HashMap::new()),
+            transparency: Mutex::new(HashMap::new()),
+            campaign_writes: Mutex::new(Vec::new()),
         })
     }
 
@@ -98,6 +103,15 @@ impl LiveClient for Fake {
 
     fn verifications(&self, org: &str) -> Vec<Verification> {
         lock(&self.proofs).get(org).cloned().unwrap_or_default()
+    }
+
+    fn transparency(&self, org: &str) -> Option<OrgTransparency> {
+        lock(&self.transparency).get(org).cloned()
+    }
+
+    fn write_campaign(&self, org: &str, write: &CampaignWrite) -> Submission {
+        lock(&self.campaign_writes).push((org.to_owned(), write.clone()));
+        Submission::ready(Ok(CommandResult::None))
     }
 }
 

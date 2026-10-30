@@ -29,6 +29,11 @@ client.service();                                      // Option<ServiceInfo>: w
 client.public_organizations()?;                        // public tables: any connection, anonymous too
 client.public_campaigns()?;
 client.public_badges()?;
+client.create_campaign(org_id, &new_campaign);         // Ticket<()>, any member; minor units (DT1)
+client.update_campaign(org_id, id, &patch);            // Ticket<()>, fields left out are kept
+client.delete_campaign(org_id, id);                    // Ticket<()>, drafts only (others kept silently)
+client.record_donation(org_id, &new_donation);         // Ticket<()>, a record only, no payment (P19)
+client.update_donation_status(org_id, id, status, reference); // Ticket<()>, moves the raised amount
 client.disconnect();
 ```
 
@@ -39,8 +44,12 @@ applied message that touched them sends one `ClientEvent::TransparencyChanged { 
 chains, public, service }` next to the ledger's `Changed`. MOD2's organisation views (flow nodes,
 transactions, visibility, trust score and history, flags, embed config) are part of
 `OrgTransparency`; chains, the service row and the public tables have their own reads. Proofs arrive already cut to what the caller's access groups
-allow (`visible_as` on each). The client has no write calls for them yet; DT1 to DT4 add what
-their screens need.
+allow (`visible_as` on each). DT1 added the campaign and donation writes
+(`create_campaign`, `update_campaign`, `delete_campaign`, `record_donation`,
+`update_donation_status`): each is one reducer call through the same `call` path as
+`create_verification`, its JSON argument the module's own input type
+(`ledger_module::transparency::types::{NewCampaign, CampaignPatch, NewDonation}`), and its
+ticket resolves after the changed rows are in the cache. DT2 to DT4 add what their screens need.
 
 A subscriber's first event is the current `ClientEvent::Status`. After that it gets one
 `ClientEvent::Changed { orgs }` per applied message (initial subscription or transaction).

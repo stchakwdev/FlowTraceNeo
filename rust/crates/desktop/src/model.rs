@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use ledger_core::LedgerState;
 use ledger_core::types::OrganizationId;
+use ledger_module::transparency::OrgTransparency;
 
 use crate::backend::{BackendEvent, ConnectSettings, ConnectionStatus, Organisation};
 
@@ -162,6 +163,8 @@ pub struct LedgerView {
     snapshot: Option<Arc<LedgerState>>,
     revision: u64,
     remote: bool,
+    transparency: Option<Arc<OrgTransparency>>,
+    transparency_revision: u64,
 }
 
 impl LedgerView {
@@ -180,7 +183,38 @@ impl LedgerView {
             snapshot,
             revision: 0,
             remote: false,
+            transparency: None,
+            transparency_revision: 0,
         }
+    }
+
+    /// The selected organisation's transparency records (campaigns, donations, flow nodes,
+    /// transactions, trust score), as [`crate::store::StoreCore`] last read them.
+    #[must_use]
+    pub fn transparency(&self) -> Option<&Arc<OrgTransparency>> {
+        self.transparency.as_ref()
+    }
+
+    /// Goes up by one every time the transparency records are replaced, apart from
+    /// [`LedgerView::revision`], so Dashboard and Campaigns re-derive only when they changed.
+    #[must_use]
+    pub fn transparency_revision(&self) -> u64 {
+        self.transparency_revision
+    }
+
+    /// Replaces the transparency records. Returns whether they differ from the ones held.
+    pub fn set_transparency(&mut self, records: Option<Arc<OrgTransparency>>) -> bool {
+        let same = match (&self.transparency, &records) {
+            (None, None) => true,
+            (Some(a), Some(b)) => Arc::ptr_eq(a, b) || a == b,
+            _ => false,
+        };
+        if same {
+            return false;
+        }
+        self.transparency = records;
+        self.transparency_revision += 1;
+        true
     }
 
     /// Marks the books as living on a server ([`crate::backend::LedgerBackend::is_remote`]), so
@@ -306,6 +340,9 @@ impl LedgerView {
                     changed |= self.status != status;
                     self.status = status;
                 }
+                // The store re-reads the records from the backend
+                // (`crate::store::StoreCore::apply`).
+                BackendEvent::Transparency { .. } => {}
             }
         }
         changed

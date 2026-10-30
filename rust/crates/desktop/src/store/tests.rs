@@ -307,3 +307,84 @@ fn a_live_store_sends_proofs_to_the_server_and_hands_out_a_worker_client() {
     );
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn the_transparency_snapshot_has_its_own_revision() {
+    let (mut store, rx) = demo_store();
+    let records = store.view().transparency().unwrap().clone();
+    assert_eq!(records.campaigns.len(), 4, "the demo's campaigns at open");
+    let seen = store.view().transparency_revision();
+
+    store.submit(add_vendor()).now().unwrap().unwrap();
+    store.apply(std::iter::from_fn(|| rx.try_recv().ok()).collect());
+    assert_eq!(
+        store.view().transparency_revision(),
+        seen,
+        "a ledger change leaves the records alone"
+    );
+
+    let campaign = serde_json::from_value(serde_json::json!({
+        "name": "Boreholes", "target_amount": 100_000, "currency": "KES",
+        "starts_at": "2026-02-04T09:00:00.000Z",
+    }))
+    .unwrap();
+    let books = store.view().revision();
+    store
+        .write_campaign(CampaignWrite::Create(campaign))
+        .now()
+        .unwrap()
+        .unwrap();
+    assert!(store.apply(std::iter::from_fn(|| rx.try_recv().ok()).collect()));
+    assert_eq!(store.view().transparency_revision(), seen + 1);
+    assert_eq!(
+        store.view().revision(),
+        books,
+        "the books are not re-derived"
+    );
+    assert_eq!(store.view().transparency().unwrap().campaigns.len(), 5);
+}
+
+#[test]
+fn selecting_another_organisation_reads_its_records() {
+    let (mut store, _rx) = demo_store();
+    let empty = store.view().organisations()[1].id.clone();
+    assert!(store.select_org(&empty));
+    assert!(store.view().transparency().unwrap().campaigns.is_empty());
+}
+
+#[test]
+fn a_live_store_reads_records_when_the_server_says_they_changed() {
+    let fake = Fake::new();
+    fake.add_org("org-a", vec![member(ME, "me", true)]);
+    let (mut store, _rx) = StoreCore::new(Box::new(SpacetimeBackend::new()), connector_to(&fake));
+    let rx = store.connect(settings()).unwrap();
+    fake.emit(ready());
+    pump_until(&mut store, &rx, |s| s.view().snapshot().is_some());
+    assert!(store.view().transparency().is_none(), "nothing read yet");
+
+    fake.transparency.lock().unwrap().insert(
+        "org-a".to_owned(),
+        crate::backend::demo_transparency().unwrap(),
+    );
+    fake.emit(ClientEvent::TransparencyChanged {
+        orgs: std::iter::once("org-a".to_owned()).collect(),
+        profiles: false,
+        chains: false,
+        public: true,
+        service: false,
+    });
+    pump_until(&mut store, &rx, |s| s.view().transparency().is_some());
+    assert_eq!(store.view().transparency().unwrap().donations.len(), 25);
+
+    let write = CampaignWrite::Delete {
+        id: "c1".to_owned(),
+    };
+    assert_eq!(
+        store.write_campaign(write.clone()).now().unwrap(),
+        Ok(CommandResult::None)
+    );
+    assert_eq!(
+        *fake.campaign_writes.lock().unwrap(),
+        [("org-a".to_owned(), write)]
+    );
+}
