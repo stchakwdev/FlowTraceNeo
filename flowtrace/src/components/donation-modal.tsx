@@ -1,5 +1,5 @@
 import type { CampaignReportEarmark } from '@/lib/data'
-import type { CampaignWithDetails } from '@/lib/supabase'
+import type { CampaignWithDetails } from '@/lib/types'
 import { ReportDialog } from '@/components/report-dialog'
 import { CampaignCoverage } from '@/components/campaign-progress-bar'
 import { PublicDonationForm } from '@/components/public-donation-form'

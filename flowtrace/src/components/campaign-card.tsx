@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowSquareOut, DotsThree, Eye, Trash } from '@phosphor-icons/react'
 import { CampaignStatusMark, campaignTiming } from './campaign-status-badge'
-import type { CampaignWithDetails } from '@/lib/supabase'
+import type { CampaignWithDetails } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,

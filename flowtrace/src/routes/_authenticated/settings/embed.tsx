@@ -14,6 +14,7 @@ import {
   CampaignWidgetEmbed,
   TrustBadgeEmbed,
 } from '@/components/embed-code-generator'
+import { EmbedSettings } from '@/components/embed-settings'
 import { useCampaigns } from '@/lib/queries'
 import { useOrg } from '@/lib/org-context'
 
@@ -144,6 +145,8 @@ function EmbedSettingsPage() {
       )}
 
       <TrustBadgeEmbed organizationId={organizationId ?? ''} />
+
+      <EmbedSettings />
     </div>
   )
 }

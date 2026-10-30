@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CircleNotch } from '@phosphor-icons/react'
 import type { CampaignReportEarmark } from '@/lib/data'
-import type { CampaignWithDetails } from '@/lib/supabase'
+import type { CampaignWithDetails } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {

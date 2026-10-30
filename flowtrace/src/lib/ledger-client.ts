@@ -13,9 +13,8 @@ import { useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DEV_MODE } from './auth'
 import { useOrg } from './org-context'
-import { useUserPermissions } from './queries'
 import { DEMO_ACTOR, DEMO_AS_OF, demoLedgerBackend } from './demo/ledger'
-import { Ledger, actorFromPermissions } from './ledger'
+import { Ledger } from './ledger'
 import {
   BACKEND,
   BooksNotConnectedError,
@@ -165,21 +164,16 @@ export function useLedger() {
   return { ...query, ledger, state: query.data ?? null }
 }
 
-/** The signed-in member as the engine sees them. */
+/**
+ * The signed-in member as the engine sees them: on SpacetimeDB the member row (the module acts
+ * as it whatever the client says), on the demo books the demo member, else nobody. Permissions
+ * never come from a query (the Supabase `get_user_permissions` RPC is gone).
+ */
 export function useLedgerActor(): Actor | null {
-  const { profile, user } = useOrg()
   const target = useLedgerTarget()
-  const userId = profile?.id ?? user?.id ?? ''
-  const fromProfile = !DEV_MODE && BACKEND !== 'spacetimedb'
-  const { data: perms } = useUserPermissions(fromProfile ? userId : '')
-  // SpacetimeDB acts as the member row whatever the client says.
   if (target.actor !== undefined) return target.actor
-  if (DEV_MODE) return DEMO_ACTOR
-  if (!perms || !userId) return null
-  return actorFromPermissions(
-    { id: userId, name: profile?.full_name ?? user?.email ?? 'Member' },
-    perms,
-  )
+  if (DEV_MODE || BACKEND === 'demo') return DEMO_ACTOR
+  return null
 }
 
 /** Sends one command; on success the ledger query refreshes. */

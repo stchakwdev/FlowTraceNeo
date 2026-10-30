@@ -16,11 +16,16 @@
 //   here as flows.rs `flow_data` and the demo's getFlowDataAPI do, api.ts:475-566), the proof
 //   figures, chain counts and the chain trust score, and the inputs of the flow and chain
 //   reducers (flows.rs:286-440).
+// - Proofs, access groups, the trust score and the embed config (RW3, ADR 0004/0005): the proof
+//   record with its R2 keys as the web's `proof:<key>` references (proofs.ts), the inputs of the
+//   access group, proof and embed reducers (types.rs:654-800, flows.rs:443), and the trust row
+//   with its four weighted components (trust.rs:149).
 import { ledgerOrgId } from '../spacetime-session'
 import { fromMajor, toMajor } from './money'
 import type { SpacetimeMembership } from './spacetime-backend'
 import type {
   AccessGroup,
+  AccessGroupPermissions,
   Campaign,
   CampaignCounts,
   CampaignStats,
@@ -36,14 +41,21 @@ import type {
   FlowDataNode,
   FlowDataResult,
   FlowNode,
+  GroupMember,
   NodeVisibility,
+  OrgMember,
   OrgStats,
   Organization,
   OrganizationChainWithDetails,
   Profile,
+  PublicEmbedConfig,
   Transaction,
   TransactionWithNodes,
+  TrustComponent,
+  TrustScoreHistory,
+  TrustScoreSummary,
   Verification,
+  VerificationAccessLog,
 } from '../types'
 import type { CampaignReport } from '../demo/api'
 
@@ -508,6 +520,7 @@ export function organizationFrom(
     public_slug: (p.public_slug as string | null | undefined) ?? null,
     // The module keeps an R2 object key (P13), not a URL.
     logo_url: null,
+    is_public: p.is_public === true,
     created_at: str('created_at', ''),
     updated_at: str('updated_at', ''),
   }
@@ -926,4 +939,258 @@ export function matchOrganizations(
       type: o.type,
       country: o.country,
     }))
+}
+
+// ---------------------------------------------------------------------------
+// Proofs (RW3; types.rs:282, 743; plan.rs:683-840)
+// ---------------------------------------------------------------------------
+
+/** The prefix of a proofs Worker reference (proofs.ts `proofRef`). */
+const PROOF_REF = 'proof:'
+const SHA256 = /^[0-9a-f]{64}$/
+
+const keyOfRef = (ref: unknown) =>
+  typeof ref === 'string' && ref.startsWith(PROOF_REF) && ref.length > PROOF_REF.length
+    ? ref.slice(PROOF_REF.length)
+    : null
+
+/**
+ * A `my_verification` row as the web's proof: the R2 keys become `proof:<key>` references, so
+ * the viewer trades them for signed URLs (proofs.ts `useProofSrc`). The module has already cut
+ * the row down to the reader's level (plan.rs:639 `redact`) and says which in `visible_as`.
+ */
+export function decodeVerification(row: Pick<DocRowLike, 'data'>): Verification {
+  const v = parse(row.data)
+  const ref = (k: string) =>
+    typeof v[k] === 'string' && v[k] ? PROOF_REF + v[k] : null
+  return {
+    ...(v as unknown as Verification),
+    transaction_id: (v.transaction_id as string | null | undefined) ?? '',
+    file_url: ref('object_key'),
+    thumbnail_url: ref('thumbnail_key'),
+    published: v.published === true,
+  }
+}
+
+/** `getVerifications` (api.ts:276-282): a transaction's proofs, newest first. */
+export const proofsOf = (proofs: Array<Verification>, transactionId: string) =>
+  proofs
+    .filter((v) => v.transaction_id === transactionId)
+    .sort((a, b) => byDateDesc(a.created_at, b.created_at))
+
+const NEW_VERIFICATION = [
+  'transaction_id',
+  'type',
+  'ocr_data',
+  'metadata',
+  'status',
+  'visibility_level',
+  'executor_name',
+  'gps_latitude',
+  'gps_longitude',
+  'gps_accuracy',
+  'location_name',
+  'description',
+]
+const NEW_VERIFICATION_NOT_NULL = ['type', 'metadata', 'status', 'visibility_level']
+
+/**
+ * `NewVerification` (types.rs:743): the proof as the web records it, its file a `proof:<key>`
+ * reference to the Worker's object `org/<org>/<sha256>` (P13). The module keeps no other kind
+ * of file, so a session-local file (a blob URL, when VITE_PROOFS_URL is unset) is refused here
+ * rather than dropped. `verified_by` and `created_by` are the caller's, so they are not sent.
+ */
+export function verificationInput(
+  v: Omit<Verification, 'id' | 'created_at' | 'verified_at' | 'trust_points'>,
+): Json {
+  const out = pick(
+    v,
+    NEW_VERIFICATION,
+    NEW_VERIFICATION.filter((k) => !NEW_VERIFICATION_NOT_NULL.includes(k)),
+  )
+  const meta = v.metadata as Json
+  const key =
+    keyOfRef(v.file_url) ??
+    (typeof meta.object_key === 'string' ? meta.object_key : null)
+  if (v.file_url && !key)
+    throw new Error(
+      'This file is only in your browser. Proof files are kept by the proof store; set VITE_PROOFS_URL to attach them.',
+    )
+  if (key) {
+    const tail = key.split('/').at(-1) ?? ''
+    const hash = typeof meta.sha256 === 'string' ? meta.sha256 : tail
+    out.object_key = key
+    if (SHA256.test(hash)) out.sha256 = hash
+  }
+  const thumb = keyOfRef(v.thumbnail_url)
+  if (thumb) out.thumbnail_key = thumb
+  return out
+}
+
+export const decodeAccess = (row: Pick<DocRowLike, 'data'>) =>
+  parse(row.data) as unknown as VerificationAccessLog
+
+// ---------------------------------------------------------------------------
+// Access groups and members (RW3; types.rs:153-200, 654-740)
+// ---------------------------------------------------------------------------
+
+const ACCESS_GROUP_FIELDS = [
+  'name',
+  'slug',
+  'description',
+  'icon',
+  'color',
+  'permissions',
+  'node_scope',
+  'is_default',
+  'is_public',
+  'priority',
+]
+const PERMISSION_KEYS: Array<keyof AccessGroupPermissions> = [
+  'can_view_nodes',
+  'can_view_amounts',
+  'can_view_proofs',
+  'can_view_executor',
+  'can_view_full_proofs',
+  'can_edit_nodes',
+  'can_edit_transactions',
+  'can_manage_members',
+  'can_manage_groups',
+]
+
+/** The nine flags only: `AccessGroupPermissions` (types.rs:100) takes no others. */
+function permissionsOf(p: Partial<AccessGroupPermissions>): AccessGroupPermissions {
+  const out = {} as AccessGroupPermissions
+  for (const k of PERMISSION_KEYS) out[k] = p[k] === true
+  return out
+}
+
+function withPermissions(out: Json): Json {
+  if (out.permissions && typeof out.permissions === 'object')
+    out.permissions = permissionsOf(out.permissions as Partial<AccessGroupPermissions>)
+  return out
+}
+
+/** `NewAccessGroup` (types.rs:654): no organisation; the module sets ids and times. */
+export function accessGroupInput(g: Partial<AccessGroup>): Json {
+  return withPermissions(pick(g, ACCESS_GROUP_FIELDS, ['description']))
+}
+
+/** `AccessGroupPatch` (types.rs:683): the same fields; permissions go whole. */
+export function accessGroupPatch(u: Partial<AccessGroup>): Json {
+  return withPermissions(pick(u, ACCESS_GROUP_FIELDS, ['description']))
+}
+
+/** `NewGroupMember` (types.rs:719): `granted_by` is the caller, so it is not sent. */
+export function groupMemberInput(m: Partial<GroupMember>): Json {
+  return pick(
+    m,
+    ['group_id', 'user_id', 'user_email', 'valid_from', 'valid_until', 'notes'],
+    ['user_id', 'user_email', 'valid_from', 'valid_until', 'notes'],
+  )
+}
+
+export const decodeAccessGroup = (row: Pick<DocRowLike, 'data'>) =>
+  parse(row.data) as unknown as AccessGroup
+export const decodeGroupMember = (row: Pick<DocRowLike, 'data'>) =>
+  parse(row.data) as unknown as GroupMember
+
+/** `getAccessGroups` (api.ts:570-576): lowest priority first. */
+export const accessGroupsInOrder = (groups: Array<AccessGroup>) =>
+  [...groups].sort((a, b) => a.priority - b.priority)
+
+/**
+ * `getGroupMembers` (api.ts:625-632): a group's members, newest first, each with the person
+ * behind it. The module keeps only a hash of an email (`set_profile`), so the profile carries the
+ * member's name from the member row and no address.
+ */
+export type GroupMemberWithProfile = GroupMember & {
+  profile: Pick<Profile, 'id' | 'email' | 'full_name'> | null
+}
+
+export function groupMembersWithProfiles(
+  members: Array<GroupMember>,
+  groupId: string,
+  people: Array<OrgMember>,
+): Array<GroupMemberWithProfile> {
+  return members
+    .filter((m) => m.group_id === groupId)
+    .sort((a, b) => byDateDesc(a.created_at, b.created_at))
+    .map((m) => {
+      const who = m.user_id ? people.find((p) => p.user_id === m.user_id) : undefined
+      return {
+        ...m,
+        profile: m.user_id
+          ? { id: m.user_id, email: '', full_name: who?.name ?? null }
+          : null,
+      }
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Trust score (RW3; trust.rs:149-200, P16)
+// ---------------------------------------------------------------------------
+
+const TRUST_KEYS: Array<TrustComponent['key']> = [
+  'verification',
+  'documentation',
+  'consistency',
+  'model',
+]
+
+/**
+ * The `my_trust_score` row (`TrustScore`, trust.rs:149): the total, its grade and the four
+ * components with their weights (32/24/24/20, P16). Null before the module has computed one.
+ */
+export function trustSummaryFrom(json: string | undefined): TrustScoreSummary | null {
+  if (!json) return null
+  const t = parse(json)
+  const values = (t.components ?? {}) as Record<string, unknown>
+  const weights = (t.weights ?? {}) as Record<string, unknown>
+  return {
+    score: typeof t.score === 'number' ? t.score : 0,
+    grade: typeof t.grade === 'string' ? t.grade : 'F',
+    components: TRUST_KEYS.filter((k) => typeof weights[k] === 'number').map((k) => ({
+      key: k,
+      value: typeof values[k] === 'number' ? values[k] : 0,
+      weight: weights[k] as number,
+    })),
+    computed_at: typeof t.computed_at === 'string' ? t.computed_at : null,
+  }
+}
+
+export const decodeTrustHistory = (row: Pick<DocRowLike, 'data'>) =>
+  parse(row.data) as unknown as TrustScoreHistory
+
+/** `getTrustScoreHistory` (api.ts:397-404): the latest `limit` snapshots, oldest first. */
+export const trustHistoryOf = (rows: Array<TrustScoreHistory>, limit = 12) =>
+  [...rows]
+    .sort((a, b) => byDateDesc(a.calculated_at, b.calculated_at))
+    .slice(0, limit)
+    .reverse()
+
+// ---------------------------------------------------------------------------
+// Public embed config (RW3; flows.rs:242, 443)
+// ---------------------------------------------------------------------------
+
+/** `EmbedConfigPatch` (flows.rs:443): a field left out is kept; the theme goes whole. */
+export function embedConfigPatch(c: Partial<PublicEmbedConfig>): Json {
+  return pick(
+    c,
+    [
+      'display_mode',
+      'show_amounts',
+      'amount_format',
+      'show_node_names',
+      'show_trust_score',
+      'show_transaction_count',
+      'show_last_updated',
+      'visible_node_types',
+      'hidden_node_ids',
+      'theme',
+      'allow_embed',
+      'allowed_domains',
+    ],
+    [],
+  )
 }

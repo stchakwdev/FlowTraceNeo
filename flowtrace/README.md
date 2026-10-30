@@ -99,8 +99,30 @@ the `my_transaction`, `my_flow_node`, `my_node_visibility`, `my_organization_cha
   demo computes it; the `generate-flow-data` edge function is gone.
 - A chain can be asked only of an organisation that publishes its profile (`public_organization`,
   `is_public` set): the module keeps no directory of every organisation.
-- The chain approval's group list reads the organisation's access groups from the module; the
-  access group screens and proofs themselves stay on their current backend until RW3.
+- The chain approval's group list reads the organisation's access groups from the module.
+
+### Proofs, access groups, trust score and embed settings
+
+With `VITE_LEDGER_BACKEND=spacetimedb` the module also serves proofs (list, record after the
+Worker upload, publish, the access log), access groups and their members (create, edit, delete,
+the five standard groups, add a member of the organisation, invite by email, remove), the trust
+score page, the badge preview and the embed settings (`my_verification`,
+`my_verification_access_log`, `my_access_group`, `my_access_group_member`, `my_trust_score`,
+`my_trust_score_history`, `my_public_embed_config`). Differences from the Supabase version:
+
+- A proof is shown as far as the reader's access groups allow (ADR 0004): a member in no group
+  sees no proofs at all, one with summaries sees that a proof exists but not its file. The
+  module cuts the row down; the viewer says what the reader is given.
+- On SpacetimeDB a proof file must go to the proofs Worker (`VITE_PROOFS_URL`); a file kept only
+  in the browser is refused.
+- Publishing a proof, managing groups and their members, and changing embed settings need a
+  member who can close periods.
+- An email invite is recorded with the note "Invited by email. No email was sent." and does not
+  attach to an account; membership end dates are shown but not enforced yet.
+- The score has four parts (verification 32, documentation 24, consistency 24, independent
+  review 20) and the module recomputes it on every change, so the page has no Recalculate
+  button. Receipt reading (the `process-receipt-ocr` edge function) is gone.
+- Permissions come from the member row, never from a query.
 
 The public pages (`/donate/<link>`, `/embed/campaign/<id>`, `/badge/trust/<org>`) read the
 module's public tables `public_campaign`, `public_organization` and `public_badge` over HTTP SQL
@@ -108,12 +130,7 @@ module's public tables `public_campaign`, `public_organization` and `public_badg
 `src/lib/ledger/public-sql.ts`). A visitor opens no WebSocket and gets no identity until they
 press Give, which records a pending gift as a device identity (dummy mode). A campaign is public
 once it is active, marked public and has a link. The organisation and its badge are public once
-its profile has `is_public` set; Settings has no switch for it yet, so an operator or closing
-member sets it:
-
-```sh
-$S call -s maincloud flowtrace-ledger-dev update_organization_profile '"org-example"' '"{\"is_public\":true}"'
-```
+its profile has `is_public` set, which the "Show on public pages" switch in Settings changes.
 
 The client bindings in `src/lib/ledger/spacetime-bindings/` are generated from the Rust
 module. After a module change:
@@ -144,4 +161,4 @@ thumbnail's key in `thumbnail_url`); the viewer trades it for a signed URL that 
 minutes. The client code is `src/lib/proofs.ts`.
 
 With `VITE_PROOFS_URL` unset, chosen files stay in the browser session only (blob URLs), so
-the demo runs with no backend. Proof files are no longer sent to Supabase Storage.
+the demo runs with no backend. The app has no Supabase client any more.

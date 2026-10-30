@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { CircleNotch, Plus } from '@phosphor-icons/react'
-import type { OrganizationChainWithDetails } from '@/lib/supabase'
+import type { OrganizationChainWithDetails } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,

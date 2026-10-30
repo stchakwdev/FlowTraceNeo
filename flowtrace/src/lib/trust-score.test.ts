@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateTrustScore, getTrustGrade } from './supabase'
+import { calculateTrustScore, getTrustGrade } from './types'
 
 describe('calculateTrustScore', () => {
   it('weights verification 40%, documentation 30%, consistency 30%', () => {

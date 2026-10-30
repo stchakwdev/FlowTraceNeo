@@ -12,7 +12,7 @@ import {
   Warning,
   X,
 } from '@phosphor-icons/react'
-import type { VerificationType, VerificationVisibility } from '@/lib/supabase'
+import type { VerificationType, VerificationVisibility } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import { VERIFICATION_TRUST_POINTS } from '@/lib/types'
 import { createVerification } from '@/lib/data'
 import {
   MAX_PROOF_MB,

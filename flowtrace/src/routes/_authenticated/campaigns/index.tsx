@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
-import type { CampaignStatus, CampaignWithDetails } from '@/lib/supabase'
+import type { CampaignStatus, CampaignWithDetails } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {

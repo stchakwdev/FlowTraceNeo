@@ -10,7 +10,7 @@ import {
   Trash,
   UserPlus,
 } from '@phosphor-icons/react'
-import type { AccessGroup, AccessGroupPermissions } from '@/lib/supabase'
+import type { AccessGroup, AccessGroupPermissions } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -40,10 +40,13 @@ import { ReportCheckbox, ReportDialog } from '@/components/report-dialog'
 import { ChainLine } from '@/components/chain-status-badge'
 import {
   useAccessGroups,
+  useAddGroupMember,
   useCreateAccessGroup,
+  useCreateDefaultAccessGroups,
   useDeleteAccessGroup,
   useGroupMembers,
   useInviteMemberByEmail,
+  useOrgMembers,
   useRemoveGroupMember,
   useUpdateAccessGroup,
 } from '@/lib/queries'
@@ -82,6 +85,7 @@ function AccessGroupsPage() {
   const [editing, setEditing] = useState<AccessGroup | 'new' | null>(null)
   const [deleting, setDeleting] = useState<AccessGroup | null>(null)
   const deleteGroup = useDeleteAccessGroup()
+  const defaults = useCreateDefaultAccessGroups()
 
   const list = groups.data ?? []
   const selected = list.find((g) => g.id === selectedId) ?? list.at(0) ?? null
@@ -143,14 +147,35 @@ function AccessGroupsPage() {
           <ReportNotice
             title="No access groups yet"
             action={
-              <Button className="h-10" onClick={() => setEditing('new')}>
-                <Plus aria-hidden="true" />
-                Create group
-              </Button>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  className="h-10"
+                  disabled={defaults.isPending}
+                  onClick={() => defaults.mutate()}
+                >
+                  {defaults.isPending && (
+                    <CircleNotch className="animate-spin" aria-hidden="true" />
+                  )}
+                  Create the standard groups
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-10"
+                  onClick={() => setEditing('new')}
+                >
+                  <Plus aria-hidden="true" />
+                  Create group
+                </Button>
+              </div>
             }
           >
-            Groups decide who sees your flows and at what depth. Create one for
-            your board to start.
+            Groups decide who sees your flows and at what depth. The standard
+            five run from your board to the public.
+            {defaults.isError && (
+              <span role="alert" className="mt-2 block text-destructive">
+                {ERROR_TEXT(defaults.error)}
+              </span>
+            )}
           </ReportNotice>
         ) : (
           <>
@@ -430,6 +455,105 @@ function todayISO() {
 
 type MemberRow = NonNullable<ReturnType<typeof useGroupMembers>['data']>[number]
 
+/** Adds someone who is already a member of the organisation, picked by name. */
+function AddMemberForm({
+  group,
+  members,
+}: {
+  group: AccessGroup
+  members: Array<MemberRow>
+}) {
+  const people = useOrgMembers()
+  const add = useAddGroupMember()
+  const [chosen, setChosen] = useState('')
+  const inGroup = new Set(members.map((m) => m.user_id).filter(Boolean))
+  const open = (people.data ?? []).filter((p) => !inGroup.has(p.user_id))
+  const pick = open.find((p) => p.user_id === chosen) ?? open.at(0) ?? null
+
+  useEffect(() => {
+    setChosen('')
+    add.reset()
+  }, [group.id])
+
+  if (people.isLoading || !people.data || people.data.length === 0) return null
+
+  return (
+    <form
+      noValidate
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!pick) return
+        add.mutate({
+          group_id: group.id,
+          user_id: pick.user_id,
+          user_email: null,
+          granted_by: null,
+          valid_from: new Date().toISOString(),
+          valid_until: null,
+          notes: null,
+        })
+      }}
+    >
+      <h3 className="text-xl">Add a member</h3>
+      {open.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Everyone in your organisation is already in {group.name}.
+        </p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2">
+            <span id="add-member-label" className="text-sm font-semibold">
+              Person
+            </span>
+            <Select
+              value={pick?.user_id ?? ''}
+              items={Object.fromEntries(open.map((p) => [p.user_id, p.name]))}
+              onValueChange={(v) => {
+                if (v) setChosen(v)
+                add.reset()
+              }}
+            >
+              <SelectTrigger
+                className="h-10 w-full"
+                aria-labelledby="add-member-label"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {open.map((p) => (
+                  <SelectItem key={p.user_id} value={p.user_id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" className="h-10" disabled={add.isPending}>
+              {add.isPending ? (
+                <CircleNotch className="animate-spin" aria-hidden="true" />
+              ) : (
+                <UserPlus aria-hidden="true" />
+              )}
+              {add.isPending ? 'Adding' : `Add to ${group.name}`}
+            </Button>
+          </div>
+        </>
+      )}
+      <p aria-live="polite" className="text-sm">
+        {add.isError ? (
+          <span className="text-destructive">
+            Not added. {ERROR_TEXT(add.error)}
+          </span>
+        ) : add.isSuccess ? (
+          <span className="text-muted-foreground">Added to {group.name}.</span>
+        ) : null}
+      </p>
+    </form>
+  )
+}
+
 function MembersSection({ group }: { group: AccessGroup }) {
   const members = useGroupMembers(group.id)
   const invite = useInviteMemberByEmail()
@@ -531,8 +655,8 @@ function MembersSection({ group }: { group: AccessGroup }) {
             </p>
           ) : list.length === 0 ? (
             <ReportNotice title="No one is in this group yet">
-              Invite people by email. They see your flows at this group’s depth
-              as soon as they sign in.
+              Add a member of your organisation, or invite someone by email.
+              An invite is recorded here; no email is sent.
             </ReportNotice>
           ) : (
             <ul className="divide-y divide-border">
@@ -616,10 +740,12 @@ function MembersSection({ group }: { group: AccessGroup }) {
           </div>
         </div>
 
+        <div className="flex flex-col gap-8 border-t border-border pt-5 lg:col-span-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+        <AddMemberForm group={group} members={list} />
         <form
           onSubmit={onInvite}
           noValidate
-          className="flex flex-col gap-4 border-t border-border pt-5 lg:col-span-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
+          className="flex flex-col gap-4"
         >
           <h3 className="text-xl">Invite someone</h3>
           <div className="flex flex-col gap-2">
@@ -700,6 +826,7 @@ function MembersSection({ group }: { group: AccessGroup }) {
             ) : null}
           </p>
         </form>
+        </div>
       </div>
 
       <AlertDialog

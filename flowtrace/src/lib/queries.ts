@@ -8,7 +8,6 @@ import { useOrg } from './org-context'
 import {
   addGroupMember,
   approveChain,
-  calculateTrustScoreAPI,
   cancelChainRequest,
   createAccessGroup,
   createCampaign,
@@ -16,7 +15,6 @@ import {
   createDonorUpdate,
   createNode,
   createTransaction,
-  createVerification,
   deleteAccessGroup,
   deleteCampaign,
   getAccessGroup,
@@ -38,6 +36,7 @@ import {
   getDonorUpdates,
   getFlowDataAPI,
   getGroupMembers,
+  getOrgMembers,
   getIncomingChains,
   getNodes,
   getNodeVisibility,
@@ -48,15 +47,17 @@ import {
   getPublicTrustScore,
   getTransaction,
   getTransactions,
+  getTrustScore,
   getTrustScoreHistory,
+  getVerificationAccessLog,
   getUnderfundedCampaigns,
-  getUserGroups,
-  getUserPermissions,
   getVerifications,
-  getVisibilityContext,
+  createDefaultAccessGroups,
   inviteMemberByEmail,
+  logVerificationAccess,
+  publishVerification,
+  regenerateEmbedToken,
   markUpdateSent,
-  processReceiptOCR,
   rejectChain,
   removeGroupMember,
   removeNodeVisibility,
@@ -70,7 +71,6 @@ import {
   updateDonationStatus,
   updatePublicEmbedConfig,
   updateTransaction,
-  uploadVerificationFile,
 } from './data'
 import type {
   AccessGroup,
@@ -105,7 +105,7 @@ import type {
   VerificationType,
   VerificationVisibility,
   VisibilityContext,
-} from './supabase'
+} from './types'
 
 // Query key factory for consistent cache management
 export const queryKeys = {
@@ -122,13 +122,11 @@ export const queryKeys = {
   accessGroups: (orgId: string) => ['access-groups', orgId] as const,
   accessGroup: (id: string) => ['access-group', id] as const,
   groupMembers: (groupId: string) => ['group-members', groupId] as const,
-  userGroups: (userId: string, orgId: string) =>
-    ['user-groups', userId, orgId] as const,
-  userPermissions: (userId: string, orgId: string) =>
-    ['user-permissions', userId, orgId] as const,
+  orgMembers: (orgId: string) => ['org-members', orgId] as const,
   nodeVisibility: (nodeId: string) => ['node-visibility', nodeId] as const,
-  visibilityContext: (userId: string, orgId: string) =>
-    ['visibility-context', userId, orgId] as const,
+  verificationAccess: (verificationId: string) =>
+    ['verification-access', verificationId] as const,
+  trustScore: (orgId: string) => ['trust-score', orgId] as const,
   publicEmbedConfig: (orgId: string) => ['embed-config', orgId] as const,
   // Organization Chains
   outgoingChains: (orgId: string) => ['chains', 'outgoing', orgId] as const,
@@ -266,30 +264,32 @@ export function useTrustHistory() {
   })
 }
 
-// Trust score for organization (public or by org ID)
+/** The organisation's current score: the module's trust row, or the demo's. */
+export function useTrustSummary() {
+  const { organizationId } = useOrg()
+
+  return useQuery({
+    queryKey: queryKeys.trustScore(organizationId || ''),
+    queryFn: () => getTrustScore(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 60 * 1000,
+  })
+}
+
+/** The badge's score for a member, in usePublicTrustScore's shape. */
 export function useTrustScore(organizationId: string) {
   return useQuery({
-    queryKey: ['trust-score', organizationId],
-    queryFn: async () => {
-      const history = await getTrustScoreHistory(organizationId, 1)
-      if (history && history.length > 0) {
-        return {
-          overall_score: history[0].score,
-          breakdown: history[0].breakdown,
-          verification_rate: history[0].verification_rate,
-          calculated_at: history[0].calculated_at,
-        }
-      }
-      // Return default if no history
-      return {
-        overall_score: 0,
-        breakdown: {},
-        verification_rate: null,
-        calculated_at: null,
-      }
-    },
+    queryKey: queryKeys.trustScore(organizationId),
+    queryFn: () => getTrustScore(organizationId),
     enabled: !!organizationId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+    select: (t) => ({
+      overall_score: t?.score ?? 0,
+      breakdown: Object.fromEntries(
+        (t?.components ?? []).map((c) => [c.key, c.value]),
+      ),
+      calculated_at: t?.computed_at ?? null,
+    }),
   })
 }
 
@@ -370,151 +370,58 @@ export function useCreateNode() {
 }
 
 // Enhanced verification input for Phase 3
-export interface CreateVerificationInput {
-  transactionId: string
-  type: VerificationType
-  fileUrl?: string
-  // New Phase 3 fields
-  visibilityLevel?: VerificationVisibility
-  executorName?: string
-  description?: string
-  gpsLatitude?: number
-  gpsLongitude?: number
-  gpsAccuracy?: number
-  locationName?: string
-  createdBy?: string
-}
-
-export function useCreateVerification() {
+/** Shows a proof's file to the public, or takes it back (admins and managers). */
+export function usePublishVerification() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({
-      transactionId,
-      type,
-      fileUrl,
-      visibilityLevel,
-      executorName,
-      description,
-      gpsLatitude,
-      gpsLongitude,
-      gpsAccuracy,
-      locationName,
-      createdBy,
-    }: CreateVerificationInput) =>
-      createVerification({
-        transaction_id: transactionId,
-        type,
-        file_url: fileUrl || null,
-        ocr_data: null,
-        metadata: {},
-        status: 'pending',
-        verified_by: null,
-        // New Phase 3 fields
-        visibility_level: visibilityLevel || 'full',
-        thumbnail_url: null,
-        executor_name: executorName || null,
-        description: description || null,
-        gps_latitude: gpsLatitude || null,
-        gps_longitude: gpsLongitude || null,
-        gps_accuracy: gpsAccuracy || null,
-        location_name: locationName || null,
-        created_by: createdBy || null,
-      }),
+      id,
+      published,
+    }: {
+      id: string
+      published: boolean
+      transactionId: string
+    }) => publishVerification(id, published),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.verifications(variables.transactionId),
-      })
-      // Also invalidate transaction to update verification count
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          query.queryKey[0] === 'transaction' &&
-          query.queryKey[1] === variables.transactionId,
       })
     },
   })
 }
 
-// Enhanced upload verification input for Phase 3
-export interface UploadVerificationInput {
-  transactionId: string
-  file: File
-  type: VerificationType
-  // New Phase 3 fields
-  visibilityLevel?: VerificationVisibility
-  executorName?: string
-  description?: string
-  gpsLatitude?: number
-  gpsLongitude?: number
-  gpsAccuracy?: number
-  locationName?: string
-  createdBy?: string
-}
-
-export function useUploadVerification() {
-  const { organizationId } = useOrg()
+/** Records one look at a proof; a failure is not the viewer's problem, so it is swallowed. */
+export function useLogVerificationAccess() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      transactionId,
-      file,
-      type,
-      visibilityLevel,
-      executorName,
-      description,
-      gpsLatitude,
-      gpsLongitude,
-      gpsAccuracy,
-      locationName,
-      createdBy,
-    }: UploadVerificationInput) => {
-      // Upload file to storage
-      const fileUrl = await uploadVerificationFile(
-        organizationId!,
-        transactionId,
-        file,
-      )
-
-      // Create verification record with Phase 3 fields
-      return createVerification({
-        transaction_id: transactionId,
-        type,
-        file_url: fileUrl,
-        ocr_data: null,
-        metadata: { originalName: file.name, size: file.size },
-        status: 'pending',
-        verified_by: null,
-        // New Phase 3 fields
-        visibility_level: visibilityLevel || 'full',
-        thumbnail_url: null,
-        executor_name: executorName || null,
-        description: description || null,
-        gps_latitude: gpsLatitude || null,
-        gps_longitude: gpsLongitude || null,
-        gps_accuracy: gpsAccuracy || null,
-        location_name: locationName || null,
-        created_by: createdBy || null,
-      })
-    },
-    onSuccess: (_, variables) => {
+    mutationFn: ({
+      id,
+      accessType,
+    }: {
+      id: string
+      accessType: 'view' | 'download'
+    }) => logVerificationAccess(id, accessType).catch(() => undefined),
+    onSettled: (_, __, variables) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.verifications(variables.transactionId),
-      })
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          query.queryKey[0] === 'transaction' &&
-          query.queryKey[1] === variables.transactionId,
+        queryKey: queryKeys.verificationAccess(variables.id),
       })
     },
   })
 }
 
-// ======================
-// Edge Function Hooks
-// ======================
+/** The caller's own looks at a proof, newest first. */
+export function useVerificationAccessLog(verificationId: string) {
+  return useQuery({
+    queryKey: queryKeys.verificationAccess(verificationId),
+    queryFn: () => getVerificationAccessLog(verificationId),
+    enabled: !!verificationId,
+    staleTime: 60 * 1000,
+  })
+}
 
-// Flow Data from Edge Function
+// Flow data, computed from the nodes and transactions
 export function useFlowData(startDate?: string, endDate?: string) {
   const { organizationId } = useOrg()
 
@@ -526,57 +433,9 @@ export function useFlowData(startDate?: string, endDate?: string) {
   })
 }
 
-// Recalculate Trust Score
-export function useRecalculateTrustScore() {
-  const { organizationId } = useOrg()
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: () => calculateTrustScoreAPI(organizationId!),
-    onSuccess: () => {
-      // Invalidate related queries to refresh data
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.trustHistory(organizationId!),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.orgStats(organizationId!),
-      })
-      // Also refetch org context
-      queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === 'organization',
-      })
-    },
-  })
-}
-
-// Process Receipt with OCR
-export function useProcessReceiptOCR() {
-  const { organizationId } = useOrg()
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({
-      transactionId,
-      file,
-      type,
-    }: {
-      transactionId: string
-      file: File
-      type: Verification['type']
-    }) => processReceiptOCR(organizationId!, transactionId, file, type),
-    onSuccess: (_, variables) => {
-      // Invalidate verification queries
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.verifications(variables.transactionId),
-      })
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          query.queryKey[0] === 'transaction' &&
-          query.queryKey[1] === variables.transactionId,
-      })
-    },
-  })
-}
+// The score recalculates in the module on every change (P17), so there is no recalculate hook.
+// Receipt reading (useProcessReceiptOCR, the process-receipt-ocr edge function) has no module
+// counterpart and is gone.
 
 // ======================
 // Access Groups & Visibility Hooks
@@ -685,14 +544,28 @@ export function useGroupMembers(groupId: string) {
   })
 }
 
-export function useUserGroups(userId: string) {
+export function useOrgMembers() {
   const { organizationId } = useOrg()
 
   return useQuery({
-    queryKey: queryKeys.userGroups(userId, organizationId || ''),
-    queryFn: () => getUserGroups(userId, organizationId!),
-    enabled: !!userId && !!organizationId,
+    queryKey: queryKeys.orgMembers(organizationId || ''),
+    queryFn: () => getOrgMembers(organizationId!),
+    enabled: !!organizationId,
     staleTime: 60 * 1000,
+  })
+}
+
+export function useCreateDefaultAccessGroups() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => createDefaultAccessGroups(organizationId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.accessGroups(organizationId!),
+      })
+    },
   })
 }
 
@@ -792,28 +665,7 @@ export function useRemoveNodeVisibility() {
   })
 }
 
-// User Permissions & Visibility Context
-export function useUserPermissions(userId: string) {
-  const { organizationId } = useOrg()
-
-  return useQuery({
-    queryKey: queryKeys.userPermissions(userId, organizationId || ''),
-    queryFn: () => getUserPermissions(userId, organizationId!),
-    enabled: !!userId && !!organizationId,
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-export function useVisibilityContext(userId: string) {
-  const { organizationId } = useOrg()
-
-  return useQuery({
-    queryKey: queryKeys.visibilityContext(userId, organizationId || ''),
-    queryFn: () => getVisibilityContext(userId, organizationId!),
-    enabled: !!userId && !!organizationId,
-    staleTime: 60 * 1000,
-  })
-}
+// Permissions come from the member row (ledger-client.ts useLedgerActor), not from a query.
 
 // Public Embed Config Hooks
 export function usePublicEmbedConfig() {
@@ -839,6 +691,21 @@ export function useUpdatePublicEmbedConfig() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.publicEmbedConfig(organizationId!),
       })
+    },
+  })
+}
+
+export function useRegenerateEmbedToken() {
+  const { organizationId } = useOrg()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => regenerateEmbedToken(organizationId!),
+    onSuccess: (config) => {
+      queryClient.setQueryData(
+        queryKeys.publicEmbedConfig(organizationId!),
+        config,
+      )
     },
   })
 }

@@ -5,8 +5,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouterState } from '@tanstack/react-router'
 import { useAppAuth } from './auth-context'
 import { AUTH_MODE, DEV_MODE } from './auth'
-import { DEV_ORG_ID } from './supabase'
-import { demoOrganization, profiles as demoProfiles } from './demo/dataset'
+import {
+  DEMO_ORG_ID as DEV_ORG_ID,
+  demoOrganization,
+  profiles as demoProfiles,
+} from './demo/dataset'
 import { loadTransparency } from './data'
 import { orgContextFrom } from './ledger/transparency-model'
 import {
@@ -70,6 +73,16 @@ const MODULE_QUERY_ROOTS = new Set([
   'chain-activity',
   'chain-trust-score',
   'chain-access-groups',
+  // RW3: proofs, access groups and their members, the trust score, the embed settings.
+  'verifications',
+  'verification-access',
+  'access-groups',
+  'access-group',
+  'group-members',
+  'org-members',
+  'trust-score',
+  'trust-history',
+  'embed-config',
 ])
 
 export const orgContextKey = ['ledger', 'org-context'] as const

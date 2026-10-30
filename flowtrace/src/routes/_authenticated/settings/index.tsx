@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, CircleNotch } from '@phosphor-icons/react'
-import type { Organization } from '@/lib/supabase'
+import type { Organization } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ReportNotice, ReportSection } from '@/components/report'
+import { PublicPagesSwitch } from '@/components/public-pages-switch'
 import { useOrg } from '@/lib/org-context'
 import { useAccessGroups } from '@/lib/queries'
 import { getOrganization, updateOrganization } from '@/lib/data'
@@ -358,6 +359,15 @@ function SettingsPage() {
         </ReportSection>
 
         <ReportSection title="Access and sharing" className="lg:col-span-5">
+          {orgQuery.data && (
+            <PublicPagesSwitch
+              org={orgQuery.data}
+              onSaved={(org) => {
+                queryClient.setQueryData(['organization', organizationId], org)
+                void refetchOrg()
+              }}
+            />
+          )}
           <ul className="divide-y divide-border">
             <SettingsLink
               to="/settings/access-groups"

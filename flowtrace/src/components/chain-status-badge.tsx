@@ -1,4 +1,4 @@
-import type { ChainStatus } from '@/lib/supabase'
+import type { ChainStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export const CHAIN_STATUS_LABEL: Record<ChainStatus, string> = {

@@ -1,7 +1,8 @@
-// Campaigns, donations, donor updates and the organisation profile (RW1), and transactions, flow
-// nodes, node visibility, the flow data and organisation chains (RW2) on the SpacetimeDB module
+// Campaigns, donations, donor updates and the organisation profile (RW1), transactions, flow
+// nodes, node visibility, the flow data and organisation chains (RW2), and proofs, access groups,
+// the trust score and the public embed config (RW3) on the SpacetimeDB module
 // (MOD1, rust/docs/adr/0004-transparency-tables.md; MOD2, ADR 0005). Each export keeps the
-// signature of the Supabase function it replaces (supabase.ts), so data.ts can select it.
+// signature of the demo function it stands beside (demo/api.ts), so data.ts can select it.
 // Loaded lazily with the SDK, like spacetime-backend.ts.
 //
 // Reads come from one subscription to the caller's `my_*` views, which the module already
@@ -15,6 +16,9 @@ import {
 } from './spacetime-backend'
 import { getPublicCampaignBySlug } from './public-sql'
 import {
+  accessGroupInput,
+  accessGroupPatch,
+  accessGroupsInOrder,
   campaignCounts,
   campaignInput,
   campaignPatch,
@@ -23,37 +27,50 @@ import {
   chainCounts,
   chainTrustScore,
   chainsOf,
+  decodeAccess,
+  decodeAccessGroup,
   decodeCampaign,
   decodeChain,
   decodeChainActivity,
   decodeDonation,
   decodeDonorUpdate,
   decodeFlowNode,
+  decodeGroupMember,
   decodeNodeVisibility,
   decodeStat,
   decodeTransaction,
+  decodeTrustHistory,
+  decodeVerification,
   donationInput,
   donationWithDetails,
   donorUpdateInput,
   donorUpdateWithDetails,
+  embedConfigPatch,
   flowData,
   flowNodeInput,
+  groupMemberInput,
+  groupMembersWithProfiles,
   nodeVisibilitySettings,
   nodeVisibilityWithGroups,
   orgStats,
   organizationFrom,
   organizationPatch,
+  proofsOf,
   resolveCreated,
   transactionInput,
   transactionPatch,
   transactionsWithNodes,
+  trustHistoryOf,
+  trustSummaryFrom,
   underfundedCampaigns,
+  verificationInput,
   withNodes,
   withTarget,
 } from './transparency-model'
 import type { DbConnection } from './spacetime-bindings'
 import type {
   DocRowLike,
+  GroupMemberWithProfile,
   NodeVisibilityWithGroup,
   ProofLike,
 } from './transparency-model'
@@ -73,14 +90,21 @@ import type {
   DonorUpdateWithDetails,
   FlowDataResult,
   FlowNode,
+  GroupMember,
   NodeVisibility,
+  OrgMember,
   OrgStats,
   Organization,
   OrganizationChain,
   OrganizationChainWithDetails,
   PaymentStatus,
+  PublicEmbedConfig,
   Transaction,
   TransactionWithNodes,
+  TrustScoreHistory,
+  TrustScoreSummary,
+  Verification,
+  VerificationAccessLog,
 } from '../types'
 
 const WRITE_TIMEOUT_MS = 15_000
@@ -94,14 +118,16 @@ const DOC_VIEWS = [
   'flowNode',
   'transaction',
   'nodeVisibility',
-  // Read only here: proofs feed the flow and proof figures, access groups the chain approval
-  // (their writes stay on Supabase until RW3).
   'verification',
+  'verificationAccessLog',
   'accessGroup',
+  'accessGroupMember',
+  'trustScoreHistory',
 ] as const
 const ORG_VIEWS = [
   'organizationProfile',
   'trustScore',
+  'publicEmbedConfig',
   'ledgerOrg',
   'profile',
 ] as const
@@ -674,9 +700,7 @@ const transactions = (conn: DbConnection, orgId: string) =>
 const proofs = (conn: DbConnection) =>
   docs(conn, 'verification').map((r) => JSON.parse(r.data) as ProofLike)
 const accessGroups = (conn: DbConnection, orgId: string) =>
-  ofOrg(docs(conn, 'accessGroup'), orgId).map(
-    (r) => JSON.parse(r.data) as AccessGroup,
-  )
+  ofOrg(docs(conn, 'accessGroup'), orgId).map(decodeAccessGroup)
 
 export async function getTransactions(
   organizationId: string,
@@ -898,10 +922,7 @@ export async function removeNodeVisibility(
   })
 }
 
-/**
- * The organisation's access groups, read only, for the chain approval's group choice (RW3 moves
- * the access group screens).
- */
+/** The organisation's access groups by name, for the chain approval's group choice. */
 export async function getChainAccessGroups(
   organizationId: string,
 ): Promise<Array<AccessGroup>> {
@@ -1103,6 +1124,435 @@ export async function getChainTrustScore(
   chainId: string,
 ): Promise<ChainTrustScore | null> {
   return chainTrustScore(chainById(await session(), chainId))
+}
+
+// ---------------------------------------------------------------------------
+// Proofs (RW3; plan.rs:683-840, ADR 0004)
+// ---------------------------------------------------------------------------
+
+const verifications = (conn: DbConnection) =>
+  docs(conn, 'verification').map(decodeVerification)
+
+function proofOrg(conn: DbConnection, verificationId: string): string {
+  const row = docs(conn, 'verification').find((r) => r.id === verificationId)
+  if (!row)
+    throw new Error('Proof not found, or your access groups do not show it to you.')
+  return row.orgId
+}
+
+/** A transaction's proofs as far as the caller's access groups show them (`my_verification`). */
+export async function getVerifications(
+  transactionId: string,
+): Promise<Array<Verification>> {
+  return proofsOf(verifications(await session()), transactionId)
+}
+
+/**
+ * Records a proof (create_verification) after its file went to the proofs Worker
+ * (proofs.ts `storeProofFile`). The proof is the caller's newest on that transaction once its
+ * row arrives; a caller in no access group never sees it, so then this resolves with what was
+ * sent (ADR 0004 rule table: no group, nothing shown).
+ */
+export async function createVerification(
+  verification: Omit<
+    Verification,
+    'id' | 'created_at' | 'verified_at' | 'trust_points'
+  >,
+): Promise<Verification> {
+  const conn = await session()
+  const orgId = docs(conn, 'transaction').find(
+    (r) => r.id === verification.transaction_id,
+  )?.orgId
+  if (!orgId)
+    throw new Error(
+      'Transaction not found, or you are not a member of its organisation.',
+    )
+  const input = verificationInput(verification)
+  const before = new Set(docs(conn, 'verification').map((r) => r.key))
+  const txBefore = docs(conn, 'transaction').find(
+    (r) => r.id === verification.transaction_id,
+  )?.data
+  return write(
+    conn,
+    'transaction',
+    () =>
+      conn.reducers.createVerification({
+        orgId,
+        verificationJson: JSON.stringify(input),
+      }),
+    () => {
+      const made = resolveCreated(
+        docs(conn, 'verification'),
+        before,
+        orgId,
+        (v: Verification) =>
+          v.transaction_id === verification.transaction_id &&
+          v.type === verification.type,
+        decodeVerification,
+      )
+      if (made) return made
+      // The proof counts towards its transaction (flows.rs count_proof), visible or not.
+      const tx = docs(conn, 'transaction').find(
+        (r) => r.id === verification.transaction_id,
+      )?.data
+      return tx !== txBefore
+        ? ({
+            ...verification,
+            id: '',
+            created_at: new Date().toISOString(),
+            verified_at: null,
+            trust_points: 0,
+          } as Verification)
+        : undefined
+    },
+  )
+}
+
+/** Shows a proof's file at the proofs Worker's public path, or takes it back (mark_published). */
+export async function publishVerification(
+  verificationId: string,
+  published: boolean,
+): Promise<Verification> {
+  const conn = await session()
+  const orgId = proofOrg(conn, verificationId)
+  return write(
+    conn,
+    'verification',
+    () => conn.reducers.markPublished({ orgId, verificationId, published }),
+    () => {
+      const v = verifications(conn).find((x) => x.id === verificationId)
+      return v && v.published === published ? v : undefined
+    },
+  )
+}
+
+/**
+ * Records that the caller opened or downloaded a proof (log_verification_access); the module
+ * sets the level from the caller's groups, never from the call.
+ */
+export async function logVerificationAccess(
+  verificationId: string,
+  accessType: 'view' | 'download',
+): Promise<void> {
+  const conn = await session()
+  await conn.reducers.logVerificationAccess({
+    orgId: proofOrg(conn, verificationId),
+    verificationId,
+    accessType,
+  })
+}
+
+/** The caller's own looks at a proof, newest first (`my_verification_access_log`). */
+export async function getVerificationAccessLog(
+  verificationId: string,
+): Promise<Array<VerificationAccessLog>> {
+  const conn = await session()
+  return docs(conn, 'verificationAccessLog')
+    .map(decodeAccess)
+    .filter((a) => a.verification_id === verificationId)
+    .sort((a, b) =>
+      a.accessed_at < b.accessed_at ? 1 : a.accessed_at > b.accessed_at ? -1 : 0,
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Access groups and their members (RW3; plan.rs:340-600)
+// ---------------------------------------------------------------------------
+
+interface MemberRowLike {
+  orgId: string
+  userId: string
+  name: string
+}
+
+const groupRow = (conn: DbConnection, id: string) =>
+  docs(conn, 'accessGroup').find((r) => r.id === id)
+
+function groupOrFail(conn: DbConnection, id: string) {
+  const row = groupRow(conn, id)
+  if (!row)
+    throw new Error(
+      'Access group not found, or you are not a member of its organisation.',
+    )
+  return { orgId: row.orgId, group: decodeAccessGroup(row) }
+}
+
+const members = (conn: DbConnection) =>
+  docs(conn, 'accessGroupMember').map(decodeGroupMember)
+
+/** The organisation's members (`my_member`), by name. */
+function people(conn: DbConnection, orgId: string): Array<OrgMember> {
+  return [...watch<MemberRowLike>(conn, 'member').iter()]
+    .filter((m) => m.orgId === orgId)
+    .map((m) => ({ user_id: m.userId, name: m.name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function getAccessGroups(
+  organizationId: string,
+): Promise<Array<AccessGroup>> {
+  return accessGroupsInOrder(accessGroups(await session(), organizationId))
+}
+
+export async function getAccessGroup(id: string): Promise<AccessGroup> {
+  return groupOrFail(await session(), id).group
+}
+
+/** The five default groups (create_default_access_groups); refused once they exist. */
+export async function createDefaultAccessGroups(
+  organizationId: string,
+): Promise<Array<AccessGroup>> {
+  const conn = await session()
+  return write(
+    conn,
+    'accessGroup',
+    () => conn.reducers.createDefaultAccessGroups({ orgId: organizationId }),
+    () => {
+      const groups = accessGroups(conn, organizationId)
+      return groups.some((g) => g.is_default)
+        ? accessGroupsInOrder(groups)
+        : undefined
+    },
+  )
+}
+
+export async function createAccessGroup(
+  group: Omit<AccessGroup, 'id' | 'created_at' | 'updated_at'>,
+): Promise<AccessGroup> {
+  const conn = await session()
+  const orgId = group.organization_id
+  const before = new Set(docs(conn, 'accessGroup').map((r) => r.key))
+  return write(
+    conn,
+    'accessGroup',
+    () =>
+      conn.reducers.createAccessGroup({
+        orgId,
+        groupJson: JSON.stringify(accessGroupInput(group)),
+      }),
+    () =>
+      resolveCreated(
+        docs(conn, 'accessGroup'),
+        before,
+        orgId,
+        (g: AccessGroup) => g.slug === group.slug,
+        decodeAccessGroup,
+      ),
+  )
+}
+
+export async function updateAccessGroup(
+  id: string,
+  updates: Partial<
+    Omit<AccessGroup, 'id' | 'organization_id' | 'created_at' | 'updated_at'>
+  >,
+): Promise<AccessGroup> {
+  const conn = await session()
+  const { orgId, group } = groupOrFail(conn, id)
+  return write(
+    conn,
+    'accessGroup',
+    () =>
+      conn.reducers.updateAccessGroup({
+        orgId,
+        groupId: id,
+        patchJson: JSON.stringify(accessGroupPatch(updates)),
+      }),
+    () => {
+      const row = groupRow(conn, id)
+      const g = row && decodeAccessGroup(row)
+      return g && g.updated_at !== group.updated_at ? g : undefined
+    },
+  )
+}
+
+/** Deletes a group with its members and node settings; the module refuses a default group. */
+export async function deleteAccessGroup(id: string): Promise<void> {
+  const conn = await session()
+  const { orgId } = groupOrFail(conn, id)
+  await conn.reducers.deleteAccessGroup({ orgId, groupId: id })
+}
+
+export async function getGroupMembers(
+  groupId: string,
+): Promise<Array<GroupMemberWithProfile>> {
+  const conn = await session()
+  const { orgId } = groupOrFail(conn, groupId)
+  return groupMembersWithProfiles(members(conn), groupId, people(conn, orgId))
+}
+
+/** Members of the organisation, for adding one to a group by name. */
+export async function getOrgMembers(
+  organizationId: string,
+): Promise<Array<OrgMember>> {
+  return people(await session(), organizationId)
+}
+
+function newMember(
+  conn: DbConnection,
+  orgId: string,
+  groupId: string,
+  call: () => Promise<void>,
+  matches: (m: GroupMember) => boolean,
+): Promise<GroupMember> {
+  const before = new Set(docs(conn, 'accessGroupMember').map((r) => r.key))
+  return write(conn, 'accessGroupMember', call, () =>
+    resolveCreated(
+      docs(conn, 'accessGroupMember'),
+      before,
+      orgId,
+      (m: GroupMember) => m.group_id === groupId && matches(m),
+      decodeGroupMember,
+    ),
+  )
+}
+
+/** Adds a member of the organisation to a group; `granted_by` is the caller. */
+export async function addGroupMember(
+  member: Omit<GroupMember, 'id' | 'created_at'>,
+): Promise<GroupMember> {
+  const conn = await session()
+  const { orgId } = groupOrFail(conn, member.group_id)
+  return newMember(
+    conn,
+    orgId,
+    member.group_id,
+    () =>
+      conn.reducers.addAccessGroupMember({
+        orgId,
+        memberJson: JSON.stringify(groupMemberInput(member)),
+      }),
+    (m) => m.user_id === member.user_id && m.user_email === member.user_email,
+  )
+}
+
+/**
+ * Invites an address to a group (invite_access_group_member). No email goes out and the invite
+ * does not attach to an account yet (the module's note says so); `grantedBy` is the caller.
+ */
+export async function inviteMemberByEmail(
+  groupId: string,
+  email: string,
+  _grantedBy: string,
+  validUntil?: string,
+): Promise<GroupMember> {
+  const conn = await session()
+  const { orgId } = groupOrFail(conn, groupId)
+  return newMember(
+    conn,
+    orgId,
+    groupId,
+    () =>
+      conn.reducers.inviteAccessGroupMember({
+        orgId,
+        groupId,
+        email,
+        validUntil: validUntil || undefined,
+      }),
+    (m) => m.user_email === email,
+  )
+}
+
+export async function removeGroupMember(id: string): Promise<void> {
+  const conn = await session()
+  const row = docs(conn, 'accessGroupMember').find((r) => r.id === id)
+  if (!row) return
+  await conn.reducers.removeAccessGroupMember({ orgId: row.orgId, memberId: id })
+}
+
+// ---------------------------------------------------------------------------
+// Trust score (RW3; trust.rs, P16, P17)
+// ---------------------------------------------------------------------------
+
+/**
+ * The organisation's trust row. The module recomputes it on every transparency write and only a
+ * registered service may ask for a recompute (P17), so the web only reads it.
+ */
+export async function getTrustScore(
+  organizationId: string,
+): Promise<TrustScoreSummary | null> {
+  const conn = await session()
+  const row = [...watch<OrgDocRow>(conn, 'trustScore').iter()].find(
+    (r) => r.orgId === organizationId,
+  )
+  return trustSummaryFrom(row?.data)
+}
+
+export async function getTrustScoreHistory(
+  organizationId: string,
+  limit = 12,
+): Promise<Array<TrustScoreHistory>> {
+  const conn = await session()
+  return trustHistoryOf(
+    ofOrg(docs(conn, 'trustScoreHistory'), organizationId).map(
+      decodeTrustHistory,
+    ),
+    limit,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Public embed config (RW3; flows.rs:900-990)
+// ---------------------------------------------------------------------------
+
+function embedConfigOf(
+  conn: DbConnection,
+  orgId: string,
+): PublicEmbedConfig | null {
+  const row = [...watch<OrgDocRow>(conn, 'publicEmbedConfig').iter()].find(
+    (r) => r.orgId === orgId,
+  )
+  return row ? (JSON.parse(row.data) as PublicEmbedConfig) : null
+}
+
+/** The embed settings; null until an admin first saves them (the module makes them then). */
+export async function getPublicEmbedConfig(
+  organizationId: string,
+): Promise<PublicEmbedConfig | null> {
+  return embedConfigOf(await session(), organizationId)
+}
+
+export async function updatePublicEmbedConfig(
+  organizationId: string,
+  config: Partial<
+    Omit<
+      PublicEmbedConfig,
+      'id' | 'organization_id' | 'embed_token' | 'created_at' | 'updated_at'
+    >
+  >,
+): Promise<PublicEmbedConfig> {
+  const conn = await session()
+  const was = embedConfigOf(conn, organizationId)?.updated_at
+  return write(
+    conn,
+    'publicEmbedConfig',
+    () =>
+      conn.reducers.updatePublicEmbedConfig({
+        orgId: organizationId,
+        patchJson: JSON.stringify(embedConfigPatch(config)),
+      }),
+    () => {
+      const c = embedConfigOf(conn, organizationId)
+      return c && c.updated_at !== was ? c : undefined
+    },
+  )
+}
+
+/** A new embed token, so embeds with the old one stop working (regenerate_embed_token). */
+export async function regenerateEmbedToken(
+  organizationId: string,
+): Promise<PublicEmbedConfig> {
+  const conn = await session()
+  const was = embedConfigOf(conn, organizationId)?.embed_token
+  return write(
+    conn,
+    'publicEmbedConfig',
+    () => conn.reducers.regenerateEmbedToken({ orgId: organizationId }),
+    () => {
+      const c = embedConfigOf(conn, organizationId)
+      return c && c.embed_token !== was ? c : undefined
+    },
+  )
 }
 
 /** Calls back once per transaction that changes any record this file reads. */

@@ -7,7 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { Verification } from '@/lib/supabase'
+import type { Verification } from '@/lib/types'
 import { SPACETIME_TOKEN_KEY } from '@/lib/proofs'
 import { FileUpload } from '@/components/file-upload'
 import { VerificationViewer } from '@/components/verification-viewer'

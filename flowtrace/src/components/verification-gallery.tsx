@@ -18,8 +18,8 @@ import {
   Video,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
-import type { Verification, VerificationType } from '@/lib/supabase'
-import { VERIFICATION_TRUST_POINTS } from '@/lib/supabase'
+import type { Verification, VerificationType } from '@/lib/types'
+import { VERIFICATION_TRUST_POINTS } from '@/lib/types'
 import { formatDate } from '@/lib/format'
 import { useProofSrc } from '@/lib/proofs'
 import { cn } from '@/lib/utils'

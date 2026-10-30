@@ -15,8 +15,8 @@ The platform provides real-time transaction verification, AI-powered trust scori
 Key architectural decisions:
 
 - **Protected route layouts** -- the `_authenticated` route layout runs a server-side `loader` that calls WorkOS AuthKit's `getAuth()`. Unauthenticated requests redirect to the WorkOS-hosted sign-in page. All child routes (`/dashboard`, `/transactions`, `/flows`, etc.) inherit this protection without per-route auth boilerplate.
-- **Progressive enhancement** -- when WorkOS credentials are absent (dev mode), auth checks are bypassed entirely with a demo organization fallback. When Supabase is unreachable, the org context gracefully degrades to cached/demo data rather than crashing.
-- **Multi-tenant isolation** -- Supabase Row-Level Security (RLS) policies enforce organization boundaries at the database level. A React context (`OrgProvider`) syncs the WorkOS user with a Supabase profile and provides `useOrg()`, `useHasRole()`, and `useCanManage()` hooks throughout the app.
+- **Progressive enhancement** -- when WorkOS credentials are absent (dev mode), auth checks are bypassed entirely with a demo organization fallback. When the books are not connected, the screens say so rather than crashing.
+- **Multi-tenant isolation** -- the SpacetimeDB module's `my_*` views return only the caller's organisations, and its reducers check the caller's member row. A React context (`OrgProvider`) takes the organisation and role from that member row and provides `useOrg()`, `useHasRole()`, and `useCanManage()` hooks throughout the app.
 - **Query architecture** -- TanStack Query with a hierarchical key factory (`['resource', 'id', 'orgId']`), resource-specific stale times (30s for transactions, 5min for nodes), and predicate-based cache invalidation on mutations.
 
 ---
@@ -29,7 +29,7 @@ Key architectural decisions:
 | Routing | TanStack Router | Type-safe routes, layout nesting, loader-based data fetching |
 | Server | Nitro (Vite 7) | Edge-compatible SSR, API routes, middleware |
 | Auth | WorkOS AuthKit | Enterprise SSO (SAML/OIDC), MFA, user management for nonprofits |
-| Database | Supabase PostgreSQL | RLS for multi-tenancy, Edge Functions, Realtime subscriptions |
+| Database | SpacetimeDB module (maincloud) | Per-caller views, reducers, subscriptions; the Supabase client was removed in RW3 |
 | Extensions | PostGIS, pgvector, pgcrypto | Geospatial verification, embedding search, field-level encryption |
 | Styling | Tailwind CSS v4 (CSS-first) | OKLch color system, no config file, CSS variable theming |
 | Components | shadcn/ui + Base UI React | Unstyled primitives with CVA variants, accessible by default |
@@ -41,7 +41,7 @@ Key architectural decisions:
 
 ## Database Design
 
-> Superseded: the Supabase database below is deleted; the books, campaigns, donations, organisation profile and org context now run on the SpacetimeDB module (flowtrace/README.md, Docs/adr/0001-native-ledger.md).
+> Superseded: the Supabase database below is deleted and the web app no longer has a Supabase client (RW3); every record, from the books to proofs, access groups, the trust score and the embed settings, runs on the SpacetimeDB module (flowtrace/README.md, Docs/adr/0001-native-ledger.md). The migrations stay in `supabase/migrations/` as the record of the old RLS rules.
 
 The schema is built through **13 progressive migrations**, each adding a self-contained feature layer with its own tables, indexes, RLS policies, triggers, and functions.
 
