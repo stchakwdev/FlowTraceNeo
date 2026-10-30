@@ -26,7 +26,7 @@ use gpui_kit::{
 use ledger_core::LedgerCommand;
 
 use crate::accounts::Failure;
-use crate::backend::{CampaignWrite, Submission, SubmitResult};
+use crate::backend::{CampaignWrite, ChainWrite, FlowWrite, Submission, SubmitResult};
 use crate::model::{LedgerView, NavEntry};
 use crate::store::LedgerStore;
 use crate::theme::{palette, space, text};
@@ -71,6 +71,30 @@ pub(crate) fn write_campaign<T: 'static>(
     then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
 ) {
     let submission = store.update(cx, |store, _| store.write_campaign(write));
+    settle(this, submission, cx, then);
+}
+
+/// [`submit`] for a flow map write ([`LedgerStore::write_flow`]).
+pub(crate) fn write_flow<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    write: FlowWrite,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.write_flow(write));
+    settle(this, submission, cx, then);
+}
+
+/// [`submit`] for a chain write ([`LedgerStore::write_chain`]).
+pub(crate) fn write_chain<T: 'static>(
+    this: &mut T,
+    store: &Entity<LedgerStore>,
+    write: ChainWrite,
+    cx: &mut Context<T>,
+    then: impl FnOnce(&mut T, SubmitResult, &mut Context<T>) + 'static,
+) {
+    let submission = store.update(cx, |store, _| store.write_chain(write));
     settle(this, submission, cx, then);
 }
 

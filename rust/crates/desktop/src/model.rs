@@ -8,6 +8,7 @@ use std::sync::Arc;
 use ledger_core::LedgerState;
 use ledger_core::types::OrganizationId;
 use ledger_module::transparency::OrgTransparency;
+use ledger_module::transparency::chains::ChainDetails;
 
 use crate::backend::{BackendEvent, ConnectSettings, ConnectionStatus, Organisation};
 
@@ -191,6 +192,8 @@ pub struct LedgerView {
     remote: bool,
     transparency: Option<Arc<OrgTransparency>>,
     transparency_revision: u64,
+    chains: Arc<Vec<ChainDetails>>,
+    chains_revision: u64,
 }
 
 impl LedgerView {
@@ -211,7 +214,33 @@ impl LedgerView {
             remote: false,
             transparency: None,
             transparency_revision: 0,
+            chains: Arc::default(),
+            chains_revision: 0,
         }
+    }
+
+    /// Every chain the caller's organisations are on, either side
+    /// ([`crate::backend::LedgerBackend::chains`]), as [`crate::store::StoreCore`] last read
+    /// them.
+    #[must_use]
+    pub fn chains(&self) -> &Arc<Vec<ChainDetails>> {
+        &self.chains
+    }
+
+    /// Goes up by one every time the chains are replaced.
+    #[must_use]
+    pub fn chains_revision(&self) -> u64 {
+        self.chains_revision
+    }
+
+    /// Replaces the chains. Returns whether they differ from the ones held.
+    pub fn set_chains(&mut self, chains: Vec<ChainDetails>) -> bool {
+        if *self.chains == chains {
+            return false;
+        }
+        self.chains = Arc::new(chains);
+        self.chains_revision += 1;
+        true
     }
 
     /// The selected organisation's transparency records (campaigns, donations, flow nodes,
@@ -368,7 +397,7 @@ impl LedgerView {
                 }
                 // The store re-reads the records from the backend
                 // (`crate::store::StoreCore::apply`).
-                BackendEvent::Transparency { .. } => {}
+                BackendEvent::Transparency { .. } | BackendEvent::Chains => {}
             }
         }
         changed
