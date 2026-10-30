@@ -247,6 +247,9 @@ function waitForResult(conn: DbConnection, requestId: string) {
     results.onInsert(onInsert)
     results.onUpdate(onUpdate)
   })
+  // The timer runs from here, but run() awaits this only after the reducer call returns: a
+  // call slower than the timeout must not leave the rejection unhandled meanwhile.
+  promise.catch(() => {})
   const cached = () => [...results.iter()].find((r) => r.requestId === requestId)
   return { promise, cached, cancel: () => cancel() }
 }
