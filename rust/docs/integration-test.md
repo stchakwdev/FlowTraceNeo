@@ -183,19 +183,49 @@ problem.
 
 ## Nightly (IT2)
 
-The command IT2 should schedule, on a runner with the SpacetimeDB CLI logged in as an operator
-of dev (a CI secret), a Wayland session for the desktop or `--desktop` pointed at a headless
-build, and Playwright's Chromium:
+`.github/workflows/nightly.yml` runs IT1 every day at 03:00 UTC and on `workflow_dispatch`, on
+`ubuntu-latest` with a 60-minute limit, in dummy auth with `--offline-emulated` (no WorkOS
+secrets in CI). It builds the desktop, `it1_probe` and the module from the same commit, installs
+bun 1.4.2, Playwright's Chromium for playwright-core 1.64.0 and the SpacetimeDB CLI 2.12, and
+gives the desktop a display: weston's headless backend (`--backend=headless
+--renderer=pixman`) on `wayland-1`, with Mesa's software Vulkan (lavapipe, `VK_ICD_FILENAMES`)
+for GPUI, so step c1 launches the real binary as it does on a desktop.
 
-```sh
-cd rust/tools && bun run it1 --url https://maincloud.spacetimedb.com --db flowtrace-ledger-dev --offline-emulated
-```
+Two variants run in the one job:
 
-On a runner without the dev login, `bun run it1 --local --offline-emulated` against a SpacetimeDB
-server started in the job proves the same, except that dev carries what is published there. The
-offline unit tests (`src/it1-*.test.ts`: flags and the database guard, the normaliser and the
+| Variant | Target | Runs | Needs |
+|---|---|---|---|
+| local | a SpacetimeDB server started in the job (`spacetime start --listen-addr 127.0.0.1:3100 --in-memory`), the module published as `ft-nightly-<run id>` and deleted by the run | always | nothing |
+| dev | `flowtrace-ledger-dev` on maincloud | on `main`, when the secret below exists; otherwise a visible "Dev variant skipped" notice and a line in the job summary | the secret |
+
+**The secret and its risk.** The dev variant reads `SPACETIMEDB_DEV_CLI_TOML`, the content of the
+dev database owner's `~/.config/spacetime/cli.toml`, writes it to the runner's CLI config (mode
+0600, every quoted value masked first, the file never printed and removed after the run) and
+runs `bun run it1 --url https://maincloud.spacetimedb.com --db flowtrace-ledger-dev
+--offline-emulated`. IT1 reads private tables over CLI SQL, which only the owner may do
+(`module-release.md`), so no narrower login works. That login is the same SpacetimeDB account
+that owns production `flowtrace-ledger`, and its token is not scoped to dev: IT1's guards allow
+only `call` and `sql` on a `-dev` database, but anyone able to push a workflow to the repository
+could use the secret for anything the account may do, publish and delete on production
+included. The secret is not set; adding it is the user's decision. A narrower path would need a
+separate SpacetimeDB account that owns only dev (dev republished under it).
+
+**Reading a run.** The job summary carries each run's `summary.md` (one row per step, the last
+line `it1: passed|FAILED (<ids>) in N s; out/it1/<stamp>`) and the dev skip notice. The artifact
+`it1-nightly-<run id>` (14 days) holds `rust/out/it1/` for both variants: `summary.md`,
+`transcript.log`, `command-log.json`, the three report readings, `report-diff.txt` on a
+mismatch, `shots/`, the desktop and web logs, plus `weston.log` and `spacetime.log`. Every `tokens/` folder is left out of the upload. On `main`, a
+failed run opens or comments on one issue titled "Nightly integration run failing", labelled
+`nightly-failure`; the next passing run closes it. Runs on other branches open no issue.
+
+**What it leaves.** The local variant leaves nothing: its server lives in the job. A dev run
+leaves one `it1-<stamp>` organisation on dev each night (next section): the module has no reducer
+that deletes an organisation, so they accumulate until one is added (a module gap for the user)
+or dev is reset.
+
+The offline unit tests (`src/it1-*.test.ts`: flags and the database guard, the normaliser and the
 three-way comparison including a one-minor-unit difference, the frame decoder on real frames)
-already run in the `fixtures` job's `bun test`.
+run in `rust.yml`'s `fixtures` job on every pull request.
 
 ## What a run leaves on dev
 

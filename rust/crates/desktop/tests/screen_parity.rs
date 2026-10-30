@@ -61,7 +61,10 @@ fn table_rows() -> Vec<Vec<String>> {
         .lines()
         .filter_map(|l| {
             let cells: Vec<String> = l.split('|').map(|c| c.trim().to_owned()).collect();
-            cells.get(1)?.starts_with("`/").then(|| cells[1..cells.len() - 1].to_vec())
+            cells
+                .get(1)?
+                .starts_with("`/")
+                .then(|| cells[1..cells.len() - 1].to_vec())
         })
         .collect()
 }
@@ -76,7 +79,10 @@ fn the_screen_parity_table_covers_every_web_route() {
     let routes = web_routes();
     let rows = table_rows();
     let want: BTreeSet<_> = routes.iter().cloned().collect();
-    let have: BTreeSet<_> = rows.iter().map(|r| r[0].trim_matches('`').to_owned()).collect();
+    let have: BTreeSet<_> = rows
+        .iter()
+        .map(|r| r[0].trim_matches('`').to_owned())
+        .collect();
     assert_eq!(want.len(), routes.len(), "a web route is found twice");
     assert_eq!(have.len(), rows.len(), "a row appears twice");
     let missing: Vec<_> = want.difference(&have).collect();
@@ -85,7 +91,11 @@ fn the_screen_parity_table_covers_every_web_route() {
         missing.is_empty() && unknown.is_empty(),
         "rows missing: {missing:?}; rows naming no web route: {unknown:?}"
     );
-    assert_eq!(rows.len(), 38, "the row count in screen-parity.md and the report");
+    assert_eq!(
+        rows.len(),
+        38,
+        "the row count in screen-parity.md and the report"
+    );
 }
 
 #[test]
@@ -110,7 +120,10 @@ fn every_row_names_a_desktop_entry_a_reason_or_the_owning_task() {
             assert!(well_formed, "{path}: a gap names its task, as `gap: DT4`");
         } else {
             let entries = ticked(entry);
-            assert!(!entries.is_empty(), "{path}: the Desktop entry cell is empty");
+            assert!(
+                !entries.is_empty(),
+                "{path}: the Desktop entry cell is empty"
+            );
             for e in entries {
                 assert!(names.contains(e), "{path}: no desktop entry named `{e}`");
                 used.insert(e.to_owned());
@@ -119,5 +132,8 @@ fn every_row_names_a_desktop_entry_a_reason_or_the_owning_task() {
         }
     }
     let unmapped: Vec<_> = names.difference(&used).collect();
-    assert!(unmapped.is_empty(), "desktop entries no web route maps to: {unmapped:?}");
+    assert!(
+        unmapped.is_empty(),
+        "desktop entries no web route maps to: {unmapped:?}"
+    );
 }
