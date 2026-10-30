@@ -6,7 +6,8 @@ status bar, over an in-process backend that runs `ledger-core` in the app. Each 
 (U2 to U9) replaces one placeholder; U10 added the SpacetimeDB backend behind the same trait
 (Configuration, below). DT1 added Dashboard and Campaigns over the module's transparency
 records (Dashboard and Campaigns (DT1), below); DT2 added Flows and Chains (Flows and Chains
-(DT2), below).
+(DT2), below); DT4 added Trust Score, Settings, Access groups and Embed & badges (Trust Score,
+Settings, Access groups and badges (DT4), below).
 
 ## Run
 
@@ -19,6 +20,7 @@ cargo run -p desktop -- --report activities        # Reports, on the statement o
 cargo run -p desktop -- --entry 8 --campaigns preview:e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01
 cargo run -p desktop -- --entry flows --flows year:3     # the flow map on the year, 4th item selected
 cargo run -p desktop -- --entry chains --chains approve  # Chains with the approve dialog open
+cargo run -p desktop -- --entry trust-score               # also settings, access-groups, embed-badges
 cargo run -p desktop -- --server https://maincloud.spacetimedb.com --database flowtrace-ledger-dev
 cargo run -p desktop -- --server http://127.0.0.1:9 --timings on   # offline at once, times on stderr
 cargo run -p desktop -- --config out/auth2/trusted/config.toml --sign-in on   # another config; sign in at once
@@ -26,9 +28,10 @@ cargo run -p desktop -- --config out/auth2/trusted/config.toml --sign-in on   # 
 
 Keys `0` to `9` open the nav entries (`0` Dashboard; `1` to `7` Accounts, Journal, General
 ledger, Spend, Grants, Reconcile, Reports, the keys they had before DT1; `8` Campaigns; `9`
-Flows). Chains has no key, the digits being spent: it opens from the rail or with
-`--entry chains`. `--entry` takes a digit or an entry's name, its label in lower case with
-hyphens (`dashboard`, `flows`, `general-ledger`, `campaigns`, `chains`). Keys work while the books show and no field has focus (the shell only handles keys
+Flows). Chains, Transactions and DT4's four screens have no key, the digits being spent: they
+open from the rail or with `--entry`. `--entry` takes a digit or an entry's name, its label in
+lower case with hyphens and an `&` dropped (`dashboard`, `flows`, `general-ledger`,
+`campaigns`, `chains`, `trust-score`, `settings`, `access-groups`, `embed-badges`). Keys work while the books show and no field has focus (the shell only handles keys
 while its own focus handle is focused, so typing in a field never switches screens). Other
 keys go to the screen showing, except `Page Up`, `Page Down`, `Home` and `End`, which scroll
 the content. On Accounts, `a` opens the chart, `p` the periods and `n` the
@@ -56,6 +59,10 @@ when the app closes.
 | `chains` | Chains view models (DT2): `ChainsView` (incoming and outgoing rows, counts, linked targets), `ChainRow` (when line, access, Chain Trust Score, actions), `describe_access`, `Confirm`, `search` and `OrgOption` for the request dialog, `Review` and `group_hint` for the review dialog, `status_label`, `LEGEND` | no |
 | `transactions` | Transactions view models (DT3): `Filter` (with the web's aliases), `List` (lede, `Counts`, `Row`s, search, `Footer` for one currency, `Notice`), `Detail` (movement, `Side`s, "about USD", the Record `Fact`s, notes), `NewForm` (the web's checks and texts, `Errors`, `parse_amount` into minor units, `amount_hint`, `input`), `node_groups`, `CATEGORIES`, `CURRENCIES`, `default_date`, `added_transaction` (finds the saved row) | no |
 | `verification` | the web's proof vocabulary and proof-screen rules (DT3): `type_label`, `visibility_label` and `visibility_description`, `state_label`, `trust_points`, `MediaKind`, `ATTACH_TYPES`, `accepted` and `describe_accepted`, `format_file_size`, `validate_proof_file`, `read_proof_file`, `ProofRow`, `proofs_meta`, `AttachForm` (typed GPS, `check`), `attach_label`, `attach_failure`, `Zoom`, `viewer_facts`, `viewer_body`, `publish_label` | no |
+| `trust` | Trust Score view models (DT4): `TrustPage` (score, grade, `calculated`, `ScoreChange`, `ComponentRow`s with the module's four weights and "Adds n points.", `history_meta`, `HistoryChart` geometry: floor, ticks, points, labels, `month_label`), `raise_actions` (`RaiseAction`, `RaiseLink`) from `flows::org_stats`, `signals` (`ledger_signals` as percentages), `recalc_error` and the notices | no |
+| `settings` | Settings view models (DT4): `ProfileForm` (`validate`, `shown_errors`, `patch`), `Profile::of`, `ORG_TYPES`, `COUNTRIES`, `CURRENCIES` and their labels, `is_slug`, `normalise_slug`, `slug_hint`, `save_status`, `public_patch` and `public_status` ("Show on public pages"), `lede`, `links` | no |
+| `access_groups` | Access groups view models (DT4): `rows` (`GroupRow`, `Cell`), `in_order`, `scope_label`/`scope_hint`, `ProofDepth`, `member_rows` (`MemberRow`, `Term`, chips), `addable`, `check_invite` (`Invite`, `InviteErrors`, `is_email`), `GroupForm` (`slugify`, `validate`, `new_group`, `patch`), `Flag` with `SEE_FLAGS`/`DO_FLAGS`, dialog titles and texts | no |
+| `badge` | the Trust Score badge (DT4): `BadgeStyle`, `Badge` (`score`, `grade`: widths, height, colours as `badge-utils.ts`), `score_color`, `escape_xml`, `shown_label`, `form_encode`, `badge_url`, `html_snippet`, `markdown_snippet` (byte for byte the web's) | no |
 | `web_format` | the web's `lib/format.ts` over minor units: `format_amount`, `format_money`, `format_compact`, `format_date`, `format_short_date`, `format_date_time` (UTC) and `format_date_time_eat` | no |
 | `accounts` | Accounts screen view models: `account_rows` (tree and balances), `NewAccountForm`, `EditAccountForm`, `fiscal_years`, `PeriodRow`, `Pending` (reopen, lock, year-end close), `Failure` (engine messages), `format_minor`, `format_date` | no |
 | `theme` | `DESIGN.md` tokens: `LIGHT`/`DARK` palettes in OKLCH, `text`, `space`, `radius`; `apply(mode, cx)` | `apply` only |
@@ -65,7 +72,7 @@ when the app closes.
 | `journal` | Journal view models: `entry_rows` (latest first, totals, funds), `StatusCounts`, `JournalFilter` (status, source, period, text), `source_choices`, `period_choices`, `list_notice`, `list_footer`, `EntryView` (lines, facts, audit trail, reversal links, `actions_for` by status, post and delete commands), `ReverseForm`, `DeleteDialog`, `override_reason`, `format_signed` | no |
 | `entry_form` | Manual entry form and CSV import view models: `EntryForm` (lines, `set_debit`/`set_credit`, `set_fund`, `balance`, `field_errors`, `issues`, `summary`, `save_command`, `post_commands`, `from_draft`), `Balance`, `account_choices`, `tag_choices`, `ImportPreview`, `read_import_file` | no |
 | `claims` | Spend claims view models: `claim_rows`, `filter_counts`, `list_notice`, `ClaimForm` (lines, `set_fund`, `total`, `command`), `parse_day_month_year`, pickers, `ClaimDetail` (trail, next step, actions, `Posting` with the grants hit), `ReimburseForm`, `has_overridable` | no |
-| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign`; `panels::flows::FlowsPanel` and `panels::chains::ChainsPanel` (DT2), `panels::write_flow`, `panels::write_chain`; `panels::transactions::TransactionsPanel` (DT3, with the `new_form` child module) and `panels::proof_section::ProofsSection` (gallery, `attach` panel and `viewer`, shared by the transaction, claim and bill pages) | yes |
+| `panels` | placeholder panels and shared pieces: `page_title`, `section_header`, `demo_tag`, and the form pieces `field`, `choice`, `tag`, `hint`, `failure_box`, `form_buttons`; `panels::accounts::AccountsPanel` (U2), `panels::spend::SpendPanel` (U5) hosting `panels::bills::BillsPanel` (U6); `Pick`/`PickState` id-valued select items; `panels::dashboard::DashboardPanel` and `panels::campaigns::CampaignsPanel` (DT1, the latter with `manage` and `new_form` child modules), `panels::write_campaign`; `panels::flows::FlowsPanel` and `panels::chains::ChainsPanel` (DT2), `panels::write_flow`, `panels::write_chain`; `panels::transactions::TransactionsPanel` (DT3, with the `new_form` child module) and `panels::proof_section::ProofsSection` (gallery, `attach` panel and `viewer`, shared by the transaction, claim and bill pages); `panels::trust_score::TrustScorePanel` (with the `OpenScreen` and `OpenTransactions` events), `panels::settings::SettingsPanel`, `panels::access_groups::AccessGroupsPanel` (with the `form` child module) and `panels::embed_badges::EmbedBadgesPanel` (DT4), `panels::write_settings` | yes |
 | `reconcile` | Reconcile view models: `bank_rows`, `overview`, `NewBankForm`, `ImportPreview` (parse, skipped rows, money in and out, `repeats` as the engine dedupes), `LineStatus` and `status_of`, `line_rows`, `candidates`, `position`, `auto_match_summary`, the `bank.add` and `statement.*` command builders, `PostForm`, `post_accounts` | no |
 | `statements` | the financial statements as rows: `ReportKind`, `ReportForm` (parameters and validation), `presets`, `statement` (tables, key figures, footing checks), `csv_rows`/`export_csv`/`write_export`, `format_minor`, `format_compact`, `format_date`, `to_fixed` | no |
 | `proofs` | proof files through the proofs Worker (`../../../workers/proofs/README.md`): `sniff`, `check`, `read_file` (25 MB, photos and PDF), `SCREEN_MAX_BYTES` (10 MB), `ProofsClient` (`upload`, `signed_url`, `fetch_bytes`, over ureq), `AttachList` (the files on a form), `LinkKind` (claim, bill, transaction), `ProofDetails` and `Gps`, `new_verification` and `new_verification_for` (the record for `create_verification`) | no |
@@ -102,7 +109,9 @@ pub enum BackendEvent {
 
 DT1 and DT2 added, with defaults that refuse or read nothing: `transparency(org)`,
 `write_campaign(org, CampaignWrite)`, `write_flow(org, FlowWrite)`, `chains()`,
-`chain_activity(id)`, `public_organizations()` and `write_chain(ChainWrite)`.
+`chain_activity(id)`, `public_organizations()` and `write_chain(ChainWrite)`; DT4 added
+`write_settings(org, SettingsWrite)`, `public_badges()` and `org_members(org)` (the actor by
+default; the live backend's member rows).
 
 A successful `submit` sends one `BackendEvent::Ledger` with the new books; a refused one sends
 nothing and changes nothing. Snapshots are immutable `Arc`s: the backend applies a command to a
@@ -602,6 +611,64 @@ header). Shots (when a display is available): `docs/screens/dt2-flows.png`,
 `dt2-flow-edge.png`, `dt2-chains.png`, `dt2-chain-approve.png`, taken as in Screenshots above
 with `--entry flows --flows month`, `--entry flows --flows month:3` (the month's three donors come first, so item 3 is the first line), `--entry chains` and
 `--entry chains --chains approve`.
+
+## Trust Score, Settings, Access groups and badges (DT4)
+
+Four entries under "Transparency", with no keys (`--entry trust-score`, `settings`,
+`access-groups`, `embed-badges`). Writes are `SettingsWrite` through `panels::write_settings`:
+`UpdateProfile`, `CreateDefaultGroups`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`,
+`AddMember`, `InviteMember`, `RemoveMember`, `UpdateEmbedConfig`, `RegenerateEmbedToken` and
+`RecomputeTrust`, each the module reducer of the same name; the in-process backend runs the
+module's own rules (`plan::update_organization` and the group rules, `flows::update_embed_config`,
+`trust::recompute`), a public link unique across the organisations it holds.
+
+**Trust Score** is the web's `routes/_authenticated/trust-score.tsx`: the header with
+"calculated {date}" and "Recalculate score" (`r`; `recompute_trust`, any member, which appends a
+history point; "Recalculating…" and the web's error line), the Score section with "/ 100",
+"Grade X" and the Since rows, "How it is made" with the module's four parts at 32, 24, 24 and 20
+percent (pre-decision P16; Independent review reads "Not yet scored" while the model source is
+neutral), each with its coverage bar and "Adds n points.", the History chart, "How to raise it"
+(links open Transactions on the filter or the one flagged movement) or "Nothing outstanding",
+and "Ledger signals" from the books (links open Reconcile and Grants). The chart is a canvas:
+grid lines at the ticks (floor `max(0, floor((min - 5) / 10) * 10)`, step 25 up to a floor of
+50, else 10), the score line 2.5 px, 6 px square dots, the last one 12 px in a paper ring with
+its score printed up and to the left, month labels "Jul 25" in UTC, every second one past six
+points ending on the latest.
+
+**Settings** is `routes/_authenticated/settings/index.tsx`: the "Organisation profile" form
+(Name with its hint, Type, Country, Reporting currency "KES · Kenyan shilling", Public link
+name lowercased and trimmed as typed with the "flowtrace.app/..." hint; the web's checks and
+texts; "Save profile" while changed, "Discard changes", "Saved. Your profile is up to date." or
+"Not saved. ..."), then "Access and sharing" with the "Show on public pages" switch (`is_public`
+alone, as RW3's `PublicPagesSwitch`) and links to Access groups (`a`), Embed & badges (`e`) and
+Chains.
+
+**Access groups** is `settings/access-groups.tsx`: the table (Group | Sees | Amounts | Proofs |
+Who handled it | Edits flows | Edits transactions | Manages people | Members, "Default ·
+Public" or "Custom", the footnote), "No access groups yet" with "Create the standard groups"
+and "Create group", the selected group's members ("Member" or "Invited" since a date; "No end
+date", "Until ..." or "Expired ..." with the chain line pattern; the legend), "Add a member"
+(the organisation's members not in the group) and "Invite someone" (the web's checks, "Access
+ends (optional)" as day/month/year, "{email} is invited to {group}."), and the create, edit,
+delete and remove dialogs with the web's titles and texts. Keys: `n` create, `e` edit, `d`
+delete the selected custom group, up and down select, Esc closes a dialog.
+
+**Embed & badges** is the "Trust Score badge" section of `settings/embed.tsx`: Style (Flat,
+"Flat, square corners", Large, Plastic), Label (24 characters, "Trust Score" when blank), the
+live preview drawn as two divs per `badge-utils.ts` (widths from the escaped label's length,
+20 px or 28 px and capitals for Large, value blue from 60, grey from 40, else orange), the
+score and grade grids (`BadgePreviewGrid`), and "HTML, for websites" and "Markdown, for
+READMEs and docs" with Copy code (`h`, `m`), the codes on `web_url` byte for byte the web's
+(the badge URL form-encoded as `URLSearchParams` writes it). The campaign widget section names
+how many campaigns are ready and opens Campaigns, where DT1 copies each widget's code.
+
+Tests: `src/trust/tests.rs`, `src/settings/tests.rs`, `src/access_groups/tests.rs`,
+`src/badge/tests.rs` (snippets checked against the web's own output under bun), the backend,
+store and fake-client tests, and the nav tests in `src/model.rs`. `tests/live_settings.rs` is
+the live check (ignored; see its header). Shots (when a display is available):
+`docs/screens/dt4-trust-score.png`, `dt4-access-groups.png`, `dt4-settings.png`,
+`dt4-embed-badges.png`, taken as in Screenshots above with `--entry trust-score`, `--entry
+access-groups`, `--entry settings` and `--entry embed-badges`.
 
 ## Transactions and proofs (DT3)
 
