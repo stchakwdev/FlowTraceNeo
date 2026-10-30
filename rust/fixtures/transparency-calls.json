@@ -1981,7 +1981,7 @@
   "fixture": "transparency-calls",
   "sources": [
     "flowtrace/src/lib/demo/api.ts",
-    "flowtrace/src/lib/supabase.ts#getVerificationVisibility"
+    "flowtrace/src/lib/types.ts#getVerificationVisibility"
   ],
   "store": "transparency-dataset.json#/store"
 }

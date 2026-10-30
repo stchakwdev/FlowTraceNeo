@@ -13690,8 +13690,8 @@
     ]
   ],
   "sources": [
-    "flowtrace/src/lib/supabase.ts#calculateTrustScore",
-    "flowtrace/src/lib/supabase.ts#getTrustGrade",
+    "flowtrace/src/lib/types.ts#calculateTrustScore",
+    "flowtrace/src/lib/types.ts#getTrustGrade",
     "flowtrace/src/lib/demo/api.ts#calculateTrustScoreAPI"
   ]
 }
