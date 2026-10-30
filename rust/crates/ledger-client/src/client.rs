@@ -23,11 +23,12 @@ use std::time::Duration;
 use ledger_core::types::LedgerState;
 use ledger_core::{CommandResult, LedgerCommand};
 use ledger_module::transparency::flows::{
-    FlowNodePatch, NewFlowNode, NewTransaction, NodeVisibilitySettings, TransactionPatch,
-    TransactionVisibilitySettings,
+    EmbedConfigPatch, FlowNodePatch, NewFlowNode, NewTransaction, NodeVisibilitySettings,
+    TransactionPatch, TransactionVisibilitySettings,
 };
 use ledger_module::transparency::types::{
-    AccessType, CampaignPatch, NewCampaign, NewDonation, NewVerification, PaymentStatus,
+    AccessGroupPatch, AccessType, CampaignPatch, NewAccessGroup, NewCampaign, NewDonation,
+    NewGroupMember, NewVerification, OrganizationPatch, PaymentStatus,
 };
 use spacetimedb_sdk::__codegen::InternalError;
 use spacetimedb_sdk::{DbContext as _, Table, TableWithPrimaryKey};
@@ -52,14 +53,18 @@ use crate::module_bindings::{
     MyTrustScoreTableAccess as _, MyVendorTableAccess as _,
     MyVerificationAccessLogTableAccess as _, MyVerificationTableAccess as _,
     PublicBadgeTableAccess as _, PublicCampaignTableAccess as _,
-    PublicOrganizationTableAccess as _, approve_chain as _, cancel_chain_request as _,
-    create_campaign as _, create_flow_node as _, create_org_ledger as _, create_transaction as _,
-    create_verification as _, delete_campaign as _, import_books as _,
+    PublicOrganizationTableAccess as _, add_access_group_member as _, approve_chain as _,
+    cancel_chain_request as _, create_access_group as _, create_campaign as _,
+    create_default_access_groups as _, create_flow_node as _, create_org_ledger as _,
+    create_transaction as _, create_verification as _, delete_access_group as _,
+    delete_campaign as _, import_books as _, invite_access_group_member as _,
     link_transaction_entries as _, log_verification_access as _, mark_published as _,
-    record_donation as _, reject_chain as _, remove_node_visibility as _,
+    recompute_trust as _, record_donation as _, regenerate_embed_token as _, reject_chain as _,
+    remove_access_group_member as _, remove_node_visibility as _,
     remove_transaction_visibility as _, request_chain as _, revoke_chain as _, run_command as _,
-    set_node_visibility as _, set_transaction_visibility as _, update_campaign as _,
-    update_chain_permissions as _, update_donation_status as _, update_flow_node as _,
+    set_node_visibility as _, set_transaction_visibility as _, update_access_group as _,
+    update_campaign as _, update_chain_permissions as _, update_donation_status as _,
+    update_flow_node as _, update_organization_profile as _, update_public_embed_config as _,
     update_transaction as _,
 };
 use crate::status::{
@@ -745,6 +750,155 @@ impl SpacetimeClient {
         })
     }
 
+    /// Changes the organisation's profile field by field (`update_organization_profile`;
+    /// `updateOrganization`, `api.ts:146-160`; `plan::update_organization`): a member who can
+    /// close periods; a public link another organisation holds is refused as `SLUG_TAKEN`.
+    pub fn update_organization_profile(
+        &self,
+        org_id: &str,
+        patch: &OrganizationPatch,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(patch) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .update_organization_profile_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Adds the five default access groups (`create_default_access_groups`,
+    /// `plan::create_default_access_groups`): a member who can close periods; refused when any
+    /// default group exists.
+    pub fn create_default_access_groups(&self, org_id: &str) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers
+                .create_default_access_groups_then(org_id.to_owned(), done)
+        })
+    }
+
+    /// Adds an access group (`create_access_group`; `createAccessGroup`, `api.ts:585-596`): a
+    /// member who can close periods.
+    pub fn create_access_group(&self, org_id: &str, group: &NewAccessGroup) -> Ticket<()> {
+        let json = match serde_json::to_string(group) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .create_access_group_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Changes an access group field by field, permissions whole (`update_access_group`;
+    /// `updateAccessGroup`, `api.ts:598-609`): a member who can close periods.
+    pub fn update_access_group(
+        &self,
+        org_id: &str,
+        group_id: &str,
+        patch: &AccessGroupPatch,
+    ) -> Ticket<()> {
+        let json = match serde_json::to_string(patch) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers.update_access_group_then(
+                org_id.to_owned(),
+                group_id.to_owned(),
+                json,
+                done,
+            )
+        })
+    }
+
+    /// Deletes a custom access group and its members (`delete_access_group`;
+    /// `deleteAccessGroup`, `api.ts:611-617`): a member who can close periods; default groups
+    /// are refused.
+    pub fn delete_access_group(&self, org_id: &str, group_id: &str) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers
+                .delete_access_group_then(org_id.to_owned(), group_id.to_owned(), done)
+        })
+    }
+
+    /// Puts a person in an access group (`add_access_group_member`; `addGroupMember`,
+    /// `api.ts:654-670`): a member who can close periods; `granted_by` is the caller.
+    pub fn add_access_group_member(&self, org_id: &str, member: &NewGroupMember) -> Ticket<()> {
+        let json = match serde_json::to_string(member) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .add_access_group_member_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Invites an email address to an access group (`invite_access_group_member`;
+    /// `inviteGroupMember`, `api.ts:672-690`): a member who can close periods. No email is sent;
+    /// `valid_until` is a date or `None` for no end.
+    pub fn invite_access_group_member(
+        &self,
+        org_id: &str,
+        group_id: &str,
+        email: &str,
+        valid_until: Option<&str>,
+    ) -> Ticket<()> {
+        let until = valid_until.map(str::to_owned);
+        self.call(|conn, done| {
+            conn.reducers.invite_access_group_member_then(
+                org_id.to_owned(),
+                group_id.to_owned(),
+                email.to_owned(),
+                until,
+                done,
+            )
+        })
+    }
+
+    /// Takes a person out of an access group (`remove_access_group_member`;
+    /// `removeGroupMember`, `api.ts:692-698`): a member who can close periods.
+    pub fn remove_access_group_member(&self, org_id: &str, member_id: &str) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers.remove_access_group_member_then(
+                org_id.to_owned(),
+                member_id.to_owned(),
+                done,
+            )
+        })
+    }
+
+    /// Changes the public embed's settings field by field (`update_public_embed_config`,
+    /// `flows::update_embed_config`): a member who can close periods. No screen uses it yet; the
+    /// web has no form for it.
+    pub fn update_public_embed_config(&self, org_id: &str, patch: &EmbedConfigPatch) -> Ticket<()> {
+        let json = match serde_json::to_string(patch) {
+            Ok(json) => json,
+            Err(e) => return Ticket::ready(Err(e.into())),
+        };
+        self.call(|conn, done| {
+            conn.reducers
+                .update_public_embed_config_then(org_id.to_owned(), json, done)
+        })
+    }
+
+    /// Draws a new embed token, retiring the old one (`regenerate_embed_token`,
+    /// `flows::regenerate_embed_token`): a member who can close periods.
+    pub fn regenerate_embed_token(&self, org_id: &str) -> Ticket<()> {
+        self.call(|conn, done| {
+            conn.reducers
+                .regenerate_embed_token_then(org_id.to_owned(), done)
+        })
+    }
+
+    /// Recalculates the trust score and appends a history point (`recompute_trust`,
+    /// `trust_reducers.rs`; the web's "Recalculate score"): any member.
+    pub fn recompute_trust(&self, org_id: &str) -> Ticket<()> {
+        self.call(|conn, done| conn.reducers.recompute_trust_then(org_id.to_owned(), done))
+    }
+
     /// Sends one reducer call whose ticket resolves with the reducer's outcome.
     fn call(
         &self,
@@ -1275,7 +1429,8 @@ mod tests {
     #![expect(clippy::unwrap_used, reason = "tests may unwrap")]
 
     use super::*;
-    use ledger_module::transparency::types::CampaignStatus;
+    use ledger_core::types::Nullish;
+    use ledger_module::transparency::types::{AccessGroupPermissions, CampaignStatus};
 
     /// The reducer reads `status` as `serde_json::Value::String(status)` parsed into a
     /// `PaymentStatus` (`ledger_module::transparency::reducers::update_donation_status`).
@@ -1401,6 +1556,78 @@ mod tests {
             assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
         }
         client.disconnect();
+    }
+
+    /// DT4's settings, access-group, embed and trust writes take the same path: with no
+    /// connection each resolves at once as disconnected.
+    #[test]
+    fn settings_writes_before_a_connection_resolve_as_disconnected() {
+        let client =
+            SpacetimeClient::connect(ClientConfig::new("http://127.0.0.1:9", "none")).unwrap();
+        let tickets = [
+            client.update_organization_profile("org-1", &OrganizationPatch::default()),
+            client.create_default_access_groups("org-1"),
+            client.create_access_group("org-1", &group()),
+            client.update_access_group("org-1", "g1", &AccessGroupPatch::default()),
+            client.delete_access_group("org-1", "g1"),
+            client.add_access_group_member("org-1", &member()),
+            client.invite_access_group_member("org-1", "g1", "a@example.org", Some("2027-01-01")),
+            client.remove_access_group_member("org-1", "m1"),
+            client.update_public_embed_config("org-1", &EmbedConfigPatch::default()),
+            client.regenerate_embed_token("org-1"),
+            client.recompute_trust("org-1"),
+        ];
+        for ticket in tickets {
+            assert!(matches!(ticket.wait(), Err(ClientError::Disconnected)));
+        }
+        client.disconnect();
+    }
+
+    fn group() -> NewAccessGroup {
+        serde_json::from_value(serde_json::json!({
+            "name": "Auditors", "slug": "auditors", "description": null, "icon": "eye",
+            "color": "#1C5FA8", "permissions": AccessGroupPermissions::default(),
+            "node_scope": "all", "priority": 50,
+        }))
+        .unwrap()
+    }
+
+    fn member() -> NewGroupMember {
+        serde_json::from_value(serde_json::json!({
+            "group_id": "g1", "user_email": "a@example.org",
+        }))
+        .unwrap()
+    }
+
+    /// The settings arguments read back as the module parses them (`deny_unknown_fields`), and
+    /// a patch sends only what it sets, with `null` kept apart from left out.
+    #[test]
+    fn settings_arguments_parse_back_as_the_module_reads_them() {
+        let text = serde_json::to_string(&group()).unwrap();
+        assert_eq!(
+            serde_json::from_str::<NewAccessGroup>(&text).unwrap(),
+            group()
+        );
+        let text = serde_json::to_string(&member()).unwrap();
+        assert_eq!(
+            serde_json::from_str::<NewGroupMember>(&text).unwrap(),
+            member()
+        );
+        let patch = OrganizationPatch {
+            name: Some("Demo NGO".to_owned()),
+            public_slug: Nullish::Null,
+            is_public: Some(true),
+            ..OrganizationPatch::default()
+        };
+        assert_eq!(
+            serde_json::to_string(&patch).unwrap(),
+            r#"{"name":"Demo NGO","public_slug":null,"is_public":true}"#
+        );
+        let patch = AccessGroupPatch {
+            priority: Some(10),
+            ..AccessGroupPatch::default()
+        };
+        assert_eq!(serde_json::to_string(&patch).unwrap(), r#"{"priority":10}"#);
     }
 
     /// The JSON arguments read back as the module's reducers parse them (`parse` in
