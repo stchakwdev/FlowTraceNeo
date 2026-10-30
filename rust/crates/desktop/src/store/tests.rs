@@ -349,7 +349,7 @@ fn selecting_another_organisation_reads_its_records() {
     let (mut store, _rx) = demo_store();
     let empty = store.view().organisations()[1].id.clone();
     assert!(store.select_org(&empty));
-    assert!(store.view().transparency().unwrap().campaigns.is_empty());
+    assert_eq!(store.view().transparency().unwrap().campaigns, []);
 }
 
 #[test]

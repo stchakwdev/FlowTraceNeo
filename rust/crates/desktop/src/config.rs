@@ -15,6 +15,8 @@
 //! workos_issuer = "https://api.workos.com/user_management/client_01..."
 //! # optional; by default https://api.workos.com (the local proof points it at a test server)
 //! workos_api = "https://api.workos.com"
+//! # optional; the web app's address for campaign links and embed code (DT1)
+//! web_url = "https://flowtrace.app"
 //! ```
 //!
 //! The token file is a credential: `ledger_client::TokenFile` writes it with mode 0600 and
@@ -66,6 +68,11 @@ pub struct Config {
     /// The WorkOS API host ([`WorkosSettings::api`]).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub workos_api: Option<String>,
+    /// The web app's address, the origin of the donate links and embed code the Campaigns
+    /// screen copies; [`crate::campaigns::ORIGIN_FALLBACK`] when absent or blank, as the web's
+    /// own fallback (`embed-code-generator.tsx:19`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub web_url: Option<String>,
 }
 
 /// Why the config could not be read or written.
@@ -169,6 +176,18 @@ impl Config {
             database: Some(settings.database.clone()),
             ..self.clone()
         }
+    }
+
+    /// The origin for campaign links and embeds: `web_url` trimmed, without a trailing `/`, else
+    /// [`crate::campaigns::ORIGIN_FALLBACK`].
+    #[must_use]
+    pub fn web_url(&self) -> String {
+        self.web_url
+            .as_deref()
+            .map(|u| u.trim().trim_end_matches('/'))
+            .filter(|u| !u.is_empty())
+            .unwrap_or(crate::campaigns::ORIGIN_FALLBACK)
+            .to_owned()
     }
 
     /// The WorkOS sign-in settings, when a non-blank `workos_client_id` is set.
@@ -401,6 +420,20 @@ mod tests {
         if let Some(dir) = config_dir() {
             assert!(dir.ends_with(APP_DIR));
         }
+    }
+
+    #[test]
+    fn the_web_url_defaults_to_the_webs_fallback_origin() {
+        assert_eq!(Config::default().web_url(), "https://flowtrace.app");
+        let blank = Config {
+            web_url: Some("  ".to_owned()),
+            ..Config::default()
+        };
+        assert_eq!(blank.web_url(), "https://flowtrace.app");
+        let config: Config = toml::from_str("web_url = \"https://books.example.org/\"\n").unwrap();
+        assert_eq!(config.web_url(), "https://books.example.org");
+        let kept = config.remember(&ConnectSettings::default());
+        assert_eq!(kept.web_url, config.web_url, "a connect keeps it");
     }
 
     #[test]

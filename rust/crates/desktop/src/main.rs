@@ -1,9 +1,10 @@
 //! FlowTrace Books desktop app: opens the shell over the in-process backend.
 //!
 //! ```text
-//! desktop [--theme light|dark] [--screen books|connect] [--entry 1-7] [--report <id>]
+//! desktop [--theme light|dark] [--screen books|connect] [--entry 0-8] [--report <id>]
 //!         [--large-books LINES] [--gl-account CODE] [--gl-row N] [--gl-scroll-bench on]
-//!         [--grants list|budgets|<grant id>] [--server <url>] [--database <name>]
+//!         [--grants list|budgets|<grant id>] [--campaigns list|new|<id>|preview:<id>]
+//!         [--server <url>] [--database <name>]
 //!         [--timings on] [--config <path>] [--sign-in on]
 //! ```
 //!
@@ -13,7 +14,8 @@
 //! `--large-books` adds synthetic books with that many posted lines, selected first; the
 //! `--gl-*` flags filter the General ledger on an account code, open a row, or scroll the whole
 //! table once and log the frame times. `--grants` opens the Grants entry on its list, its
-//! budget tab or one grant (with `--entry 5`). `--server` and `--database` open the books on a
+//! budget tab or one grant (with `--entry 5`); `--campaigns` opens Campaigns on its list, the
+//! new-campaign form, one campaign or its preview card (with `--entry 8`). `--server` and `--database` open the books on a
 //! SpacetimeDB server instead of the demo, over `flowtrace-books/config.toml` (README.md,
 //! Configuration); `--timings on` writes the time to the first books and each write's round
 //! trip to stderr. `--config` reads another config file (token files then default to its
@@ -48,7 +50,7 @@ fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
             }
             "--entry" => {
                 launch.nav.entry = NavEntry::from_key(&value)
-                    .with_context(|| format!("--entry is 1 to 7, not {value}"))?;
+                    .with_context(|| format!("--entry is 0 to 8, not {value}"))?;
             }
             "--report" => {
                 launch.report = Some(
@@ -72,6 +74,7 @@ fn parse(mut args: impl Iterator<Item = String>) -> anyhow::Result<Launch> {
                 );
             }
             "--grants" => launch.grants = Some(value),
+            "--campaigns" => launch.campaigns = Some(value),
             "--gl-scroll-bench" => launch.general_ledger.scroll_bench = value == "on",
             "--server" => launch.server = Some(value),
             "--database" => launch.database = Some(value),

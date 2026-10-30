@@ -11,9 +11,12 @@ use ledger_module::transparency::OrgTransparency;
 
 use crate::backend::{BackendEvent, ConnectSettings, ConnectionStatus, Organisation};
 
-/// One entry of the left navigation, in display order. Each is one screen task (U2 to U9).
+/// One entry of the left navigation, in display order. Each is one screen task (U2 to U9,
+/// DT1).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NavEntry {
+    /// Key figures, funding by donor and recent movements (DT1).
+    Dashboard,
     /// Chart of accounts and fiscal periods (U2).
     Accounts,
     /// Journal entries and manual entry (U3).
@@ -28,11 +31,15 @@ pub enum NavEntry {
     Reconcile,
     /// Financial statements and CSV export (U9).
     Reports,
+    /// Fundraising campaigns, donations, the preview card and embed code (DT1).
+    Campaigns,
 }
 
 impl NavEntry {
-    /// Every entry, in navigation order.
-    pub const ALL: [Self; 7] = [
+    /// Every entry, in navigation order: the rail's sections of `flowtrace/src/lib/navigation.ts`
+    /// (Dashboard alone, the books, then Transparency).
+    pub const ALL: [Self; 9] = [
+        Self::Dashboard,
         Self::Accounts,
         Self::Journal,
         Self::GeneralLedger,
@@ -40,12 +47,26 @@ impl NavEntry {
         Self::Grants,
         Self::Reconcile,
         Self::Reports,
+        Self::Campaigns,
     ];
+
+    /// The rail section heading the entry sits under (`navSections`, `navigation.ts:16-44`):
+    /// none for Dashboard, `Books` for the ledger screens, `Transparency` for Campaigns.
+    #[must_use]
+    pub fn section(self) -> Option<&'static str> {
+        match self {
+            Self::Dashboard => None,
+            Self::Campaigns => Some("Transparency"),
+            _ => Some("Books"),
+        }
+    }
 
     /// The label in the navigation and the panel title.
     #[must_use]
     pub fn label(self) -> &'static str {
         match self {
+            Self::Dashboard => "Dashboard",
+            Self::Campaigns => "Campaigns",
             Self::Accounts => "Accounts",
             Self::Journal => "Journal",
             Self::GeneralLedger => "General ledger",
@@ -60,6 +81,8 @@ impl NavEntry {
     #[must_use]
     pub fn summary(self) -> &'static str {
         match self {
+            Self::Dashboard => "Key figures, funding received by donor and recent movements.",
+            Self::Campaigns => "Fundraising campaigns, donations, the preview card and embed code.",
             Self::Accounts => {
                 "The chart of accounts and the fiscal periods, with closing and locking."
             }
@@ -72,10 +95,13 @@ impl NavEntry {
         }
     }
 
-    /// The key that opens this entry: `1` for the first through `7` for the last.
+    /// The key that opens this entry: `0` for Dashboard, `1` to `7` for the books screens in
+    /// order (the keys they had before DT1), `8` for Campaigns.
     #[must_use]
     pub fn key(self) -> &'static str {
         match self {
+            Self::Dashboard => "0",
+            Self::Campaigns => "8",
             Self::Accounts => "1",
             Self::Journal => "2",
             Self::GeneralLedger => "3",
@@ -86,7 +112,7 @@ impl NavEntry {
         }
     }
 
-    /// The entry a key opens, for the keys `1` to `7`.
+    /// The entry a key opens, for the keys `0` to `8`.
     #[must_use]
     pub fn from_key(key: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|entry| entry.key() == key)
@@ -128,7 +154,7 @@ impl Navigation {
         self.screen = Screen::Books;
     }
 
-    /// Handles a key pressed with no modifier. Keys `1` to `7` select their entry while the
+    /// Handles a key pressed with no modifier. Keys `0` to `8` select their entry while the
     /// books show; on the connect screen they belong to the form's fields. Returns whether the
     /// key was taken.
     pub fn press_key(&mut self, key: &str) -> bool {
@@ -516,20 +542,26 @@ mod tests {
     }
 
     #[test]
-    fn nav_has_the_seven_entries_in_order() {
+    fn nav_has_the_nine_entries_in_order() {
         let labels: Vec<_> = NavEntry::ALL.iter().map(|e| e.label()).collect();
         assert_eq!(
             labels,
             [
+                "Dashboard",
                 "Accounts",
                 "Journal",
                 "General ledger",
                 "Spend",
                 "Grants",
                 "Reconcile",
-                "Reports"
+                "Reports",
+                "Campaigns"
             ]
         );
+        let sections: Vec<_> = NavEntry::ALL.iter().map(|e| e.section()).collect();
+        assert_eq!(sections[0], None);
+        assert!(sections[1..8].iter().all(|s| *s == Some("Books")));
+        assert_eq!(sections[8], Some("Transparency"));
         for entry in NavEntry::ALL {
             assert_ne!(entry.summary(), "");
             assert!(entry.summary().is_ascii(), "no emoji: {}", entry.summary());
@@ -537,13 +569,18 @@ mod tests {
     }
 
     #[test]
-    fn keys_one_to_seven_map_to_the_entries_and_back() {
+    fn keys_zero_to_eight_map_to_the_entries_and_back() {
         for (i, entry) in NavEntry::ALL.into_iter().enumerate() {
-            let key = (i + 1).to_string();
+            let key = i.to_string();
             assert_eq!(entry.key(), key);
             assert_eq!(NavEntry::from_key(&key), Some(entry));
         }
-        for key in ["0", "8", "a", "", "11", "F1"] {
+        assert_eq!(
+            NavEntry::from_key("3"),
+            Some(NavEntry::GeneralLedger),
+            "kept from U1"
+        );
+        for key in ["9", "a", "", "11", "F1"] {
             assert_eq!(NavEntry::from_key(key), None, "{key:?}");
         }
     }

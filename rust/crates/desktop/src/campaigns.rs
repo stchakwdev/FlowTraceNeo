@@ -901,77 +901,9 @@ impl CampaignPage {
             .filter(|d| d.campaign_id == c.id)
             .collect();
         donations.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-        let category = c.category.as_deref().map_or_else(
-            || "None".to_owned(),
-            |k| {
-                let mut chars = k.chars();
-                chars
-                    .next()
-                    .map_or_else(String::new, |f| f.to_uppercase().chain(chars).collect())
-            },
-        );
         let funds = report.campaign.target_node.as_ref().map(|n| n.name.clone());
-        let details = vec![
-            ("Target", format_money(c.target_amount, cur)),
-            (
-                "Funds",
-                funds
-                    .clone()
-                    .unwrap_or_else(|| "Not tied to one project".to_owned()),
-            ),
-            ("Category", category),
-            ("Started", format_date(&c.starts_at)),
-            (
-                "Ends",
-                c.ends_at
-                    .as_deref()
-                    .map_or_else(|| "No end date".to_owned(), format_date),
-            ),
-            (
-                "Visibility",
-                if c.is_public {
-                    "Public donate page"
-                } else {
-                    "Private"
-                }
-                .to_owned(),
-            ),
-            (
-                "After target",
-                if c.allow_overflow {
-                    "Keeps accepting gifts"
-                } else {
-                    "Closes to new gifts"
-                }
-                .to_owned(),
-            ),
-        ];
-        let spending = report
-            .spending
-            .iter()
-            .map(|x| {
-                let t = &x.transaction;
-                let route = match (&x.from_node, &x.to_node) {
-                    (Some(f), Some(to)) => format!(" \u{b7} {} to {}", f.name, to.name),
-                    (None, Some(to)) => format!(" \u{b7} to {}", to.name),
-                    _ => String::new(),
-                };
-                SpendingRow {
-                    description: t.description.clone(),
-                    amount: format_money(t.amount, &t.currency),
-                    detail: format!("{}{route}", format_short_date(&t.transaction_date)),
-                    status: t.verification_status,
-                    proofs: (t.verification_count > 0).then(|| {
-                        let unit = if t.verification_count == 1 {
-                            "proof"
-                        } else {
-                            "proofs"
-                        };
-                        format!("{} {unit}", t.verification_count)
-                    }),
-                }
-            })
-            .collect();
+        let details = details_of(&c, funds.as_deref());
+        let spending = spending_rows(&report);
         Some(Self {
             can_receive: c.status == CampaignStatus::Active && !timing.ended,
             actions: status_actions(c.status),
@@ -1009,6 +941,82 @@ impl CampaignPage {
     pub fn is_open_to_public(&self) -> bool {
         is_open_to_public(&self.campaign)
     }
+}
+
+/// The Details list (`campaigns/$id.tsx:369-381`): label and value.
+fn details_of(c: &Campaign, funds: Option<&str>) -> Vec<(&'static str, String)> {
+    let category = c.category.as_deref().map_or_else(
+        || "None".to_owned(),
+        |k| {
+            let mut chars = k.chars();
+            chars
+                .next()
+                .map_or_else(String::new, |f| f.to_uppercase().chain(chars).collect())
+        },
+    );
+    vec![
+        ("Target", format_money(c.target_amount, &c.currency)),
+        (
+            "Funds",
+            funds.unwrap_or("Not tied to one project").to_owned(),
+        ),
+        ("Category", category),
+        ("Started", format_date(&c.starts_at)),
+        (
+            "Ends",
+            c.ends_at
+                .as_deref()
+                .map_or_else(|| "No end date".to_owned(), format_date),
+        ),
+        (
+            "Visibility",
+            if c.is_public {
+                "Public donate page"
+            } else {
+                "Private"
+            }
+            .to_owned(),
+        ),
+        (
+            "After target",
+            if c.allow_overflow {
+                "Keeps accepting gifts"
+            } else {
+                "Closes to new gifts"
+            }
+            .to_owned(),
+        ),
+    ]
+}
+
+/// "Recent programme spending" (`ProofSpendingList`).
+fn spending_rows(report: &CampaignReport) -> Vec<SpendingRow> {
+    report
+        .spending
+        .iter()
+        .map(|x| {
+            let t = &x.transaction;
+            let route = match (&x.from_node, &x.to_node) {
+                (Some(f), Some(to)) => format!(" \u{b7} {} to {}", f.name, to.name),
+                (None, Some(to)) => format!(" \u{b7} to {}", to.name),
+                _ => String::new(),
+            };
+            SpendingRow {
+                description: t.description.clone(),
+                amount: format_money(t.amount, &t.currency),
+                detail: format!("{}{route}", format_short_date(&t.transaction_date)),
+                status: t.verification_status,
+                proofs: (t.verification_count > 0).then(|| {
+                    let unit = if t.verification_count == 1 {
+                        "proof"
+                    } else {
+                        "proofs"
+                    };
+                    format!("{} {unit}", t.verification_count)
+                }),
+            }
+        })
+        .collect()
 }
 
 fn figure(value: String, label: &str) -> Figure {
@@ -1251,6 +1259,10 @@ pub fn donate_url(origin: &str, slug: &str) -> String {
 }
 
 /// The embed generator's options (`CampaignWidgetEmbed`, `embed-code-generator.tsx:127-131`).
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "the web widget's four independent options"
+)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EmbedOptions {
     /// Dark theme instead of light.
