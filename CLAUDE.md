@@ -165,3 +165,25 @@ workspace under `rust/`. For anything there, `PRIMER.md` and
 `.claude/skills/rust-best-practices/SKILL.md` win over this file. The checks are
 `cd rust && cargo fmt --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked`.
 The web app in `flowtrace/` is the parity reference and is not edited from Rust work.
+
+## Kokonut UI Pro
+
+The web app installs components from Kokonut UI Pro, a private shadcn/ui registry. It is set in
+`flowtrace/components.json` as `@kokonutui-pro` and reads the API key from `KOKO_PRO_TOKEN` in
+`flowtrace/.env.local` (untracked; each worktree that installs components needs its own copy).
+
+- Before building a section, page or animated component from scratch, check Kokonut UI Pro:
+  https://kokonutui.pro/llms.txt lists every docs page with a one-line description (an offline
+  copy is in `flowtrace/docs/kokonutui-pro-catalogue.md`).
+- Install with the shadcn CLI, never by pasting code, run from `flowtrace/`:
+  `bunx shadcn@latest add @kokonutui-pro/<name>`. It writes the files under
+  `flowtrace/src/components/kokonutui-pro/` and installs their dependencies.
+- Never print, log or commit `KOKO_PRO_TOKEN`. A 401 means the key is missing or wrong; ask the
+  user for it rather than guessing.
+- Free components come from the `@kokonutui` registry (kokonutui.com).
+- Installed components are project code. Edit them in place rather than wrapping them.
+- Any docs page is available as Markdown by adding `.md` to its URL, for example
+  https://kokonutui.pro/docs/components/pricings.md
+- The project's design rules in `DESIGN.md` still govern: one accent colour, no gradients or
+  glow, square corners, Phosphor icons, no emoji. A Kokonut section is a starting point to be
+  restyled, not shipped as-is.

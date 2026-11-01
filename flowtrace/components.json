@@ -20,5 +20,10 @@
   },
   "menuColor": "default",
   "menuAccent": "bold",
-  "registries": {}
+  "registries": {
+    "@kokonutui-pro": {
+      "url": "https://kokonutui.pro/api/r/{name}",
+      "headers": { "X-API-Key": "${KOKO_PRO_TOKEN}" }
+    }
+  }
 }
