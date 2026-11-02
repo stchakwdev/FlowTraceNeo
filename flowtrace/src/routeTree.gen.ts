@@ -10,8 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignOutRouteImport } from './routes/sign-out'
+import { Route as MarketingRouteImport } from './routes/_marketing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as DonateSlugRouteImport } from './routes/donate/$slug'
 import { Route as AuthenticatedTrustScoreRouteImport } from './routes/_authenticated/trust-score'
 import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/flows'
@@ -54,14 +55,18 @@ const SignOutRoute = SignOutRouteImport.update({
   path: '/sign-out',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingRoute = MarketingRouteImport.update({
+  id: '/_marketing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const MarketingIndexRoute = MarketingIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => MarketingRoute,
 } as any)
 const DonateSlugRoute = DonateSlugRouteImport.update({
   id: '/donate/$slug',
@@ -270,13 +275,13 @@ const AuthenticatedLedgerEntriesIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/sign-out': typeof SignOutRoute
   '/chains': typeof AuthenticatedChainsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
   '/donate/$slug': typeof DonateSlugRoute
+  '/': typeof MarketingIndexRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
   '/grants/$id': typeof AuthenticatedGrantsIdRoute
   '/grants/budgets': typeof AuthenticatedGrantsBudgetsRoute
@@ -310,13 +315,13 @@ export interface FileRoutesByFullPath {
   '/spend/claims': typeof AuthenticatedSpendClaimsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/sign-out': typeof SignOutRoute
   '/chains': typeof AuthenticatedChainsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
   '/donate/$slug': typeof DonateSlugRoute
+  '/': typeof MarketingIndexRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
   '/grants/$id': typeof AuthenticatedGrantsIdRoute
   '/grants/budgets': typeof AuthenticatedGrantsBudgetsRoute
@@ -351,14 +356,15 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_marketing': typeof MarketingRouteWithChildren
   '/sign-out': typeof SignOutRoute
   '/_authenticated/chains': typeof AuthenticatedChainsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/flows': typeof AuthenticatedFlowsRoute
   '/_authenticated/trust-score': typeof AuthenticatedTrustScoreRoute
   '/donate/$slug': typeof DonateSlugRoute
+  '/_marketing/': typeof MarketingIndexRoute
   '/_authenticated/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
   '/_authenticated/grants/$id': typeof AuthenticatedGrantsIdRoute
   '/_authenticated/grants/budgets': typeof AuthenticatedGrantsBudgetsRoute
@@ -394,13 +400,13 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/sign-out'
     | '/chains'
     | '/dashboard'
     | '/flows'
     | '/trust-score'
     | '/donate/$slug'
+    | '/'
     | '/campaigns/$id'
     | '/grants/$id'
     | '/grants/budgets'
@@ -434,13 +440,13 @@ export interface FileRouteTypes {
     | '/spend/claims'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/sign-out'
     | '/chains'
     | '/dashboard'
     | '/flows'
     | '/trust-score'
     | '/donate/$slug'
+    | '/'
     | '/campaigns/$id'
     | '/grants/$id'
     | '/grants/budgets'
@@ -474,14 +480,15 @@ export interface FileRouteTypes {
     | '/spend/claims'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
+    | '/_marketing'
     | '/sign-out'
     | '/_authenticated/chains'
     | '/_authenticated/dashboard'
     | '/_authenticated/flows'
     | '/_authenticated/trust-score'
     | '/donate/$slug'
+    | '/_marketing/'
     | '/_authenticated/campaigns/$id'
     | '/_authenticated/grants/$id'
     | '/_authenticated/grants/budgets'
@@ -516,8 +523,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  MarketingRoute: typeof MarketingRouteWithChildren
   SignOutRoute: typeof SignOutRoute
   DonateSlugRoute: typeof DonateSlugRoute
   ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
@@ -534,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignOutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_marketing': {
+      id: '/_marketing'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof MarketingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -541,12 +555,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_marketing/': {
+      id: '/_marketing/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof MarketingRoute
     }
     '/donate/$slug': {
       id: '/donate/$slug'
@@ -878,9 +892,21 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface MarketingRouteChildren {
+  MarketingIndexRoute: typeof MarketingIndexRoute
+}
+
+const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingIndexRoute: MarketingIndexRoute,
+}
+
+const MarketingRouteWithChildren = MarketingRoute._addFileChildren(
+  MarketingRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  MarketingRoute: MarketingRouteWithChildren,
   SignOutRoute: SignOutRoute,
   DonateSlugRoute: DonateSlugRoute,
   ApiAuthCallbackRoute: ApiAuthCallbackRoute,

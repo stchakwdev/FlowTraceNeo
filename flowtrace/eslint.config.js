@@ -4,7 +4,7 @@ import { tanstackConfig } from '@tanstack/eslint-config'
 
 export default [
   {
-    ignores: ['.output/**', 'dist/**', 'node_modules/**'],
+    ignores: ['.output/**', '.vercel/**', 'dist/**', 'node_modules/**'],
   },
   ...tanstackConfig,
   {
