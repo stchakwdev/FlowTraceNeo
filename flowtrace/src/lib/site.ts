@@ -30,7 +30,7 @@ export const DEFAULT_OG_IMAGE = {
  * that adds a marketing route adds its path here; `site.test.ts` fails if a
  * path has no route in routeTree.gen.ts.
  */
-export const SITEMAP_PATHS: ReadonlyArray<string> = ['/']
+export const SITEMAP_PATHS: ReadonlyArray<string> = ['/', '/books']
 
 export function absoluteUrl(path: string): string {
   if (/^https?:\/\//.test(path)) return path
