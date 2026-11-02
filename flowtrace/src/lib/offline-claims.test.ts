@@ -91,10 +91,11 @@ describe('offline claim queue', () => {
   it('keeps a claim in the queue when sending it fails', async () => {
     const ok = await enqueueClaim(claim('Goes through'))
     const bad = await enqueueClaim(claim('Fails'))
-    const run = vi.fn(async (input: { id: string }) => {
-      if (input.id === bad.key) throw new TypeError('Failed to fetch')
-      return { type: 'id', id: input.id }
-    })
+    const run = vi.fn((input: { id: string }) =>
+      input.id === bad.key
+        ? Promise.reject(new TypeError('Failed to fetch'))
+        : Promise.resolve({ type: 'id', id: input.id }),
+    )
     const r = await flushQueued(run)
     expect(r.sent).toEqual([ok.key])
     expect(r.failed).toEqual([{ key: bad.key, error: 'Failed to fetch' }])

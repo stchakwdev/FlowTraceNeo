@@ -1,6 +1,6 @@
-import { jwtVerify, createRemoteJWKSet } from 'jose'
-import type { H3Event } from 'h3'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { getHeader } from 'h3'
+import type { H3Event } from 'h3'
 
 // MCP Authentication utilities for Nitro server routes
 // Verifies Bearer tokens from MCP clients against AuthKit
