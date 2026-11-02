@@ -86,11 +86,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(resolved)
   }
 
-  // Prevent flash by not rendering until mounted
-  if (!mounted) {
-    return null
-  }
-
+  // Always render the children: returning null before mount sent an empty
+  // <body> to every non-browser client. The inline script in __root.tsx sets
+  // the theme class before first paint, so there is no flash to prevent.
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
