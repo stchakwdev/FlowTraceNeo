@@ -93,7 +93,7 @@ fn the_screen_parity_table_covers_every_web_route() {
     );
     assert_eq!(
         rows.len(),
-        39,
+        41,
         "the row count in screen-parity.md and the report"
     );
 }

@@ -56,3 +56,17 @@ head helper and one analytics helper. Add your route; do not fork these.
   applicable (marketing); run `cargo test -p desktop --test screen_parity --locked`.
 - Render tests use `renderWithRouter` from `src/test/render-with-router.tsx`;
   test the page's headings, primary CTA and `Route.options.head()`.
+
+## Docs (`/docs`, LP4)
+- Pages are Markdown in `content/docs/<slug>.md` with front matter `title`,
+  `description` (160 characters at most), `order` (unique) and `section`. The
+  first body line is `<!-- Verified against: <repo paths> -->`; re-check those
+  files when you edit a page. No MDX, no other HTML.
+- `src/lib/docs/markdown.ts` parses front matter, renders with `marked` (GFM),
+  gives headings ids and sanitizes with `sanitize-html`. `content.ts` bundles
+  the files with `import.meta.glob(?raw)`; the routes load them through the
+  server functions in `docs-server.ts`, so the browser gets HTML only.
+- Images: WebP under `public/docs/img/`, written as
+  `![alt](/docs/img/x.webp "1280x800")` (the title is the size), two per page
+  at most. `content.test.ts` checks links, images, front matter and sources.
+- The sitemap route adds `DOC_PATHS`; a new page needs no other registration.

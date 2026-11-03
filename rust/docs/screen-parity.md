@@ -2,7 +2,7 @@
 
 Every full path of the web app's router (`FileRoutesByFullPath` in
 `flowtrace/src/routeTree.gen.ts`) with the desktop nav entry that holds the same screen, what
-proves it and the known differences. 39 rows. `crates/desktop/tests/screen_parity.rs` reads the
+proves it and the known differences. 41 rows. `crates/desktop/tests/screen_parity.rs` reads the
 route tree and the rail (`flowtrace/src/lib/navigation.ts`) as text and `NavEntry::ALL` from the
 crate, and fails when a route has no row, a row names a route or desktop entry that does not
 exist, a cell is empty, or a desktop entry has no route.
@@ -35,6 +35,8 @@ show, and links to them, but does not render donate, badge or embed pages itself
 | `/badge/trust/$orgId` | none | n/a: public trust badge image, web-rendered (P20) |  |  |
 | `/embed/campaign/$id` | none | n/a: public embed card, web-rendered (P20); Campaigns previews it and copies the embed code |  |  |
 | `/books` | none | n/a: marketing page about the desktop app and its downloads, web-rendered |  |  |
+| `/docs` | none | n/a: marketing docs index, rendered from Markdown in `flowtrace/content/docs` (P20) |  |  |
+| `/docs/$slug` | none | n/a: one docs page rendered from Markdown, web-rendered (P20); covers the desktop on its FlowTrace Books page |  |  |
 | `/dashboard` | Dashboard | `dashboard` | `dashboard` tests; `tests/live_campaigns.rs` |  |
 | `/transactions` | Transactions | `transactions` | `transactions` tests | |
 | `/transactions/new` | Transactions | `transactions` | `transactions` tests (record form) | a form inside the entry, not a page |

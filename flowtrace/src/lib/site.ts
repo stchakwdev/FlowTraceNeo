@@ -28,9 +28,10 @@ export const DEFAULT_OG_IMAGE = {
 /**
  * Marketing paths that exist as routes and belong in sitemap.xml. A thread
  * that adds a marketing route adds its path here; `site.test.ts` fails if a
- * path has no route in routeTree.gen.ts.
+ * path has no route in routeTree.gen.ts. Each docs page (`/docs/<slug>`) is
+ * added by the sitemap route from `DOC_PATHS` in lib/docs/content.ts.
  */
-export const SITEMAP_PATHS: ReadonlyArray<string> = ['/', '/books']
+export const SITEMAP_PATHS: ReadonlyArray<string> = ['/', '/books', '/docs']
 
 export function absoluteUrl(path: string): string {
   if (/^https?:\/\//.test(path)) return path
