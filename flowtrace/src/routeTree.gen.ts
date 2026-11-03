@@ -14,6 +14,7 @@ import { Route as MarketingRouteImport } from './routes/_marketing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as DonateSlugRouteImport } from './routes/donate/$slug'
+import { Route as MarketingBooksRouteImport } from './routes/_marketing/books'
 import { Route as AuthenticatedTrustScoreRouteImport } from './routes/_authenticated/trust-score'
 import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/flows'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -72,6 +73,11 @@ const DonateSlugRoute = DonateSlugRouteImport.update({
   id: '/donate/$slug',
   path: '/donate/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingBooksRoute = MarketingBooksRouteImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => MarketingRoute,
 } as any)
 const AuthenticatedTrustScoreRoute = AuthenticatedTrustScoreRouteImport.update({
   id: '/trust-score',
@@ -280,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/books': typeof MarketingBooksRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/': typeof MarketingIndexRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/books': typeof MarketingBooksRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/': typeof MarketingIndexRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/flows': typeof AuthenticatedFlowsRoute
   '/_authenticated/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/_marketing/books': typeof MarketingBooksRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/_marketing/': typeof MarketingIndexRoute
   '/_authenticated/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
@@ -405,6 +414,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/books'
     | '/donate/$slug'
     | '/'
     | '/campaigns/$id'
@@ -445,6 +455,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/books'
     | '/donate/$slug'
     | '/'
     | '/campaigns/$id'
@@ -487,6 +498,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/flows'
     | '/_authenticated/trust-score'
+    | '/_marketing/books'
     | '/donate/$slug'
     | '/_marketing/'
     | '/_authenticated/campaigns/$id'
@@ -568,6 +580,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/donate/$slug'
       preLoaderRoute: typeof DonateSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_marketing/books': {
+      id: '/_marketing/books'
+      path: '/books'
+      fullPath: '/books'
+      preLoaderRoute: typeof MarketingBooksRouteImport
+      parentRoute: typeof MarketingRoute
     }
     '/_authenticated/trust-score': {
       id: '/_authenticated/trust-score'
@@ -893,10 +912,12 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface MarketingRouteChildren {
+  MarketingBooksRoute: typeof MarketingBooksRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
 }
 
 const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingBooksRoute: MarketingBooksRoute,
   MarketingIndexRoute: MarketingIndexRoute,
 }
 
