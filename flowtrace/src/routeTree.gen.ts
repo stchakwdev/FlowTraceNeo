@@ -14,7 +14,11 @@ import { Route as MarketingRouteImport } from './routes/_marketing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as DonateSlugRouteImport } from './routes/donate/$slug'
+import { Route as MarketingSecurityRouteImport } from './routes/_marketing/security'
+import { Route as MarketingPricingRouteImport } from './routes/_marketing/pricing'
+import { Route as MarketingFundersRouteImport } from './routes/_marketing/funders'
 import { Route as MarketingBooksRouteImport } from './routes/_marketing/books'
+import { Route as MarketingAboutRouteImport } from './routes/_marketing/about'
 import { Route as AuthenticatedTrustScoreRouteImport } from './routes/_authenticated/trust-score'
 import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/flows'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -74,9 +78,29 @@ const DonateSlugRoute = DonateSlugRouteImport.update({
   path: '/donate/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingSecurityRoute = MarketingSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingPricingRoute = MarketingPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingFundersRoute = MarketingFundersRouteImport.update({
+  id: '/funders',
+  path: '/funders',
+  getParentRoute: () => MarketingRoute,
+} as any)
 const MarketingBooksRoute = MarketingBooksRouteImport.update({
   id: '/books',
   path: '/books',
+  getParentRoute: () => MarketingRoute,
+} as any)
+const MarketingAboutRoute = MarketingAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => MarketingRoute,
 } as any)
 const AuthenticatedTrustScoreRoute = AuthenticatedTrustScoreRouteImport.update({
@@ -286,7 +310,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/about': typeof MarketingAboutRoute
   '/books': typeof MarketingBooksRoute
+  '/funders': typeof MarketingFundersRoute
+  '/pricing': typeof MarketingPricingRoute
+  '/security': typeof MarketingSecurityRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/': typeof MarketingIndexRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
@@ -327,7 +355,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/flows': typeof AuthenticatedFlowsRoute
   '/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/about': typeof MarketingAboutRoute
   '/books': typeof MarketingBooksRoute
+  '/funders': typeof MarketingFundersRoute
+  '/pricing': typeof MarketingPricingRoute
+  '/security': typeof MarketingSecurityRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/': typeof MarketingIndexRoute
   '/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
@@ -371,7 +403,11 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/flows': typeof AuthenticatedFlowsRoute
   '/_authenticated/trust-score': typeof AuthenticatedTrustScoreRoute
+  '/_marketing/about': typeof MarketingAboutRoute
   '/_marketing/books': typeof MarketingBooksRoute
+  '/_marketing/funders': typeof MarketingFundersRoute
+  '/_marketing/pricing': typeof MarketingPricingRoute
+  '/_marketing/security': typeof MarketingSecurityRoute
   '/donate/$slug': typeof DonateSlugRoute
   '/_marketing/': typeof MarketingIndexRoute
   '/_authenticated/campaigns/$id': typeof AuthenticatedCampaignsIdRoute
@@ -414,7 +450,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/about'
     | '/books'
+    | '/funders'
+    | '/pricing'
+    | '/security'
     | '/donate/$slug'
     | '/'
     | '/campaigns/$id'
@@ -455,7 +495,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flows'
     | '/trust-score'
+    | '/about'
     | '/books'
+    | '/funders'
+    | '/pricing'
+    | '/security'
     | '/donate/$slug'
     | '/'
     | '/campaigns/$id'
@@ -498,7 +542,11 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/flows'
     | '/_authenticated/trust-score'
+    | '/_marketing/about'
     | '/_marketing/books'
+    | '/_marketing/funders'
+    | '/_marketing/pricing'
+    | '/_marketing/security'
     | '/donate/$slug'
     | '/_marketing/'
     | '/_authenticated/campaigns/$id'
@@ -581,11 +629,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DonateSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_marketing/security': {
+      id: '/_marketing/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof MarketingSecurityRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/pricing': {
+      id: '/_marketing/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof MarketingPricingRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/funders': {
+      id: '/_marketing/funders'
+      path: '/funders'
+      fullPath: '/funders'
+      preLoaderRoute: typeof MarketingFundersRouteImport
+      parentRoute: typeof MarketingRoute
+    }
     '/_marketing/books': {
       id: '/_marketing/books'
       path: '/books'
       fullPath: '/books'
       preLoaderRoute: typeof MarketingBooksRouteImport
+      parentRoute: typeof MarketingRoute
+    }
+    '/_marketing/about': {
+      id: '/_marketing/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof MarketingAboutRouteImport
       parentRoute: typeof MarketingRoute
     }
     '/_authenticated/trust-score': {
@@ -912,12 +988,20 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface MarketingRouteChildren {
+  MarketingAboutRoute: typeof MarketingAboutRoute
   MarketingBooksRoute: typeof MarketingBooksRoute
+  MarketingFundersRoute: typeof MarketingFundersRoute
+  MarketingPricingRoute: typeof MarketingPricingRoute
+  MarketingSecurityRoute: typeof MarketingSecurityRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
 }
 
 const MarketingRouteChildren: MarketingRouteChildren = {
+  MarketingAboutRoute: MarketingAboutRoute,
   MarketingBooksRoute: MarketingBooksRoute,
+  MarketingFundersRoute: MarketingFundersRoute,
+  MarketingPricingRoute: MarketingPricingRoute,
+  MarketingSecurityRoute: MarketingSecurityRoute,
   MarketingIndexRoute: MarketingIndexRoute,
 }
 
