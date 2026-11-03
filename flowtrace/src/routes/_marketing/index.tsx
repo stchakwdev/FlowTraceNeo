@@ -1,22 +1,57 @@
 import { Fragment, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowRight, Check, Minus } from '@phosphor-icons/react'
+import type { ReactNode } from 'react'
 import { ChainLine } from '@/components/chain-status-badge'
-import { buttonVariants } from '@/components/ui/button'
+import { CampaignCoverage } from '@/components/campaign-progress-bar'
+import MinimalFaq from '@/components/kokonutui-pro/minimal-faq'
+import { demoStarted } from '@/components/marketing/marketing-masthead'
+import { ProofSpendingList } from '@/components/public-campaign-header'
 import {
+  AsOf,
   CoverageBar,
   DemoTag,
   KeyFigure,
   KeyFigures,
   ProofLegend,
   StatusLine,
+  StatusMark,
 } from '@/components/report'
-import { demoStarted } from '@/components/marketing/marketing-masthead'
+import { buttonVariants } from '@/components/ui/button'
+import { track } from '@/lib/analytics'
+import { generateTrustBadgeSVG, scaleSvg } from '@/lib/badge-utils'
+import { accessGroups } from '@/lib/demo/dataset'
+import { formatAmount, formatShortDate } from '@/lib/format'
 import {
-  DEFAULT_DESCRIPTION,
-  organizationJsonLd,
-  pageHead,
-} from '@/lib/site'
+  AUDIENCE,
+  CLOSE,
+  DOORS,
+  FAQ,
+  FUNDERS,
+  HERO,
+  HOW,
+  LIVE_LEDGER,
+  PRODUCTS,
+  TRUST,
+  WORKS,
+} from '@/lib/landing-copy'
+import {
+  BOREHOLE_TRACE,
+  DEMO_SUMMARY,
+  HERO_FIGURES,
+  LANDING_CAMPAIGN,
+  LANDING_ORG,
+  PROOF_KINDS,
+  TRUST_GRADES,
+  TRUST_PARTS,
+} from '@/lib/landing-figures'
+import {
+  DEMO_FIGURES_AS_OF,
+  DEMO_PATH,
+  GITHUB_REPO_URL,
+} from '@/lib/marketing-nav'
+import { PROOF_TYPE_LABEL } from '@/lib/proof-labels'
+import { DEFAULT_DESCRIPTION, organizationJsonLd, pageHead } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
 export const LANDING_TITLE = 'FlowTrace · Every payment, traced to its proof'
@@ -36,163 +71,202 @@ export const Route = createFileRoute('/_marketing/')({
   component: LandingPage,
 })
 
-// Figures from the bundled demo dataset (Demo NGO Kenya, Q1 2026).
-const DONORS = [
-  // Same order as the dashboard: evidenced by amount, awaiting proof last.
-  {
-    name: 'Harambee Health Fund',
-    amount: 8_500_000,
-    status: 'verified' as const,
-  },
-  { name: 'Kisima Water Trust', amount: 4_000_000, status: 'verified' as const },
-  {
-    name: 'Northlight Foundation',
-    amount: 3_200_000,
-    status: 'verified' as const,
-  },
-  {
-    name: 'Pan-African Education Fund',
-    amount: 6_000_000,
-    status: 'pending' as const,
-  },
-]
-const LARGEST = Math.max(...DONORS.map((d) => d.amount))
-
-const TRACE = [
-  {
-    step: 'Received',
-    node: 'Kisima Water Trust',
-    detail: 'KES 4,000,000 into the Project Fund, 10 Jan',
-    proof: 'Bank statement, signed award letter',
-    status: 'verified' as const,
-  },
-  {
-    step: 'Allocated',
-    node: 'Project Fund',
-    detail: 'KES 2,500,000 to Clean Water Turkana, 18 Jan',
-    proof: 'Board approval minute',
-    status: 'verified' as const,
-  },
-  {
-    step: 'Spent',
-    node: 'Borehole, Phase 1',
-    detail: 'Contractor paid for drilling in Turkana',
-    proof: 'Contractor invoice, site photo, GPS fix',
-    status: 'verified' as const,
-  },
-]
-
-const AUDIENCES: Array<{
-  group: string
-  scope: string
-  amounts: boolean
-  proofs: 'full' | 'summary' | false
-  edit: boolean
-}> = [
-  { group: 'Board', scope: 'Everything', amounts: true, proofs: 'full', edit: true },
-  { group: 'Staff', scope: 'Everything', amounts: true, proofs: 'summary', edit: true },
-  { group: 'Donors', scope: 'Their money, downstream', amounts: true, proofs: 'summary', edit: false },
-  { group: 'Partners', scope: 'Assigned nodes only', amounts: true, proofs: false, edit: false },
-  { group: 'Public', scope: 'All flows, names only', amounts: false, proofs: false, edit: false },
-]
-
-const fmt = (n: number) => n.toLocaleString('en-KE')
-
 export function LandingPage() {
   return (
     <>
       <Hero />
-      <TraceSection />
+      <Doors />
+      <Products />
+      <LiveLedger />
+      <HowProofWorks />
       <AudienceSection />
       <FundersSection />
+      <WorksSection />
+      <TrustSection />
+      <MinimalFaq title={FAQ.title} description={FAQ.lede} items={FAQ.items} />
       <Close />
     </>
   )
 }
 
+// ---------------------------------------------------------------------------
+// Shared pieces
+// ---------------------------------------------------------------------------
+
+const QUIET_LINK =
+  'font-medium underline decoration-foreground/40 underline-offset-4 hover:decoration-foreground'
+
+function Section({
+  id,
+  className,
+  children,
+}: {
+  id?: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <section
+      id={id}
+      className={cn('scroll-mt-20 border-t-[3px] border-foreground', className)}
+    >
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-8 lg:py-20">
+        {children}
+      </div>
+    </section>
+  )
+}
+
+function SectionTitle({ children }: { children: ReactNode }) {
+  return <h2 className="text-4xl leading-none sm:text-5xl">{children}</h2>
+}
+
+function Arrow() {
+  return (
+    <ArrowRight
+      className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+      weight="bold"
+    />
+  )
+}
+
+/** A text link with the trailing arrow; app routes go through the router, the rest are anchors. */
+function ArrowLink({
+  href,
+  location,
+  children,
+}: {
+  href: string
+  location: string
+  children: ReactNode
+}) {
+  const className = cn(
+    'group inline-flex min-h-6 items-center gap-1.5 text-sm',
+    QUIET_LINK,
+  )
+  if (href === DEMO_PATH)
+    return (
+      <Link
+        to={DEMO_PATH}
+        onClick={() => demoStarted(location)}
+        className={className}
+      >
+        {children}
+        <Arrow />
+      </Link>
+    )
+  return (
+    <a
+      href={href}
+      onClick={() => track('cta_click', { location })}
+      className={className}
+    >
+      {children}
+      <Arrow />
+    </a>
+  )
+}
+
+function DemoCta({ location }: { location: string }) {
+  return (
+    <Link
+      to={DEMO_PATH}
+      onClick={() => demoStarted(location)}
+      className={cn(buttonVariants({ size: 'lg' }), 'group shrink-0')}
+    >
+      {HERO.primary}
+      <Arrow />
+    </Link>
+  )
+}
+
+const fmt = (n: number) => formatAmount(n)
+
+// ---------------------------------------------------------------------------
+// 1. Hero
+// ---------------------------------------------------------------------------
+
 function Hero() {
   const [focused, setFocused] = useState<string | null>(null)
-  const evidenced = DONORS.filter((d) => d.status === 'verified').reduce(
-    (sum, d) => sum + d.amount,
-    0,
-  )
-  const committed = DONORS.reduce((sum, d) => sum + d.amount, 0)
 
   return (
     <section className="mx-auto grid max-w-7xl gap-12 px-4 pt-12 pb-16 sm:px-8 lg:grid-cols-12 lg:gap-14 lg:pt-16 lg:pb-20">
       <div className="lg:col-span-5 lg:pt-4">
         <h1 className="text-[3.25rem] leading-[0.95] sm:text-7xl lg:text-[5.25rem]">
-          Every shilling, traced to its proof.
+          {HERO.title}
         </h1>
         <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-muted-foreground">
-          FlowTrace records each grant, budget transfer and payment with its
-          receipt, photo or bank statement attached. Then it gives every funder
-          a live view of the money, at exactly the depth you choose.
+          {HERO.lede}
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-          <Link
-            to="/dashboard"
-            onClick={() => demoStarted('hero')}
-            className={cn(buttonVariants({ size: 'lg' }), 'group')}
-          >
-            Explore the demo
-            <ArrowRight
-              className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-              weight="bold"
-            />
-          </Link>
+          <DemoCta location="hero" />
           <a
             href="#how"
-            className="text-base font-medium underline decoration-foreground/40 hover:decoration-foreground"
+            onClick={() => track('cta_click', { location: 'hero_proof' })}
+            className={cn('text-base', QUIET_LINK)}
           >
-            How proof is attached
+            {HERO.secondary}
           </a>
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          The demo opens as Demo NGO Kenya. No account needed.
-        </p>
+        <p className="mt-4 text-sm text-muted-foreground">{HERO.note}</p>
       </div>
 
       <div className="lg:col-span-7">
         <div className="rule-heavy">
-          <div className="flex items-center justify-between border-b border-border py-2">
-            <h2 className="section-label">
-              Key figures, Q1 2026
-            </h2>
-            <DemoTag />
+          <div className="flex min-h-11 items-center justify-between gap-3 border-b border-border py-2">
+            <h2 className="section-label">{HERO.figuresLabel}</h2>
+            <span className="flex items-center gap-3">
+              <AsOf date={DEMO_FIGURES_AS_OF} className="hidden sm:inline" />
+              <DemoTag />
+            </span>
           </div>
           <KeyFigures>
             <KeyFigure
               scale="lg"
-              value="15.7M"
+              value={HERO_FIGURES.evidencedCompact}
               label="KES received with proof"
             />
-            <KeyFigure value="12/16" label="movements evidenced" />
-            <KeyFigure value="4" label="awaiting proof or flagged" />
-            <KeyFigure value="87" label="Trust Score" />
+            <KeyFigure
+              value={HERO_FIGURES.movements}
+              label="movements evidenced"
+            />
+            <KeyFigure
+              value={HERO_FIGURES.awaiting}
+              label="awaiting proof"
+              detail={
+                HERO_FIGURES.flagged > 0 ? (
+                  <StatusMark
+                    status="flagged"
+                    label={`${HERO_FIGURES.flagged} flagged`}
+                  />
+                ) : undefined
+              }
+            />
+            <KeyFigure
+              value={HERO_FIGURES.trustScore}
+              label={`Trust Score, grade ${HERO_FIGURES.trustGrade}`}
+            />
           </KeyFigures>
 
-          <h3 className="section-label mt-6 mb-3">
-            Funding received, by donor
-          </h3>
+          <h3 className="section-label mt-6 mb-3">{HERO.donorsLabel}</h3>
           <ul
             className="space-y-1"
             onMouseLeave={() => setFocused(null)}
             aria-label="Funding by donor"
           >
-            {DONORS.map((donor) => {
-              const dimmed = focused !== null && focused !== donor.name
+            {DEMO_SUMMARY.donorLines.map((donor) => {
+              const dimmed = focused !== null && focused !== donor.id
+              const onlyPending = donor.received === 0 && donor.awaiting > 0
+              const amount = donor.received + donor.awaiting
               return (
-                <li key={donor.name}>
+                <li key={donor.id}>
                   <button
                     type="button"
-                    onMouseEnter={() => setFocused(donor.name)}
-                    onFocus={() => setFocused(donor.name)}
+                    onMouseEnter={() => setFocused(donor.id)}
+                    onFocus={() => setFocused(donor.id)}
                     onBlur={() => setFocused(null)}
-                    aria-label={`${donor.name}: KES ${fmt(donor.amount)}, ${
-                      donor.status === 'pending'
-                        ? 'awaiting proof'
-                        : 'evidenced'
+                    aria-label={`${donor.name}: KES ${fmt(amount)}, ${
+                      onlyPending ? 'awaiting proof' : 'evidenced'
                     }`}
                     className={cn(
                       'grid w-full grid-cols-[1fr_6.5rem] items-center gap-x-3 gap-y-1 py-1.5 text-left text-sm transition-opacity duration-200 motion-reduce:transition-none sm:grid-cols-[12rem_1fr_7.5rem] sm:gap-4',
@@ -203,15 +277,13 @@ function Hero() {
                       {donor.name}
                     </span>
                     <CoverageBar
-                      total={LARGEST}
-                      filled={donor.amount}
-                      evidenced={
-                        donor.status === 'verified' ? donor.amount : undefined
-                      }
-                      pending={donor.status === 'pending'}
+                      total={DEMO_SUMMARY.largest}
+                      filled={onlyPending ? amount : donor.received}
+                      evidenced={onlyPending ? undefined : donor.evidenced}
+                      pending={onlyPending}
                     />
                     <span className="text-right font-semibold tabular-nums">
-                      {fmt(donor.amount)}
+                      {fmt(amount)}
                     </span>
                   </button>
                 </li>
@@ -221,8 +293,8 @@ function Hero() {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
             <ProofLegend />
             <p className="text-xs text-muted-foreground">
-              KES {fmt(evidenced)} evidenced of {fmt(committed)}{' '}
-              committed
+              KES {fmt(DEMO_SUMMARY.evidencedTotal)} evidenced of{' '}
+              {fmt(DEMO_SUMMARY.committedTotal)} committed
             </p>
           </div>
         </div>
@@ -231,66 +303,354 @@ function Hero() {
   )
 }
 
-function TraceSection() {
-  return (
-    <section id="how" className="scroll-mt-20 border-t-[3px] border-foreground">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-8 lg:py-20">
-        <div className="grid gap-6 lg:grid-cols-12">
-          <h2 className="text-4xl leading-none sm:text-5xl lg:col-span-5">
-            One borehole, followed from grant to drill.
-          </h2>
-          <p className="max-w-xl text-lg leading-relaxed text-muted-foreground lg:col-span-6 lg:col-start-7">
-            Each movement is recorded once, with its evidence attached at the
-            moment it happens. Nobody rebuilds the trail at reporting time,
-            because the trail is the record.
-          </p>
-        </div>
+// ---------------------------------------------------------------------------
+// 2. Four doors
+// ---------------------------------------------------------------------------
 
-        <ol className="relative mt-12 grid gap-10 md:grid-cols-3 md:gap-0">
-          {TRACE.map((item, i) => (
-            <li key={item.step} className="relative md:pr-8">
-              <div className="flex items-center" aria-hidden="true">
-                <span className="size-3.5 shrink-0 border-[3px] border-foreground bg-background" />
-                {i < TRACE.length - 1 && (
-                  <StatusLine
-                    status={item.status}
-                    width={600}
-                    className="hidden h-2.5 w-full md:block"
-                  />
-                )}
-              </div>
-              <h3 className="mt-4 text-3xl">{item.node}</h3>
-              <p className="mt-2 text-sm">
-                <span className="font-bold">{item.step}.</span> {item.detail}
-              </p>
-              <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">Proof: </span>
-                {item.proof}
-              </p>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-10 text-sm text-muted-foreground">
-          From the demo dataset. In the app, every line can be opened to its
-          documents.
-        </p>
-      </div>
-    </section>
+function Doors() {
+  return (
+    <Section id="who">
+      <SectionTitle>{DOORS.title}</SectionTitle>
+      <ul className="mt-10 grid border-t border-border sm:grid-cols-2 lg:grid-cols-4">
+        {DOORS.items.map((door, i) => (
+          <li
+            key={door.name}
+            className={cn(
+              'flex flex-col border-b border-border py-6 sm:px-6 lg:border-b-0',
+              i % 2 === 1 && 'sm:border-l',
+              i > 0 && 'lg:border-l',
+              i % 2 === 0 && 'sm:pl-0',
+              i === 0 && 'lg:pl-0',
+              i === 2 && 'lg:pl-6',
+            )}
+          >
+            <h3 className="text-2xl leading-tight">{door.name}</h3>
+            <p className="mt-3 text-base leading-relaxed">{door.text}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{door.outcome}</p>
+            <p className="mt-auto pt-5">
+              <ArrowLink
+                href={door.link.href}
+                location={`door_${door.name.toLowerCase().replace(/\W+/g, '_')}`}
+              >
+                {door.link.label}
+              </ArrowLink>
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Section>
   )
 }
+
+// ---------------------------------------------------------------------------
+// 3. Two products
+// ---------------------------------------------------------------------------
+
+function Products() {
+  return (
+    <Section id="product">
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <SectionTitle>{PRODUCTS.title}</SectionTitle>
+        </div>
+        <p className="max-w-xl text-lg leading-relaxed text-muted-foreground lg:col-span-6 lg:col-start-7">
+          {PRODUCTS.lede}
+        </p>
+      </div>
+      <div className="mt-12 grid gap-12 md:grid-cols-2 md:gap-8">
+        {PRODUCTS.items.map((product) => (
+          <article key={product.name} className="flex flex-col">
+            <img
+              src={product.image.src}
+              width={product.image.width}
+              height={product.image.height}
+              alt={product.image.alt}
+              loading="lazy"
+              decoding="async"
+              className="h-auto w-full border border-border"
+            />
+            <h3 className="mt-6 text-3xl">{product.name}</h3>
+            <p className="mt-3 max-w-xl text-base leading-relaxed">
+              {product.text}
+            </p>
+            <p className="mt-5">
+              <ArrowLink
+                href={product.link.href}
+                location={`product_${product.name.split(' ')[1].toLowerCase()}`}
+              >
+                {product.link.label}
+              </ArrowLink>
+            </p>
+          </article>
+        ))}
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 4. Live public ledger (decision Q18)
+// ---------------------------------------------------------------------------
+
+function LiveLedger() {
+  const { campaign, organization, evidenced_amount, spending } =
+    LANDING_CAMPAIGN
+  return (
+    <Section id="live">
+      <SectionTitle>{LIVE_LEDGER.title}</SectionTitle>
+      <div className="mt-10 rule-heavy">
+        <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-b border-border py-2">
+          <h3 className="section-label">{LIVE_LEDGER.label}</h3>
+          <span className="flex items-center gap-3">
+            <AsOf date={DEMO_FIGURES_AS_OF} />
+            <DemoTag />
+          </span>
+        </div>
+        <div className="grid gap-x-10 gap-y-8 py-6 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <p className="text-3xl leading-tight font-bold [font-variation-settings:'wdth'_78]">
+              {campaign.name}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              A campaign by {organization.name}
+            </p>
+            <p className="section-label mt-6 mb-3">{LIVE_LEDGER.raised}</p>
+            <CampaignCoverage
+              raised={campaign.current_amount}
+              target={campaign.target_amount}
+              evidenced={evidenced_amount}
+              currency={campaign.currency}
+              size="lg"
+            />
+          </div>
+          <div className="lg:col-span-7">
+            <p className="section-label border-b border-border pb-2">
+              {LIVE_LEDGER.spending}
+            </p>
+            <ProofSpendingList spending={spending} />
+            <ProofLegend className="border-t border-border pt-3" />
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <p className="max-w-xl text-sm text-muted-foreground">
+          {LIVE_LEDGER.caption}
+        </p>
+        <Link
+          to="/donate/$slug"
+          params={{ slug: campaign.public_slug ?? '' }}
+          onClick={() => track('cta_click', { location: 'live_ledger' })}
+          className={cn(
+            'group inline-flex items-center gap-1.5 text-sm',
+            QUIET_LINK,
+          )}
+        >
+          {LIVE_LEDGER.link}
+          <Arrow />
+        </Link>
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 5. How proof works
+// ---------------------------------------------------------------------------
+
+function HowProofWorks() {
+  const stations = [
+    { name: BOREHOLE_TRACE[0].from, step: null },
+    ...BOREHOLE_TRACE.map((step) => ({ name: step.to, step })),
+  ]
+  const badge = scaleSvg(
+    generateTrustBadgeSVG({ score: LANDING_ORG.trust_score }),
+    2,
+  )
+
+  return (
+    <Section id="how">
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <SectionTitle>{HOW.title}</SectionTitle>
+        </div>
+        <p className="max-w-xl text-lg leading-relaxed text-muted-foreground lg:col-span-6 lg:col-start-7">
+          {HOW.lede}
+        </p>
+      </div>
+
+      <p className="section-label mt-12">{HOW.traceLabel}</p>
+      <ol
+        className="mt-5 grid gap-10 md:grid-cols-3 md:gap-0"
+        aria-label={HOW.traceLabel}
+      >
+        {stations.map((station, i) => (
+          <li key={station.name} className="relative md:pr-8">
+            <div className="flex items-center" aria-hidden="true">
+              <span className="size-3.5 shrink-0 border-[3px] border-foreground bg-background" />
+              {i < BOREHOLE_TRACE.length && (
+                <StatusLine
+                  status={BOREHOLE_TRACE[i].status}
+                  width={600}
+                  className="hidden h-2.5 w-full md:block"
+                />
+              )}
+            </div>
+            <p className="mt-4 text-3xl leading-tight font-bold [font-variation-settings:'wdth'_78]">
+              {station.name}
+            </p>
+            {station.step ? (
+              <>
+                <p className="mt-2 text-sm">
+                  <span className="font-bold">
+                    KES {fmt(station.step.amount)}
+                  </span>
+                  , {formatShortDate(station.step.date)}.{' '}
+                  {station.step.description}.
+                </p>
+                <p className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
+                  <span>
+                    <span className="font-semibold text-foreground">
+                      Proof:{' '}
+                    </span>
+                    {station.step.proofs
+                      .map((type) => PROOF_TYPE_LABEL[type])
+                      .join(', ')}
+                  </span>
+                  <StatusMark status={station.step.status} />
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm">{HOW.donorStation}</p>
+            )}
+          </li>
+        ))}
+      </ol>
+      <p className="mt-8 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        {HOW.traceNote} <DemoTag />
+      </p>
+
+      <div className="mt-16 grid gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <h3 className="text-3xl">{HOW.kindsTitle}</h3>
+          <p className="mt-3 text-base text-muted-foreground">
+            {HOW.kindsLede}
+          </p>
+          <ul className="mt-6 grid grid-cols-2 border-t border-border text-sm">
+            {PROOF_KINDS.map((kind) => (
+              <li
+                key={kind.type}
+                className="flex items-baseline justify-between gap-3 border-b border-border py-2 pr-4 odd:border-r even:pl-4"
+              >
+                <span>{PROOF_TYPE_LABEL[kind.type]}</span>
+                <span className="font-semibold tabular-nums">
+                  {kind.points}
+                  <span className="sr-only"> trust points</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="lg:col-span-6 lg:col-start-7">
+          <h3 className="text-3xl">{HOW.scoreTitle}</h3>
+          <p className="mt-3 text-base text-muted-foreground">
+            {HOW.scoreLede}
+          </p>
+          <dl className="mt-6 border-t border-border">
+            {TRUST_PARTS.map((part) => (
+              <div
+                key={part.label}
+                className="grid grid-cols-[1fr_auto] gap-x-4 border-b border-border py-3"
+              >
+                <dt className="font-semibold">{part.label}</dt>
+                <dd className="row-span-2 self-center text-3xl font-extrabold tabular-nums [font-variation-settings:'wdth'_75]">
+                  {part.weight}
+                </dd>
+                <dd className="text-sm text-muted-foreground">
+                  {HOW.parts[part.label]}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="section-label mb-2">{HOW.gradesLabel}</p>
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums">
+                {TRUST_GRADES.map((g) => (
+                  <li key={g.grade}>
+                    <span className="font-bold">{g.grade}</span>{' '}
+                    {g.min > 0 ? `${g.min}+` : 'below 50'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="section-label mb-2 flex items-center gap-2">
+                {HOW.badgeLabel} <DemoTag />
+              </p>
+              <Link
+                to="/badge/trust/$orgId"
+                params={{ orgId: LANDING_ORG.id }}
+                search={{ format: 'preview' }}
+                aria-label={`${LANDING_ORG.name} Trust Score badge: ${LANDING_ORG.trust_score} of 100`}
+                className="inline-block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {/* Our own SVG, generated from a number; badge-utils escapes its label. */}
+                <span
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: badge }}
+                />
+              </Link>
+            </div>
+          </div>
+          <p className="mt-6">
+            <ArrowLink href="/docs" location="trust_method">
+              {HOW.method}
+            </ArrowLink>
+          </p>
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 6. Each audience sees its own depth
+// ---------------------------------------------------------------------------
+
+const GROUP_LABEL: Record<string, string> = {
+  'Board of Directors': 'Board',
+  Donors: 'Funders and donors',
+}
+
+/** The demo organisation's five default groups, read from their permissions. */
+const AUDIENCES = accessGroups
+  .filter((g) => g.organization_id === LANDING_ORG.id)
+  .map((g) => {
+    const group = GROUP_LABEL[g.name] ?? g.name
+    const p = g.permissions
+    const proofs: 'full' | 'summary' | false = p.can_view_full_proofs
+      ? 'full'
+      : p.can_view_proofs
+        ? 'summary'
+        : false
+    return {
+      group,
+      scope: AUDIENCE.scope[group] ?? '',
+      amounts: p.can_view_amounts,
+      proofs,
+      edit: p.can_edit_transactions,
+    }
+  })
 
 function AudienceSection() {
   return (
     <section className="bg-masthead text-masthead-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-8 lg:grid-cols-12 lg:py-20">
         <div className="lg:col-span-4">
-          <h2 className="text-4xl leading-none sm:text-5xl">
-            Each audience sees its own depth.
-          </h2>
+          <SectionTitle>{AUDIENCE.title}</SectionTitle>
           <p className="mt-5 text-base leading-relaxed opacity-80">
-            Your board sees the original receipts. A donor sees how their
-            grant was spent. The public sees names, not salaries. You set the
-            depth per group, and FlowTrace holds the line.
+            {AUDIENCE.lede}
           </p>
         </div>
         <div className="lg:col-span-8">
@@ -357,10 +717,7 @@ function AudienceSection() {
               ))}
             </tbody>
           </table>
-          <p className="mt-3 text-xs opacity-70">
-            The five default groups every organisation starts with. Add your
-            own, and make access expire for auditors.
-          </p>
+          <p className="mt-3 text-xs opacity-70">{AUDIENCE.note}</p>
         </div>
       </div>
     </section>
@@ -404,6 +761,10 @@ function ProofDepth({
   return <YesNo value={false} withText={withText} />
 }
 
+// ---------------------------------------------------------------------------
+// 7. For funders
+// ---------------------------------------------------------------------------
+
 const CHAIN: Array<{ name: string; note: string }> = [
   { name: 'Funder', note: 'Follows its grant' },
   { name: 'Your organisation', note: 'Records and proves' },
@@ -419,16 +780,11 @@ function FundersSection() {
     <section id="funders" className="scroll-mt-20">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-8 lg:grid-cols-12 lg:py-20">
         <div className="lg:col-span-5">
-          <h2 className="text-4xl leading-none sm:text-5xl">
-            Funders follow the grant past your door.
-          </h2>
+          <SectionTitle>{FUNDERS.title}</SectionTitle>
         </div>
         <div className="lg:col-span-7">
           <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-            Link your FlowTrace to a funder's, and to your partners'. With each
-            side's approval, a foundation can follow its grant through your
-            organisation to the partner that delivered it, seeing only what
-            each link grants.
+            {FUNDERS.lede}
           </p>
           <ol
             className="mt-10 flex flex-col border-t-[3px] border-foreground pt-5 md:grid md:grid-cols-[minmax(0,1fr)_minmax(4rem,7rem)_minmax(0,1fr)_minmax(4rem,7rem)_minmax(0,1fr)] md:items-start md:gap-x-3"
@@ -437,7 +793,7 @@ function FundersSection() {
             {CHAIN.map((org, i) => (
               <Fragment key={org.name}>
                 <li className="min-w-0">
-                  <p className="font-semibold leading-tight">{org.name}</p>
+                  <p className="leading-tight font-semibold">{org.name}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {org.note}
                   </p>
@@ -459,7 +815,9 @@ function FundersSection() {
                         y2="40"
                         strokeWidth="3"
                         strokeDasharray={
-                          CHAIN_LINKS[i].status === 'pending' ? '7 5' : undefined
+                          CHAIN_LINKS[i].status === 'pending'
+                            ? '7 5'
+                            : undefined
                         }
                         className={
                           CHAIN_LINKS[i].status === 'pending'
@@ -487,9 +845,12 @@ function FundersSection() {
               </Fragment>
             ))}
           </ol>
-          <p className="mt-6 text-sm text-muted-foreground">
-            A solid line is an approved link; a dashed line is a request
-            awaiting the other side. Either side can revoke a link at any time.
+          <p className="mt-6 text-sm text-muted-foreground">{FUNDERS.key}</p>
+          <p className="mt-6 max-w-xl text-base">{FUNDERS.mandate}</p>
+          <p className="mt-4">
+            <ArrowLink href="/funders" location="funders">
+              {FUNDERS.link}
+            </ArrowLink>
           </p>
         </div>
       </div>
@@ -497,24 +858,88 @@ function FundersSection() {
   )
 }
 
+// ---------------------------------------------------------------------------
+// 8. Works where you work, 9. Trust block
+// ---------------------------------------------------------------------------
+
+function WorksSection() {
+  return (
+    <Section>
+      <SectionTitle>{WORKS.title}</SectionTitle>
+      <ul className="mt-10 grid border-t border-border sm:grid-cols-2 lg:grid-cols-4">
+        {WORKS.items.map((item) => (
+          <li
+            key={item.name}
+            className="border-b border-border py-5 sm:pr-6 lg:border-b-0"
+          >
+            <h3 className="text-xl leading-tight">{item.name}</h3>
+            <p className="mt-2 text-sm leading-relaxed">{item.text}</p>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  )
+}
+
+function TrustSection() {
+  return (
+    <Section id="trust">
+      <div className="grid gap-10 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <SectionTitle>{TRUST.title}</SectionTitle>
+          <p className="mt-6 inline-flex border border-foreground px-3 py-2 text-sm font-semibold">
+            {TRUST.stage}
+          </p>
+          <p className="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+            <ArrowLink href="/security" location="trust_security">
+              {TRUST.security}
+            </ArrowLink>
+            <ArrowLink href="/pricing" location="trust_pricing">
+              {TRUST.pricing}
+            </ArrowLink>
+          </p>
+        </div>
+        <dl className="border-t border-border text-sm lg:col-span-7">
+          {TRUST.items.map((item) => (
+            <div
+              key={item.name}
+              className="grid grid-cols-[9rem_1fr] gap-x-4 border-b border-border py-3 sm:grid-cols-[11rem_1fr]"
+            >
+              <dt className="font-semibold">{item.name}</dt>
+              <dd>
+                {item.name === 'Source code' ? (
+                  <a
+                    href={GITHUB_REPO_URL}
+                    rel="noopener"
+                    onClick={() => track('outbound_click', { name: 'github' })}
+                    className={QUIET_LINK}
+                  >
+                    {item.text}
+                  </a>
+                ) : (
+                  item.text
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 11. Close
+// ---------------------------------------------------------------------------
+
 function Close() {
   return (
     <section className="border-t-[3px] border-foreground">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-16 sm:px-8 md:flex-row md:items-end md:justify-between lg:py-20">
         <h2 className="max-w-2xl text-4xl leading-none sm:text-6xl">
-          Open a quarter of an NGO's books, proof included.
+          {CLOSE.title}
         </h2>
-        <Link
-          to="/dashboard"
-          onClick={() => demoStarted('close')}
-          className={cn(buttonVariants({ size: 'lg' }), 'group shrink-0')}
-        >
-          Explore the demo
-          <ArrowRight
-            className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-            weight="bold"
-          />
-        </Link>
+        <DemoCta location="close" />
       </div>
     </section>
   )

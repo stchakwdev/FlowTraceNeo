@@ -5,6 +5,8 @@
 import { VERIFICATION_TRUST_POINTS, calculateTrustScore, getTrustGrade } from '../types'
 import * as seed from './dataset'
 import { postDemoTransaction } from './ledger'
+import { campaignReport } from './report'
+import type { CampaignReport } from './report'
 import type {
   AccessGroup,
   AccessGroupPermissions,
@@ -1454,93 +1456,14 @@ export function markUpdateSent(id: string) {
 // Campaign report (public donate page and campaign detail)
 // ---------------------------------------------------------------------------
 
-export interface CampaignReportEarmark {
-  id: string
-  name: string
-  type: FlowNode['type']
-  /** Money received by this node (non-rejected inflows). */
-  received: number
-  /** The part of `received` backed by verified proof. */
-  evidenced: number
-  /** The campaign's own target node. */
-  is_target: boolean
-}
-
-export interface CampaignReport {
-  campaign: CampaignWithDetails
-  organization: {
-    id: string
-    name: string
-    trust_score: number
-    verified: boolean
-  }
-  /** Verified spending into the campaign's target node, capped at the raised amount. */
-  evidenced_amount: number | null
-  earmarks: Array<CampaignReportEarmark>
-  /** Recent programme spending, newest first, with its proof state. */
-  spending: Array<TransactionWithNodes>
-}
+export type { CampaignReport, CampaignReportEarmark } from './report'
 
 export function getCampaignReport(campaignId: string): Promise<CampaignReport> {
   const c = db.campaigns.find((x) => x.id === campaignId)
   if (!c)
     return Promise.reject(new Error('Campaign not found in the demo data.'))
-  const o = db.organizations.find((x) => x.id === c.organization_id)
-  if (!o)
+  const report = campaignReport(db, campaignId)
+  if (!report)
     return Promise.reject(new Error('Organization not found in the demo data.'))
-  const txns = db.transactions.filter(
-    (t) =>
-      t.organization_id === c.organization_id &&
-      t.verification_status !== 'rejected',
-  )
-  const sum = (rows: Array<Transaction>) =>
-    rows.reduce((s, t) => s + t.amount, 0)
-  const earmarks = db.flowNodes
-    .filter(
-      (n) =>
-        n.organization_id === c.organization_id &&
-        (n.type === 'project' || n.type === 'department'),
-    )
-    .map((n) => {
-      const inflow = txns.filter((t) => t.to_node_id === n.id)
-      return {
-        id: n.id,
-        name: n.name,
-        type: n.type,
-        received: sum(inflow),
-        evidenced: sum(
-          inflow.filter((t) => t.verification_status === 'verified'),
-        ),
-        is_target: n.id === c.target_node_id,
-      }
-    })
-    .sort(
-      (a, b) =>
-        Number(b.is_target) - Number(a.is_target) || b.received - a.received,
-    )
-  const programme = new Set(earmarks.map((e) => e.id))
-  const spending = txns
-    .filter(
-      (t) =>
-        (t.to_node_id && programme.has(t.to_node_id)) ||
-        (t.from_node_id && programme.has(t.from_node_id)),
-    )
-    .sort((a, b) => byDateDesc(a.transaction_date, b.transaction_date))
-    .slice(0, 6)
-    .map(withNodes)
-  const target = earmarks.find((e) => e.is_target)
-  return settle({
-    campaign: withTarget(c),
-    organization: {
-      id: o.id,
-      name: o.name,
-      trust_score: o.trust_score,
-      verified: o.verified,
-    },
-    evidenced_amount: target
-      ? Math.min(target.evidenced, c.current_amount)
-      : null,
-    earmarks,
-    spending,
-  })
+  return settle(report)
 }
