@@ -70,7 +70,9 @@ describe('BooksPage', () => {
     await render({ kind: 'none' })
     const early = screen.getAllByRole('link', { name: /Request early access/ })
     expect(early).toHaveLength(2)
-    expect(early[0].getAttribute('href')).toMatch(/^mailto:TODO-USER\?subject=/)
+    expect(early[0].getAttribute('href')).toMatch(
+      /^mailto:stchakwera@gmail\.com\?subject=/,
+    )
     expect(screen.queryByRole('table')).toBeNull()
     expect(screen.queryByText(/Download for Linux/)).toBeNull()
     expect(screen.queryByText(/0 downloads/)).toBeNull()

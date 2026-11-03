@@ -12,8 +12,8 @@ import { formatDate } from '@/lib/format'
 import { DEMO_FIGURES_AS_OF, DEMO_PATH } from '@/lib/marketing-nav'
 import { cn } from '@/lib/utils'
 
-// TODO-USER: the contact address for early access requests.
-const CONTACT_EMAIL = 'TODO-USER'
+// The contact address for early access requests.
+const CONTACT_EMAIL = 'stchakwera@gmail.com'
 const EARLY_ACCESS_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('FlowTrace Books early access')}`
 
 // Measured, not rounded: `cargo test --workspace --locked` on main 1ffec82 passed 861
