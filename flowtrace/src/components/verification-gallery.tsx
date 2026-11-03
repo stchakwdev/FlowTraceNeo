@@ -22,6 +22,7 @@ import type { Verification, VerificationType } from '@/lib/types'
 import { VERIFICATION_TRUST_POINTS } from '@/lib/types'
 import { formatDate } from '@/lib/format'
 import { useProofSrc } from '@/lib/proofs'
+import { PROOF_TYPE_LABEL } from '@/lib/proof-labels'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ReportNotice, StatusMark } from '@/components/report'
@@ -43,20 +44,7 @@ export const PROOF_TYPE_ICON: Record<VerificationType, Icon> = {
   government_doc: Buildings,
 }
 
-export const PROOF_TYPE_LABEL: Record<VerificationType, string> = {
-  receipt: 'Receipt',
-  photo: 'Photo',
-  document: 'Document',
-  bank_statement: 'Bank statement',
-  signature: 'Signature',
-  gps: 'GPS reading',
-  biometric: 'Biometric',
-  invoice: 'Invoice',
-  video: 'Video',
-  audit: 'Third-party audit',
-  contract: 'Contract',
-  government_doc: 'Government document',
-}
+export { PROOF_TYPE_LABEL }
 
 export const PROOF_VISIBILITY_LABEL = {
   full: 'Full file',

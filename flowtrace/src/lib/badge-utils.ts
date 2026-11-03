@@ -157,3 +157,14 @@ export function generateCampaignBadgeSVG(options: {
     leftChar: 6,
   })
 }
+
+// The SVG has a fixed width and height but no viewBox, so it cannot grow by
+// CSS alone. Give it one and multiply the size so it scales crisply.
+export function scaleSvg(svg: string, scale: number) {
+  if (scale === 1) return svg
+  return svg.replace(
+    /<svg([^>]*?) width="(\d+(?:\.\d+)?)" height="(\d+(?:\.\d+)?)"/,
+    (_m, attrs: string, w: string, h: string) =>
+      `<svg${attrs} viewBox="0 0 ${w} ${h}" width="${Number(w) * scale}" height="${Number(h) * scale}"`,
+  )
+}
