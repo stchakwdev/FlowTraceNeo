@@ -604,7 +604,7 @@ function HowProofWorks() {
             </div>
           </div>
           <p className="mt-6">
-            <ArrowLink href="/docs" location="trust_method">
+            <ArrowLink href="/docs/trust-score" location="trust_method">
               {HOW.method}
             </ArrowLink>
           </p>

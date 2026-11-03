@@ -19,6 +19,7 @@ import { Route as AuthenticatedTrustScoreRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFlowsRouteImport } from './routes/_authenticated/flows'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChainsRouteImport } from './routes/_authenticated/chains'
+import { Route as MarketingDocsIndexRouteImport } from './routes/_marketing/docs.index'
 import { Route as AuthenticatedTransactionsIndexRouteImport } from './routes/_authenticated/transactions/index'
 import { Route as AuthenticatedSpendIndexRouteImport } from './routes/_authenticated/spend/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
@@ -30,6 +31,7 @@ import { Route as AuthenticatedCampaignsIndexRouteImport } from './routes/_authe
 import { Route as EmbedCampaignIdRouteImport } from './routes/embed/campaign.$id'
 import { Route as BadgeTrustOrgIdRouteImport } from './routes/badge/trust.$orgId'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
+import { Route as MarketingDocsSlugRouteImport } from './routes/_marketing/docs.$slug'
 import { Route as AuthenticatedTransactionsNewRouteImport } from './routes/_authenticated/transactions/new'
 import { Route as AuthenticatedTransactionsIdRouteImport } from './routes/_authenticated/transactions/$id'
 import { Route as AuthenticatedSettingsEmbedRouteImport } from './routes/_authenticated/settings/embed'
@@ -99,6 +101,11 @@ const AuthenticatedChainsRoute = AuthenticatedChainsRouteImport.update({
   path: '/chains',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const MarketingDocsIndexRoute = MarketingDocsIndexRouteImport.update({
+  id: '/docs/',
+  path: '/docs/',
+  getParentRoute: () => MarketingRoute,
+} as any)
 const AuthenticatedTransactionsIndexRoute =
   AuthenticatedTransactionsIndexRouteImport.update({
     id: '/transactions/',
@@ -160,6 +167,11 @@ const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
   id: '/api/auth/callback',
   path: '/api/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingDocsSlugRoute = MarketingDocsSlugRouteImport.update({
+  id: '/docs/$slug',
+  path: '/docs/$slug',
+  getParentRoute: () => MarketingRoute,
 } as any)
 const AuthenticatedTransactionsNewRoute =
   AuthenticatedTransactionsNewRouteImport.update({
@@ -302,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/docs/$slug': typeof MarketingDocsSlugRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
@@ -313,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/spend': typeof AuthenticatedSpendIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
+  '/docs': typeof MarketingDocsIndexRoute
   '/ledger/entries/$id': typeof AuthenticatedLedgerEntriesIdRoute
   '/spend/bills/$id': typeof AuthenticatedSpendBillsIdRoute
   '/spend/bills/new': typeof AuthenticatedSpendBillsNewRoute
@@ -343,6 +357,7 @@ export interface FileRoutesByTo {
   '/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/docs/$slug': typeof MarketingDocsSlugRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
@@ -354,6 +369,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/spend': typeof AuthenticatedSpendIndexRoute
   '/transactions': typeof AuthenticatedTransactionsIndexRoute
+  '/docs': typeof MarketingDocsIndexRoute
   '/ledger/entries/$id': typeof AuthenticatedLedgerEntriesIdRoute
   '/spend/bills/$id': typeof AuthenticatedSpendBillsIdRoute
   '/spend/bills/new': typeof AuthenticatedSpendBillsNewRoute
@@ -387,6 +403,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/embed': typeof AuthenticatedSettingsEmbedRoute
   '/_authenticated/transactions/$id': typeof AuthenticatedTransactionsIdRoute
   '/_authenticated/transactions/new': typeof AuthenticatedTransactionsNewRoute
+  '/_marketing/docs/$slug': typeof MarketingDocsSlugRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
   '/badge/trust/$orgId': typeof BadgeTrustOrgIdRoute
   '/embed/campaign/$id': typeof EmbedCampaignIdRoute
@@ -398,6 +415,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/spend/': typeof AuthenticatedSpendIndexRoute
   '/_authenticated/transactions/': typeof AuthenticatedTransactionsIndexRoute
+  '/_marketing/docs/': typeof MarketingDocsIndexRoute
   '/_authenticated/ledger/entries/$id': typeof AuthenticatedLedgerEntriesIdRoute
   '/_authenticated/spend/bills/$id': typeof AuthenticatedSpendBillsIdRoute
   '/_authenticated/spend/bills/new': typeof AuthenticatedSpendBillsNewRoute
@@ -430,6 +448,7 @@ export interface FileRouteTypes {
     | '/settings/embed'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/docs/$slug'
     | '/api/auth/callback'
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
@@ -441,6 +460,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spend'
     | '/transactions'
+    | '/docs'
     | '/ledger/entries/$id'
     | '/spend/bills/$id'
     | '/spend/bills/new'
@@ -471,6 +491,7 @@ export interface FileRouteTypes {
     | '/settings/embed'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/docs/$slug'
     | '/api/auth/callback'
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
@@ -482,6 +503,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spend'
     | '/transactions'
+    | '/docs'
     | '/ledger/entries/$id'
     | '/spend/bills/$id'
     | '/spend/bills/new'
@@ -514,6 +536,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/embed'
     | '/_authenticated/transactions/$id'
     | '/_authenticated/transactions/new'
+    | '/_marketing/docs/$slug'
     | '/api/auth/callback'
     | '/badge/trust/$orgId'
     | '/embed/campaign/$id'
@@ -525,6 +548,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/spend/'
     | '/_authenticated/transactions/'
+    | '/_marketing/docs/'
     | '/_authenticated/ledger/entries/$id'
     | '/_authenticated/spend/bills/$id'
     | '/_authenticated/spend/bills/new'
@@ -616,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChainsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_marketing/docs/': {
+      id: '/_marketing/docs/'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof MarketingDocsIndexRouteImport
+      parentRoute: typeof MarketingRoute
+    }
     '/_authenticated/transactions/': {
       id: '/_authenticated/transactions/'
       path: '/transactions'
@@ -692,6 +723,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/callback'
       preLoaderRoute: typeof ApiAuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_marketing/docs/$slug': {
+      id: '/_marketing/docs/$slug'
+      path: '/docs/$slug'
+      fullPath: '/docs/$slug'
+      preLoaderRoute: typeof MarketingDocsSlugRouteImport
+      parentRoute: typeof MarketingRoute
     }
     '/_authenticated/transactions/new': {
       id: '/_authenticated/transactions/new'
@@ -914,11 +952,15 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 interface MarketingRouteChildren {
   MarketingBooksRoute: typeof MarketingBooksRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
+  MarketingDocsSlugRoute: typeof MarketingDocsSlugRoute
+  MarketingDocsIndexRoute: typeof MarketingDocsIndexRoute
 }
 
 const MarketingRouteChildren: MarketingRouteChildren = {
   MarketingBooksRoute: MarketingBooksRoute,
   MarketingIndexRoute: MarketingIndexRoute,
+  MarketingDocsSlugRoute: MarketingDocsSlugRoute,
+  MarketingDocsIndexRoute: MarketingDocsIndexRoute,
 }
 
 const MarketingRouteWithChildren = MarketingRoute._addFileChildren(

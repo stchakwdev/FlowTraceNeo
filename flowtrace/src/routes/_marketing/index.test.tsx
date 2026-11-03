@@ -47,6 +47,15 @@ afterEach(() => {
 })
 
 describe('landing page', () => {
+  it('links "How the score is computed" to the Trust Score methodology page', async () => {
+    await renderWithRouter(() => <LandingPage />)
+    expect(
+      screen
+        .getByRole('link', { name: /How the score is computed/ })
+        .getAttribute('href'),
+    ).toBe('/docs/trust-score')
+  })
+
   it('renders the H1 and every section H2 in order', async () => {
     await renderWithRouter(() => <LandingPage />)
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
