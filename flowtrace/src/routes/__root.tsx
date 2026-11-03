@@ -11,6 +11,8 @@ import { ThemeProvider } from '@/lib/theme'
 import { OrgProvider } from '@/lib/org-context'
 import { AppAuthProvider } from '@/lib/auth-context'
 import { DEV_MODE } from '@/lib/auth'
+import { umamiScript } from '@/lib/analytics'
+import { defaultHeadMeta } from '@/lib/site'
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -50,9 +52,10 @@ export const Route = createRootRoute({
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
-      {
-        title: 'FlowTrace - Financial Transparency Platform',
-      },
+      { name: 'theme-color', content: '#1d2431' },
+      // Site-wide title, description and Open Graph defaults; public routes
+      // override them with pageHead() from lib/site.ts.
+      ...defaultHeadMeta(),
     ],
     links: [
       {
@@ -60,6 +63,9 @@ export const Route = createRootRoute({
         href: appCss,
       },
       { rel: 'manifest', href: '/manifest.json' },
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
     ],
     scripts: [
       {
@@ -75,6 +81,8 @@ export const Route = createRootRoute({
             },
           ]
         : []),
+      // Umami, only when VITE_UMAMI_WEBSITE_ID is set.
+      ...umamiScript(),
     ],
   }),
 

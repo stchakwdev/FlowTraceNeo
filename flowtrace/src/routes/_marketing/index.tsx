@@ -2,10 +2,8 @@ import { Fragment, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowRight, Check, Minus } from '@phosphor-icons/react'
 import { ChainLine } from '@/components/chain-status-badge'
-import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { buttonVariants } from '@/components/ui/button'
 import {
-  AsOf,
   CoverageBar,
   DemoTag,
   KeyFigure,
@@ -13,16 +11,32 @@ import {
   ProofLegend,
   StatusLine,
 } from '@/components/report'
-import { Wordmark } from '@/components/layout/wordmark'
-import { useAppAuth } from '@/lib/auth-context'
+import { demoStarted } from '@/components/marketing/marketing-masthead'
+import {
+  DEFAULT_DESCRIPTION,
+  organizationJsonLd,
+  pageHead,
+} from '@/lib/site'
 import { cn } from '@/lib/utils'
 
-export const Route = createFileRoute('/')({
+export const LANDING_TITLE = 'FlowTrace · Every payment, traced to its proof'
+export const LANDING_DESCRIPTION = DEFAULT_DESCRIPTION
+
+export const Route = createFileRoute('/_marketing/')({
+  head: () => ({
+    ...pageHead({
+      title: LANDING_TITLE,
+      description: LANDING_DESCRIPTION,
+      path: '/',
+      absoluteTitle: true,
+    }),
+    scripts: [{ type: 'application/ld+json', children: organizationJsonLd() }],
+  }),
+  staticData: { demoFigures: true },
   component: LandingPage,
 })
 
 // Figures from the bundled demo dataset (Demo NGO Kenya, Q1 2026).
-const REPORT_DATE = '2026-02-04'
 const DONORS = [
   // Same order as the dashboard: evidenced by amount, awaiting proof last.
   {
@@ -84,61 +98,15 @@ const AUDIENCES: Array<{
 
 const fmt = (n: number) => n.toLocaleString('en-KE')
 
-function LandingPage() {
-  const { user } = useAppAuth()
-
+export function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Masthead signedIn={!!user} />
-      <main>
-        <Hero />
-        <TraceSection />
-        <AudienceSection />
-        <FundersSection />
-        <Close />
-      </main>
-      <Footer />
-    </div>
-  )
-}
-
-function Masthead({ signedIn }: { signedIn: boolean }) {
-  return (
-    <header className="sticky top-0 z-40 border-b-[3px] border-foreground bg-background">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-8">
-        <Link to="/" aria-label="FlowTrace home">
-          <Wordmark />
-        </Link>
-        <p className="hidden text-xs tracking-[0.14em] text-muted-foreground uppercase lg:block font-narrow">
-          Situation report · Demo NGO Kenya ·{' '}
-          <AsOf date={REPORT_DATE} className="text-xs" />
-        </p>
-        <nav className="ml-auto flex items-center gap-1 sm:gap-4">
-          <a
-            href="#how"
-            className="hidden px-2 py-1 text-sm hover:underline md:inline"
-          >
-            How proof works
-          </a>
-          <a
-            href="#funders"
-            className="hidden px-2 py-1 text-sm hover:underline md:inline"
-          >
-            For funders
-          </a>
-          <ThemeToggle className="hidden sm:inline-flex" />
-          <Link
-            to="/dashboard"
-            className="px-1 py-1 text-sm whitespace-nowrap underline decoration-foreground/30 underline-offset-4 hover:decoration-foreground sm:px-2"
-          >
-            {signedIn ? 'Open app' : 'Sign in'}
-          </Link>
-          <Link to="/dashboard" className={buttonVariants({ size: 'sm' })}>
-            Explore the demo
-          </Link>
-        </nav>
-      </div>
-    </header>
+    <>
+      <Hero />
+      <TraceSection />
+      <AudienceSection />
+      <FundersSection />
+      <Close />
+    </>
   )
 }
 
@@ -164,6 +132,7 @@ function Hero() {
         <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
           <Link
             to="/dashboard"
+            onClick={() => demoStarted('hero')}
             className={cn(buttonVariants({ size: 'lg' }), 'group')}
           >
             Explore the demo
@@ -537,6 +506,7 @@ function Close() {
         </h2>
         <Link
           to="/dashboard"
+          onClick={() => demoStarted('close')}
           className={cn(buttonVariants({ size: 'lg' }), 'group shrink-0')}
         >
           Explore the demo
@@ -547,16 +517,5 @@ function Close() {
         </Link>
       </div>
     </section>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-8">
-        <Wordmark className="text-foreground" />
-        <p>&copy; {new Date().getFullYear()} FlowTrace</p>
-      </div>
-    </footer>
   )
 }
