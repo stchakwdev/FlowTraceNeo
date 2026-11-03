@@ -12,8 +12,10 @@
 #   rust/tools/release.sh --name   print the archive name only (no build)
 #   rust/tools/release.sh --check <archive>   run the archive content check only (no build)
 #
-# It never tags, publishes or uploads anything; the tag job in .github/workflows/rust.yml runs
-# it and uploads rust/dist/ as a workflow artifact.
+# It never tags, publishes or uploads anything itself. On a v* tag, the release job in
+# .github/workflows/rust.yml runs it on Linux and macOS and uploads rust/dist/ as workflow
+# artifacts; the github-release job then attaches both archives and a SHA256SUMS file over them
+# to the tag's public GitHub Release (rust/docs/module-release.md, section 7).
 set -euo pipefail
 
 caller_dir=$PWD

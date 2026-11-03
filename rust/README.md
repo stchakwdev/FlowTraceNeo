@@ -151,6 +151,10 @@ checks it; `cd tools && ~/.bun/bin/bun test`). It is a shell script rather than 
 because it only strings cargo, strip and tar together, and an xtask crate would be one more
 workspace member for every check to compile.
 
+A `v*` tag pushed to GitHub runs it on Linux (x86_64) and macOS (arm64) in CI and publishes the
+two archives with a `SHA256SUMS` file as the tag's GitHub Release
+(`docs/module-release.md`, section 7).
+
 Measured on Linux (Omarchy, x86_64, 16 threads, Rust 1.99.0), 2026-10-16:
 
 | Measure | Value |

@@ -1,8 +1,8 @@
 # Releasing the ledger module
 
 How `crates/ledger-module` (the SpacetimeDB 2.12 server module) is built, how the maincloud dev
-and production databases were published, how people get access to them, and what a later
-production publish needs.
+and production databases were published, how people get access to them, what a later
+production publish needs, and how a FlowTrace Books desktop release is cut (section 7).
 Day-to-day commands against the local server are in `../crates/ledger-module/README.md`; this
 page is about maincloud.
 
@@ -293,3 +293,45 @@ The module keeps only each file's R2 object key and SHA-256 on its `verification
   points it at production; a module update that adds the reducer is a publish, so on
   `flowtrace-ledger` it is the user's step (section 4).
 
+## 7. FlowTrace Books releases (GitHub Release on a `v*` tag)
+
+The desktop app is released publicly as a GitHub Release of this repository. Nothing here
+touches maincloud: the archives only carry a `config.toml` naming `flowtrace-ledger`
+(section 4), and the app opens the demo books until someone copies it into place.
+
+What a `v*` tag push runs (`.github/workflows/rust.yml`; tag pushes skip the path filters):
+
+1. `check`, as on every push.
+2. `release`, on `ubuntu-latest` (x86_64) and `macos-latest` (arm64): `tools/release.sh`
+   builds, strips, packs and checks `flowtrace-books-<version>-<os>-<arch>.tar.gz` and its
+   `.sha256`, uploaded as the workflow artifact `flowtrace-books-<tag>-<OS>` (kept 90 days).
+3. `github-release`, the only job with `contents: write`, using the workflow's own
+   `GITHUB_TOKEN` (no secret): downloads both artifacts, checks each `.sha256`, writes
+   `SHA256SUMS` over the two archives, and creates the tag's GitHub Release titled
+   `FlowTrace Books <tag>` with the two archives and `SHA256SUMS` attached. The notes are the
+   annotated tag's message; for a lightweight tag GitHub generates them from the merged pull
+   requests. A tag with a hyphen (`v0.1.0-rc1`) is marked a pre-release, which GitHub does not
+   return as `releases/latest`, so the web's `/books` page keeps showing the last full release.
+   A re-run of the job on an existing release replaces the assets (`--clobber`) and resets the
+   pre-release flag; it leaves the notes alone.
+
+The version in the archive names is the workspace version in `rust/Cargo.toml`, not the tag;
+bump it in the same change that the tag points at, so `v0.2.0` ships `flowtrace-books-0.2.0-*`.
+
+Cutting a release is the user's step (a tag push is public):
+
+```sh
+git switch main && git pull --ff-only
+grep -A1 '^\[workspace.package\]' rust/Cargo.toml       # version = "0.1.0" for v0.1.0
+git tag -a v0.1.0 -m "FlowTrace Books 0.1.0
+
+What is in this release, in plain words."
+git push origin v0.1.0
+gh run watch "$(gh run list --workflow rust.yml --branch v0.1.0 --limit 1 --json databaseId -q '.[0].databaseId')"
+gh release view v0.1.0                                    # two archives and SHA256SUMS
+```
+
+To check a download: `sha256sum -c SHA256SUMS --ignore-missing` (macOS:
+`shasum -a 256 -c SHA256SUMS --ignore-missing`) in the folder holding the archive. A failed
+release job leaves no release; fix, delete the tag (`git push --delete origin v0.1.0`,
+`git tag -d v0.1.0`) and tag again, or re-run the failed jobs from the run's page.

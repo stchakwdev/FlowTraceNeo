@@ -47,6 +47,16 @@ organisation is empty books from `ledger_core::setup::create_org_ledger` for thi
 it draws UUIDs and wall-clock time from `backend::SystemEnv`. Nothing is saved: books reset
 when the app closes.
 
+### From a release
+
+Released builds are on the repository's GitHub Releases page
+(<https://github.com/stchakwdev/FlowTraceNeo/releases>), one archive for Linux x86_64 and one
+for macOS arm64, with a `SHA256SUMS` file over both. A `v*` tag publishes them
+(`../../docs/module-release.md`, section 7). Each archive holds the stripped binary as
+`flowtrace-books`, `INSTALL.txt` (how to run it, the Linux libraries, the unsigned macOS
+binary) and `config.toml` (`release/config.toml` here), which opens the production books once copied into the
+config directory (Configuration, below). The web's `/books` page links the latest release.
+
 ## Layout
 
 | Module | Holds | GPUI? |

@@ -95,7 +95,8 @@ jobs:
         run: bun run check
 
   # Release archives for a v* tag: rust/tools/release.sh on Linux and macOS, uploaded as workflow
-  # artifacts only. No GitHub Release, no publish to maincloud (rust/docs/module-release.md).
+  # artifacts; the github-release job below attaches them to the tag's GitHub Release. No publish
+  # to maincloud (rust/docs/module-release.md).
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: check
@@ -137,3 +138,63 @@ jobs:
           name: flowtrace-books-${{ github.ref_name }}-${{ runner.os }}
           path: rust/dist/
           if-no-files-found: error
+
+  # The public release of FlowTrace Books for a v* tag: creates the tag's GitHub Release, or
+  # updates it on a re-run, with the two archives and a SHA256SUMS file over them. Notes are the
+  # annotated tag's message, or GitHub's generated notes for a lightweight tag. A tag with a
+  # hyphen (v0.1.0-rc1) is a pre-release. The only job that may write to the repository.
+  github-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: flowtrace-books-${{ github.ref_name }}-*
+          path: dist
+          merge-multiple: true
+
+      # Each archive's .sha256 was written by release.sh on the machine that built it.
+      - name: Check the archives and write SHA256SUMS
+        working-directory: dist
+        run: |
+          shopt -s nullglob
+          archives=(flowtrace-books-*.tar.gz)
+          if [ "${#archives[@]}" -ne 2 ]; then
+            echo "expected 2 archives (Linux and macOS), found ${#archives[@]}: ${archives[*]}" >&2
+            exit 1
+          fi
+          sha256sum -c ./*.tar.gz.sha256
+          sha256sum "${archives[@]}" > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create or update the GitHub Release
+        run: |
+          # actions/checkout can leave the tag lightweight; fetch the tag object itself.
+          git fetch --force --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+          prerelease=false
+          if [[ "$TAG" == *-* ]]; then prerelease=true; fi
+          notes=()
+          if [ "$(git cat-file -t "refs/tags/$TAG")" = tag ]; then
+            git tag -l --format='%(contents)' "$TAG" > "$RUNNER_TEMP/notes.md"
+            notes=(--notes-file "$RUNNER_TEMP/notes.md")
+          else
+            notes=(--generate-notes)
+          fi
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/flowtrace-books-*.tar.gz dist/SHA256SUMS --clobber
+            gh release edit "$TAG" --prerelease="$prerelease"
+          else
+            args=(--verify-tag --title "FlowTrace Books $TAG" "${notes[@]}")
+            if [ "$prerelease" = true ]; then args+=(--prerelease); fi
+            gh release create "$TAG" "${args[@]}" dist/flowtrace-books-*.tar.gz dist/SHA256SUMS
+          fi
